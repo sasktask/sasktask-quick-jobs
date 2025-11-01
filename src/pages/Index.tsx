@@ -145,133 +145,159 @@ const Index = () => {
       
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 relative overflow-hidden">
-        {/* Unique Corner Decorative Elements - Better than TaskRabbit */}
+        {/* Refined Corner Decorative Elements - Premium Design */}
         <div className="absolute inset-0 -z-10">
-          {/* Top Left Corner - Flowing Organic Shape with Patterns */}
-          <div className="absolute -top-48 -left-48 w-[550px] h-[550px] pointer-events-none">
-            {/* Main gradient blob */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/15 to-transparent rounded-full blur-3xl animate-float" />
-            {/* Accent ring */}
-            <div className="absolute top-24 left-24 w-80 h-80 bg-gradient-to-br from-accent/30 to-transparent rounded-full animate-pulse" style={{ animationDuration: "3s" }} />
-            {/* Dots Grid Pattern */}
-            <div className="absolute top-36 left-36 grid grid-cols-6 gap-3 opacity-40">
-              {[...Array(24)].map((_, i) => (
-                <div 
-                  key={i} 
-                  className="w-2 h-2 bg-primary rounded-full animate-glow-pulse" 
-                  style={{ animationDelay: `${i * 0.1}s` }} 
-                />
-              ))}
-            </div>
-            {/* Diagonal Stripes SVG */}
-            <svg className="absolute top-0 left-0 w-full h-full opacity-15" viewBox="0 0 550 550">
-              <defs>
-                <pattern id="stripes-tl" patternUnits="userSpaceOnUse" width="12" height="12" patternTransform="rotate(45)">
-                  <line x1="0" y1="0" x2="0" y2="12" stroke="hsl(var(--primary))" strokeWidth="2.5" />
-                </pattern>
-              </defs>
-              <circle cx="100" cy="100" r="220" fill="url(#stripes-tl)" />
-            </svg>
-          </div>
-
-          {/* Top Right Corner - Layered Geometric Elements */}
-          <div className="absolute -top-40 -right-40 w-[500px] h-[500px] pointer-events-none">
-            {/* Main glow */}
-            <div className="absolute inset-0 bg-gradient-to-bl from-secondary/30 via-accent/20 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: "1s" }} />
-            {/* Rotating ring */}
-            <div className="absolute top-20 right-20 w-80 h-80 border-4 border-secondary/30 rounded-full animate-spin" style={{ animationDuration: "20s" }} />
-            {/* Inner pulsing circle */}
-            <div className="absolute top-28 right-28 w-64 h-64 bg-gradient-to-br from-primary/40 via-accent/30 to-transparent rounded-full animate-pulse" style={{ animationDuration: "4s" }} />
-            {/* Floating accent ring */}
-            <div className="absolute top-36 right-24 w-40 h-40 border-8 border-accent/40 rounded-full animate-float" style={{ animationDelay: "0.5s", animationDuration: "4s" }} />
-            {/* Small accent circle with glow */}
-            <div className="absolute top-24 right-36 w-20 h-20 bg-gradient-accent rounded-full shadow-glow animate-glow-pulse" />
-            {/* Dots constellation */}
-            <div className="absolute top-40 right-44">
-              {[...Array(8)].map((_, i) => (
+          {/* Top Left Corner - Elegant Curves & Dots */}
+          <div className="absolute -top-52 -left-52 w-[600px] h-[600px] pointer-events-none">
+            {/* Soft gradient glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/25 via-primary/12 to-transparent rounded-full blur-3xl animate-float" />
+            {/* Secondary accent */}
+            <div className="absolute top-28 left-28 w-96 h-96 bg-gradient-to-br from-accent/25 via-secondary/15 to-transparent rounded-full animate-pulse" style={{ animationDuration: "4s" }} />
+            
+            {/* Elegant dot constellation */}
+            <div className="absolute top-40 left-40">
+              {[...Array(12)].map((_, i) => (
                 <div 
                   key={i}
-                  className="absolute w-3 h-3 bg-secondary rounded-full animate-pulse"
+                  className="absolute w-2.5 h-2.5 bg-primary rounded-full animate-glow-pulse shadow-glow"
                   style={{ 
-                    left: `${Math.cos(i * Math.PI / 4) * 40}px`,
-                    top: `${Math.sin(i * Math.PI / 4) * 40}px`,
-                    animationDelay: `${i * 0.2}s`
+                    left: `${Math.cos(i * Math.PI / 6) * 60 + Math.cos(i * Math.PI / 3) * 30}px`,
+                    top: `${Math.sin(i * Math.PI / 6) * 60 + Math.sin(i * Math.PI / 3) * 30}px`,
+                    animationDelay: `${i * 0.15}s`,
+                    opacity: 0.4 + (i % 3) * 0.2
                   }}
                 />
               ))}
             </div>
+            
+            {/* Curved arc pattern */}
+            <svg className="absolute top-0 left-0 w-full h-full opacity-12" viewBox="0 0 600 600">
+              <defs>
+                <linearGradient id="arc-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0.3" />
+                </linearGradient>
+              </defs>
+              <path d="M 50 50 Q 150 100, 250 50 T 450 50" stroke="url(#arc-gradient)" strokeWidth="3" fill="none" />
+              <path d="M 50 120 Q 150 170, 250 120 T 450 120" stroke="url(#arc-gradient)" strokeWidth="3" fill="none" />
+              <path d="M 50 190 Q 150 240, 250 190 T 450 190" stroke="url(#arc-gradient)" strokeWidth="3" fill="none" />
+            </svg>
           </div>
 
-          {/* Bottom Left Corner - Wave & Grid Pattern */}
-          <div className="absolute -bottom-48 -left-48 w-[600px] h-[600px] pointer-events-none">
-            {/* Main gradient */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-accent/30 via-secondary/20 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-            {/* Concentric expanding waves */}
-            {[...Array(5)].map((_, i) => (
+          {/* Top Right Corner - Refined Geometric Layers */}
+          <div className="absolute -top-44 -right-44 w-[550px] h-[550px] pointer-events-none">
+            {/* Main ambient glow */}
+            <div className="absolute inset-0 bg-gradient-to-bl from-secondary/28 via-primary/18 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: "1.2s" }} />
+            
+            {/* Elegant spinning rings */}
+            <div className="absolute top-24 right-24 w-96 h-96 border-2 border-secondary/25 rounded-full animate-spin" style={{ animationDuration: "30s" }} />
+            <div className="absolute top-32 right-32 w-80 h-80 border-2 border-primary/20 rounded-full animate-spin" style={{ animationDuration: "25s", animationDirection: "reverse" }} />
+            
+            {/* Pulsing center */}
+            <div className="absolute top-40 right-40 w-64 h-64 bg-gradient-to-br from-primary/35 via-accent/25 to-transparent rounded-full animate-pulse" style={{ animationDuration: "5s" }} />
+            
+            {/* Accent circle with shadow */}
+            <div className="absolute top-32 right-44 w-24 h-24 bg-gradient-to-br from-accent to-secondary rounded-full shadow-glow animate-glow-pulse" />
+            
+            {/* Floating particles */}
+            {[...Array(6)].map((_, i) => (
               <div 
                 key={i}
-                className="absolute bottom-0 left-0 border-2 border-secondary/25 rounded-full animate-pulse"
+                className="absolute w-1.5 h-1.5 bg-primary rounded-full animate-float"
                 style={{ 
-                  width: `${(i + 1) * 130}px`, 
-                  height: `${(i + 1) * 130}px`,
-                  animationDelay: `${i * 0.4}s`,
-                  animationDuration: "3s"
+                  top: `${25 + i * 12}%`,
+                  right: `${20 + (i % 2) * 10}%`,
+                  animationDelay: `${i * 0.3}s`,
+                  animationDuration: `${3 + i * 0.5}s`,
+                  opacity: 0.5
                 }}
               />
             ))}
-            {/* Grid of small squares */}
-            <div className="absolute bottom-24 left-24 w-48 h-48 opacity-25">
-              <div className="grid grid-cols-10 grid-rows-10 gap-1.5 h-full">
-                {[...Array(100)].map((_, i) => (
+          </div>
+
+          {/* Bottom Left Corner - Flowing Waves */}
+          <div className="absolute -bottom-52 -left-52 w-[620px] h-[620px] pointer-events-none">
+            {/* Gradient base */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-accent/28 via-secondary/18 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: "2.5s" }} />
+            
+            {/* Elegant concentric waves */}
+            {[...Array(4)].map((_, i) => (
+              <div 
+                key={i}
+                className="absolute bottom-0 left-0 border-2 rounded-full animate-pulse"
+                style={{ 
+                  width: `${(i + 1) * 150}px`, 
+                  height: `${(i + 1) * 150}px`,
+                  borderColor: `hsl(var(--secondary) / ${0.15 - i * 0.03})`,
+                  animationDelay: `${i * 0.5}s`,
+                  animationDuration: "4s"
+                }}
+              />
+            ))}
+            
+            {/* Subtle grid pattern */}
+            <div className="absolute bottom-28 left-28 w-52 h-52 opacity-20">
+              <div className="grid grid-cols-12 grid-rows-12 gap-2 h-full">
+                {[...Array(144)].map((_, i) => (
                   <div 
                     key={i} 
-                    className="bg-accent/50 rounded-sm animate-fade-in" 
-                    style={{ animationDelay: `${i * 0.015}s` }} 
+                    className="bg-accent/40 rounded-sm animate-fade-in" 
+                    style={{ 
+                      animationDelay: `${i * 0.01}s`,
+                      opacity: Math.random() * 0.6 + 0.2
+                    }} 
                   />
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Bottom Right Corner - Organic Blob with Scatter Pattern */}
-          <div className="absolute -bottom-40 -right-40 w-[520px] h-[520px] pointer-events-none">
-            {/* Main gradient blob */}
-            <div className="absolute inset-0 bg-gradient-to-tl from-primary/30 via-secondary/20 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: "1.5s" }} />
-            {/* Animated organic shape */}
-            <svg className="absolute bottom-0 right-0 w-full h-full opacity-20 animate-spin" style={{ animationDuration: "25s" }} viewBox="0 0 520 520">
+          {/* Bottom Right Corner - Modern Abstract */}
+          <div className="absolute -bottom-48 -right-48 w-[580px] h-[580px] pointer-events-none">
+            {/* Soft gradient glow */}
+            <div className="absolute inset-0 bg-gradient-to-tl from-primary/28 via-secondary/18 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: "1.8s" }} />
+            
+            {/* Organic flowing shape */}
+            <svg className="absolute bottom-0 right-0 w-full h-full opacity-15 animate-spin" style={{ animationDuration: "35s" }} viewBox="0 0 580 580">
               <defs>
-                <linearGradient id="blob-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
-                  <stop offset="50%" stopColor="hsl(var(--secondary))" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0.3" />
+                <linearGradient id="flow-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.5" />
+                  <stop offset="50%" stopColor="hsl(var(--secondary))" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0.25" />
                 </linearGradient>
               </defs>
               <path 
-                d="M420,260 Q500,180 420,100 Q340,20 260,100 Q180,180 260,260 Q340,340 420,260 Z" 
-                fill="url(#blob-gradient)" 
+                d="M450,290 Q530,210 450,130 Q370,50 290,130 Q210,210 290,290 Q370,370 450,290 Z" 
+                fill="url(#flow-gradient)" 
               />
             </svg>
-            {/* Scattered glowing dots */}
-            <div className="absolute bottom-28 right-28 w-56 h-56">
-              {[...Array(16)].map((_, i) => (
+            
+            {/* Scattered luminous particles */}
+            <div className="absolute bottom-32 right-32 w-64 h-64">
+              {[...Array(20)].map((_, i) => (
                 <div 
                   key={i}
-                  className="absolute w-3 h-3 bg-gradient-to-br from-accent via-secondary to-primary rounded-full animate-pulse shadow-glow"
+                  className="absolute rounded-full animate-pulse shadow-glow"
                   style={{ 
+                    width: `${4 + Math.random() * 6}px`,
+                    height: `${4 + Math.random() * 6}px`,
                     left: `${Math.random() * 100}%`,
                     top: `${Math.random() * 100}%`,
-                    animationDelay: `${i * 0.25}s`,
-                    animationDuration: `${2 + Math.random() * 2}s`
+                    background: `linear-gradient(135deg, hsl(var(--accent)), hsl(var(--secondary)))`,
+                    animationDelay: `${i * 0.2}s`,
+                    animationDuration: `${2.5 + Math.random() * 2}s`,
+                    opacity: 0.4 + Math.random() * 0.4
                   }}
                 />
               ))}
             </div>
-            {/* Rotating partial ring */}
-            <div className="absolute bottom-32 right-32 w-48 h-48 border-t-4 border-r-4 border-primary/40 rounded-full animate-spin" style={{ animationDuration: "15s" }} />
+            
+            {/* Partial arc accent */}
+            <div className="absolute bottom-36 right-36 w-56 h-56 border-r-4 border-b-4 border-primary/30 rounded-full animate-spin" style={{ animationDuration: "18s" }} />
           </div>
 
-          {/* Center ambient glow for depth */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl animate-glow-pulse" />
+          {/* Center depth layer */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/4 rounded-full blur-3xl animate-glow-pulse" style={{ animationDuration: "6s" }} />
         </div>
         
         <div className="container mx-auto">

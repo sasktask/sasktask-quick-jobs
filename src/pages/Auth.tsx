@@ -73,7 +73,7 @@ const Auth = () => {
         throw new Error(firstError.message);
       }
 
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: validation.data.email,
         password: validation.data.password,
         options: {
@@ -86,16 +86,30 @@ const Auth = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific error cases
+        if (error.message.includes("already registered")) {
+          throw new Error("This email is already registered. Please sign in instead.");
+        }
+        throw error;
+      }
 
       toast({
-        title: "Account created!",
-        description: "You can now sign in with your credentials.",
+        title: "Account created! ✅",
+        description: "Your profile has been set up. You can now sign in.",
       });
+
+      // Auto switch to sign in tab after 1.5 seconds
+      setTimeout(() => {
+        const signinTab = document.querySelector('[value="signin"]') as HTMLElement;
+        signinTab?.click();
+      }, 1500);
+
     } catch (error: any) {
+      console.error("Signup error:", error);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Signup Failed",
+        description: error.message || "Unable to create account. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -116,21 +130,33 @@ const Auth = () => {
         throw new Error(firstError.message);
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: validation.data.email,
         password: validation.data.password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific error cases
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password. Please check your credentials.");
+        }
+        if (error.message.includes("Email not confirmed")) {
+          throw new Error("Please check your email to confirm your account first.");
+        }
+        throw error;
+      }
 
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
-      });
+      if (data.user) {
+        toast({
+          title: "Welcome back! 👋",
+          description: "Redirecting to your dashboard...",
+        });
+      }
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Login Failed",
+        description: error.message || "Unable to sign in. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -144,15 +170,15 @@ const Auth = () => {
       
       <div className="container mx-auto px-4 pt-32 pb-20">
         <div className="max-w-md mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-2">Welcome to SaskTask</h1>
-            <p className="text-muted-foreground">Start your journey as a task giver or doer</p>
+          <div className="text-center mb-8 animate-fade-in">
+            <h1 className="text-4xl font-bold mb-2 text-gradient">Welcome to SaskTask</h1>
+            <p className="text-muted-foreground">Create your account and start connecting</p>
           </div>
 
-          <Card className="shadow-2xl border-border">
+          <Card className="shadow-2xl border-border glass">
             <CardHeader>
-              <CardTitle>Get Started</CardTitle>
-              <CardDescription>Sign in to your account or create a new one</CardDescription>
+              <CardTitle className="text-2xl">Get Started</CardTitle>
+              <CardDescription>Sign in or create your free account</CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="signin" className="w-full">
