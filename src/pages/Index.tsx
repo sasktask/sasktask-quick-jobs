@@ -314,6 +314,15 @@ const Index = () => {
               </div>
             </div>
 
+            {/* SaskTask Brand Title */}
+            <div className="relative animate-fade-up mb-8">
+              <div className="absolute inset-0 bg-gradient-hero blur-3xl opacity-40 animate-glow-pulse" />
+              <h1 className="relative text-7xl md:text-8xl lg:text-9xl font-heading font-black text-gradient tracking-tight leading-none hover-scale">
+                SaskTask
+              </h1>
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-48 h-1 bg-gradient-accent rounded-full blur-sm" />
+            </div>
+
             {/* Search Feature with enhanced glass design */}
             <div className="max-w-2xl mx-auto mb-8 relative z-10 animate-fade-up" ref={searchRef}>
               <div className="relative group">
