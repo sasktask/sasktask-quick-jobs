@@ -39,11 +39,11 @@
     
     --radius: 0.75rem;
     
-    /* Brand Gradients - Blue to Teal (toned down) */
-    --gradient-primary: linear-gradient(135deg, hsl(205 95% 55% / 0.9), hsl(205 90% 65% / 0.8));
-    --gradient-secondary: linear-gradient(135deg, hsl(174 65% 48% / 0.9), hsl(174 65% 50% / 0.8));
-    --gradient-accent: linear-gradient(90deg, hsl(205 95% 55% / 0.7), hsl(174 65% 48% / 0.7));
-    --gradient-hero: linear-gradient(135deg, hsl(205 95% 55% / 0.2), hsl(174 65% 48% / 0.2));
+    /* Brand Gradients - Blue to Teal */
+    --gradient-primary: linear-gradient(135deg, hsl(205 95% 55%), hsl(205 90% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(174 65% 48%), hsl(174 65% 50%));
+    --gradient-accent: linear-gradient(90deg, hsl(205 95% 55%), hsl(174 65% 48%));
+    --gradient-hero: linear-gradient(135deg, hsl(205 95% 55%), hsl(174 65% 48%));
     --gradient-surface: linear-gradient(180deg, hsl(222 20% 10%), hsl(222 20% 12%));
     
     /* Shadows - Subtle */
@@ -88,11 +88,11 @@
     --input: 217 16% 22%;
     --ring: 205 95% 55%;
     
-    /* Same gradients (toned down) */
-    --gradient-primary: linear-gradient(135deg, hsl(205 95% 55% / 0.9), hsl(205 90% 65% / 0.8));
-    --gradient-secondary: linear-gradient(135deg, hsl(174 65% 48% / 0.9), hsl(174 65% 50% / 0.8));
-    --gradient-accent: linear-gradient(90deg, hsl(205 95% 55% / 0.7), hsl(174 65% 48% / 0.7));
-    --gradient-hero: linear-gradient(135deg, hsl(205 95% 55% / 0.2), hsl(174 65% 48% / 0.2));
+    /* Same gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(205 95% 55%), hsl(205 90% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(174 65% 48%), hsl(174 65% 50%));
+    --gradient-accent: linear-gradient(90deg, hsl(205 95% 55%), hsl(174 65% 48%));
+    --gradient-hero: linear-gradient(135deg, hsl(205 95% 55%), hsl(174 65% 48%));
     --gradient-surface: linear-gradient(180deg, hsl(222 20% 10%), hsl(222 20% 12%));
     
     /* Same shadows (subtle) */
