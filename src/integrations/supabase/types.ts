@@ -16,27 +16,33 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
+          agreed_at: string | null
           created_at: string | null
           id: string
           message: string | null
+          payment_agreed: boolean | null
           status: Database["public"]["Enums"]["booking_status"] | null
           task_doer_id: string
           task_id: string
           updated_at: string | null
         }
         Insert: {
+          agreed_at?: string | null
           created_at?: string | null
           id?: string
           message?: string | null
+          payment_agreed?: boolean | null
           status?: Database["public"]["Enums"]["booking_status"] | null
           task_doer_id: string
           task_id: string
           updated_at?: string | null
         }
         Update: {
+          agreed_at?: string | null
           created_at?: string | null
           id?: string
           message?: string | null
+          payment_agreed?: boolean | null
           status?: Database["public"]["Enums"]["booking_status"] | null
           task_doer_id?: string
           task_id?: string
@@ -104,6 +110,7 @@ export type Database = {
           amount: number
           booking_id: string
           created_at: string
+          escrow_status: string | null
           id: string
           paid_at: string | null
           payee_id: string
@@ -112,8 +119,10 @@ export type Database = {
           payout_amount: number
           payout_at: string | null
           platform_fee: number
+          released_at: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
           task_id: string
+          tax_deducted: number | null
           transaction_id: string | null
           updated_at: string
         }
@@ -121,6 +130,7 @@ export type Database = {
           amount: number
           booking_id: string
           created_at?: string
+          escrow_status?: string | null
           id?: string
           paid_at?: string | null
           payee_id: string
@@ -129,8 +139,10 @@ export type Database = {
           payout_amount: number
           payout_at?: string | null
           platform_fee: number
+          released_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           task_id: string
+          tax_deducted?: number | null
           transaction_id?: string | null
           updated_at?: string
         }
@@ -138,6 +150,7 @@ export type Database = {
           amount?: number
           booking_id?: string
           created_at?: string
+          escrow_status?: string | null
           id?: string
           paid_at?: string | null
           payee_id?: string
@@ -146,8 +159,10 @@ export type Database = {
           payout_amount?: number
           payout_at?: string | null
           platform_fee?: number
+          released_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           task_id?: string
+          tax_deducted?: number | null
           transaction_id?: string | null
           updated_at?: string
         }
@@ -155,60 +170,75 @@ export type Database = {
       }
       profiles: {
         Row: {
+          availability_status: string | null
           avatar_url: string | null
           bio: string | null
           completed_tasks: number | null
           created_at: string | null
           email: string
+          experience_years: number | null
           full_name: string | null
+          hourly_rate: number | null
           id: string
           joined_date: string | null
           last_active: string | null
           on_time_rate: number | null
           phone: string | null
+          preferred_categories: string[] | null
           profile_completion: number | null
           rating: number | null
           response_rate: number | null
+          skills: string[] | null
           total_reviews: number | null
           trust_score: number | null
           updated_at: string | null
           verification_level: string | null
         }
         Insert: {
+          availability_status?: string | null
           avatar_url?: string | null
           bio?: string | null
           completed_tasks?: number | null
           created_at?: string | null
           email: string
+          experience_years?: number | null
           full_name?: string | null
+          hourly_rate?: number | null
           id: string
           joined_date?: string | null
           last_active?: string | null
           on_time_rate?: number | null
           phone?: string | null
+          preferred_categories?: string[] | null
           profile_completion?: number | null
           rating?: number | null
           response_rate?: number | null
+          skills?: string[] | null
           total_reviews?: number | null
           trust_score?: number | null
           updated_at?: string | null
           verification_level?: string | null
         }
         Update: {
+          availability_status?: string | null
           avatar_url?: string | null
           bio?: string | null
           completed_tasks?: number | null
           created_at?: string | null
           email?: string
+          experience_years?: number | null
           full_name?: string | null
+          hourly_rate?: number | null
           id?: string
           joined_date?: string | null
           last_active?: string | null
           on_time_rate?: number | null
           phone?: string | null
+          preferred_categories?: string[] | null
           profile_completion?: number | null
           rating?: number | null
           response_rate?: number | null
+          skills?: string[] | null
           total_reviews?: number | null
           trust_score?: number | null
           updated_at?: string | null

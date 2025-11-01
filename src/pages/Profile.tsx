@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { AdvancedProfileSettings } from "@/components/AdvancedProfileSettings";
 import { Loader2, Star, Briefcase, Award, Upload, Shield, TrendingUp, Clock } from "lucide-react";
 
 const Profile = () => {
@@ -175,9 +176,10 @@ const Profile = () => {
           <p className="text-muted-foreground">Manage your personal information and settings</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Enhanced Profile Stats */}
-          <Card className="border-border">
+        <div className="space-y-6">
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Enhanced Profile Stats */}
+            <Card className="border-border">
             <CardContent className="p-6">
               <div className="text-center mb-6">
                 <div className="relative inline-block mb-4">
@@ -350,6 +352,10 @@ const Profile = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Advanced Settings */}
+        <AdvancedProfileSettings profile={profile} onUpdate={checkUserAndLoadProfile} />
+      </div>
       </div>
 
       <Footer />

@@ -22,14 +22,16 @@ export const PaymentPanel = ({ bookingId, taskId, payerId, payeeId, amount, paye
   const { toast } = useToast();
 
   const platformFeePercentage = 0.15; // 15% platform fee
+  const taxPercentage = 0.05; // 5% GST in Saskatchewan
   const platformFee = amount * platformFeePercentage;
-  const payoutAmount = amount - platformFee;
+  const taxAmount = amount * taxPercentage;
+  const payoutAmount = amount - platformFee - taxAmount;
 
   const handlePayment = async () => {
     setLoading(true);
 
     try {
-      // Create payment record
+      // Create payment record with escrow (held status)
       const { error } = await supabase.from("payments").insert({
         booking_id: bookingId,
         task_id: taskId,
@@ -37,33 +39,32 @@ export const PaymentPanel = ({ bookingId, taskId, payerId, payeeId, amount, paye
         payee_id: payeeId,
         amount,
         platform_fee: platformFee,
+        tax_deducted: taxAmount,
         payout_amount: payoutAmount,
         status: "completed",
+        escrow_status: "held", // Payment held in escrow
         payment_method: "mock_payment", // In production, integrate with Stripe
         transaction_id: `txn_${Date.now()}`,
         paid_at: new Date().toISOString(),
-        payout_at: new Date().toISOString(),
       });
 
       if (error) throw error;
 
-      // Update booking status to completed
+      // Update booking status to in_progress with payment agreed
       await supabase
         .from("bookings")
-        .update({ status: "completed" })
+        .update({ 
+          status: "in_progress",
+          payment_agreed: true,
+          agreed_at: new Date().toISOString()
+        })
         .eq("id", bookingId);
-
-      // Update task status to completed
-      await supabase
-        .from("tasks")
-        .update({ status: "completed" })
-        .eq("id", taskId);
 
       setPaymentComplete(true);
       
       toast({
-        title: "Payment Successful!",
-        description: `$${payoutAmount.toFixed(2)} will be sent to ${payeeName}.`,
+        title: "Payment Held in Escrow! 🎉",
+        description: `$${amount.toFixed(2)} is held securely. ${payeeName} will receive $${payoutAmount.toFixed(2)} after task completion.`,
       });
     } catch (error: any) {
       toast({
@@ -78,14 +79,14 @@ export const PaymentPanel = ({ bookingId, taskId, payerId, payeeId, amount, paye
 
   if (paymentComplete) {
     return (
-      <Card className="border-green-500">
+      <Card className="border-primary">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-green-600">
+          <CardTitle className="flex items-center gap-2 text-primary">
             <CheckCircle className="h-6 w-6" />
-            Payment Complete
+            Payment Held in Escrow
           </CardTitle>
           <CardDescription>
-            The task has been completed and payment has been processed.
+            Payment is secured. Tasker will be paid after you confirm task completion.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -98,10 +99,19 @@ export const PaymentPanel = ({ bookingId, taskId, payerId, payeeId, amount, paye
               <span>Platform Fee (15%):</span>
               <span>-${platformFee.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-lg font-bold pt-2 border-t">
-              <span>Tasker Received:</span>
-              <span className="text-green-600">${payoutAmount.toFixed(2)}</span>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Tax (5% GST):</span>
+              <span>-${taxAmount.toFixed(2)}</span>
             </div>
+            <div className="flex justify-between text-lg font-bold pt-2 border-t">
+              <span>Tasker Will Receive:</span>
+              <span className="text-primary">${payoutAmount.toFixed(2)}</span>
+            </div>
+          </div>
+          <div className="mt-4 p-3 bg-accent/10 border border-accent/30 rounded-lg">
+            <p className="text-xs text-muted-foreground">
+              💼 Like Uber: Payment is held securely until task completion. Confirm completion to release funds to the tasker.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -121,19 +131,30 @@ export const PaymentPanel = ({ bookingId, taskId, payerId, payeeId, amount, paye
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
-          <div className="bg-muted p-4 rounded-lg space-y-2">
+          <div className="bg-gradient-to-br from-primary/10 to-secondary/10 p-4 rounded-lg border border-primary/20 space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Task Amount:</span>
-              <span className="font-semibold">${amount.toFixed(2)}</span>
+              <span className="font-semibold">Task Amount:</span>
+              <span className="text-xl font-bold">${amount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Platform Fee (15%):</span>
-              <span>-${platformFee.toFixed(2)}</span>
+              <span className="text-destructive font-semibold">-${platformFee.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-lg font-bold pt-2 border-t border-border">
-              <span>Tasker Gets:</span>
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Tax (5% GST):</span>
+              <span className="text-destructive font-semibold">-${taxAmount.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-lg font-bold pt-2 border-t border-primary/20">
+              <span>Tasker Gets (After Completion):</span>
               <span className="text-primary">${payoutAmount.toFixed(2)}</span>
             </div>
+          </div>
+
+          <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              💰 <strong>Escrow Protection:</strong> Your payment will be held securely until you confirm task completion. 
+              The tasker receives payout only after you approve, just like Uber!
+            </p>
           </div>
 
           <div className="space-y-3">

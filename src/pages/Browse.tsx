@@ -16,6 +16,8 @@ const Browse = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -59,6 +61,22 @@ const Browse = () => {
         navigate("/auth");
         return;
       }
+
+      // Fetch user profile and role
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+      
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .single();
+      
+      setUserProfile(profileData);
+      setUserRole(roleData?.role || null);
 
       fetchTasks();
     } catch (error: any) {
@@ -114,6 +132,33 @@ const Browse = () => {
       filtered = filtered.filter(task => task.category === categoryFilter);
     }
 
+    // Smart recommendations for task doers based on their skills and preferred categories
+    if (userRole === "task_doer" && userProfile) {
+      filtered = filtered.sort((a, b) => {
+        let scoreA = 0;
+        let scoreB = 0;
+
+        // Match preferred categories
+        if (userProfile.preferred_categories?.includes(a.category)) scoreA += 10;
+        if (userProfile.preferred_categories?.includes(b.category)) scoreB += 10;
+
+        // Match skills with task description
+        const aSkillMatches = userProfile.skills?.filter((skill: string) => 
+          a.description.toLowerCase().includes(skill.toLowerCase()) ||
+          a.title.toLowerCase().includes(skill.toLowerCase())
+        ).length || 0;
+        const bSkillMatches = userProfile.skills?.filter((skill: string) => 
+          b.description.toLowerCase().includes(skill.toLowerCase()) ||
+          b.title.toLowerCase().includes(skill.toLowerCase())
+        ).length || 0;
+
+        scoreA += aSkillMatches * 5;
+        scoreB += bSkillMatches * 5;
+
+        return scoreB - scoreA; // Higher score first
+      });
+    }
+
     setFilteredTasks(filtered);
   };
 
@@ -135,12 +180,16 @@ const Browse = () => {
       <div className="container mx-auto px-4 pt-24 pb-20">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">
-            Browse Available Tasks
+            {userRole === "task_doer" ? "Recommended Tasks For You" : "Browse Available Tasks"}
             <span className="text-lg font-normal text-muted-foreground ml-3">
               💼 Instant Accept - Like Uber
             </span>
           </h1>
-          <p className="text-muted-foreground">Find and accept tasks near you instantly</p>
+          <p className="text-muted-foreground">
+            {userRole === "task_doer" 
+              ? "Tasks matched to your skills and preferences" 
+              : "Find and accept tasks near you instantly"}
+          </p>
         </div>
 
         {/* Search and Filters */}
