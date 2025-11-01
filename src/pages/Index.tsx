@@ -4,8 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { HeroCorner3D } from "@/components/HeroCorner3D";
-import { 
+import {
   Snowflake, 
   Sparkles, 
   Truck, 
@@ -32,16 +31,24 @@ const Index = () => {
       
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 relative overflow-hidden">
-        {/* 3D Corner Decorations */}
-        <HeroCorner3D position="top-left" />
-        <HeroCorner3D position="top-right" />
-        <HeroCorner3D position="bottom-left" />
-        <HeroCorner3D position="bottom-right" />
-        
-        {/* Background Decorations */}
-        <div className="absolute top-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl -z-10" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-3xl -z-10" />
+        {/* Canva-Style Colorful Background */}
+        <div className="absolute inset-0 -z-10">
+          {/* Colorful Gradient Blobs */}
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '4s' }} />
+          <div className="absolute top-20 right-0 w-80 h-80 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '5s' }} />
+          <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '6s' }} />
+          <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-gradient-to-br from-orange-400 to-red-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '5.5s' }} />
+          
+          {/* Decorative Circles */}
+          <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full opacity-30" />
+          <div className="absolute top-40 right-20 w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-400 rounded-full opacity-30" />
+          <div className="absolute bottom-40 left-20 w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-400 rounded-full opacity-30" />
+          <div className="absolute bottom-20 right-10 w-14 h-14 bg-gradient-to-br from-orange-500 to-red-400 rounded-full opacity-30" />
+          
+          {/* Geometric Shapes */}
+          <div className="absolute top-1/4 right-1/3 w-32 h-32 bg-gradient-to-br from-yellow-400 to-orange-400 opacity-20 rotate-45" style={{ clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }} />
+          <div className="absolute bottom-1/3 left-1/3 w-28 h-28 bg-gradient-to-br from-indigo-400 to-purple-400 opacity-20 rotate-12 rounded-lg" />
+        </div>
         
         <div className="container mx-auto">
           <div className="text-center space-y-8 animate-fade-in max-w-5xl mx-auto">
