@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { HeroCorner3D } from "@/components/HeroCorner3D";
@@ -45,12 +46,39 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="text-center space-y-8 animate-fade-in max-w-5xl mx-auto">
             {/* Logo */}
-            <div className="flex justify-center mb-6 animate-scale-in">
+            <div className="flex justify-center mb-4 animate-scale-in">
               <img 
                 src={logo} 
                 alt="SaskTask Logo" 
                 className="h-28 w-auto hover-scale"
               />
+            </div>
+
+            {/* Search Feature */}
+            <div className="max-w-2xl mx-auto mb-8">
+              <div className="relative group">
+                <Input
+                  type="text"
+                  placeholder="Search for tasks, services, or locations..."
+                  className="h-14 pl-6 pr-32 text-lg bg-card/80 backdrop-blur-sm border-2 border-border focus:border-primary shadow-lg group-hover:shadow-xl transition-all"
+                />
+                <Button 
+                  className="absolute right-2 top-2 h-10 px-6"
+                  variant="hero"
+                >
+                  Search
+                </Button>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2 mt-3 text-sm">
+                <span className="text-muted-foreground">Popular:</span>
+                <button className="text-primary hover:underline">Snow Removal</button>
+                <span className="text-muted-foreground">•</span>
+                <button className="text-primary hover:underline">Cleaning</button>
+                <span className="text-muted-foreground">•</span>
+                <button className="text-primary hover:underline">Moving Help</button>
+                <span className="text-muted-foreground">•</span>
+                <button className="text-primary hover:underline">Assembly</button>
+              </div>
             </div>
             
             {/* Main Heading with Multiple Value Props */}
