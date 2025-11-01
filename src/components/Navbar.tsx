@@ -55,8 +55,8 @@ export const Navbar = ({
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 group">
             <div className="flex flex-col items-center gap-1.5">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-violet-800">
+            <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-extrabold bg-gradient-to-br from-blue-600 via-purple-600 to-teal-500 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(139,92,246,0.3)] tracking-tight">
                   SaskTask
                 </h1>
                 <div className="relative">
