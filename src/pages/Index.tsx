@@ -6,38 +6,9 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Snowflake, 
-  Sparkles, 
-  Truck, 
-  Star, 
-  Shield, 
-  Clock,
-  DollarSign,
-  Users,
-  Wrench,
-  Package,
-  Monitor,
-  Trees,
-  Home,
-  PaintBucket,
-  MoreHorizontal,
-  Briefcase,
-  FileEdit,
-  CheckCircle2,
-  Search,
-  MessageSquare,
-  TrendingUp,
-  Calendar,
-  MapPin,
-  Bell,
-  Award,
-  ShieldCheck,
-  Lock
-} from "lucide-react";
+import { Snowflake, Sparkles, Truck, Star, Shield, Clock, DollarSign, Users, Wrench, Package, Monitor, Trees, Home, PaintBucket, MoreHorizontal, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
 import logo from "@/assets/sasktask-logo.png";
-
 const Index = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,18 +16,39 @@ const Index = () => {
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
-
-  const categories = [
-    { name: "Snow Removal", icon: "❄️", path: "/browse?category=Snow Removal" },
-    { name: "Cleaning", icon: "🧹", path: "/browse?category=Cleaning" },
-    { name: "Moving", icon: "📦", path: "/browse?category=Moving" },
-    { name: "Delivery", icon: "🚚", path: "/browse?category=Delivery" },
-    { name: "Handyman", icon: "🔧", path: "/browse?category=Handyman" },
-    { name: "Gardening", icon: "🌱", path: "/browse?category=Gardening" },
-    { name: "Pet Care", icon: "🐾", path: "/browse?category=Pet Care" },
-    { name: "Painting", icon: "🎨", path: "/browse?category=Painting" },
-  ];
-
+  const categories = [{
+    name: "Snow Removal",
+    icon: "❄️",
+    path: "/browse?category=Snow Removal"
+  }, {
+    name: "Cleaning",
+    icon: "🧹",
+    path: "/browse?category=Cleaning"
+  }, {
+    name: "Moving",
+    icon: "📦",
+    path: "/browse?category=Moving"
+  }, {
+    name: "Delivery",
+    icon: "🚚",
+    path: "/browse?category=Delivery"
+  }, {
+    name: "Handyman",
+    icon: "🔧",
+    path: "/browse?category=Handyman"
+  }, {
+    name: "Gardening",
+    icon: "🌱",
+    path: "/browse?category=Gardening"
+  }, {
+    name: "Pet Care",
+    icon: "🐾",
+    path: "/browse?category=Pet Care"
+  }, {
+    name: "Painting",
+    icon: "🎨",
+    path: "/browse?category=Painting"
+  }];
   const popularSearches = ["Snow Removal", "Cleaning", "Moving Help", "Assembly"];
 
   // Close search results when clicking outside
@@ -66,7 +58,6 @@ const Index = () => {
         setShowResults(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -79,31 +70,25 @@ const Index = () => {
         setShowResults(false);
         return;
       }
-
       setIsSearching(true);
       setShowResults(true);
-
       try {
         // Search in tasks
-        const { data: tasks, error } = await supabase
-          .from("tasks")
-          .select("*")
-          .or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%`)
-          .eq("status", "open")
-          .limit(5);
-
+        const {
+          data: tasks,
+          error
+        } = await supabase.from("tasks").select("*").or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%`).eq("status", "open").limit(5);
         if (error) throw error;
 
         // Combine with category matches
-        const categoryMatches = categories.filter(cat =>
-          cat.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-
-        const results = [
-          ...categoryMatches.map(cat => ({ type: "category", ...cat })),
-          ...(tasks || []).map(task => ({ type: "task", ...task }))
-        ];
-
+        const categoryMatches = categories.filter(cat => cat.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        const results = [...categoryMatches.map(cat => ({
+          type: "category",
+          ...cat
+        })), ...(tasks || []).map(task => ({
+          type: "task",
+          ...task
+        }))];
         setSearchResults(results);
       } catch (error) {
         console.error("Search error:", error);
@@ -112,23 +97,19 @@ const Index = () => {
         setIsSearching(false);
       }
     };
-
     const debounce = setTimeout(searchTasks, 300);
     return () => clearTimeout(debounce);
   }, [searchQuery]);
-
   const handleSearchClick = () => {
     if (searchQuery.trim()) {
       navigate(`/browse?search=${encodeURIComponent(searchQuery)}`);
       setShowResults(false);
     }
   };
-
   const handlePopularSearchClick = (term: string) => {
     setSearchQuery(term);
     navigate(`/browse?category=${encodeURIComponent(term)}`);
   };
-
   const handleResultClick = (result: any) => {
     if (result.type === "category") {
       navigate(result.path);
@@ -138,9 +119,7 @@ const Index = () => {
     setShowResults(false);
     setSearchQuery("");
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navbar />
       
       {/* Hero Section */}
@@ -152,22 +131,18 @@ const Index = () => {
             {/* Soft gradient glow */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary/25 via-primary/12 to-transparent rounded-full blur-3xl animate-float" />
             {/* Secondary accent */}
-            <div className="absolute top-28 left-28 w-96 h-96 bg-gradient-to-br from-accent/25 via-secondary/15 to-transparent rounded-full animate-pulse" style={{ animationDuration: "4s" }} />
+            <div className="absolute top-28 left-28 w-96 h-96 bg-gradient-to-br from-accent/25 via-secondary/15 to-transparent rounded-full animate-pulse" style={{
+            animationDuration: "4s"
+          }} />
             
             {/* Elegant dot constellation */}
             <div className="absolute top-40 left-40">
-              {[...Array(12)].map((_, i) => (
-                <div 
-                  key={i}
-                  className="absolute w-2.5 h-2.5 bg-primary rounded-full animate-glow-pulse shadow-glow"
-                  style={{ 
-                    left: `${Math.cos(i * Math.PI / 6) * 60 + Math.cos(i * Math.PI / 3) * 30}px`,
-                    top: `${Math.sin(i * Math.PI / 6) * 60 + Math.sin(i * Math.PI / 3) * 30}px`,
-                    animationDelay: `${i * 0.15}s`,
-                    opacity: 0.4 + (i % 3) * 0.2
-                  }}
-                />
-              ))}
+              {[...Array(12)].map((_, i) => <div key={i} className="absolute w-2.5 h-2.5 bg-primary rounded-full animate-glow-pulse shadow-glow" style={{
+              left: `${Math.cos(i * Math.PI / 6) * 60 + Math.cos(i * Math.PI / 3) * 30}px`,
+              top: `${Math.sin(i * Math.PI / 6) * 60 + Math.sin(i * Math.PI / 3) * 30}px`,
+              animationDelay: `${i * 0.15}s`,
+              opacity: 0.4 + i % 3 * 0.2
+            }} />)}
             </div>
             
             {/* Curved arc pattern */}
@@ -187,67 +162,60 @@ const Index = () => {
           {/* Top Right Corner - Refined Geometric Layers */}
           <div className="absolute -top-44 -right-44 w-[550px] h-[550px] pointer-events-none">
             {/* Main ambient glow */}
-            <div className="absolute inset-0 bg-gradient-to-bl from-secondary/28 via-primary/18 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: "1.2s" }} />
+            <div className="absolute inset-0 bg-gradient-to-bl from-secondary/28 via-primary/18 to-transparent rounded-full blur-3xl animate-float" style={{
+            animationDelay: "1.2s"
+          }} />
             
             {/* Elegant spinning rings */}
-            <div className="absolute top-24 right-24 w-96 h-96 border-2 border-secondary/25 rounded-full animate-spin" style={{ animationDuration: "30s" }} />
-            <div className="absolute top-32 right-32 w-80 h-80 border-2 border-primary/20 rounded-full animate-spin" style={{ animationDuration: "25s", animationDirection: "reverse" }} />
+            <div className="absolute top-24 right-24 w-96 h-96 border-2 border-secondary/25 rounded-full animate-spin" style={{
+            animationDuration: "30s"
+          }} />
+            <div className="absolute top-32 right-32 w-80 h-80 border-2 border-primary/20 rounded-full animate-spin" style={{
+            animationDuration: "25s",
+            animationDirection: "reverse"
+          }} />
             
             {/* Pulsing center */}
-            <div className="absolute top-40 right-40 w-64 h-64 bg-gradient-to-br from-primary/35 via-accent/25 to-transparent rounded-full animate-pulse" style={{ animationDuration: "5s" }} />
+            <div className="absolute top-40 right-40 w-64 h-64 bg-gradient-to-br from-primary/35 via-accent/25 to-transparent rounded-full animate-pulse" style={{
+            animationDuration: "5s"
+          }} />
             
             {/* Accent circle with shadow */}
             <div className="absolute top-32 right-44 w-24 h-24 bg-gradient-to-br from-accent to-secondary rounded-full shadow-glow animate-glow-pulse" />
             
             {/* Floating particles */}
-            {[...Array(6)].map((_, i) => (
-              <div 
-                key={i}
-                className="absolute w-1.5 h-1.5 bg-primary rounded-full animate-float"
-                style={{ 
-                  top: `${25 + i * 12}%`,
-                  right: `${20 + (i % 2) * 10}%`,
-                  animationDelay: `${i * 0.3}s`,
-                  animationDuration: `${3 + i * 0.5}s`,
-                  opacity: 0.5
-                }}
-              />
-            ))}
+            {[...Array(6)].map((_, i) => <div key={i} className="absolute w-1.5 h-1.5 bg-primary rounded-full animate-float" style={{
+            top: `${25 + i * 12}%`,
+            right: `${20 + i % 2 * 10}%`,
+            animationDelay: `${i * 0.3}s`,
+            animationDuration: `${3 + i * 0.5}s`,
+            opacity: 0.5
+          }} />)}
           </div>
 
           {/* Bottom Left Corner - Flowing Waves */}
           <div className="absolute -bottom-52 -left-52 w-[620px] h-[620px] pointer-events-none">
             {/* Gradient base */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-accent/28 via-secondary/18 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: "2.5s" }} />
+            <div className="absolute inset-0 bg-gradient-to-tr from-accent/28 via-secondary/18 to-transparent rounded-full blur-3xl animate-float" style={{
+            animationDelay: "2.5s"
+          }} />
             
             {/* Elegant concentric waves */}
-            {[...Array(4)].map((_, i) => (
-              <div 
-                key={i}
-                className="absolute bottom-0 left-0 border-2 rounded-full animate-pulse"
-                style={{ 
-                  width: `${(i + 1) * 150}px`, 
-                  height: `${(i + 1) * 150}px`,
-                  borderColor: `hsl(var(--secondary) / ${0.15 - i * 0.03})`,
-                  animationDelay: `${i * 0.5}s`,
-                  animationDuration: "4s"
-                }}
-              />
-            ))}
+            {[...Array(4)].map((_, i) => <div key={i} className="absolute bottom-0 left-0 border-2 rounded-full animate-pulse" style={{
+            width: `${(i + 1) * 150}px`,
+            height: `${(i + 1) * 150}px`,
+            borderColor: `hsl(var(--secondary) / ${0.15 - i * 0.03})`,
+            animationDelay: `${i * 0.5}s`,
+            animationDuration: "4s"
+          }} />)}
             
             {/* Subtle grid pattern */}
             <div className="absolute bottom-28 left-28 w-52 h-52 opacity-20">
               <div className="grid grid-cols-12 grid-rows-12 gap-2 h-full">
-                {[...Array(144)].map((_, i) => (
-                  <div 
-                    key={i} 
-                    className="bg-accent/40 rounded-sm animate-fade-in" 
-                    style={{ 
-                      animationDelay: `${i * 0.01}s`,
-                      opacity: Math.random() * 0.6 + 0.2
-                    }} 
-                  />
-                ))}
+                {[...Array(144)].map((_, i) => <div key={i} className="bg-accent/40 rounded-sm animate-fade-in" style={{
+                animationDelay: `${i * 0.01}s`,
+                opacity: Math.random() * 0.6 + 0.2
+              }} />)}
               </div>
             </div>
           </div>
@@ -255,10 +223,14 @@ const Index = () => {
           {/* Bottom Right Corner - Modern Abstract */}
           <div className="absolute -bottom-48 -right-48 w-[580px] h-[580px] pointer-events-none">
             {/* Soft gradient glow */}
-            <div className="absolute inset-0 bg-gradient-to-tl from-primary/28 via-secondary/18 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: "1.8s" }} />
+            <div className="absolute inset-0 bg-gradient-to-tl from-primary/28 via-secondary/18 to-transparent rounded-full blur-3xl animate-float" style={{
+            animationDelay: "1.8s"
+          }} />
             
             {/* Organic flowing shape */}
-            <svg className="absolute bottom-0 right-0 w-full h-full opacity-15 animate-spin" style={{ animationDuration: "35s" }} viewBox="0 0 580 580">
+            <svg className="absolute bottom-0 right-0 w-full h-full opacity-15 animate-spin" style={{
+            animationDuration: "35s"
+          }} viewBox="0 0 580 580">
               <defs>
                 <linearGradient id="flow-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.5" />
@@ -266,38 +238,33 @@ const Index = () => {
                   <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0.25" />
                 </linearGradient>
               </defs>
-              <path 
-                d="M450,290 Q530,210 450,130 Q370,50 290,130 Q210,210 290,290 Q370,370 450,290 Z" 
-                fill="url(#flow-gradient)" 
-              />
+              <path d="M450,290 Q530,210 450,130 Q370,50 290,130 Q210,210 290,290 Q370,370 450,290 Z" fill="url(#flow-gradient)" />
             </svg>
             
             {/* Scattered luminous particles */}
             <div className="absolute bottom-32 right-32 w-64 h-64">
-              {[...Array(20)].map((_, i) => (
-                <div 
-                  key={i}
-                  className="absolute rounded-full animate-pulse shadow-glow"
-                  style={{ 
-                    width: `${4 + Math.random() * 6}px`,
-                    height: `${4 + Math.random() * 6}px`,
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                    background: `linear-gradient(135deg, hsl(var(--accent)), hsl(var(--secondary)))`,
-                    animationDelay: `${i * 0.2}s`,
-                    animationDuration: `${2.5 + Math.random() * 2}s`,
-                    opacity: 0.4 + Math.random() * 0.4
-                  }}
-                />
-              ))}
+              {[...Array(20)].map((_, i) => <div key={i} className="absolute rounded-full animate-pulse shadow-glow" style={{
+              width: `${4 + Math.random() * 6}px`,
+              height: `${4 + Math.random() * 6}px`,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              background: `linear-gradient(135deg, hsl(var(--accent)), hsl(var(--secondary)))`,
+              animationDelay: `${i * 0.2}s`,
+              animationDuration: `${2.5 + Math.random() * 2}s`,
+              opacity: 0.4 + Math.random() * 0.4
+            }} />)}
             </div>
             
             {/* Partial arc accent */}
-            <div className="absolute bottom-36 right-36 w-56 h-56 border-r-4 border-b-4 border-primary/30 rounded-full animate-spin" style={{ animationDuration: "18s" }} />
+            <div className="absolute bottom-36 right-36 w-56 h-56 border-r-4 border-b-4 border-primary/30 rounded-full animate-spin" style={{
+            animationDuration: "18s"
+          }} />
           </div>
 
           {/* Center depth layer */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/4 rounded-full blur-3xl animate-glow-pulse" style={{ animationDuration: "6s" }} />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/4 rounded-full blur-3xl animate-glow-pulse" style={{
+          animationDuration: "6s"
+        }} />
         </div>
         
         <div className="container mx-auto">
@@ -306,11 +273,7 @@ const Index = () => {
             <div className="flex justify-center mb-6 animate-fade-in">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-hero rounded-full blur-2xl opacity-30 animate-glow-pulse" />
-                <img 
-                  src={logo} 
-                  alt="SaskTask Logo" 
-                  className="h-32 w-auto relative z-10 hover:scale-110 transition-transform duration-500 drop-shadow-2xl"
-                />
+                
               </div>
             </div>
 
@@ -329,50 +292,27 @@ const Index = () => {
                 <div className="absolute inset-0 bg-gradient-hero rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
                 <div className="relative glass rounded-2xl p-2">
                   <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-primary pointer-events-none z-10" />
-                  <Input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
-                    placeholder="Search for tasks, services, or locations..."
-                    className="h-16 pl-16 pr-40 text-lg bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 font-medium placeholder:text-muted-foreground/70"
-                  />
-                  <Button 
-                    className="absolute right-3 top-3 h-12 px-8 rounded-xl"
-                    variant="hero"
-                    onClick={handleSearchClick}
-                  >
+                  <Input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onFocus={() => searchQuery.length >= 2 && setShowResults(true)} placeholder="Search for tasks, services, or locations..." className="h-16 pl-16 pr-40 text-lg bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 font-medium placeholder:text-muted-foreground/70" />
+                  <Button className="absolute right-3 top-3 h-12 px-8 rounded-xl" variant="hero" onClick={handleSearchClick}>
                     Search
                   </Button>
                 </div>
               </div>
 
               {/* Search Results Dropdown */}
-              {showResults && (
-                <div className="absolute w-full mt-3 glass rounded-2xl shadow-2xl max-h-96 overflow-y-auto z-50 border-2 border-primary/20">
-                  {isSearching ? (
-                    <div className="p-8 text-center">
+              {showResults && <div className="absolute w-full mt-3 glass rounded-2xl shadow-2xl max-h-96 overflow-y-auto z-50 border-2 border-primary/20">
+                  {isSearching ? <div className="p-8 text-center">
                       <div className="animate-spin rounded-full h-10 w-10 border-b-3 border-primary mx-auto glow-sm"></div>
                       <p className="mt-3 text-sm font-medium text-muted-foreground">Searching...</p>
-                    </div>
-                  ) : searchResults.length > 0 ? (
-                    <div className="py-2">
-                      {searchResults.map((result, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleResultClick(result)}
-                          className="w-full px-4 py-3 hover:bg-muted/50 flex items-start gap-3 text-left transition-colors"
-                        >
-                          {result.type === "category" ? (
-                            <>
+                    </div> : searchResults.length > 0 ? <div className="py-2">
+                      {searchResults.map((result, idx) => <button key={idx} onClick={() => handleResultClick(result)} className="w-full px-4 py-3 hover:bg-muted/50 flex items-start gap-3 text-left transition-colors">
+                          {result.type === "category" ? <>
                               <span className="text-2xl">{result.icon}</span>
                               <div>
                                 <p className="font-semibold">{result.name}</p>
                                 <p className="text-xs text-muted-foreground">Browse category</p>
                               </div>
-                            </>
-                          ) : (
-                            <>
+                            </> : <>
                               <Briefcase className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
                                 <p className="font-semibold truncate">{result.title}</p>
@@ -386,36 +326,23 @@ const Index = () => {
                                   </span>
                                 </div>
                               </div>
-                            </>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-6 text-center text-muted-foreground">
+                            </>}
+                        </button>)}
+                    </div> : <div className="p-6 text-center text-muted-foreground">
                       <Search className="h-12 w-12 mx-auto mb-2 opacity-50" />
                       <p>No results found for "{searchQuery}"</p>
                       <p className="text-sm mt-1">Try browsing categories or post your own task</p>
-                    </div>
-                  )}
-                </div>
-              )}
+                    </div>}
+                </div>}
 
               <div className="flex flex-wrap justify-center gap-2 mt-3 text-sm">
                 <span className="text-muted-foreground">Popular:</span>
-                {popularSearches.map((term, idx) => (
-                  <React.Fragment key={term}>
-                    <button
-                      onClick={() => handlePopularSearchClick(term)}
-                      className="text-primary hover:underline font-medium"
-                    >
+                {popularSearches.map((term, idx) => <React.Fragment key={term}>
+                    <button onClick={() => handlePopularSearchClick(term)} className="text-primary hover:underline font-medium">
                       {term}
                     </button>
-                    {idx < popularSearches.length - 1 && (
-                      <span className="text-muted-foreground">•</span>
-                    )}
-                  </React.Fragment>
-                ))}
+                    {idx < popularSearches.length - 1 && <span className="text-muted-foreground">•</span>}
+                  </React.Fragment>)}
               </div>
             </div>
             
@@ -441,7 +368,9 @@ const Index = () => {
             </div>
             
             {/* Enhanced Description */}
-            <div className="max-w-3xl mx-auto space-y-6 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+            <div className="max-w-3xl mx-auto space-y-6 animate-fade-up" style={{
+            animationDelay: '0.2s'
+          }}>
               <p className="text-2xl lg:text-3xl font-heading font-bold text-foreground leading-tight">
                 Connect with trusted local Taskers in minutes
               </p>
@@ -452,14 +381,26 @@ const Index = () => {
             </div>
 
             {/* Key Benefits Grid with modern cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-6 animate-fade-up" style={{ animationDelay: '0.4s' }}>
-              {[
-                { icon: Shield, text: "Insured & Vetted", gradient: "from-primary to-primary-glow" },
-                { icon: Clock, text: "Fast Booking", gradient: "from-secondary via-cyan-500 to-secondary" },
-                { icon: DollarSign, text: "Fair Prices", gradient: "from-accent to-pink-500" },
-                { icon: Star, text: "Top Rated", gradient: "from-amber-500 to-orange-500" }
-              ].map((benefit, i) => (
-                <div key={i} className="group relative">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-6 animate-fade-up" style={{
+            animationDelay: '0.4s'
+          }}>
+              {[{
+              icon: Shield,
+              text: "Insured & Vetted",
+              gradient: "from-primary to-primary-glow"
+            }, {
+              icon: Clock,
+              text: "Fast Booking",
+              gradient: "from-secondary via-cyan-500 to-secondary"
+            }, {
+              icon: DollarSign,
+              text: "Fair Prices",
+              gradient: "from-accent to-pink-500"
+            }, {
+              icon: Star,
+              text: "Top Rated",
+              gradient: "from-amber-500 to-orange-500"
+            }].map((benefit, i) => <div key={i} className="group relative">
                   <div className={`absolute inset-0 bg-gradient-to-br ${benefit.gradient} rounded-2xl opacity-0 group-hover:opacity-10 blur-xl transition-all duration-300`} />
                   <div className="relative flex flex-col items-center gap-3 p-6 rounded-2xl glass hover:scale-105 transition-all duration-300 cursor-default">
                     <div className={`h-14 w-14 rounded-xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all`}>
@@ -467,8 +408,7 @@ const Index = () => {
                     </div>
                     <span className="text-sm font-bold font-heading">{benefit.text}</span>
                   </div>
-                </div>
-              ))}
+                </div>)}
             </div>
             
             {/* What do you need help with? */}
@@ -477,17 +417,39 @@ const Index = () => {
               <p className="text-muted-foreground mb-6">Choose a service to get started</p>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-                {[
-                  { icon: Package, label: "Assembly", color: "from-blue-500 to-cyan-500" },
-                  { icon: Monitor, label: "Mounting", color: "from-purple-500 to-pink-500" },
-                  { icon: Truck, label: "Moving", color: "from-orange-500 to-red-500" },
-                  { icon: Sparkles, label: "Cleaning", color: "from-green-500 to-emerald-500" },
-                  { icon: Trees, label: "Outdoor Help", color: "from-teal-500 to-cyan-500" },
-                  { icon: Home, label: "Home Repairs", color: "from-rose-500 to-pink-500" },
-                  { icon: PaintBucket, label: "Painting", color: "from-amber-500 to-orange-500" },
-                  { icon: MoreHorizontal, label: "Many More", color: "from-violet-500 to-purple-500" }
-                ].map((category, i) => (
-                  <Link key={i} to="/browse">
+                {[{
+                icon: Package,
+                label: "Assembly",
+                color: "from-blue-500 to-cyan-500"
+              }, {
+                icon: Monitor,
+                label: "Mounting",
+                color: "from-purple-500 to-pink-500"
+              }, {
+                icon: Truck,
+                label: "Moving",
+                color: "from-orange-500 to-red-500"
+              }, {
+                icon: Sparkles,
+                label: "Cleaning",
+                color: "from-green-500 to-emerald-500"
+              }, {
+                icon: Trees,
+                label: "Outdoor Help",
+                color: "from-teal-500 to-cyan-500"
+              }, {
+                icon: Home,
+                label: "Home Repairs",
+                color: "from-rose-500 to-pink-500"
+              }, {
+                icon: PaintBucket,
+                label: "Painting",
+                color: "from-amber-500 to-orange-500"
+              }, {
+                icon: MoreHorizontal,
+                label: "Many More",
+                color: "from-violet-500 to-purple-500"
+              }].map((category, i) => <Link key={i} to="/browse">
                     <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-border hover:border-primary/50 h-full hover:-translate-y-1">
                       <CardContent className="p-6 flex flex-col items-center justify-center gap-3">
                         <div className={`h-14 w-14 rounded-xl bg-gradient-to-br ${category.color} flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}>
@@ -496,8 +458,7 @@ const Index = () => {
                         <span className="text-sm font-semibold text-center">{category.label}</span>
                       </CardContent>
                     </Card>
-                  </Link>
-                ))}
+                  </Link>)}
               </div>
             </div>
             
@@ -547,13 +508,27 @@ const Index = () => {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Snowflake, title: "Snow Removal", desc: "Quick snow clearing services", color: "from-blue-500 to-cyan-500" },
-              { icon: Sparkles, title: "Cleaning", desc: "Professional cleaning help", color: "from-purple-500 to-pink-500" },
-              { icon: Truck, title: "Moving", desc: "Help with moving items", color: "from-orange-500 to-red-500" },
-              { icon: Users, title: "General Labor", desc: "Various short-term tasks", color: "from-green-500 to-emerald-500" }
-            ].map((category, i) => (
-              <Card key={i} className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-border hover:border-primary/50">
+            {[{
+            icon: Snowflake,
+            title: "Snow Removal",
+            desc: "Quick snow clearing services",
+            color: "from-blue-500 to-cyan-500"
+          }, {
+            icon: Sparkles,
+            title: "Cleaning",
+            desc: "Professional cleaning help",
+            color: "from-purple-500 to-pink-500"
+          }, {
+            icon: Truck,
+            title: "Moving",
+            desc: "Help with moving items",
+            color: "from-orange-500 to-red-500"
+          }, {
+            icon: Users,
+            title: "General Labor",
+            desc: "Various short-term tasks",
+            color: "from-green-500 to-emerald-500"
+          }].map((category, i) => <Card key={i} className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-border hover:border-primary/50">
                 <CardContent className="p-6">
                   <div className={`h-14 w-14 rounded-lg bg-gradient-to-br ${category.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                     <category.icon className="h-7 w-7 text-white" />
@@ -561,8 +536,7 @@ const Index = () => {
                   <h3 className="text-xl font-semibold mb-2">{category.title}</h3>
                   <p className="text-muted-foreground">{category.desc}</p>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
       </section>
@@ -586,33 +560,27 @@ const Index = () => {
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                { 
-                  icon: FileEdit, 
-                  title: "Post Your Task", 
-                  desc: "Describe what you need done, set your budget, location, and timeline",
-                  color: "from-blue-500 to-cyan-500"
-                },
-                { 
-                  icon: Users, 
-                  title: "Browse Proposals", 
-                  desc: "Receive offers from verified task doers with ratings, reviews, and profiles",
-                  color: "from-purple-500 to-pink-500"
-                },
-                { 
-                  icon: CheckCircle2, 
-                  title: "Select & Connect", 
-                  desc: "Choose the best match, discuss details via secure messaging, and confirm booking",
-                  color: "from-green-500 to-emerald-500"
-                },
-                { 
-                  icon: Star, 
-                  title: "Pay & Review", 
-                  desc: "Complete payment securely after task completion and leave feedback",
-                  color: "from-yellow-500 to-orange-500"
-                }
-              ].map((item, i) => (
-                <Card key={i} className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50">
+              {[{
+              icon: FileEdit,
+              title: "Post Your Task",
+              desc: "Describe what you need done, set your budget, location, and timeline",
+              color: "from-blue-500 to-cyan-500"
+            }, {
+              icon: Users,
+              title: "Browse Proposals",
+              desc: "Receive offers from verified task doers with ratings, reviews, and profiles",
+              color: "from-purple-500 to-pink-500"
+            }, {
+              icon: CheckCircle2,
+              title: "Select & Connect",
+              desc: "Choose the best match, discuss details via secure messaging, and confirm booking",
+              color: "from-green-500 to-emerald-500"
+            }, {
+              icon: Star,
+              title: "Pay & Review",
+              desc: "Complete payment securely after task completion and leave feedback",
+              color: "from-yellow-500 to-orange-500"
+            }].map((item, i) => <Card key={i} className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50">
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${item.color}`}></div>
                   <CardContent className="p-6 space-y-4">
                     <div className="relative">
@@ -626,8 +594,7 @@ const Index = () => {
                     <h4 className="text-lg font-bold">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.desc}</p>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
           </div>
 
@@ -642,33 +609,27 @@ const Index = () => {
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                { 
-                  icon: Search, 
-                  title: "Browse Tasks", 
-                  desc: "Explore available tasks by category, location, budget, and schedule",
-                  color: "from-indigo-500 to-blue-500"
-                },
-                { 
-                  icon: MessageSquare, 
-                  title: "Submit Proposals", 
-                  desc: "Send offers with your rates, availability, and showcase your verified credentials",
-                  color: "from-violet-500 to-purple-500"
-                },
-                { 
-                  icon: Briefcase, 
-                  title: "Get Hired", 
-                  desc: "Get selected by task givers, confirm details, and schedule the work",
-                  color: "from-cyan-500 to-teal-500"
-                },
-                { 
-                  icon: TrendingUp, 
-                  title: "Build Reputation", 
-                  desc: "Complete tasks, receive payments instantly, and earn 5-star reviews",
-                  color: "from-amber-500 to-orange-500"
-                }
-              ].map((item, i) => (
-                <Card key={i} className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border-2 hover:border-secondary/50">
+              {[{
+              icon: Search,
+              title: "Browse Tasks",
+              desc: "Explore available tasks by category, location, budget, and schedule",
+              color: "from-indigo-500 to-blue-500"
+            }, {
+              icon: MessageSquare,
+              title: "Submit Proposals",
+              desc: "Send offers with your rates, availability, and showcase your verified credentials",
+              color: "from-violet-500 to-purple-500"
+            }, {
+              icon: Briefcase,
+              title: "Get Hired",
+              desc: "Get selected by task givers, confirm details, and schedule the work",
+              color: "from-cyan-500 to-teal-500"
+            }, {
+              icon: TrendingUp,
+              title: "Build Reputation",
+              desc: "Complete tasks, receive payments instantly, and earn 5-star reviews",
+              color: "from-amber-500 to-orange-500"
+            }].map((item, i) => <Card key={i} className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border-2 hover:border-secondary/50">
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${item.color}`}></div>
                   <CardContent className="p-6 space-y-4">
                     <div className="relative">
@@ -682,8 +643,7 @@ const Index = () => {
                     <h4 className="text-lg font-bold">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.desc}</p>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
           </div>
 
@@ -695,15 +655,31 @@ const Index = () => {
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[
-                { icon: MessageSquare, title: "Real-Time Messaging", desc: "Chat instantly with task givers and doers through our secure platform" },
-                { icon: DollarSign, title: "Secure Payments", desc: "Escrow protection ensures payment only after successful completion" },
-                { icon: Calendar, title: "Smart Scheduling", desc: "Built-in calendar to manage multiple tasks and bookings effortlessly" },
-                { icon: MapPin, title: "Location Tracking", desc: "GPS-based task matching connects you with nearby opportunities" },
-                { icon: Bell, title: "Instant Notifications", desc: "Get real-time alerts for new offers, messages, and booking updates" },
-                { icon: Award, title: "Achievement Badges", desc: "Earn recognition badges as you complete more tasks and build expertise" }
-              ].map((item, i) => (
-                <Card key={i} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border hover:border-primary/50">
+              {[{
+              icon: MessageSquare,
+              title: "Real-Time Messaging",
+              desc: "Chat instantly with task givers and doers through our secure platform"
+            }, {
+              icon: DollarSign,
+              title: "Secure Payments",
+              desc: "Escrow protection ensures payment only after successful completion"
+            }, {
+              icon: Calendar,
+              title: "Smart Scheduling",
+              desc: "Built-in calendar to manage multiple tasks and bookings effortlessly"
+            }, {
+              icon: MapPin,
+              title: "Location Tracking",
+              desc: "GPS-based task matching connects you with nearby opportunities"
+            }, {
+              icon: Bell,
+              title: "Instant Notifications",
+              desc: "Get real-time alerts for new offers, messages, and booking updates"
+            }, {
+              icon: Award,
+              title: "Achievement Badges",
+              desc: "Earn recognition badges as you complete more tasks and build expertise"
+            }].map((item, i) => <Card key={i} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border hover:border-primary/50">
                   <CardContent className="p-6 space-y-3">
                     <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                       <item.icon className="h-6 w-6 text-primary" />
@@ -711,8 +687,7 @@ const Index = () => {
                     <h4 className="font-bold text-lg">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.desc}</p>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
           </div>
 
@@ -727,33 +702,27 @@ const Index = () => {
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                { 
-                  icon: ShieldCheck, 
-                  title: "ID Verification", 
-                  desc: "All users undergo mandatory identity verification with government-issued documents",
-                  badge: "Required"
-                },
-                { 
-                  icon: Shield, 
-                  title: "Background Checks", 
-                  desc: "Optional enhanced background screening for task doers in sensitive categories",
-                  badge: "Optional"
-                },
-                { 
-                  icon: Lock, 
-                  title: "Secure Payments", 
-                  desc: "Bank-level encryption and escrow protection for all financial transactions",
-                  badge: "Protected"
-                },
-                { 
-                  icon: Star, 
-                  title: "Rating System", 
-                  desc: "Transparent reviews and ratings help you make informed decisions every time",
-                  badge: "Verified"
-                }
-              ].map((item, i) => (
-                <Card key={i} className="group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50 bg-background">
+              {[{
+              icon: ShieldCheck,
+              title: "ID Verification",
+              desc: "All users undergo mandatory identity verification with government-issued documents",
+              badge: "Required"
+            }, {
+              icon: Shield,
+              title: "Background Checks",
+              desc: "Optional enhanced background screening for task doers in sensitive categories",
+              badge: "Optional"
+            }, {
+              icon: Lock,
+              title: "Secure Payments",
+              desc: "Bank-level encryption and escrow protection for all financial transactions",
+              badge: "Protected"
+            }, {
+              icon: Star,
+              title: "Rating System",
+              desc: "Transparent reviews and ratings help you make informed decisions every time",
+              badge: "Verified"
+            }].map((item, i) => <Card key={i} className="group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50 bg-background">
                   <CardContent className="p-6 space-y-4 relative">
                     <div className="absolute top-4 right-4">
                       <span className="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary">
@@ -766,8 +735,7 @@ const Index = () => {
                     <h4 className="font-bold text-lg pr-16">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.desc}</p>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
 
             <div className="mt-10 text-center">
@@ -789,15 +757,31 @@ const Index = () => {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { icon: Shield, title: "Verified Users", desc: "All users are verified with ratings and reviews" },
-              { icon: Clock, title: "Quick Matching", desc: "Find the right person for your task in minutes" },
-              { icon: DollarSign, title: "Fair Pricing", desc: "Set your own rates with transparent commission" },
-              { icon: Star, title: "Rating System", desc: "Build your reputation with verified reviews" },
-              { icon: Users, title: "Large Network", desc: "Thousands of task givers and doers" },
-              { icon: Shield, title: "Secure Payments", desc: "Protected payment processing" }
-            ].map((feature, i) => (
-              <Card key={i} className="border-border hover:shadow-lg transition-shadow">
+            {[{
+            icon: Shield,
+            title: "Verified Users",
+            desc: "All users are verified with ratings and reviews"
+          }, {
+            icon: Clock,
+            title: "Quick Matching",
+            desc: "Find the right person for your task in minutes"
+          }, {
+            icon: DollarSign,
+            title: "Fair Pricing",
+            desc: "Set your own rates with transparent commission"
+          }, {
+            icon: Star,
+            title: "Rating System",
+            desc: "Build your reputation with verified reviews"
+          }, {
+            icon: Users,
+            title: "Large Network",
+            desc: "Thousands of task givers and doers"
+          }, {
+            icon: Shield,
+            title: "Secure Payments",
+            desc: "Protected payment processing"
+          }].map((feature, i) => <Card key={i} className="border-border hover:shadow-lg transition-shadow">
                 <CardContent className="p-6 space-y-3">
                   <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                     <feature.icon className="h-6 w-6 text-primary" />
@@ -805,8 +789,7 @@ const Index = () => {
                   <h3 className="text-lg font-semibold">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.desc}</p>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
       </section>
@@ -840,8 +823,6 @@ const Index = () => {
       </section>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
