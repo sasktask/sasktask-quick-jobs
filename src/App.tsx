@@ -18,6 +18,9 @@ import BecomeTasker from "./pages/BecomeTasker";
 import HowItWorks from "./pages/HowItWorks";
 import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
+import FAQ from "./pages/FAQ";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +45,9 @@ const App = () => (
             <Route path="/become-tasker" element={<BecomeTasker />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/categories" element={<Categories />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

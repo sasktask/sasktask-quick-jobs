@@ -79,7 +79,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Payout error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'An unknown error occurred' }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

@@ -120,6 +120,27 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          created_at: string | null
+          id: string
+          tasker_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          tasker_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          tasker_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           booking_id: string
@@ -150,6 +171,39 @@ export type Database = {
           receiver_id?: string
           sender_id?: string
           status?: Database["public"]["Enums"]["message_status"] | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          link: string | null
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          link?: string | null
+          message: string
+          read?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          link?: string | null
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -444,6 +498,75 @@ export type Database = {
           },
         ]
       }
+      service_packages: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string
+          estimated_hours: number | null
+          id: string
+          includes: string[] | null
+          is_active: boolean | null
+          price: number
+          tasker_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description: string
+          estimated_hours?: number | null
+          id?: string
+          includes?: string[] | null
+          is_active?: boolean | null
+          price: number
+          tasker_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
+          estimated_hours?: number | null
+          id?: string
+          includes?: string[] | null
+          is_active?: boolean | null
+          price?: number
+          tasker_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      task_photos: {
+        Row: {
+          caption: string | null
+          created_at: string | null
+          id: string
+          photo_url: string
+          task_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string | null
+          id?: string
+          photo_url: string
+          task_id: string
+          uploaded_by: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string | null
+          id?: string
+          photo_url?: string
+          task_id?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           category: string
@@ -703,6 +826,16 @@ export type Database = {
     }
     Functions: {
       calculate_trust_score: { Args: { user_id: string }; Returns: number }
+      create_notification: {
+        Args: {
+          p_link?: string
+          p_message: string
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

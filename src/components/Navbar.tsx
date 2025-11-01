@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
+import { NotificationsDropdown } from "./NotificationsDropdown";
 
 interface NavbarProps {
   onMenuClick?: () => void;
@@ -85,6 +86,57 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
           </Link>
           
           <div className="flex items-center gap-2">
+            {user && <NotificationsDropdown />}
+            
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="rounded-full hover:bg-primary/10"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5 text-primary" />
+              ) : (
+                <Moon className="h-5 w-5 text-primary" />
+              )}
+            </Button>
+
+            {/* Language Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10">
+                  <Globe className="h-5 w-5 text-primary" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-card border-border z-50 min-w-[150px]">
+                <DropdownMenuItem 
+                  onClick={() => setLanguage("English")}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇺🇸 English {language === "English" && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage("Español")}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇪🇸 Español {language === "Español" && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage("Français")}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇫🇷 Français {language === "Français" && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage("Deutsch")}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇩🇪 Deutsch {language === "Deutsch" && "✓"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <div className="hidden md:flex items-center space-x-6">
               {/* Main Navigation */}
               <Link to="/browse" className="text-foreground hover:text-primary transition-colors font-medium">
