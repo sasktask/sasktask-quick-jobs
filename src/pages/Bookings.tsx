@@ -5,16 +5,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare } from "lucide-react";
+import { MessagingPanel } from "@/components/MessagingPanel";
+import { PaymentPanel } from "@/components/PaymentPanel";
+import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign } from "lucide-react";
 
 const Bookings = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [showMessaging, setShowMessaging] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -30,6 +37,8 @@ const Bookings = () => {
         navigate("/auth");
         return;
       }
+
+      setCurrentUserId(session.user.id);
 
       // Fetch profile
       const { data: profileData } = await supabase
@@ -49,11 +58,17 @@ const Bookings = () => {
       
       setUserRole(roleData?.role || null);
 
-      // Fetch bookings based on role
+      // Fetch bookings based on role with task doer profile
       let query = supabase
         .from("bookings")
         .select(`
           *,
+          task_doer:profiles!bookings_task_doer_id_fkey (
+            id,
+            full_name,
+            avatar_url,
+            rating
+          ),
           tasks (
             id,
             title,
@@ -63,7 +78,8 @@ const Bookings = () => {
             pay_amount,
             scheduled_date,
             task_giver_id,
-            profiles!tasks_task_giver_id_fkey (
+            task_giver:profiles!tasks_task_giver_id_fkey (
+              id,
               full_name,
               avatar_url,
               rating
@@ -202,9 +218,9 @@ const Bookings = () => {
                             <div>
                               <h3 className="text-xl font-bold mb-1">{booking.tasks?.title}</h3>
                               <p className="text-sm text-muted-foreground">
-                                {profile?.role === "task_giver" 
-                                  ? `Applied by Task Doer` 
-                                  : `Posted by ${booking.tasks?.profiles?.full_name || "Anonymous"}`}
+                                {userRole === "task_giver" 
+                                  ? `Applied by ${booking.task_doer?.full_name || "Task Doer"}` 
+                                  : `Posted by ${booking.tasks?.task_giver?.full_name || "Task Giver"}`}
                               </p>
                             </div>
                             {getStatusBadge(booking.status)}
@@ -235,9 +251,37 @@ const Bookings = () => {
                               {booking.tasks?.location}
                             </span>
                           </div>
+
+                          {/* Action buttons for accepted bookings */}
+                          {booking.status === "accepted" && (
+                            <div className="flex gap-2 mt-4">
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedBooking(booking);
+                                  setShowMessaging(true);
+                                }}
+                              >
+                                <MessageSquare className="mr-2 h-4 w-4" />
+                                Message
+                              </Button>
+                              
+                              {userRole === "task_giver" && (
+                                <Button
+                                  onClick={() => {
+                                    setSelectedBooking(booking);
+                                    setShowPayment(true);
+                                  }}
+                                >
+                                  <DollarSign className="mr-2 h-4 w-4" />
+                                  Pay Now
+                                </Button>
+                              )}
+                            </div>
+                          )}
                         </div>
 
-                        {profile?.role === "task_giver" && booking.status === "pending" && (
+                        {userRole === "task_giver" && booking.status === "pending" && (
                           <div className="flex md:flex-col gap-2">
                             <Button
                               onClick={() => updateBookingStatus(booking.id, "accepted")}
@@ -257,7 +301,7 @@ const Bookings = () => {
                           </div>
                         )}
 
-                        {profile?.role === "task_doer" && booking.status === "accepted" && (
+                        {userRole === "task_doer" && booking.status === "accepted" && (
                           <div className="flex md:flex-col gap-2">
                             <Button
                               onClick={() => updateBookingStatus(booking.id, "completed")}
@@ -276,6 +320,48 @@ const Bookings = () => {
             </TabsContent>
           ))}
         </Tabs>
+
+        {/* Messaging Dialog */}
+        <Dialog open={showMessaging} onOpenChange={setShowMessaging}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Messages</DialogTitle>
+              <DialogDescription>
+                Chat with {userRole === "task_giver" 
+                  ? selectedBooking?.task_doer?.full_name 
+                  : selectedBooking?.tasks?.task_giver?.full_name}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedBooking && (
+              <MessagingPanel
+                bookingId={selectedBooking.id}
+                currentUserId={currentUserId}
+                otherUserId={userRole === "task_giver" 
+                  ? selectedBooking.task_doer_id 
+                  : selectedBooking.tasks?.task_giver_id}
+                otherUserName={userRole === "task_giver" 
+                  ? selectedBooking.task_doer?.full_name 
+                  : selectedBooking.tasks?.task_giver?.full_name}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Payment Dialog */}
+        <Dialog open={showPayment} onOpenChange={setShowPayment}>
+          <DialogContent className="max-w-md">
+            {selectedBooking && (
+              <PaymentPanel
+                bookingId={selectedBooking.id}
+                taskId={selectedBooking.task_id}
+                payerId={currentUserId}
+                payeeId={selectedBooking.task_doer_id}
+                amount={selectedBooking.tasks?.pay_amount || 0}
+                payeeName={selectedBooking.task_doer?.full_name || "Task Doer"}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Footer />

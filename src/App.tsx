@@ -11,6 +11,7 @@ import PostTask from "./pages/PostTask";
 import Profile from "./pages/Profile";
 import Bookings from "./pages/Bookings";
 import TaskDetail from "./pages/TaskDetail";
+import Verification from "./pages/Verification";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/bookings" element={<Bookings />} />
           <Route path="/task/:id" element={<TaskDetail />} />
+          <Route path="/verification" element={<Verification />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

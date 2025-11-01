@@ -66,6 +66,93 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          message: string
+          read_at: string | null
+          receiver_id: string
+          sender_id: string
+          status: Database["public"]["Enums"]["message_status"] | null
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          message: string
+          read_at?: string | null
+          receiver_id: string
+          sender_id: string
+          status?: Database["public"]["Enums"]["message_status"] | null
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          read_at?: string | null
+          receiver_id?: string
+          sender_id?: string
+          status?: Database["public"]["Enums"]["message_status"] | null
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          id: string
+          paid_at: string | null
+          payee_id: string
+          payer_id: string
+          payment_method: string | null
+          payout_amount: number
+          payout_at: string | null
+          platform_fee: number
+          status: Database["public"]["Enums"]["payment_status"] | null
+          task_id: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          payee_id: string
+          payer_id: string
+          payment_method?: string | null
+          payout_amount: number
+          payout_at?: string | null
+          platform_fee: number
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          task_id: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          payee_id?: string
+          payer_id?: string
+          payment_method?: string | null
+          payout_amount?: number
+          payout_at?: string | null
+          platform_fee?: number
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          task_id?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -272,6 +359,126 @@ export type Database = {
         }
         Relationships: []
       }
+      verifications: {
+        Row: {
+          age_verified: boolean
+          background_check_completed_at: string | null
+          background_check_consent: boolean
+          background_check_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          certification_documents: string[] | null
+          certifications: string[] | null
+          created_at: string
+          date_of_birth: string | null
+          has_insurance: boolean
+          id: string
+          id_document_url: string | null
+          id_number_hash: string | null
+          id_type: string | null
+          id_verified: boolean
+          id_verified_at: string | null
+          insurance_document_url: string | null
+          insurance_expiry_date: string | null
+          insurance_policy_number: string | null
+          insurance_provider: string | null
+          legal_name: string | null
+          privacy_accepted: boolean
+          privacy_accepted_at: string | null
+          rejection_reason: string | null
+          sin_provided: boolean
+          skills: string[] | null
+          tax_info_complete: boolean
+          terms_accepted: boolean
+          terms_accepted_at: string | null
+          updated_at: string
+          user_id: string
+          verification_completed_at: string | null
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verified_by: string | null
+        }
+        Insert: {
+          age_verified?: boolean
+          background_check_completed_at?: string | null
+          background_check_consent?: boolean
+          background_check_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          certification_documents?: string[] | null
+          certifications?: string[] | null
+          created_at?: string
+          date_of_birth?: string | null
+          has_insurance?: boolean
+          id?: string
+          id_document_url?: string | null
+          id_number_hash?: string | null
+          id_type?: string | null
+          id_verified?: boolean
+          id_verified_at?: string | null
+          insurance_document_url?: string | null
+          insurance_expiry_date?: string | null
+          insurance_policy_number?: string | null
+          insurance_provider?: string | null
+          legal_name?: string | null
+          privacy_accepted?: boolean
+          privacy_accepted_at?: string | null
+          rejection_reason?: string | null
+          sin_provided?: boolean
+          skills?: string[] | null
+          tax_info_complete?: boolean
+          terms_accepted?: boolean
+          terms_accepted_at?: string | null
+          updated_at?: string
+          user_id: string
+          verification_completed_at?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verified_by?: string | null
+        }
+        Update: {
+          age_verified?: boolean
+          background_check_completed_at?: string | null
+          background_check_consent?: boolean
+          background_check_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          certification_documents?: string[] | null
+          certifications?: string[] | null
+          created_at?: string
+          date_of_birth?: string | null
+          has_insurance?: boolean
+          id?: string
+          id_document_url?: string | null
+          id_number_hash?: string | null
+          id_type?: string | null
+          id_verified?: boolean
+          id_verified_at?: string | null
+          insurance_document_url?: string | null
+          insurance_expiry_date?: string | null
+          insurance_policy_number?: string | null
+          insurance_provider?: string | null
+          legal_name?: string | null
+          privacy_accepted?: boolean
+          privacy_accepted_at?: string | null
+          rejection_reason?: string | null
+          sin_provided?: boolean
+          skills?: string[] | null
+          tax_info_complete?: boolean
+          terms_accepted?: boolean
+          terms_accepted_at?: string | null
+          updated_at?: string
+          user_id?: string
+          verification_completed_at?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       public_profiles: {
@@ -329,8 +536,16 @@ export type Database = {
         | "rejected"
         | "completed"
         | "cancelled"
+      message_status: "sent" | "delivered" | "read"
+      payment_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "failed"
+        | "refunded"
       task_status: "open" | "in_progress" | "completed" | "cancelled"
       user_role: "task_giver" | "task_doer"
+      verification_status: "pending" | "verified" | "rejected" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -466,8 +681,17 @@ export const Constants = {
         "completed",
         "cancelled",
       ],
+      message_status: ["sent", "delivered", "read"],
+      payment_status: [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "refunded",
+      ],
       task_status: ["open", "in_progress", "completed", "cancelled"],
       user_role: ["task_giver", "task_doer"],
+      verification_status: ["pending", "verified", "rejected", "expired"],
     },
   },
 } as const
