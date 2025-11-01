@@ -85,8 +85,26 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
           
           <div className="flex items-center gap-6">
             <div className="hidden md:flex items-center space-x-6">
-              <Link to="/browse" className="text-foreground hover:text-primary transition-colors">
+              {/* Main Navigation */}
+              <Link to="/browse" className="text-foreground hover:text-primary transition-colors font-medium">
                 Browse Tasks
+              </Link>
+              
+              <Link to="/find-taskers" className="text-foreground hover:text-primary transition-colors font-medium">
+                Find Taskers
+              </Link>
+              
+              <Link to="/become-tasker" className="text-foreground hover:text-primary transition-colors font-medium flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                Become a Tasker
+              </Link>
+
+              <Link to="/how-it-works" className="text-foreground hover:text-primary transition-colors font-medium">
+                How It Works
+              </Link>
+
+              <Link to="/categories" className="text-foreground hover:text-primary transition-colors font-medium">
+                Categories
               </Link>
               
               {user ? (
@@ -97,10 +115,10 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                       Get Verified
                     </Link>
                   )}
-                  <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors">
+                  <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors font-medium">
                     Dashboard
                   </Link>
-                  <Link to="/profile" className="text-foreground hover:text-primary transition-colors">
+                  <Link to="/profile" className="text-foreground hover:text-primary transition-colors font-medium">
                     Profile
                   </Link>
                   <Button variant="outline" size="default" onClick={handleSignOut}>
@@ -109,7 +127,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 </>
               ) : (
                 <>
-                  <Link to="/auth" className="text-foreground hover:text-primary transition-colors">
+                  <Link to="/auth" className="text-foreground hover:text-primary transition-colors font-medium">
                     Sign In
                   </Link>
                   <Link to="/auth">

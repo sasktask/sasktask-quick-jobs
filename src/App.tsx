@@ -12,6 +12,10 @@ import Profile from "./pages/Profile";
 import Bookings from "./pages/Bookings";
 import TaskDetail from "./pages/TaskDetail";
 import Verification from "./pages/Verification";
+import FindTaskers from "./pages/FindTaskers";
+import BecomeTasker from "./pages/BecomeTasker";
+import HowItWorks from "./pages/HowItWorks";
+import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +36,10 @@ const App = () => (
           <Route path="/bookings" element={<Bookings />} />
           <Route path="/task/:id" element={<TaskDetail />} />
           <Route path="/verification" element={<Verification />} />
+          <Route path="/find-taskers" element={<FindTaskers />} />
+          <Route path="/become-tasker" element={<BecomeTasker />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/categories" element={<Categories />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
