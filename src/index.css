@@ -148,6 +148,15 @@
     background: var(--gradient-surface);
   }
   
+  /* Gradient radial */
+  .bg-gradient-radial {
+    background: radial-gradient(circle, hsl(var(--primary) / 0.3), transparent);
+  }
+  
+  .bg-gradient-accent {
+    background: var(--gradient-accent);
+  }
+  
   /* Glass morphism */
   .glass {
     background: var(--glass-bg);
