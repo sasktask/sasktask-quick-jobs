@@ -591,6 +591,7 @@ export type Database = {
         | "rejected"
         | "completed"
         | "cancelled"
+        | "in_progress"
       message_status: "sent" | "delivered" | "read"
       payment_status:
         | "pending"
@@ -735,6 +736,7 @@ export const Constants = {
         "rejected",
         "completed",
         "cancelled",
+        "in_progress",
       ],
       message_status: ["sent", "delivered", "read"],
       payment_status: [
