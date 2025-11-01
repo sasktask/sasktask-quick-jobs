@@ -179,8 +179,8 @@ const Index = () => {
             {/* SaskTask Brand Title */}
             <div className="relative animate-fade-up mb-8">
               <div className="absolute inset-0 bg-gradient-hero blur-3xl opacity-40 animate-glow-pulse" />
-              <h1 className="relative text-7xl md:text-8xl lg:text-9xl font-heading font-black text-gradient tracking-tight leading-none hover-scale">
-                SaskTask<sup className="text-3xl md:text-4xl lg:text-5xl ml-1">™</sup>
+              <h1 className="relative text-7xl md:text-8xl lg:text-9xl font-heading font-black tracking-tight leading-none">
+                <span className="text-primary">Sask</span><span className="text-secondary">Task</span><sup className="text-3xl md:text-4xl lg:text-5xl ml-1 text-primary">™</sup>
               </h1>
               <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-48 h-1 bg-gradient-accent rounded-full blur-sm" />
             </div>
