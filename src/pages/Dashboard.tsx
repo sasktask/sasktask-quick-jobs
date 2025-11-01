@@ -13,7 +13,8 @@ import {
   TrendingUp,
   Plus,
   Search,
-  User
+  User,
+  MapPin
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -237,13 +238,18 @@ const Dashboard = () => {
         {/* Recent Tasks */}
         <Card className="border-border">
           <CardHeader>
-            <CardTitle>
-              {userRole === "task_giver" ? "Your Recent Tasks" : "Available Tasks"}
+            <CardTitle className="flex items-center gap-2">
+              {userRole === "task_giver" ? "Your Recent Tasks" : "Available Tasks - Accept Instantly"}
+              {userRole === "task_doer" && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  (Like Uber - One Tap Accept)
+                </span>
+              )}
             </CardTitle>
             <CardDescription>
               {userRole === "task_giver" 
                 ? "Manage your posted tasks" 
-                : "Browse and apply to these tasks"}
+                : "Browse and instantly accept tasks near you"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -257,23 +263,41 @@ const Dashboard = () => {
                 {tasks.map((task) => (
                   <Card key={task.id} className="border-border hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
+                      <div className="flex justify-between items-start gap-4">
                         <div className="flex-1">
                           <h4 className="font-semibold text-lg mb-1">{task.title}</h4>
-                          <p className="text-muted-foreground text-sm mb-2">{task.description}</p>
+                          <p className="text-muted-foreground text-sm mb-2 line-clamp-2">{task.description}</p>
                           <div className="flex flex-wrap gap-2">
                             <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
                               {task.category}
                             </span>
-                            <span className="px-3 py-1 bg-secondary/10 text-secondary rounded-full text-xs font-medium">
+                            <span className="px-3 py-1 bg-green-500/10 text-green-600 rounded-full text-xs font-bold">
                               ${task.pay_amount}
                             </span>
-                            <span className="px-3 py-1 bg-muted text-foreground rounded-full text-xs">
+                            <span className="px-3 py-1 bg-muted text-foreground rounded-full text-xs flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
                               {task.location}
                             </span>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm">View Details</Button>
+                        {userRole === "task_doer" ? (
+                          <Button 
+                            variant="default" 
+                            size="lg"
+                            className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 font-bold shrink-0"
+                            onClick={() => navigate(`/task/${task.id}`)}
+                          >
+                            Accept Task
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => navigate(`/task/${task.id}`)}
+                          >
+                            View Details
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

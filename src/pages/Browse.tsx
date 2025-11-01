@@ -121,8 +121,13 @@ const Browse = () => {
       
       <div className="container mx-auto px-4 pt-24 pb-20">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Browse Available Tasks</h1>
-          <p className="text-muted-foreground">Find your next opportunity</p>
+          <h1 className="text-4xl font-bold mb-2">
+            Browse Available Tasks
+            <span className="text-lg font-normal text-muted-foreground ml-3">
+              💼 Instant Accept - Like Uber
+            </span>
+          </h1>
+          <p className="text-muted-foreground">Find and accept tasks near you instantly</p>
         </div>
 
         {/* Search and Filters */}
@@ -217,16 +222,17 @@ const Browse = () => {
                     <div className="flex md:flex-col gap-2 md:justify-center">
                       <Button 
                         onClick={() => navigate(`/task/${task.id}`)}
-                        className="flex-1 md:flex-none"
+                        size="lg"
+                        className="flex-1 md:flex-none bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 font-bold"
                       >
-                        View Details
+                        Accept Task
                       </Button>
                       <Button 
                         variant="outline"
                         onClick={() => navigate(`/task/${task.id}`)}
                         className="flex-1 md:flex-none"
                       >
-                        Apply Now
+                        View Details
                       </Button>
                     </div>
                   </div>

@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, DollarSign, Calendar, Shield, Star, TrendingUp } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle, DollarSign, Calendar, Shield, Star, TrendingUp, Briefcase } from "lucide-react";
 
 export default function BecomeTasker() {
   const benefits = [
@@ -134,7 +134,7 @@ export default function BecomeTasker() {
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-xl text-muted-foreground">Get started in 3 simple steps</p>
+            <p className="text-xl text-muted-foreground">Start earning in 3 simple steps</p>
           </div>
 
           <div className="space-y-8">
@@ -150,6 +150,34 @@ export default function BecomeTasker() {
               </div>
             ))}
           </div>
+
+          {/* Category Selection Preview */}
+          <Card className="mt-12 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-primary" />
+                Choose Your Service Categories
+              </CardTitle>
+              <CardDescription>Select the services you want to offer</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {[
+                  "Snow Removal", "Cleaning", "Moving", "Delivery", 
+                  "Handyman", "Gardening", "Pet Care", "Painting",
+                  "Electrical", "Plumbing", "Landscaping", "Other"
+                ].map((cat) => (
+                  <div key={cat} className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">{cat}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground mt-4">
+                💡 You'll set your categories when you complete your profile after signing up
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </section>
 

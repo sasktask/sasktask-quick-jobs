@@ -90,10 +90,6 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 <ShieldCheck className="h-4 w-4" />
                 Become a Tasker
               </Link>
-
-              <Link to="/categories" className="text-foreground hover:text-primary transition-colors font-medium">
-                Categories
-              </Link>
               
               {user ? (
                 <>
