@@ -72,6 +72,54 @@ export type Database = {
           },
         ]
       }
+      cancellations: {
+        Row: {
+          booking_id: string
+          cancellation_fee: number | null
+          cancellation_reason: string | null
+          cancelled_by: string
+          created_at: string | null
+          id: string
+          stripe_refund_id: string | null
+          task_id: string
+        }
+        Insert: {
+          booking_id: string
+          cancellation_fee?: number | null
+          cancellation_reason?: string | null
+          cancelled_by: string
+          created_at?: string | null
+          id?: string
+          stripe_refund_id?: string | null
+          task_id: string
+        }
+        Update: {
+          booking_id?: string
+          cancellation_fee?: number | null
+          cancellation_reason?: string | null
+          cancelled_by?: string
+          created_at?: string | null
+          id?: string
+          stripe_refund_id?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cancellations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cancellations_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           booking_id: string
@@ -102,6 +150,45 @@ export type Database = {
           receiver_id?: string
           sender_id?: string
           status?: Database["public"]["Enums"]["message_status"] | null
+        }
+        Relationships: []
+      }
+      payment_methods: {
+        Row: {
+          card_brand: string | null
+          card_exp_month: number | null
+          card_exp_year: number | null
+          card_last4: string | null
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          stripe_payment_method_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          card_brand?: string | null
+          card_exp_month?: number | null
+          card_exp_year?: number | null
+          card_last4?: string | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          stripe_payment_method_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          card_brand?: string | null
+          card_exp_month?: number | null
+          card_exp_year?: number | null
+          card_last4?: string | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          stripe_payment_method_id?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -168,11 +255,46 @@ export type Database = {
         }
         Relationships: []
       }
+      payout_accounts: {
+        Row: {
+          account_status: string | null
+          account_type: string | null
+          bank_last4: string | null
+          created_at: string | null
+          id: string
+          stripe_account_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_status?: string | null
+          account_type?: string | null
+          bank_last4?: string | null
+          created_at?: string | null
+          id?: string
+          stripe_account_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_status?: string | null
+          account_type?: string | null
+          bank_last4?: string | null
+          created_at?: string | null
+          id?: string
+          stripe_account_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           availability_status: string | null
           avatar_url: string | null
           bio: string | null
+          cancellation_count: number | null
+          cancellation_rate: number | null
           completed_tasks: number | null
           created_at: string | null
           email: string
@@ -187,8 +309,10 @@ export type Database = {
           preferred_categories: string[] | null
           profile_completion: number | null
           rating: number | null
+          reliability_score: number | null
           response_rate: number | null
           skills: string[] | null
+          stripe_customer_id: string | null
           total_reviews: number | null
           trust_score: number | null
           updated_at: string | null
@@ -198,6 +322,8 @@ export type Database = {
           availability_status?: string | null
           avatar_url?: string | null
           bio?: string | null
+          cancellation_count?: number | null
+          cancellation_rate?: number | null
           completed_tasks?: number | null
           created_at?: string | null
           email: string
@@ -212,8 +338,10 @@ export type Database = {
           preferred_categories?: string[] | null
           profile_completion?: number | null
           rating?: number | null
+          reliability_score?: number | null
           response_rate?: number | null
           skills?: string[] | null
+          stripe_customer_id?: string | null
           total_reviews?: number | null
           trust_score?: number | null
           updated_at?: string | null
@@ -223,6 +351,8 @@ export type Database = {
           availability_status?: string | null
           avatar_url?: string | null
           bio?: string | null
+          cancellation_count?: number | null
+          cancellation_rate?: number | null
           completed_tasks?: number | null
           created_at?: string | null
           email?: string
@@ -237,8 +367,10 @@ export type Database = {
           preferred_categories?: string[] | null
           profile_completion?: number | null
           rating?: number | null
+          reliability_score?: number | null
           response_rate?: number | null
           skills?: string[] | null
+          stripe_customer_id?: string | null
           total_reviews?: number | null
           trust_score?: number | null
           updated_at?: string | null

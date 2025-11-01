@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AdvancedProfileSettings } from "@/components/AdvancedProfileSettings";
+import { PaymentMethodManager } from "@/components/PaymentMethodManager";
+import { PayoutAccountSetup } from "@/components/PayoutAccountSetup";
 import { Loader2, Star, Briefcase, Award, Upload, Shield, TrendingUp, Clock } from "lucide-react";
 
 const Profile = () => {
@@ -355,6 +357,16 @@ const Profile = () => {
 
         {/* Advanced Settings */}
         <AdvancedProfileSettings profile={profile} onUpdate={checkUserAndLoadProfile} />
+
+        {/* Payment Methods - For Task Givers */}
+        {userRole === "task_giver" && (
+          <PaymentMethodManager />
+        )}
+
+        {/* Payout Account - For Task Doers */}
+        {userRole === "task_doer" && (
+          <PayoutAccountSetup />
+        )}
       </div>
       </div>
 

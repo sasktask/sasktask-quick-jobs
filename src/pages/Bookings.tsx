@@ -13,7 +13,8 @@ import { Footer } from "@/components/Footer";
 import { MessagingPanel } from "@/components/MessagingPanel";
 import { PaymentPanel } from "@/components/PaymentPanel";
 import { TaskCompletionFlow } from "@/components/TaskCompletionFlow";
-import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, Shield, Star, Phone, MapPin } from "lucide-react";
+import { CancellationDialog } from "@/components/CancellationDialog";
+import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, Shield, Star, Phone, MapPin, Ban } from "lucide-react";
 
 const Bookings = () => {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -23,6 +24,7 @@ const Bookings = () => {
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [showMessaging, setShowMessaging] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const [showCancellation, setShowCancellation] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -349,18 +351,34 @@ const Bookings = () => {
                               
                               {/* Chat Button - Always available for accepted/in_progress */}
                               {(booking.status === "accepted" || booking.status === "in_progress") && (
-                                <Button
-                                  variant="outline"
-                                  onClick={() => {
-                                    setSelectedBooking(booking);
-                                    setShowMessaging(true);
-                                  }}
-                                  className="w-full mt-3"
-                                  size="lg"
-                                >
-                                  <MessageSquare className="mr-2 h-5 w-5" />
-                                  Chat with {userRole === "task_giver" ? "Tasker" : "Task Giver"}
-                                </Button>
+                                <div className="space-y-2 mt-3">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedBooking(booking);
+                                      setShowMessaging(true);
+                                    }}
+                                    className="w-full"
+                                    size="lg"
+                                  >
+                                    <MessageSquare className="mr-2 h-5 w-5" />
+                                    Chat with {userRole === "task_giver" ? "Tasker" : "Task Giver"}
+                                  </Button>
+                                  
+                                  {/* Cancel Button */}
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedBooking(booking);
+                                      setShowCancellation(true);
+                                    }}
+                                    className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                    size="lg"
+                                  >
+                                    <Ban className="mr-2 h-5 w-5" />
+                                    Cancel Booking
+                                  </Button>
+                                </div>
                               )}
                             </div>
                           )}
@@ -438,6 +456,18 @@ const Bookings = () => {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Cancellation Dialog */}
+        {selectedBooking && (
+          <CancellationDialog
+            open={showCancellation}
+            onOpenChange={setShowCancellation}
+            bookingId={selectedBooking.id}
+            taskAmount={selectedBooking.tasks?.pay_amount || 0}
+            scheduledDate={selectedBooking.tasks?.scheduled_date || new Date().toISOString()}
+            onSuccess={checkUserAndFetchBookings}
+          />
+        )}
       </div>
 
       <Footer />
