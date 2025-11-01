@@ -67,7 +67,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-4 group">
             <div className="flex flex-col">
-              <span className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent group-hover:from-accent group-hover:via-primary group-hover:to-secondary transition-all duration-300">
+              <span className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-[#3eb5a4] via-[#4fa8d5] to-[#3eb5a4] bg-clip-text text-transparent group-hover:scale-105 transition-all duration-300">
                 SaskTask
               </span>
               <span className="text-xs font-medium text-muted-foreground tracking-widest uppercase">
@@ -84,44 +84,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
             </div>
           </Link>
           
-          <div className="flex items-center gap-4">
-            {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="rounded-full hover:bg-primary/10"
-            >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5 text-primary" />
-              ) : (
-                <Moon className="h-5 w-5 text-primary" />
-              )}
-            </Button>
-
-            {/* Language Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10">
-                  <Globe className="h-5 w-5 text-primary" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-card z-50">
-                <DropdownMenuItem onClick={() => setLanguage("English")}>
-                  🇺🇸 English
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLanguage("Español")}>
-                  🇪🇸 Español
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLanguage("Français")}>
-                  🇫🇷 Français
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLanguage("Deutsch")}>
-                  🇩🇪 Deutsch
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
+          <div className="flex items-center gap-2">
             <div className="hidden md:flex items-center space-x-6">
               {/* Main Navigation */}
               <Link to="/browse" className="text-foreground hover:text-primary transition-colors font-medium">
@@ -168,6 +131,55 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 </>
               )}
             </div>
+
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="rounded-full hover:bg-primary/10"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5 text-primary" />
+              ) : (
+                <Moon className="h-5 w-5 text-primary" />
+              )}
+            </Button>
+
+            {/* Language Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10">
+                  <Globe className="h-5 w-5 text-primary" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-card border-border z-50 min-w-[150px]">
+                <DropdownMenuItem 
+                  onClick={() => setLanguage("English")}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇺🇸 English {language === "English" && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage("Español")}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇪🇸 Español {language === "Español" && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage("Français")}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇫🇷 Français {language === "Français" && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage("Deutsch")}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇩🇪 Deutsch {language === "Deutsch" && "✓"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <button onClick={onMenuClick} className="md:hidden">
               <Menu className="h-6 w-6" />
