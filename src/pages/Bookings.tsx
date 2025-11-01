@@ -13,6 +13,7 @@ import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare } from "lucide-re
 const Bookings = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -39,6 +40,15 @@ const Bookings = () => {
 
       setProfile(profileData);
 
+      // Fetch user role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .single();
+      
+      setUserRole(roleData?.role || null);
+
       // Fetch bookings based on role
       let query = supabase
         .from("bookings")
@@ -61,7 +71,7 @@ const Bookings = () => {
           )
         `);
 
-      if (profileData?.role === "task_giver") {
+      if (roleData?.role === "task_giver") {
         // Task givers see bookings for their tasks
         query = query.eq("tasks.task_giver_id", session.user.id);
       } else {

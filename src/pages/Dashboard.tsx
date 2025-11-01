@@ -19,6 +19,7 @@ import {
 const Dashboard = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -49,8 +50,17 @@ const Dashboard = () => {
       if (profileError) throw profileError;
       setProfile(profileData);
 
+      // Fetch user role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .single();
+      
+      setUserRole(roleData?.role || null);
+
       // Fetch tasks based on role
-      if (profileData?.role === "task_giver") {
+      if (roleData?.role === "task_giver") {
         const { data: tasksData } = await supabase
           .from("tasks")
           .select("*")
@@ -106,7 +116,7 @@ const Dashboard = () => {
               Welcome back, {profile?.full_name || user?.email}!
             </h1>
             <p className="text-muted-foreground">
-              {profile?.role === "task_giver" ? "Manage your tasks" : "Find your next opportunity"}
+              {userRole === "task_giver" ? "Manage your tasks" : "Find your next opportunity"}
             </p>
           </div>
           <div className="flex gap-3">
@@ -157,7 +167,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    {profile?.role === "task_giver" ? "Posted Tasks" : "Completed Tasks"}
+                    {userRole === "task_giver" ? "Posted Tasks" : "Completed Tasks"}
                   </p>
                   <p className="text-3xl font-bold">{tasks.length}</p>
                 </div>
@@ -185,7 +195,7 @@ const Dashboard = () => {
 
         {/* Action Buttons */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {profile?.role === "task_giver" ? (
+          {userRole === "task_giver" ? (
             <Link to="/post-task">
               <Card className="cursor-pointer hover:shadow-lg transition-shadow border-primary/50 h-full">
                 <CardContent className="p-8 text-center">
@@ -228,10 +238,10 @@ const Dashboard = () => {
         <Card className="border-border">
           <CardHeader>
             <CardTitle>
-              {profile?.role === "task_giver" ? "Your Recent Tasks" : "Available Tasks"}
+              {userRole === "task_giver" ? "Your Recent Tasks" : "Available Tasks"}
             </CardTitle>
             <CardDescription>
-              {profile?.role === "task_giver" 
+              {userRole === "task_giver" 
                 ? "Manage your posted tasks" 
                 : "Browse and apply to these tasks"}
             </CardDescription>

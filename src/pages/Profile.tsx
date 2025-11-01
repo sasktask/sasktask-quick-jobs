@@ -17,6 +17,7 @@ const Profile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -51,6 +52,16 @@ const Profile = () => {
       if (error) throw error;
 
       setProfile(profileData);
+
+      // Fetch user role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .single();
+      
+      setUserRole(roleData?.role || null);
+
       setFormData({
         full_name: profileData.full_name || "",
         phone: profileData.phone || "",
@@ -159,7 +170,7 @@ const Profile = () => {
                     <span className="text-sm">Role</span>
                   </div>
                   <span className="font-semibold capitalize">
-                    {profile?.role?.replace("_", " ") || "N/A"}
+                    {userRole?.replace("_", " ") || "N/A"}
                   </span>
                 </div>
               </div>
