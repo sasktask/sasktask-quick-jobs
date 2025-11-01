@@ -136,7 +136,7 @@ const Index = () => {
             {/* SaskTask Brand Title */}
             <div className="relative animate-fade-up mb-8">
               <h1 className="relative text-7xl md:text-8xl lg:text-9xl font-heading font-black tracking-tight leading-none">
-                <span className="text-secondary">Task</span><sup className="text-3xl md:text-4xl lg:text-5xl ml-1 text-primary/80">™</sup>
+                <sup className="text-3xl md:text-4xl lg:text-5xl ml-1 text-primary/80">SaskTask</sup>
               </h1>
             </div>
 
