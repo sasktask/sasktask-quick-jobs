@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreditCard, Plus, Trash2, Shield } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { StripeSetupGuide } from "./StripeSetupGuide";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
 
@@ -148,23 +149,29 @@ export const PaymentMethodManager = () => {
   }
 
   return (
-    <Card className="border-border">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Payment Methods
-            </CardTitle>
-            <CardDescription>Manage your credit and debit cards</CardDescription>
+    <>
+      <StripeSetupGuide />
+      <Card className="border-border">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Payment Methods
+              </CardTitle>
+              <CardDescription>Manage your credit and debit cards</CardDescription>
+            </div>
+            <Button 
+              onClick={() => setShowAddForm(!showAddForm)} 
+              size="sm"
+              disabled={!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Card
+            </Button>
           </div>
-          <Button onClick={() => setShowAddForm(!showAddForm)} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Card
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        </CardHeader>
+        <CardContent className="space-y-4">
         {showAddForm && (
           <Elements stripe={stripePromise}>
             <AddPaymentMethodForm
@@ -224,5 +231,6 @@ export const PaymentMethodManager = () => {
         </div>
       </CardContent>
     </Card>
+    </>
   );
 };
