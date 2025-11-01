@@ -1,8 +1,16 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Menu, ShieldCheck } from "lucide-react";
+import { Menu, ShieldCheck, Globe } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import logo from "@/assets/sasktask-logo.png";
 
 interface NavbarProps {
   onMenuClick?: () => void;
@@ -11,6 +19,7 @@ interface NavbarProps {
 export const Navbar = ({ onMenuClick }: NavbarProps) => {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [language, setLanguage] = useState("en");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,50 +64,69 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              SaskTask
-            </div>
+          <Link to="/" className="flex items-center space-x-3">
+            <img 
+              src={logo} 
+              alt="SaskTask Logo" 
+              className="h-10 w-auto"
+            />
           </Link>
           
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/browse" className="text-foreground hover:text-primary transition-colors">
-              Browse Tasks
-            </Link>
-            
-            {user ? (
-              <>
-                {userRole === "task_doer" && (
-                  <Link to="/verification" className="text-foreground hover:text-primary transition-colors flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4" />
-                    Get Verified
+          <div className="flex items-center gap-6">
+            <div className="hidden md:flex items-center space-x-6">
+              <Link to="/browse" className="text-foreground hover:text-primary transition-colors">
+                Browse Tasks
+              </Link>
+              
+              {user ? (
+                <>
+                  {userRole === "task_doer" && (
+                    <Link to="/verification" className="text-foreground hover:text-primary transition-colors flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4" />
+                      Get Verified
+                    </Link>
+                  )}
+                  <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors">
+                    Dashboard
                   </Link>
-                )}
-                <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors">
-                  Dashboard
-                </Link>
-                <Link to="/profile" className="text-foreground hover:text-primary transition-colors">
-                  Profile
-                </Link>
-                <Button variant="outline" size="default" onClick={handleSignOut}>
-                  Sign Out
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/auth" className="text-foreground hover:text-primary transition-colors">
-                  Sign In
-                </Link>
-                <Link to="/auth">
-                  <Button variant="hero" size="default">Get Started</Button>
-                </Link>
-              </>
-            )}
-          </div>
+                  <Link to="/profile" className="text-foreground hover:text-primary transition-colors">
+                    Profile
+                  </Link>
+                  <Button variant="outline" size="default" onClick={handleSignOut}>
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/auth" className="text-foreground hover:text-primary transition-colors">
+                    Sign In
+                  </Link>
+                  <Link to="/auth">
+                    <Button variant="hero" size="default">Get Started</Button>
+                  </Link>
+                </>
+              )}
+            </div>
 
-          <button onClick={onMenuClick} className="md:hidden">
-            <Menu className="h-6 w-6" />
-          </button>
+            {/* Language Selector */}
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger className="w-[140px] hidden md:flex">
+                <Globe className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="fr">Français</SelectItem>
+                <SelectItem value="es">Español</SelectItem>
+                <SelectItem value="de">Deutsch</SelectItem>
+                <SelectItem value="zh">中文</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <button onClick={onMenuClick} className="md:hidden">
+              <Menu className="h-6 w-6" />
+            </button>
+          </div>
         </div>
       </div>
     </nav>
