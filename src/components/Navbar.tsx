@@ -64,12 +64,20 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center gap-3 group">
             <img 
               src={logo} 
               alt="SaskTask Logo" 
-              className="h-10 w-auto"
+              className="h-12 w-auto group-hover:scale-105 transition-transform"
             />
+            <div className="flex flex-col">
+              <span className="text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                SaskTask
+              </span>
+              <span className="text-xs text-muted-foreground tracking-wide">
+                Get Things Done
+              </span>
+            </div>
           </Link>
           
           <div className="flex items-center gap-6">
