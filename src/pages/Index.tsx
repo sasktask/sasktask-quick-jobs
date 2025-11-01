@@ -123,62 +123,47 @@ const Index = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
-        {/* Clean Corner Decorative Elements - SaskTask Style */}
+      <section className="pt-32 pb-20 px-4 relative overflow-hidden bg-gradient-to-b from-background via-background to-card">
+        {/* Minimal Modern Corner Decorations - Dark Theme */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          {/* Top Left Corner - Large circle with stripe pattern */}
-          <div className="absolute -top-48 -left-48 w-[500px] h-[500px] pointer-events-none">
-            {/* Main circle */}
-            <div className="absolute inset-0 bg-primary/15 rounded-full" />
-            
-            {/* Diagonal stripes pattern */}
-            <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 500 500">
-              <defs>
-                <pattern id="diagonalStripes" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                  <rect width="10" height="20" fill="hsl(var(--primary))" />
-                </pattern>
-              </defs>
-              <circle cx="250" cy="250" r="250" fill="url(#diagonalStripes)" />
-            </svg>
-          </div>
-
-          {/* Top Right Corner - Layered shapes */}
-          <div className="absolute -top-40 -right-40 w-[450px] h-[450px] pointer-events-none">
-            {/* Back layer - larger */}
-            <div className="absolute top-0 right-0 w-[380px] h-[380px] bg-primary/12 rounded-full" />
-            
-            {/* Front layer - medium */}
-            <div className="absolute top-12 right-12 w-[320px] h-[320px] bg-primary/18 rounded-br-full" />
-            
-            {/* Accent circle */}
-            <div className="absolute top-24 right-32 w-32 h-32 bg-accent/40 rounded-full" />
-            
-            {/* Dot grid pattern */}
-            <div className="absolute top-40 right-48 w-28 h-28 opacity-25">
-              <div className="grid grid-cols-6 grid-rows-6 gap-2 h-full">
-                {[...Array(36)].map((_, i) => (
-                  <div key={i} className="w-1.5 h-1.5 bg-primary rounded-full" />
-                ))}
-              </div>
+          {/* Top Left - Subtle gradient circle with grid */}
+          <div className="absolute -top-32 -left-32 w-[400px] h-[400px] pointer-events-none">
+            <div className="absolute inset-0 bg-primary/8 rounded-full blur-3xl" />
+            <div className="absolute top-20 left-20 w-48 h-48 opacity-20">
+              <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+                    <circle cx="2" cy="2" r="1" fill="hsl(var(--primary))" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+              </svg>
             </div>
           </div>
 
-          {/* Bottom Left Corner - Simple wave */}
-          <div className="absolute -bottom-40 -left-40 w-[420px] h-[420px] pointer-events-none">
-            <div className="absolute inset-0 bg-primary/10 rounded-full" />
-            
-            {/* Concentric circles */}
-            <div className="absolute bottom-12 left-12 w-80 h-80 border-2 border-primary/15 rounded-full" />
-            <div className="absolute bottom-20 left-20 w-64 h-64 border-2 border-primary/20 rounded-full" />
+          {/* Top Right - Layered geometric */}
+          <div className="absolute -top-24 -right-24 w-[350px] h-[350px] pointer-events-none">
+            <div className="absolute top-0 right-0 w-72 h-72 bg-primary/6 rounded-full blur-2xl" />
+            <div className="absolute top-16 right-16 w-40 h-40 border border-primary/20 rounded-full" />
+            <div className="absolute top-24 right-24 w-24 h-24 border border-primary/15 rounded-full" />
           </div>
 
-          {/* Bottom Right Corner - Organic shape */}
-          <div className="absolute -bottom-36 -right-36 w-[400px] h-[400px] pointer-events-none">
-            <div className="absolute inset-0 bg-primary/8 rounded-full" />
-            
-            {/* Simple geometric accent */}
-            <div className="absolute bottom-20 right-20 w-40 h-40 bg-primary/20 rounded-tl-full" />
+          {/* Bottom Right - Clean geometric accent */}
+          <div className="absolute -bottom-24 -right-24 w-[320px] h-[320px] pointer-events-none">
+            <div className="absolute inset-0 bg-primary/5 rounded-full blur-3xl" />
+            <div className="absolute bottom-16 right-16 w-32 h-32">
+              <div className="absolute inset-0 border-l border-t border-primary/25 rounded-tl-full" />
+            </div>
           </div>
+
+          {/* Bottom Left - Minimalist lines */}
+          <div className="absolute -bottom-20 -left-20 w-[300px] h-[300px] pointer-events-none">
+            <div className="absolute bottom-12 left-12 w-48 h-48 border border-primary/10 rounded-full" />
+            <div className="absolute bottom-20 left-20 w-32 h-32 border border-primary/15 rounded-full" />
+          </div>
+
+          {/* Subtle center glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl opacity-50" />
         </div>
         
         <div className="container mx-auto">
