@@ -4,106 +4,105 @@
 
 @layer base {
   :root {
-    /* Modern Dark Theme with SaskTask Brand Colors (Blue & Teal) */
-    --background: 222 20% 10%;
-    --foreground: 210 30% 92%;
+    /* Modern deep purple & teal theme */
+    --background: 240 10% 98%;
+    --foreground: 240 10% 10%;
     
-    --card: 222 18% 12%;
-    --card-foreground: 210 30% 92%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
     
-    --popover: 222 18% 12%;
-    --popover-foreground: 210 30% 92%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
     
-    /* Brand Blue from Logo */
-    --primary: 205 95% 55%;
+    /* Rich purple primary */
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 205 90% 65%;
+    --primary-glow: 262 83% 70%;
     
-    /* Brand Teal/Green from Logo */
-    --secondary: 174 65% 48%;
+    /* Vibrant teal secondary */
+    --secondary: 180 75% 45%;
     --secondary-foreground: 0 0% 100%;
     
-    --muted: 217 18% 18%;
-    --muted-foreground: 215 15% 60%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
     
-    /* Accent Teal */
-    --accent: 174 65% 50%;
+    /* Accent coral/pink */
+    --accent: 340 82% 62%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 217 16% 22%;
-    --input: 217 16% 22%;
-    --ring: 205 95% 55%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 262 83% 58%;
     
     --radius: 0.75rem;
     
-    /* Brand Gradients - Blue to Teal */
-    --gradient-primary: linear-gradient(135deg, hsl(205 95% 55%), hsl(205 90% 65%));
-    --gradient-secondary: linear-gradient(135deg, hsl(174 65% 48%), hsl(174 65% 50%));
-    --gradient-accent: linear-gradient(90deg, hsl(205 95% 55%), hsl(174 65% 48%));
-    --gradient-hero: linear-gradient(135deg, hsl(205 95% 55%), hsl(174 65% 48%));
-    --gradient-surface: linear-gradient(180deg, hsl(222 20% 10%), hsl(222 20% 12%));
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%), hsl(280 85% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(180 75% 45%), hsl(190 78% 55%));
+    --gradient-accent: linear-gradient(135deg, hsl(340 82% 62%), hsl(320 85% 65%));
+    --gradient-hero: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(280 85% 65%) 50%, hsl(180 75% 45%) 100%);
+    --gradient-surface: linear-gradient(180deg, hsl(240 10% 98%), hsl(240 10% 96%));
     
-    /* Shadows - Subtle */
-    --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
-    --shadow-md: 0 8px 24px -8px hsl(0 0% 0% / 0.4);
-    --shadow-lg: 0 16px 48px -16px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 30px hsl(205 95% 55% / 0.15);
+    /* Shadows */
+    --shadow-sm: 0 2px 8px -2px hsl(262 83% 58% / 0.1);
+    --shadow-md: 0 8px 24px -8px hsl(262 83% 58% / 0.2);
+    --shadow-lg: 0 16px 48px -16px hsl(262 83% 58% / 0.3);
+    --shadow-glow: 0 0 40px hsl(262 83% 70% / 0.4);
     
-    /* Glass effect - Dark */
-    --glass-bg: hsl(222 18% 12% / 0.7);
-    --glass-border: hsl(217 16% 25% / 0.5);
+    /* Glass effect */
+    --glass-bg: hsl(0 0% 100% / 0.7);
+    --glass-border: hsl(240 10% 90% / 0.5);
   }
   
   .dark {
-    /* Dark mode variant - Brand colors */
-    --background: 222 20% 10%;
-    --foreground: 210 30% 92%;
+    --background: 240 10% 8%;
+    --foreground: 240 5% 96%;
     
-    --card: 222 18% 12%;
-    --card-foreground: 210 30% 92%;
+    --card: 240 10% 12%;
+    --card-foreground: 240 5% 96%;
     
-    --popover: 222 18% 12%;
-    --popover-foreground: 210 30% 92%;
+    --popover: 240 10% 12%;
+    --popover-foreground: 240 5% 96%;
     
-    --primary: 205 95% 55%;
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 205 90% 65%;
+    --primary-glow: 262 83% 70%;
     
-    --secondary: 174 65% 48%;
+    --secondary: 180 75% 45%;
     --secondary-foreground: 0 0% 100%;
     
-    --muted: 217 18% 18%;
-    --muted-foreground: 215 15% 60%;
+    --muted: 240 5% 18%;
+    --muted-foreground: 240 4% 64%;
     
-    --accent: 174 65% 50%;
+    --accent: 340 82% 62%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 217 16% 22%;
-    --input: 217 16% 22%;
-    --ring: 205 95% 55%;
+    --border: 240 6% 20%;
+    --input: 240 6% 20%;
+    --ring: 262 83% 58%;
     
-    /* Same gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(205 95% 55%), hsl(205 90% 65%));
-    --gradient-secondary: linear-gradient(135deg, hsl(174 65% 48%), hsl(174 65% 50%));
-    --gradient-accent: linear-gradient(90deg, hsl(205 95% 55%), hsl(174 65% 48%));
-    --gradient-hero: linear-gradient(135deg, hsl(205 95% 55%), hsl(174 65% 48%));
-    --gradient-surface: linear-gradient(180deg, hsl(222 20% 10%), hsl(222 20% 12%));
+    /* Dark mode gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(262 83% 48%), hsl(280 85% 55%));
+    --gradient-secondary: linear-gradient(135deg, hsl(180 75% 35%), hsl(190 78% 45%));
+    --gradient-accent: linear-gradient(135deg, hsl(340 82% 52%), hsl(320 85% 55%));
+    --gradient-hero: linear-gradient(135deg, hsl(262 83% 48%) 0%, hsl(280 85% 55%) 50%, hsl(180 75% 35%) 100%);
+    --gradient-surface: linear-gradient(180deg, hsl(240 10% 8%), hsl(240 10% 10%));
     
-    /* Same shadows (subtle) */
-    --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
-    --shadow-md: 0 8px 24px -8px hsl(0 0% 0% / 0.4);
-    --shadow-lg: 0 16px 48px -16px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 30px hsl(205 95% 55% / 0.15);
+    /* Dark shadows with glow */
+    --shadow-sm: 0 2px 8px -2px hsl(262 83% 58% / 0.3);
+    --shadow-md: 0 8px 24px -8px hsl(262 83% 58% / 0.4);
+    --shadow-lg: 0 16px 48px -16px hsl(262 83% 58% / 0.5);
+    --shadow-glow: 0 0 60px hsl(262 83% 70% / 0.6);
     
-    /* Same glass */
-    --glass-bg: hsl(222 18% 12% / 0.7);
-    --glass-border: hsl(217 16% 25% / 0.5);
+    /* Dark glass */
+    --glass-bg: hsl(240 10% 12% / 0.7);
+    --glass-border: hsl(240 10% 20% / 0.5);
   }
 }
 
@@ -165,13 +164,13 @@
     border: 1px solid var(--glass-border);
   }
   
-  /* Glow effects - reduced */
+  /* Glow effects */
   .glow {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.15);
+    box-shadow: var(--shadow-glow);
   }
   
   .glow-sm {
-    box-shadow: 0 0 10px hsl(var(--primary) / 0.2);
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
   }
   
   /* Smooth transitions */

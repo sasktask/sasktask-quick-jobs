@@ -123,27 +123,88 @@ const Index = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 relative overflow-hidden bg-gradient-to-b from-background to-card/30">
-        {/* Subtle Background Elements */}
-        <div className="absolute inset-0 -z-10 overflow-hidden opacity-40">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
-          <div className="absolute top-40 right-20 w-64 h-64 bg-secondary/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-primary/3 rounded-full blur-3xl" />
+      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
+        {/* Clean Corner Decorative Elements - SaskTask Style */}
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          {/* Top Left Corner - Large circle with stripe pattern */}
+          <div className="absolute -top-48 -left-48 w-[500px] h-[500px] pointer-events-none">
+            {/* Main circle */}
+            <div className="absolute inset-0 bg-primary/15 rounded-full" />
+            
+            {/* Diagonal stripes pattern */}
+            <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 500 500">
+              <defs>
+                <pattern id="diagonalStripes" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                  <rect width="10" height="20" fill="hsl(var(--primary))" />
+                </pattern>
+              </defs>
+              <circle cx="250" cy="250" r="250" fill="url(#diagonalStripes)" />
+            </svg>
+          </div>
+
+          {/* Top Right Corner - Layered shapes */}
+          <div className="absolute -top-40 -right-40 w-[450px] h-[450px] pointer-events-none">
+            {/* Back layer - larger */}
+            <div className="absolute top-0 right-0 w-[380px] h-[380px] bg-primary/12 rounded-full" />
+            
+            {/* Front layer - medium */}
+            <div className="absolute top-12 right-12 w-[320px] h-[320px] bg-primary/18 rounded-br-full" />
+            
+            {/* Accent circle */}
+            <div className="absolute top-24 right-32 w-32 h-32 bg-accent/40 rounded-full" />
+            
+            {/* Dot grid pattern */}
+            <div className="absolute top-40 right-48 w-28 h-28 opacity-25">
+              <div className="grid grid-cols-6 grid-rows-6 gap-2 h-full">
+                {[...Array(36)].map((_, i) => (
+                  <div key={i} className="w-1.5 h-1.5 bg-primary rounded-full" />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Left Corner - Simple wave */}
+          <div className="absolute -bottom-40 -left-40 w-[420px] h-[420px] pointer-events-none">
+            <div className="absolute inset-0 bg-primary/10 rounded-full" />
+            
+            {/* Concentric circles */}
+            <div className="absolute bottom-12 left-12 w-80 h-80 border-2 border-primary/15 rounded-full" />
+            <div className="absolute bottom-20 left-20 w-64 h-64 border-2 border-primary/20 rounded-full" />
+          </div>
+
+          {/* Bottom Right Corner - Organic shape */}
+          <div className="absolute -bottom-36 -right-36 w-[400px] h-[400px] pointer-events-none">
+            <div className="absolute inset-0 bg-primary/8 rounded-full" />
+            
+            {/* Simple geometric accent */}
+            <div className="absolute bottom-20 right-20 w-40 h-40 bg-primary/20 rounded-tl-full" />
+          </div>
         </div>
         
         <div className="container mx-auto">
           <div className="text-center space-y-8 max-w-5xl mx-auto">
-            {/* SaskTask Brand Title */}
-            <div className="relative animate-fade-up mb-8">
-              <h1 className="relative text-7xl md:text-8xl lg:text-9xl font-heading font-black tracking-tight leading-none">
-                <sup className="text-3xl md:text-4xl lg:text-5xl ml-1 text-primary/80">SaskTask</sup>
-              </h1>
+            {/* Logo with glow effect */}
+            <div className="flex justify-center mb-6 animate-fade-in">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-hero rounded-full blur-2xl opacity-30 animate-glow-pulse" />
+                
+              </div>
             </div>
 
-            {/* Search Feature */}
+            {/* SaskTask Brand Title */}
+            <div className="relative animate-fade-up mb-8">
+              <div className="absolute inset-0 bg-gradient-hero blur-3xl opacity-40 animate-glow-pulse" />
+              <h1 className="relative text-7xl md:text-8xl lg:text-9xl font-heading font-black text-gradient tracking-tight leading-none hover-scale">
+                SaskTask<sup className="text-3xl md:text-4xl lg:text-5xl ml-1">™</sup>
+              </h1>
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-48 h-1 bg-gradient-accent rounded-full blur-sm" />
+            </div>
+
+            {/* Search Feature with enhanced glass design */}
             <div className="max-w-2xl mx-auto mb-8 relative z-10 animate-fade-up" ref={searchRef}>
               <div className="relative group">
-                <div className="relative bg-card/80 backdrop-blur-sm rounded-2xl p-2 border border-border/50 shadow-lg">
+                <div className="absolute inset-0 bg-gradient-hero rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
+                <div className="relative glass rounded-2xl p-2">
                   <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-primary pointer-events-none z-10" />
                   <Input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onFocus={() => searchQuery.length >= 2 && setShowResults(true)} placeholder="Search for tasks, services, or locations..." className="h-16 pl-16 pr-40 text-lg bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 font-medium placeholder:text-muted-foreground/70" />
                   <Button className="absolute right-3 top-3 h-12 px-8 rounded-xl" variant="hero" onClick={handleSearchClick}>
@@ -153,7 +214,7 @@ const Index = () => {
               </div>
 
               {/* Search Results Dropdown */}
-              {showResults && <div className="absolute w-full mt-3 bg-card/95 backdrop-blur-sm rounded-2xl shadow-2xl max-h-96 overflow-y-auto z-50 border border-border">
+              {showResults && <div className="absolute w-full mt-3 glass rounded-2xl shadow-2xl max-h-96 overflow-y-auto z-50 border-2 border-primary/20">
                   {isSearching ? <div className="p-8 text-center">
                       <div className="animate-spin rounded-full h-10 w-10 border-b-3 border-primary mx-auto glow-sm"></div>
                       <p className="mt-3 text-sm font-medium text-muted-foreground">Searching...</p>
@@ -199,20 +260,22 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Main Heading */}
+            {/* Main Heading with gradient text */}
             <div className="space-y-6 animate-fade-up">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold leading-tight text-foreground">
-                Your Tasks, Our Experts
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight">
+                <span className="text-gradient animate-glow-pulse">
+                  Your Tasks, Our Experts
+                </span>
               </h1>
               
-              <div className="flex flex-wrap justify-center gap-3 text-base lg:text-lg font-semibold">
-                <span className="px-5 py-2.5 bg-primary/10 border border-primary/30 rounded-xl text-primary hover:bg-primary/15 transition-all cursor-default">
+              <div className="flex flex-wrap justify-center gap-4 text-lg lg:text-xl font-semibold">
+                <span className="px-6 py-3 bg-gradient-primary rounded-2xl text-white shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-default">
                   💪 Quick & Reliable
                 </span>
-                <span className="px-5 py-2.5 bg-secondary/10 border border-secondary/30 rounded-xl text-secondary hover:bg-secondary/15 transition-all cursor-default">
+                <span className="px-6 py-3 bg-gradient-secondary rounded-2xl text-white shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-default">
                   ✓ Verified Taskers
                 </span>
-                <span className="px-5 py-2.5 bg-accent/10 border border-accent/30 rounded-xl text-accent hover:bg-accent/15 transition-all cursor-default">
+                <span className="px-6 py-3 bg-gradient-accent rounded-2xl text-white shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-default">
                   ⚡ Same-Day Service
                 </span>
               </div>
@@ -231,32 +294,33 @@ const Index = () => {
               </p>
             </div>
 
-            {/* Key Benefits Grid */}
+            {/* Key Benefits Grid with modern cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-6 animate-fade-up" style={{
             animationDelay: '0.4s'
           }}>
               {[{
               icon: Shield,
               text: "Insured & Vetted",
-              color: "primary"
+              gradient: "from-primary to-primary-glow"
             }, {
               icon: Clock,
               text: "Fast Booking",
-              color: "secondary"
+              gradient: "from-secondary via-cyan-500 to-secondary"
             }, {
               icon: DollarSign,
               text: "Fair Prices",
-              color: "accent"
+              gradient: "from-accent to-pink-500"
             }, {
               icon: Star,
               text: "Top Rated",
-              color: "primary"
-            }].map((benefit, i) => <div key={i} className="group">
-                  <div className="flex flex-col items-center gap-3 p-5 rounded-xl bg-card/50 border border-border/50 hover:border-primary/30 hover:bg-card/70 transition-all cursor-default">
-                    <div className={`h-12 w-12 rounded-lg bg-${benefit.color}/10 flex items-center justify-center`}>
-                      <benefit.icon className={`h-6 w-6 text-${benefit.color}`} />
+              gradient: "from-amber-500 to-orange-500"
+            }].map((benefit, i) => <div key={i} className="group relative">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${benefit.gradient} rounded-2xl opacity-0 group-hover:opacity-10 blur-xl transition-all duration-300`} />
+                  <div className="relative flex flex-col items-center gap-3 p-6 rounded-2xl glass hover:scale-105 transition-all duration-300 cursor-default">
+                    <div className={`h-14 w-14 rounded-xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all`}>
+                      <benefit.icon className="h-6 w-6 text-white" />
                     </div>
-                    <span className="text-sm font-semibold">{benefit.text}</span>
+                    <span className="text-sm font-bold font-heading">{benefit.text}</span>
                   </div>
                 </div>)}
             </div>
