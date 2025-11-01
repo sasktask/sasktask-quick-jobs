@@ -1,9 +1,16 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Menu, ShieldCheck } from "lucide-react";
+import { Menu, ShieldCheck, Globe, Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/sasktask-logo.png";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTheme } from "next-themes";
 
 interface NavbarProps {
   onMenuClick?: () => void;
@@ -12,6 +19,8 @@ interface NavbarProps {
 export const Navbar = ({ onMenuClick }: NavbarProps) => {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [language, setLanguage] = useState("English");
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -75,7 +84,44 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
             </div>
           </Link>
           
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="rounded-full hover:bg-primary/10"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5 text-primary" />
+              ) : (
+                <Moon className="h-5 w-5 text-primary" />
+              )}
+            </Button>
+
+            {/* Language Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10">
+                  <Globe className="h-5 w-5 text-primary" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-card z-50">
+                <DropdownMenuItem onClick={() => setLanguage("English")}>
+                  🇺🇸 English
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage("Español")}>
+                  🇪🇸 Español
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage("Français")}>
+                  🇫🇷 Français
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage("Deutsch")}>
+                  🇩🇪 Deutsch
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <div className="hidden md:flex items-center space-x-6">
               {/* Main Navigation */}
               <Link to="/browse" className="text-foreground hover:text-primary transition-colors font-medium">
