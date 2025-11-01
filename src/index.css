@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Modern Dark Theme with Brand Color Accents */
+    /* Modern Dark Theme with SaskTask Brand Colors (Blue & Teal) */
     --background: 220 18% 10%;
     --foreground: 0 0% 98%;
     
@@ -14,20 +14,20 @@
     --popover: 220 16% 14%;
     --popover-foreground: 0 0% 98%;
     
-    /* Brand Color - Keep for logo and key elements */
-    --primary: 262 83% 58%;
+    /* Brand Blue from Logo */
+    --primary: 202 93% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 262 83% 70%;
+    --primary-glow: 202 93% 65%;
     
-    /* Neutral secondary for dark theme */
-    --secondary: 220 16% 22%;
-    --secondary-foreground: 0 0% 98%;
+    /* Brand Teal/Green from Logo */
+    --secondary: 168 82% 43%;
+    --secondary-foreground: 0 0% 100%;
     
     --muted: 220 14% 18%;
     --muted-foreground: 220 10% 65%;
     
-    /* Subtle accent */
-    --accent: 262 60% 50%;
+    /* Accent Teal */
+    --accent: 168 82% 43%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
@@ -35,22 +35,22 @@
     
     --border: 220 14% 20%;
     --input: 220 14% 20%;
-    --ring: 262 83% 58%;
+    --ring: 202 93% 50%;
     
     --radius: 0.75rem;
     
-    /* Gradients - Dark theme optimized */
-    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%), hsl(262 83% 48%));
-    --gradient-secondary: linear-gradient(135deg, hsl(220 16% 22%), hsl(220 16% 18%));
-    --gradient-accent: linear-gradient(135deg, hsl(262 60% 50%), hsl(262 70% 60%));
-    --gradient-hero: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(262 70% 48%) 100%);
+    /* Brand Gradients - Blue to Teal */
+    --gradient-primary: linear-gradient(135deg, hsl(202 93% 50%), hsl(202 93% 40%));
+    --gradient-secondary: linear-gradient(135deg, hsl(168 82% 43%), hsl(168 82% 35%));
+    --gradient-accent: linear-gradient(135deg, hsl(168 82% 43%), hsl(168 70% 50%));
+    --gradient-hero: linear-gradient(135deg, hsl(202 93% 50%) 0%, hsl(168 82% 43%) 100%);
     --gradient-surface: linear-gradient(180deg, hsl(220 18% 10%), hsl(220 18% 12%));
     
-    /* Shadows - Dark theme with glow */
+    /* Shadows - Dark theme with brand glow */
     --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
     --shadow-md: 0 8px 24px -8px hsl(0 0% 0% / 0.4);
     --shadow-lg: 0 16px 48px -16px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 60px hsl(262 83% 58% / 0.3);
+    --shadow-glow: 0 0 60px hsl(202 93% 50% / 0.3);
     
     /* Glass effect - Dark */
     --glass-bg: hsl(220 16% 14% / 0.7);
@@ -58,7 +58,7 @@
   }
   
   .dark {
-    /* Dark mode variant - keeping for compatibility */
+    /* Dark mode variant - Brand colors */
     --background: 220 18% 10%;
     --foreground: 0 0% 98%;
     
@@ -68,17 +68,17 @@
     --popover: 220 16% 14%;
     --popover-foreground: 0 0% 98%;
     
-    --primary: 262 83% 58%;
+    --primary: 202 93% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 262 83% 70%;
+    --primary-glow: 202 93% 65%;
     
-    --secondary: 220 16% 22%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 168 82% 43%;
+    --secondary-foreground: 0 0% 100%;
     
     --muted: 220 14% 18%;
     --muted-foreground: 220 10% 65%;
     
-    --accent: 262 60% 50%;
+    --accent: 168 82% 43%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
@@ -86,20 +86,20 @@
     
     --border: 220 14% 20%;
     --input: 220 14% 20%;
-    --ring: 262 83% 58%;
+    --ring: 202 93% 50%;
     
     /* Same gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%), hsl(262 83% 48%));
-    --gradient-secondary: linear-gradient(135deg, hsl(220 16% 22%), hsl(220 16% 18%));
-    --gradient-accent: linear-gradient(135deg, hsl(262 60% 50%), hsl(262 70% 60%));
-    --gradient-hero: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(262 70% 48%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(202 93% 50%), hsl(202 93% 40%));
+    --gradient-secondary: linear-gradient(135deg, hsl(168 82% 43%), hsl(168 82% 35%));
+    --gradient-accent: linear-gradient(135deg, hsl(168 82% 43%), hsl(168 70% 50%));
+    --gradient-hero: linear-gradient(135deg, hsl(202 93% 50%) 0%, hsl(168 82% 43%) 100%);
     --gradient-surface: linear-gradient(180deg, hsl(220 18% 10%), hsl(220 18% 12%));
     
     /* Same shadows */
     --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
     --shadow-md: 0 8px 24px -8px hsl(0 0% 0% / 0.4);
     --shadow-lg: 0 16px 48px -16px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 60px hsl(262 83% 58% / 0.3);
+    --shadow-glow: 0 0 60px hsl(202 93% 50% / 0.3);
     
     /* Same glass */
     --glass-bg: hsl(220 16% 14% / 0.7);
