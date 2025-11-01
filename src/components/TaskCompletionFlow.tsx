@@ -1,0 +1,325 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { CheckCircle, AlertCircle, Shield, Clock, DollarSign } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+interface TaskCompletionFlowProps {
+  bookingId: string;
+  taskId: string;
+  currentUserId: string;
+  taskDoerId: string;
+  taskGiverId: string;
+  bookingStatus: string;
+  taskStatus: string;
+  paymentAmount: number;
+  onStatusUpdate: () => void;
+}
+
+export const TaskCompletionFlow = ({
+  bookingId,
+  taskId,
+  currentUserId,
+  taskDoerId,
+  taskGiverId,
+  bookingStatus,
+  taskStatus,
+  paymentAmount,
+  onStatusUpdate
+}: TaskCompletionFlowProps) => {
+  const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [completionNotes, setCompletionNotes] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState<any>(null);
+  
+  const isTaskDoer = currentUserId === taskDoerId;
+  const isTaskGiver = currentUserId === taskGiverId;
+  
+  // Calculate payment breakdown
+  const platformFee = (paymentAmount * 0.15).toFixed(2);
+  const tax = (paymentAmount * 0.05).toFixed(2);
+  const taskerPayout = (paymentAmount - parseFloat(platformFee) - parseFloat(tax)).toFixed(2);
+
+  // Fetch payment status
+  useEffect(() => {
+    const fetchPaymentStatus = async () => {
+      const { data } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("booking_id", bookingId)
+        .maybeSingle();
+      
+      setPaymentStatus(data);
+    };
+    fetchPaymentStatus();
+  }, [bookingId]);
+
+  // Task Doer marks task as completed
+  const handleMarkComplete = async () => {
+    setIsProcessing(true);
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ 
+          status: "completed"
+        })
+        .eq("id", bookingId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Task Marked Complete! ✅",
+        description: "Waiting for task giver to confirm and release payment.",
+      });
+      
+      onStatusUpdate();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Task Giver confirms completion and releases payment
+  const handleConfirmAndRelease = async () => {
+    setIsProcessing(true);
+    try {
+      // Update payment to released
+      const { error: paymentError } = await supabase
+        .from("payments")
+        .update({ 
+          escrow_status: "released",
+          released_at: new Date().toISOString()
+        })
+        .eq("booking_id", bookingId)
+        .eq("task_id", taskId);
+
+      if (paymentError) throw paymentError;
+
+      // Update task to completed
+      const { error: taskError } = await supabase
+        .from("tasks")
+        .update({ status: "completed" })
+        .eq("id", taskId);
+
+      if (taskError) throw taskError;
+
+      toast({
+        title: "Payment Released! 💰",
+        description: `$${taskerPayout} has been released to the tasker. Task completed!`,
+      });
+      
+      onStatusUpdate();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // If task is already fully completed
+  if (taskStatus === "completed" && paymentStatus?.escrow_status === "released") {
+    return (
+      <Card className="border-green-500 bg-green-50/50 dark:bg-green-950/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-600 dark:text-green-400">
+            <CheckCircle className="h-6 w-6" />
+            Task Completed & Payment Released
+          </CardTitle>
+          <CardDescription>
+            This task has been successfully completed and payment has been released.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="p-4 bg-white/50 dark:bg-gray-900/50 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-muted-foreground">Task Amount:</span>
+                <span className="font-semibold">${paymentAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-muted-foreground">Platform Fee (15%):</span>
+                <span className="text-red-600">-${platformFee}</span>
+              </div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-muted-foreground">Tax (5% GST):</span>
+                <span className="text-red-600">-${tax}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-green-200 dark:border-green-800">
+                <span className="font-bold">Tasker Received:</span>
+                <span className="text-lg font-bold text-green-600 dark:text-green-400">${taskerPayout}</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Task Doer View - waiting for payment or can mark complete
+  if (isTaskDoer) {
+    if (bookingStatus === "accepted" && !paymentStatus?.escrow_status) {
+      return (
+        <Alert>
+          <Clock className="h-4 w-4" />
+          <AlertDescription>
+            Waiting for task giver to make payment. Once payment is secured in escrow, you can start the task.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    if (bookingStatus === "in_progress" && paymentStatus?.escrow_status === "held") {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-6 w-6 text-primary" />
+              Payment Secured - Ready to Complete
+            </CardTitle>
+            <CardDescription>
+              Mark the task as complete when finished. Payment will be released after task giver confirms.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert className="bg-primary/5 border-primary/20">
+              <DollarSign className="h-4 w-4 text-primary" />
+              <AlertDescription>
+                <strong>${paymentAmount.toFixed(2)}</strong> is held in escrow. You'll receive <strong>${taskerPayout}</strong> after confirmation.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Completion Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                placeholder="Add any notes about the completed work..."
+                value={completionNotes}
+                onChange={(e) => setCompletionNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <Button 
+              onClick={handleMarkComplete}
+              disabled={isProcessing}
+              className="w-full"
+              size="lg"
+            >
+              {isProcessing ? "Processing..." : "Mark Task Complete"}
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (bookingStatus === "completed" && paymentStatus?.escrow_status === "held") {
+      return (
+        <Alert className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800">
+          <Clock className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+            ⏳ Waiting for task giver to confirm completion and release your payment of <strong>${taskerPayout}</strong>.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+  }
+
+  // Task Giver View - can confirm and release payment
+  if (isTaskGiver) {
+    if (bookingStatus === "accepted" && !paymentStatus?.escrow_status) {
+      return (
+        <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800 dark:text-amber-200">
+            Please make payment to secure the booking. Payment will be held in escrow until you confirm task completion.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    if (bookingStatus === "in_progress" && paymentStatus?.escrow_status === "held") {
+      return (
+        <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+          <Shield className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800 dark:text-blue-200">
+            💼 Payment of <strong>${paymentAmount.toFixed(2)}</strong> is secured in escrow. Waiting for tasker to complete the job.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    if (bookingStatus === "completed" && paymentStatus?.escrow_status === "held") {
+      return (
+        <Card className="border-primary">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-6 w-6 text-primary" />
+              Confirm Completion & Release Payment
+            </CardTitle>
+            <CardDescription>
+              The tasker has marked this task as complete. Review the work and release payment.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800 dark:text-green-200">
+                ✅ Tasker has completed the task and is waiting for your confirmation.
+              </AlertDescription>
+            </Alert>
+
+            <div className="p-4 bg-muted/50 rounded-lg border border-border space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Task Amount:</span>
+                <span className="font-semibold">${paymentAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Platform Fee (15%):</span>
+                <span>-${platformFee}</span>
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Tax (5% GST):</span>
+                <span>-${tax}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-border">
+                <span className="font-bold">Tasker Will Receive:</span>
+                <span className="text-lg font-bold text-primary">${taskerPayout}</span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                🔒 <strong>Secure Process:</strong> By confirming, you release the payment from escrow. 
+                The tasker will receive ${taskerPayout} and the task will be marked as complete.
+              </p>
+            </div>
+
+            <Button 
+              onClick={handleConfirmAndRelease}
+              disabled={isProcessing}
+              className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+              size="lg"
+            >
+              {isProcessing ? "Processing..." : `Confirm & Release $${taskerPayout}`}
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+  }
+
+  return null;
+};

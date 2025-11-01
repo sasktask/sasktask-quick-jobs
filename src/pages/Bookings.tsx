@@ -12,6 +12,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { MessagingPanel } from "@/components/MessagingPanel";
 import { PaymentPanel } from "@/components/PaymentPanel";
+import { TaskCompletionFlow } from "@/components/TaskCompletionFlow";
 import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, Shield, Star, Phone, MapPin } from "lucide-react";
 
 const Bookings = () => {
@@ -146,6 +147,7 @@ const Bookings = () => {
     const variants: any = {
       pending: "default",
       accepted: "default",
+      in_progress: "default",
       completed: "default",
       rejected: "destructive"
     };
@@ -153,13 +155,14 @@ const Bookings = () => {
     const colors: any = {
       pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
       accepted: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+      in_progress: "bg-purple-500/10 text-purple-500 border-purple-500/20",
       completed: "bg-green-500/10 text-green-500 border-green-500/20",
       rejected: "bg-red-500/10 text-red-500 border-red-500/20"
     };
 
     return (
       <Badge variant={variants[status]} className={colors[status]}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {status === "in_progress" ? "In Progress" : status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
     );
   };
@@ -194,15 +197,16 @@ const Bookings = () => {
         </div>
 
         <Tabs defaultValue="all" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="all">All ({bookings.length})</TabsTrigger>
             <TabsTrigger value="pending">Pending ({filterBookings("pending").length})</TabsTrigger>
             <TabsTrigger value="accepted">Accepted ({filterBookings("accepted").length})</TabsTrigger>
+            <TabsTrigger value="in_progress">In Progress ({filterBookings("in_progress").length})</TabsTrigger>
             <TabsTrigger value="completed">Completed ({filterBookings("completed").length})</TabsTrigger>
             <TabsTrigger value="rejected">Rejected ({filterBookings("rejected").length})</TabsTrigger>
           </TabsList>
 
-          {["all", "pending", "accepted", "completed", "rejected"].map(tab => (
+          {["all", "pending", "accepted", "in_progress", "completed", "rejected"].map(tab => (
             <TabsContent key={tab} value={tab} className="space-y-4">
               {(tab === "all" ? bookings : filterBookings(tab)).length === 0 ? (
                 <Card className="border-border">
@@ -328,72 +332,61 @@ const Bookings = () => {
                             )}
                           </div>
 
-                          {/* Action Buttons */}
-                          <div className="flex gap-2 pt-4 border-t border-border">
-                            {userRole === "task_giver" && booking.status === "pending" && (
-                              <>
-                                <Button
-                                  onClick={() => updateBookingStatus(booking.id, "accepted")}
-                                  className="flex-1"
-                                  size="lg"
-                                >
-                                  <CheckCircle className="mr-2 h-5 w-5" />
-                                  Accept Request
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  onClick={() => updateBookingStatus(booking.id, "rejected")}
-                                  className="flex-1"
-                                  size="lg"
-                                >
-                                  <XCircle className="mr-2 h-5 w-5" />
-                                  Decline
-                                </Button>
-                              </>
-                            )}
-
-                            {booking.status === "accepted" && (
-                              <>
+                          {/* Task Completion Flow - Escrow System */}
+                          {(booking.status === "accepted" || booking.status === "in_progress" || booking.status === "completed") && (
+                            <div className="pt-4 border-t border-border">
+                              <TaskCompletionFlow
+                                bookingId={booking.id}
+                                taskId={booking.tasks?.id}
+                                currentUserId={currentUserId}
+                                taskDoerId={booking.task_doer_id}
+                                taskGiverId={booking.tasks?.task_giver_id}
+                                bookingStatus={booking.status}
+                                taskStatus={booking.tasks?.status || "open"}
+                                paymentAmount={booking.tasks?.pay_amount || 0}
+                                onStatusUpdate={checkUserAndFetchBookings}
+                              />
+                              
+                              {/* Chat Button - Always available for accepted/in_progress */}
+                              {(booking.status === "accepted" || booking.status === "in_progress") && (
                                 <Button
                                   variant="outline"
                                   onClick={() => {
                                     setSelectedBooking(booking);
                                     setShowMessaging(true);
                                   }}
-                                  className="flex-1"
+                                  className="w-full mt-3"
                                   size="lg"
                                 >
                                   <MessageSquare className="mr-2 h-5 w-5" />
-                                  Chat
+                                  Chat with {userRole === "task_giver" ? "Tasker" : "Task Giver"}
                                 </Button>
-                                
-                                {userRole === "task_giver" && (
-                                  <Button
-                                    onClick={() => {
-                                      setSelectedBooking(booking);
-                                      setShowPayment(true);
-                                    }}
-                                    className="flex-1"
-                                    size="lg"
-                                  >
-                                    <DollarSign className="mr-2 h-5 w-5" />
-                                    Pay ${booking.tasks?.pay_amount}
-                                  </Button>
-                                )}
-
-                                {userRole === "task_doer" && (
-                                  <Button
-                                    onClick={() => updateBookingStatus(booking.id, "completed")}
-                                    className="flex-1"
-                                    size="lg"
-                                  >
-                                    <CheckCircle className="mr-2 h-5 w-5" />
-                                    Mark Complete
-                                  </Button>
-                                )}
-                              </>
-                            )}
-                          </div>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Action Buttons for Pending */}
+                          {userRole === "task_giver" && booking.status === "pending" && (
+                            <div className="flex gap-2 pt-4 border-t border-border">
+                              <Button
+                                onClick={() => updateBookingStatus(booking.id, "accepted")}
+                                className="flex-1"
+                                size="lg"
+                              >
+                                <CheckCircle className="mr-2 h-5 w-5" />
+                                Accept Request
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => updateBookingStatus(booking.id, "rejected")}
+                                className="flex-1"
+                                size="lg"
+                              >
+                                <XCircle className="mr-2 h-5 w-5" />
+                                Decline
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
