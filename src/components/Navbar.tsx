@@ -1,15 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Menu, ShieldCheck, Globe } from "lucide-react";
+import { Menu, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import logo from "@/assets/sasktask-logo.png";
 
 interface NavbarProps {
@@ -19,7 +12,6 @@ interface NavbarProps {
 export const Navbar = ({ onMenuClick }: NavbarProps) => {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [language, setLanguage] = useState("en");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -99,10 +91,6 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 Become a Tasker
               </Link>
 
-              <Link to="/how-it-works" className="text-foreground hover:text-primary transition-colors font-medium">
-                How It Works
-              </Link>
-
               <Link to="/categories" className="text-foreground hover:text-primary transition-colors font-medium">
                 Categories
               </Link>
@@ -127,30 +115,17 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 </>
               ) : (
                 <>
-                  <Link to="/auth" className="text-foreground hover:text-primary transition-colors font-medium">
-                    Sign In
+                  <Link to="/auth">
+                    <Button variant="outline" size="lg" className="font-semibold border-2">
+                      Sign In
+                    </Button>
                   </Link>
                   <Link to="/auth">
-                    <Button variant="hero" size="default">Get Started</Button>
+                    <Button variant="hero" size="lg" className="font-semibold">Get Started</Button>
                   </Link>
                 </>
               )}
             </div>
-
-            {/* Language Selector */}
-            <Select value={language} onValueChange={setLanguage}>
-              <SelectTrigger className="w-[140px] hidden md:flex">
-                <Globe className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Language" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="fr">Français</SelectItem>
-                <SelectItem value="es">Español</SelectItem>
-                <SelectItem value="de">Deutsch</SelectItem>
-                <SelectItem value="zh">中文</SelectItem>
-              </SelectContent>
-            </Select>
 
             <button onClick={onMenuClick} className="md:hidden">
               <Menu className="h-6 w-6" />
