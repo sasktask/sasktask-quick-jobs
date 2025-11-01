@@ -1,9 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { useEffect, useState, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Snowflake, 
   Sparkles, 
@@ -37,6 +39,106 @@ import heroImage from "@/assets/hero-image.jpg";
 import logo from "@/assets/sasktask-logo.png";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  const categories = [
+    { name: "Snow Removal", icon: "❄️", path: "/browse?category=Snow Removal" },
+    { name: "Cleaning", icon: "🧹", path: "/browse?category=Cleaning" },
+    { name: "Moving", icon: "📦", path: "/browse?category=Moving" },
+    { name: "Delivery", icon: "🚚", path: "/browse?category=Delivery" },
+    { name: "Handyman", icon: "🔧", path: "/browse?category=Handyman" },
+    { name: "Gardening", icon: "🌱", path: "/browse?category=Gardening" },
+    { name: "Pet Care", icon: "🐾", path: "/browse?category=Pet Care" },
+    { name: "Painting", icon: "🎨", path: "/browse?category=Painting" },
+  ];
+
+  const popularSearches = ["Snow Removal", "Cleaning", "Moving Help", "Assembly"];
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowResults(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Search functionality
+  useEffect(() => {
+    const searchTasks = async () => {
+      if (searchQuery.trim().length < 2) {
+        setSearchResults([]);
+        setShowResults(false);
+        return;
+      }
+
+      setIsSearching(true);
+      setShowResults(true);
+
+      try {
+        // Search in tasks
+        const { data: tasks, error } = await supabase
+          .from("tasks")
+          .select("*")
+          .or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%`)
+          .eq("status", "open")
+          .limit(5);
+
+        if (error) throw error;
+
+        // Combine with category matches
+        const categoryMatches = categories.filter(cat =>
+          cat.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+        const results = [
+          ...categoryMatches.map(cat => ({ type: "category", ...cat })),
+          ...(tasks || []).map(task => ({ type: "task", ...task }))
+        ];
+
+        setSearchResults(results);
+      } catch (error) {
+        console.error("Search error:", error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(searchTasks, 300);
+    return () => clearTimeout(debounce);
+  }, [searchQuery]);
+
+  const handleSearchClick = () => {
+    if (searchQuery.trim()) {
+      navigate(`/browse?search=${encodeURIComponent(searchQuery)}`);
+      setShowResults(false);
+    }
+  };
+
+  const handlePopularSearchClick = (term: string) => {
+    setSearchQuery(term);
+    navigate(`/browse?category=${encodeURIComponent(term)}`);
+  };
+
+  const handleResultClick = (result: any) => {
+    if (result.type === "category") {
+      navigate(result.path);
+    } else {
+      navigate(`/task/${result.id}`);
+    }
+    setShowResults(false);
+    setSearchQuery("");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -73,30 +175,97 @@ const Index = () => {
               />
             </div>
 
-            {/* Search Feature */}
-            <div className="max-w-2xl mx-auto mb-8">
+            {/* Search Feature with Live Results */}
+            <div className="max-w-2xl mx-auto mb-8 relative z-10" ref={searchRef}>
               <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground pointer-events-none z-10" />
                 <Input
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
                   placeholder="Search for tasks, services, or locations..."
-                  className="h-14 pl-6 pr-32 text-lg bg-card/80 backdrop-blur-sm border-2 border-border focus:border-primary shadow-lg group-hover:shadow-xl transition-all"
+                  className="h-14 pl-14 pr-32 text-lg bg-card/80 backdrop-blur-sm border-2 border-border focus:border-primary shadow-lg group-hover:shadow-xl transition-all"
                 />
                 <Button 
                   className="absolute right-2 top-2 h-10 px-6"
                   variant="hero"
+                  onClick={handleSearchClick}
                 >
                   Search
                 </Button>
               </div>
+
+              {/* Search Results Dropdown */}
+              {showResults && (
+                <div className="absolute w-full mt-2 bg-card border-2 border-border rounded-lg shadow-2xl max-h-96 overflow-y-auto z-50">
+                  {isSearching ? (
+                    <div className="p-6 text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                      <p className="mt-2 text-sm text-muted-foreground">Searching...</p>
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="py-2">
+                      {searchResults.map((result, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleResultClick(result)}
+                          className="w-full px-4 py-3 hover:bg-muted/50 flex items-start gap-3 text-left transition-colors"
+                        >
+                          {result.type === "category" ? (
+                            <>
+                              <span className="text-2xl">{result.icon}</span>
+                              <div>
+                                <p className="font-semibold">{result.name}</p>
+                                <p className="text-xs text-muted-foreground">Browse category</p>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <Briefcase className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold truncate">{result.title}</p>
+                                <p className="text-xs text-muted-foreground truncate">{result.description}</p>
+                                <div className="flex gap-2 mt-1">
+                                  <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                                    {result.category}
+                                  </span>
+                                  <span className="text-xs px-2 py-0.5 bg-green-500/10 text-green-600 rounded-full font-bold">
+                                    ${result.pay_amount}
+                                  </span>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center text-muted-foreground">
+                      <Search className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No results found for "{searchQuery}"</p>
+                      <p className="text-sm mt-1">Try browsing categories or post your own task</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex flex-wrap justify-center gap-2 mt-3 text-sm">
                 <span className="text-muted-foreground">Popular:</span>
-                <button className="text-primary hover:underline">Snow Removal</button>
-                <span className="text-muted-foreground">•</span>
-                <button className="text-primary hover:underline">Cleaning</button>
-                <span className="text-muted-foreground">•</span>
-                <button className="text-primary hover:underline">Moving Help</button>
-                <span className="text-muted-foreground">•</span>
-                <button className="text-primary hover:underline">Assembly</button>
+                {popularSearches.map((term, idx) => (
+                  <>
+                    <button
+                      key={term}
+                      onClick={() => handlePopularSearchClick(term)}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      {term}
+                    </button>
+                    {idx < popularSearches.length - 1 && (
+                      <span key={`sep-${idx}`} className="text-muted-foreground">•</span>
+                    )}
+                  </>
+                ))}
               </div>
             </div>
             

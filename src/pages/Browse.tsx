@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ const Browse = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   const categories = [
@@ -31,6 +32,18 @@ const Browse = () => {
   ];
 
   useEffect(() => {
+    // Parse URL parameters on mount
+    const params = new URLSearchParams(location.search);
+    const searchParam = params.get('search');
+    const categoryParam = params.get('category');
+    
+    if (searchParam) {
+      setSearchTerm(searchParam);
+    }
+    if (categoryParam) {
+      setCategoryFilter(categoryParam);
+    }
+    
     checkAuthAndFetchTasks();
   }, []);
 
