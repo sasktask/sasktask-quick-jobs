@@ -29,55 +29,94 @@ const Index = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
+      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
+        {/* Background Decorations */}
+        <div className="absolute top-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl -z-10" />
+        
         <div className="container mx-auto">
-          <div className="text-center space-y-8 animate-fade-in max-w-4xl mx-auto">
+          <div className="text-center space-y-8 animate-fade-in max-w-5xl mx-auto">
             {/* Logo */}
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-6 animate-scale-in">
               <img 
                 src={logo} 
                 alt="SaskTask Logo" 
-                className="h-24 w-auto"
+                className="h-28 w-auto hover-scale"
               />
             </div>
             
-            {/* Main Heading */}
-            <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-              Trusted help,
-              <br />
-              <span className="bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
-                when and how you need it.
-              </span>
-            </h1>
+            {/* Main Heading with Multiple Value Props */}
+            <div className="space-y-4">
+              <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
+                <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-fade-in">
+                  Your Tasks, Our Experts
+                </span>
+              </h1>
+              
+              <div className="flex flex-wrap justify-center gap-4 text-xl lg:text-2xl font-semibold text-muted-foreground">
+                <span className="px-4 py-2 bg-primary/10 rounded-full border border-primary/20 hover:border-primary/50 transition-all hover-scale">
+                  💪 Quick & Reliable
+                </span>
+                <span className="px-4 py-2 bg-secondary/10 rounded-full border border-secondary/20 hover:border-secondary/50 transition-all hover-scale">
+                  ✓ Verified Taskers
+                </span>
+                <span className="px-4 py-2 bg-accent/10 rounded-full border border-accent/20 hover:border-accent/50 transition-all hover-scale">
+                  ⚡ Same-Day Service
+                </span>
+              </div>
+            </div>
             
-            {/* Description */}
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              SaskTask makes it easy to find trusted local Taskers, schedule help, 
-              and get your to-dos done fast.
-            </p>
+            {/* Enhanced Description */}
+            <div className="max-w-3xl mx-auto space-y-4">
+              <p className="text-2xl lg:text-3xl font-bold text-foreground">
+                Connect with trusted local Taskers in minutes
+              </p>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                From home repairs to moving help, cleaning to assembly - find skilled professionals 
+                for any task. Post your job or browse opportunities. Get it done today!
+              </p>
+            </div>
+
+            {/* Key Benefits Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4">
+              {[
+                { icon: Shield, text: "Insured & Vetted", color: "from-blue-500 to-cyan-500" },
+                { icon: Clock, text: "Fast Booking", color: "from-purple-500 to-pink-500" },
+                { icon: DollarSign, text: "Fair Prices", color: "from-orange-500 to-red-500" },
+                { icon: Star, text: "Top Rated", color: "from-green-500 to-emerald-500" }
+              ].map((benefit, i) => (
+                <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/50 transition-all hover-scale">
+                  <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${benefit.color} flex items-center justify-center`}>
+                    <benefit.icon className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="text-sm font-medium">{benefit.text}</span>
+                </div>
+              ))}
+            </div>
             
             {/* What do you need help with? */}
             <div className="pt-8">
-              <h2 className="text-2xl font-semibold mb-6">What do you need help with?</h2>
+              <h2 className="text-3xl lg:text-4xl font-bold mb-3">What do you need help with?</h2>
+              <p className="text-muted-foreground mb-6">Choose a service to get started</p>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
                 {[
-                  { icon: Package, label: "Assembly" },
-                  { icon: Monitor, label: "Mounting" },
-                  { icon: Truck, label: "Moving" },
-                  { icon: Sparkles, label: "Cleaning" },
-                  { icon: Trees, label: "Outdoor Help" },
-                  { icon: Home, label: "Home Repairs" },
-                  { icon: PaintBucket, label: "Painting" },
-                  { icon: MoreHorizontal, label: "Many More" }
+                  { icon: Package, label: "Assembly", color: "from-blue-500 to-cyan-500" },
+                  { icon: Monitor, label: "Mounting", color: "from-purple-500 to-pink-500" },
+                  { icon: Truck, label: "Moving", color: "from-orange-500 to-red-500" },
+                  { icon: Sparkles, label: "Cleaning", color: "from-green-500 to-emerald-500" },
+                  { icon: Trees, label: "Outdoor Help", color: "from-teal-500 to-cyan-500" },
+                  { icon: Home, label: "Home Repairs", color: "from-rose-500 to-pink-500" },
+                  { icon: PaintBucket, label: "Painting", color: "from-amber-500 to-orange-500" },
+                  { icon: MoreHorizontal, label: "Many More", color: "from-violet-500 to-purple-500" }
                 ].map((category, i) => (
                   <Link key={i} to="/browse">
-                    <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-border hover:border-primary/50 h-full">
-                      <CardContent className="p-4 flex flex-col items-center justify-center gap-3">
-                        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <category.icon className="h-6 w-6 text-white" />
+                    <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-border hover:border-primary/50 h-full hover:-translate-y-1">
+                      <CardContent className="p-6 flex flex-col items-center justify-center gap-3">
+                        <div className={`h-14 w-14 rounded-xl bg-gradient-to-br ${category.color} flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}>
+                          <category.icon className="h-7 w-7 text-white" />
                         </div>
-                        <span className="text-sm font-medium text-center">{category.label}</span>
+                        <span className="text-sm font-semibold text-center">{category.label}</span>
                       </CardContent>
                     </Card>
                   </Link>
@@ -86,29 +125,36 @@ const Index = () => {
             </div>
             
             {/* CTA Buttons */}
-            <div className="flex flex-wrap justify-center gap-4 pt-6">
+            <div className="flex flex-wrap justify-center gap-4 pt-8">
               <Link to="/auth">
-                <Button variant="hero" size="lg" className="group">
-                  Get Started
+                <Button variant="hero" size="lg" className="group shadow-xl hover:shadow-2xl transition-all text-lg px-8 py-6">
+                  Get Started Free
                   <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
                 </Button>
               </Link>
               <Link to="/browse">
-                <Button variant="outline" size="lg">
-                  Browse Tasks
+                <Button variant="outline" size="lg" className="shadow-lg hover:shadow-xl transition-all text-lg px-8 py-6">
+                  Explore Tasks
                 </Button>
               </Link>
             </div>
             
             {/* Stats */}
-            <div className="flex items-center justify-center gap-8 pt-4">
-              <div className="flex items-center gap-2">
-                <Star className="h-5 w-5 fill-accent text-accent" />
-                <span className="text-sm font-medium">4.9/5 Rating</span>
+            <div className="flex flex-wrap items-center justify-center gap-8 pt-6">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20">
+                <Star className="h-6 w-6 fill-accent text-accent" />
+                <span className="font-bold text-lg">4.9/5</span>
+                <span className="text-sm text-muted-foreground">Rating</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">10K+ Active Users</span>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                <Users className="h-6 w-6 text-primary" />
+                <span className="font-bold text-lg">10K+</span>
+                <span className="text-sm text-muted-foreground">Active Users</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20">
+                <Shield className="h-6 w-6 text-secondary" />
+                <span className="font-bold text-lg">100%</span>
+                <span className="text-sm text-muted-foreground">Verified</span>
               </div>
             </div>
           </div>
