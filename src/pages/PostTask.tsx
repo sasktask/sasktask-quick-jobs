@@ -12,6 +12,18 @@ import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Loader2 } from "lucide-react";
+import { z } from "zod";
+
+const taskSchema = z.object({
+  title: z.string().trim().min(5, "Title must be at least 5 characters").max(200, "Title too long"),
+  description: z.string().trim().min(20, "Description must be at least 20 characters").max(5000, "Description too long"),
+  category: z.string().min(1, "Category is required"),
+  location: z.string().trim().min(3, "Location must be at least 3 characters").max(200, "Location too long"),
+  pay_amount: z.number().positive("Pay amount must be positive").max(100000, "Pay amount too high"),
+  scheduled_date: z.string().optional(),
+  tools_provided: z.boolean(),
+  tools_description: z.string().max(1000, "Tools description too long").optional(),
+});
 
 const PostTask = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,18 +107,35 @@ const PostTask = () => {
     setIsSubmitting(true);
 
     try {
+      // Validate input
+      const validation = taskSchema.safeParse({
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        location: formData.location,
+        pay_amount: parseFloat(formData.pay_amount),
+        scheduled_date: formData.scheduled_date,
+        tools_provided: formData.tools_provided,
+        tools_description: formData.tools_description,
+      });
+
+      if (!validation.success) {
+        const firstError = validation.error.errors[0];
+        throw new Error(firstError.message);
+      }
+
       const { error } = await supabase
         .from("tasks")
         .insert({
           task_giver_id: userId,
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          location: formData.location,
-          pay_amount: parseFloat(formData.pay_amount),
-          scheduled_date: formData.scheduled_date || null,
-          tools_provided: formData.tools_provided,
-          tools_description: formData.tools_description || null,
+          title: validation.data.title,
+          description: validation.data.description,
+          category: validation.data.category,
+          location: validation.data.location,
+          pay_amount: validation.data.pay_amount,
+          scheduled_date: validation.data.scheduled_date || null,
+          tools_provided: validation.data.tools_provided,
+          tools_description: validation.data.tools_description || null,
           status: "open"
         });
 

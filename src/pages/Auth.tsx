@@ -9,6 +9,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
+import { z } from "zod";
+
+const signInSchema = z.object({
+  email: z.string().email("Invalid email address").max(255, "Email too long"),
+  password: z.string().min(1, "Password is required"),
+});
+
+const signUpSchema = z.object({
+  fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name too long"),
+  email: z.string().email("Invalid email address").max(255, "Email too long"),
+  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number").optional().or(z.literal("")),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain an uppercase letter")
+    .regex(/[0-9]/, "Password must contain a number"),
+  role: z.enum(["task_giver", "task_doer"]),
+});
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -42,14 +59,28 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // Validate input
+      const validation = signUpSchema.safeParse({
+        fullName,
         email,
+        phone,
         password,
+        role,
+      });
+
+      if (!validation.success) {
+        const firstError = validation.error.errors[0];
+        throw new Error(firstError.message);
+      }
+
+      const { error } = await supabase.auth.signUp({
+        email: validation.data.email,
+        password: validation.data.password,
         options: {
           data: {
-            full_name: fullName,
-            phone,
-            role,
+            full_name: validation.data.fullName,
+            phone: validation.data.phone || null,
+            role: validation.data.role,
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
@@ -77,9 +108,17 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
+      // Validate input
+      const validation = signInSchema.safeParse({ email, password });
+
+      if (!validation.success) {
+        const firstError = validation.error.errors[0];
+        throw new Error(firstError.message);
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: validation.data.email,
+        password: validation.data.password,
       });
 
       if (error) throw error;
@@ -191,12 +230,13 @@ const Auth = () => {
                       <Input
                         id="signup-password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="Min 8 chars, 1 uppercase, 1 number"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        minLength={6}
+                        minLength={8}
                       />
+                      <p className="text-xs text-muted-foreground">Must contain uppercase letter and number</p>
                     </div>
                     <div className="space-y-2">
                       <Label>I want to:</Label>

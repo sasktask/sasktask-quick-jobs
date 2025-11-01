@@ -63,7 +63,7 @@ const Browse = () => {
         .from("tasks")
         .select(`
           *,
-          profiles!tasks_task_giver_id_fkey (
+          public_profiles!tasks_task_giver_id_fkey (
             full_name,
             rating,
             avatar_url
@@ -173,9 +173,9 @@ const Browse = () => {
                         <div>
                           <h3 className="text-2xl font-bold mb-1">{task.title}</h3>
                           <p className="text-sm text-muted-foreground">
-                            Posted by {task.profiles?.full_name || "Anonymous"}
-                            {task.profiles?.rating && (
-                              <span className="ml-2">⭐ {task.profiles.rating.toFixed(1)}</span>
+                            Posted by {task.public_profiles?.full_name || "Anonymous"}
+                            {task.public_profiles?.rating && (
+                              <span className="ml-2">⭐ {task.public_profiles.rating.toFixed(1)}</span>
                             )}
                           </p>
                         </div>

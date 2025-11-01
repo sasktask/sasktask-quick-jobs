@@ -19,11 +19,17 @@ import {
   ArrowLeft,
   User
 } from "lucide-react";
+import { z } from "zod";
+
+const bookingMessageSchema = z.object({
+  message: z.string().max(1000, "Message too long (max 1000 characters)").optional(),
+});
 
 const TaskDetail = () => {
   const { id } = useParams();
   const [task, setTask] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isApplying, setIsApplying] = useState(false);
@@ -43,21 +49,23 @@ const TaskDetail = () => {
         return;
       }
 
-      // Fetch profile
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
+      setUserId(session.user.id);
+
+      // Fetch user role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
         .single();
 
-      setProfile(profileData);
+      setUserRole(roleData?.role || null);
 
-      // Fetch task with task giver profile
+      // Fetch task with task giver profile (excluding PII)
       const { data: taskData, error } = await supabase
         .from("tasks")
         .select(`
           *,
-          profiles!tasks_task_giver_id_fkey (
+          public_profiles!tasks_task_giver_id_fkey (
             full_name,
             avatar_url,
             rating,
@@ -66,7 +74,7 @@ const TaskDetail = () => {
           )
         `)
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setTask(taskData);
@@ -83,7 +91,7 @@ const TaskDetail = () => {
   };
 
   const handleApply = async () => {
-    if (profile?.role !== "task_doer") {
+    if (userRole !== "task_doer") {
       toast({
         title: "Access Denied",
         description: "Only task doers can apply to tasks",
@@ -95,14 +103,20 @@ const TaskDetail = () => {
     setIsApplying(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Validate input
+      const validation = bookingMessageSchema.safeParse({ message });
+
+      if (!validation.success) {
+        const firstError = validation.error.errors[0];
+        throw new Error(firstError.message);
+      }
 
       const { error } = await supabase
         .from("bookings")
         .insert({
           task_id: id,
-          task_doer_id: session?.user.id,
-          message: message,
+          task_doer_id: userId,
+          message: validation.data.message || null,
           status: "pending"
         });
 
@@ -228,7 +242,7 @@ const TaskDetail = () => {
                 </div>
               )}
 
-              {profile?.role === "task_doer" && task.status === "open" && (
+              {userRole === "task_doer" && task.status === "open" && (
                 <div className="pt-6 border-t">
                   <h3 className="font-semibold text-lg mb-4">Apply for this Task</h3>
                   <div className="space-y-4">
@@ -265,28 +279,31 @@ const TaskDetail = () => {
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <Avatar className="h-20 w-20 mx-auto">
-                <AvatarImage src={task.profiles?.avatar_url} />
+                <AvatarImage src={task.public_profiles?.avatar_url} />
                 <AvatarFallback className="text-xl">
-                  {task.profiles?.full_name?.charAt(0) || <User />}
+                  {task.public_profiles?.full_name?.charAt(0) || <User />}
                 </AvatarFallback>
               </Avatar>
 
               <div>
-                <h3 className="font-semibold text-lg">{task.profiles?.full_name || "Anonymous"}</h3>
-                {task.profiles?.rating && (
+                <h3 className="font-semibold text-lg">{task.public_profiles?.full_name || "Anonymous"}</h3>
+                {task.public_profiles?.rating && (
                   <div className="flex items-center justify-center gap-1 mt-1">
                     <Star className="h-4 w-4 fill-accent text-accent" />
-                    <span className="font-semibold">{task.profiles.rating.toFixed(1)}</span>
+                    <span className="font-semibold">{task.public_profiles.rating.toFixed(1)}</span>
                     <span className="text-sm text-muted-foreground">
-                      ({task.profiles.total_reviews} reviews)
+                      ({task.public_profiles.total_reviews} reviews)
                     </span>
                   </div>
                 )}
               </div>
 
-              {task.profiles?.bio && (
+              {task.public_profiles?.bio && (
                 <div className="text-sm text-muted-foreground text-left p-3 bg-muted/50 rounded-lg">
-                  <p>{task.profiles.bio}</p>
+                  <p>{task.public_profiles.bio}</p>
+                  <p className="text-xs mt-2 opacity-75">
+                    Contact information is private until booking is accepted
+                  </p>
                 </div>
               )}
             </CardContent>
