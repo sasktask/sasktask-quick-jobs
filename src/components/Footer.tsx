@@ -132,18 +132,18 @@ export const Footer = () => {
             
             {/* Language Selector */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors text-xs text-muted-foreground hover:text-foreground border border-border/30">
-                <Globe className="h-3.5 w-3.5" />
+              <DropdownMenuTrigger className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card hover:bg-muted/80 transition-colors text-sm text-foreground border border-border/50 shadow-sm hover:shadow-md">
+                <Globe className="h-4 w-4 text-primary" />
                 <span className="font-medium">{language}</span>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuContent align="end" className="w-44 bg-card border-border/50 shadow-lg">
                 {languages.map((lang) => (
                   <DropdownMenuItem
                     key={lang.code}
                     onClick={() => setLanguage(lang.name)}
-                    className="flex items-center gap-2 text-sm cursor-pointer"
+                    className="flex items-center gap-2.5 text-sm cursor-pointer py-2.5 hover:bg-muted"
                   >
-                    <span className="text-base">{lang.flag}</span>
+                    <span className="text-lg">{lang.flag}</span>
                     <span className="font-medium">{lang.name}</span>
                   </DropdownMenuItem>
                 ))}
