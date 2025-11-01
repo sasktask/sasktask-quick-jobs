@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { HeroCorner3D } from "@/components/HeroCorner3D";
 import { 
   Snowflake, 
   Sparkles, 
@@ -30,9 +31,16 @@ const Index = () => {
       
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 relative overflow-hidden">
+        {/* 3D Corner Decorations */}
+        <HeroCorner3D position="top-left" />
+        <HeroCorner3D position="top-right" />
+        <HeroCorner3D position="bottom-left" />
+        <HeroCorner3D position="bottom-right" />
+        
         {/* Background Decorations */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl -z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-3xl -z-10" />
         
         <div className="container mx-auto">
           <div className="text-center space-y-8 animate-fade-in max-w-5xl mx-auto">
