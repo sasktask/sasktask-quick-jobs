@@ -145,64 +145,63 @@ const Index = () => {
       
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 relative overflow-hidden">
-        {/* Canva-Style Colorful Background */}
-        <div className="absolute inset-0 -z-10">
-          {/* Colorful Gradient Blobs */}
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '4s' }} />
-          <div className="absolute top-20 right-0 w-80 h-80 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '5s' }} />
-          <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '6s' }} />
-          <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-gradient-to-br from-orange-400 to-red-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '5.5s' }} />
+        {/* Modern animated background with glassmorphism */}
+        <div className="absolute inset-0 -z-10 bg-gradient-surface">
+          {/* Animated gradient orbs */}
+          <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-primary rounded-full blur-3xl opacity-20 animate-float" />
+          <div className="absolute top-40 right-20 w-80 h-80 bg-gradient-secondary rounded-full blur-3xl opacity-20 animate-float" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-20 left-1/3 w-72 h-72 bg-gradient-accent rounded-full blur-3xl opacity-20 animate-float" style={{ animationDelay: '2s' }} />
           
-          {/* Decorative Circles */}
-          <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full opacity-30" />
-          <div className="absolute top-40 right-20 w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-400 rounded-full opacity-30" />
-          <div className="absolute bottom-40 left-20 w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-400 rounded-full opacity-30" />
-          <div className="absolute bottom-20 right-10 w-14 h-14 bg-gradient-to-br from-orange-500 to-red-400 rounded-full opacity-30" />
-          
-          {/* Geometric Shapes */}
-          <div className="absolute top-1/4 right-1/3 w-32 h-32 bg-gradient-to-br from-yellow-400 to-orange-400 opacity-20 rotate-45" style={{ clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }} />
-          <div className="absolute bottom-1/3 left-1/3 w-28 h-28 bg-gradient-to-br from-indigo-400 to-purple-400 opacity-20 rotate-12 rounded-lg" />
+          {/* Geometric shapes */}
+          <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-gradient-primary opacity-10 rotate-45 blur-sm animate-glow-pulse" />
+          <div className="absolute bottom-1/3 left-1/4 w-28 h-28 bg-gradient-secondary opacity-10 -rotate-12 blur-sm animate-glow-pulse" style={{ animationDelay: '1.5s' }} />
         </div>
         
         <div className="container mx-auto">
-          <div className="text-center space-y-8 animate-fade-in max-w-5xl mx-auto">
-            {/* Logo */}
-            <div className="flex justify-center mb-4 animate-scale-in">
-              <img 
-                src={logo} 
-                alt="SaskTask Logo" 
-                className="h-28 w-auto hover-scale"
-              />
+          <div className="text-center space-y-8 max-w-5xl mx-auto">
+            {/* Logo with glow effect */}
+            <div className="flex justify-center mb-6 animate-fade-in">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-hero rounded-full blur-2xl opacity-30 animate-glow-pulse" />
+                <img 
+                  src={logo} 
+                  alt="SaskTask Logo" 
+                  className="h-32 w-auto relative z-10 hover:scale-110 transition-transform duration-500 drop-shadow-2xl"
+                />
+              </div>
             </div>
 
-            {/* Search Feature with Live Results */}
-            <div className="max-w-2xl mx-auto mb-8 relative z-10" ref={searchRef}>
+            {/* Search Feature with enhanced glass design */}
+            <div className="max-w-2xl mx-auto mb-8 relative z-10 animate-fade-up" ref={searchRef}>
               <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground pointer-events-none z-10" />
-                <Input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
-                  placeholder="Search for tasks, services, or locations..."
-                  className="h-14 pl-14 pr-32 text-lg bg-card/80 backdrop-blur-sm border-2 border-border focus:border-primary shadow-lg group-hover:shadow-xl transition-all"
-                />
-                <Button 
-                  className="absolute right-2 top-2 h-10 px-6"
-                  variant="hero"
-                  onClick={handleSearchClick}
-                >
-                  Search
-                </Button>
+                <div className="absolute inset-0 bg-gradient-hero rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
+                <div className="relative glass rounded-2xl p-2">
+                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-primary pointer-events-none z-10" />
+                  <Input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
+                    placeholder="Search for tasks, services, or locations..."
+                    className="h-16 pl-16 pr-40 text-lg bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 font-medium placeholder:text-muted-foreground/70"
+                  />
+                  <Button 
+                    className="absolute right-3 top-3 h-12 px-8 rounded-xl"
+                    variant="hero"
+                    onClick={handleSearchClick}
+                  >
+                    Search
+                  </Button>
+                </div>
               </div>
 
               {/* Search Results Dropdown */}
               {showResults && (
-                <div className="absolute w-full mt-2 bg-card border-2 border-border rounded-lg shadow-2xl max-h-96 overflow-y-auto z-50">
+                <div className="absolute w-full mt-3 glass rounded-2xl shadow-2xl max-h-96 overflow-y-auto z-50 border-2 border-primary/20">
                   {isSearching ? (
-                    <div className="p-6 text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                      <p className="mt-2 text-sm text-muted-foreground">Searching...</p>
+                    <div className="p-8 text-center">
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-3 border-primary mx-auto glow-sm"></div>
+                      <p className="mt-3 text-sm font-medium text-muted-foreground">Searching...</p>
                     </div>
                   ) : searchResults.length > 0 ? (
                     <div className="py-2">
@@ -268,51 +267,54 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Main Heading with Multiple Value Props */}
-            <div className="space-y-4">
-              <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
-                <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-fade-in">
+            {/* Main Heading with gradient text */}
+            <div className="space-y-6 animate-fade-up">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight">
+                <span className="text-gradient animate-glow-pulse">
                   Your Tasks, Our Experts
                 </span>
               </h1>
               
-              <div className="flex flex-wrap justify-center gap-4 text-xl lg:text-2xl font-semibold text-muted-foreground">
-                <span className="px-4 py-2 bg-primary/10 rounded-full border border-primary/20 hover:border-primary/50 transition-all hover-scale">
+              <div className="flex flex-wrap justify-center gap-4 text-lg lg:text-xl font-semibold">
+                <span className="px-6 py-3 bg-gradient-primary rounded-2xl text-white shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-default">
                   💪 Quick & Reliable
                 </span>
-                <span className="px-4 py-2 bg-secondary/10 rounded-full border border-secondary/20 hover:border-secondary/50 transition-all hover-scale">
+                <span className="px-6 py-3 bg-gradient-secondary rounded-2xl text-white shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-default">
                   ✓ Verified Taskers
                 </span>
-                <span className="px-4 py-2 bg-accent/10 rounded-full border border-accent/20 hover:border-accent/50 transition-all hover-scale">
+                <span className="px-6 py-3 bg-gradient-accent rounded-2xl text-white shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-default">
                   ⚡ Same-Day Service
                 </span>
               </div>
             </div>
             
             {/* Enhanced Description */}
-            <div className="max-w-3xl mx-auto space-y-4">
-              <p className="text-2xl lg:text-3xl font-bold text-foreground">
+            <div className="max-w-3xl mx-auto space-y-6 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+              <p className="text-2xl lg:text-3xl font-heading font-bold text-foreground leading-tight">
                 Connect with trusted local Taskers in minutes
               </p>
-              <p className="text-lg text-muted-foreground leading-relaxed">
+              <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
                 From home repairs to moving help, cleaning to assembly - find skilled professionals 
                 for any task. Post your job or browse opportunities. Get it done today!
               </p>
             </div>
 
-            {/* Key Benefits Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4">
+            {/* Key Benefits Grid with modern cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-6 animate-fade-up" style={{ animationDelay: '0.4s' }}>
               {[
-                { icon: Shield, text: "Insured & Vetted", color: "from-blue-500 to-cyan-500" },
-                { icon: Clock, text: "Fast Booking", color: "from-purple-500 to-pink-500" },
-                { icon: DollarSign, text: "Fair Prices", color: "from-orange-500 to-red-500" },
-                { icon: Star, text: "Top Rated", color: "from-green-500 to-emerald-500" }
+                { icon: Shield, text: "Insured & Vetted", gradient: "from-primary to-primary-glow" },
+                { icon: Clock, text: "Fast Booking", gradient: "from-secondary via-cyan-500 to-secondary" },
+                { icon: DollarSign, text: "Fair Prices", gradient: "from-accent to-pink-500" },
+                { icon: Star, text: "Top Rated", gradient: "from-amber-500 to-orange-500" }
               ].map((benefit, i) => (
-                <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/50 transition-all hover-scale">
-                  <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${benefit.color} flex items-center justify-center`}>
-                    <benefit.icon className="h-5 w-5 text-white" />
+                <div key={i} className="group relative">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${benefit.gradient} rounded-2xl opacity-0 group-hover:opacity-10 blur-xl transition-all duration-300`} />
+                  <div className="relative flex flex-col items-center gap-3 p-6 rounded-2xl glass hover:scale-105 transition-all duration-300 cursor-default">
+                    <div className={`h-14 w-14 rounded-xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all`}>
+                      <benefit.icon className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="text-sm font-bold font-heading">{benefit.text}</span>
                   </div>
-                  <span className="text-sm font-medium">{benefit.text}</span>
                 </div>
               ))}
             </div>
