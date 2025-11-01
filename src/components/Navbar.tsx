@@ -53,12 +53,12 @@ export const Navbar = ({
   return <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex flex-col items-center gap-2 group">
+          <Link to="/" className="flex flex-col items-center gap-1.5 group">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full blur-md group-hover:blur-lg transition-all"></div>
               <img src={logo} alt="SaskTask Logo" className="h-20 w-auto relative z-10 group-hover:scale-105 transition-transform duration-300" />
             </div>
-            <span className="text-xs font-medium text-muted-foreground tracking-widest uppercase">
+            <span className="text-[10px] font-light text-muted-foreground/80 tracking-[0.2em] uppercase">
               Your Task Partner
             </span>
           </Link>

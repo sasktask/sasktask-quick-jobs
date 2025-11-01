@@ -1,7 +1,23 @@
 import { Link } from "react-router-dom";
-import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin, Globe } from "lucide-react";
+import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Footer = () => {
+  const [language, setLanguage] = useState("English");
+  
+  const languages = [
+    { code: "en", name: "English", flag: "🇺🇸" },
+    { code: "fr", name: "Français", flag: "🇫🇷" },
+    { code: "es", name: "Español", flag: "🇪🇸" },
+    { code: "de", name: "Deutsch", flag: "🇩🇪" },
+  ];
+
   return (
     <footer className="bg-card/50 backdrop-blur-sm border-t border-border/50 mt-20">
       <div className="container mx-auto px-4 py-10">
@@ -108,9 +124,31 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* Copyright */}
-          <div className="text-center mt-4 text-xs text-muted-foreground/70">
-            <p>&copy; 2025 SaskTask. All rights reserved.</p>
+          {/* Copyright & Language Selector */}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4">
+            <div className="text-center md:text-left text-xs text-muted-foreground/70 font-light">
+              <p>&copy; 2025 SaskTask. All rights reserved.</p>
+            </div>
+            
+            {/* Language Selector */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors text-xs text-muted-foreground hover:text-foreground border border-border/30">
+                <Globe className="h-3.5 w-3.5" />
+                <span className="font-medium">{language}</span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                {languages.map((lang) => (
+                  <DropdownMenuItem
+                    key={lang.code}
+                    onClick={() => setLanguage(lang.name)}
+                    className="flex items-center gap-2 text-sm cursor-pointer"
+                  >
+                    <span className="text-base">{lang.flag}</span>
+                    <span className="font-medium">{lang.name}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
