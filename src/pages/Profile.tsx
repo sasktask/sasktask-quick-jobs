@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Loader2, Star, Briefcase, Award } from "lucide-react";
+import { Loader2, Star, Briefcase, Award, Upload, Shield, TrendingUp, Clock } from "lucide-react";
 
 const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +28,8 @@ const Profile = () => {
     bio: "",
     avatar_url: ""
   });
+  const [uploading, setUploading] = useState(false);
+  const [trustScore, setTrustScore] = useState<number>(50);
 
   useEffect(() => {
     checkUserAndLoadProfile();
@@ -52,6 +55,7 @@ const Profile = () => {
       if (error) throw error;
 
       setProfile(profileData);
+      setTrustScore(profileData.trust_score || 50);
 
       // Fetch user role
       const { data: roleData } = await supabase
@@ -79,6 +83,42 @@ const Profile = () => {
     }
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!e.target.files || e.target.files.length === 0) return;
+      
+      setUploading(true);
+      const file = e.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(fileName);
+
+      setFormData({ ...formData, avatar_url: publicUrl });
+      
+      toast({
+        title: "Photo uploaded!",
+        description: "Don't forget to save your changes",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -90,7 +130,8 @@ const Profile = () => {
           full_name: formData.full_name,
           phone: formData.phone,
           bio: formData.bio,
-          avatar_url: formData.avatar_url
+          avatar_url: formData.avatar_url,
+          last_active: new Date().toISOString()
         })
         .eq("id", userId);
 
@@ -135,28 +176,62 @@ const Profile = () => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {/* Profile Stats */}
+          {/* Enhanced Profile Stats */}
           <Card className="border-border">
-            <CardContent className="p-6 text-center">
-              <Avatar className="h-24 w-24 mx-auto mb-4">
-                <AvatarImage src={profile?.avatar_url} />
-                <AvatarFallback className="text-2xl">
-                  {profile?.full_name?.charAt(0) || profile?.email?.charAt(0) || "?"}
-                </AvatarFallback>
-              </Avatar>
-              <h3 className="font-semibold text-lg mb-1">{profile?.full_name || "No Name"}</h3>
-              <p className="text-sm text-muted-foreground mb-4">{profile?.email}</p>
+            <CardContent className="p-6">
+              <div className="text-center mb-6">
+                <div className="relative inline-block mb-4">
+                  <Avatar className="h-32 w-32 border-4 border-primary/20">
+                    <AvatarImage src={profile?.avatar_url} />
+                    <AvatarFallback className="text-3xl">
+                      {profile?.full_name?.charAt(0) || profile?.email?.charAt(0) || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <label className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-2 rounded-full cursor-pointer hover:bg-primary/90 transition-colors">
+                    <Upload className="h-4 w-4" />
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handlePhotoUpload}
+                      disabled={uploading}
+                    />
+                  </label>
+                </div>
+                <h3 className="font-bold text-xl mb-1">{profile?.full_name || "No Name"}</h3>
+                <p className="text-sm text-muted-foreground mb-2">{profile?.email}</p>
+                <Badge variant="outline" className="capitalize">
+                  {userRole?.replace("_", " ") || "N/A"}
+                </Badge>
+              </div>
+
+              {/* Trust Score */}
+              <div className="mb-4 p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg border border-primary/20">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-primary" />
+                    <span className="font-semibold">Trust Score</span>
+                  </div>
+                  <span className="text-2xl font-bold text-primary">{trustScore}</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-primary to-accent h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${trustScore}%` }}
+                  />
+                </div>
+              </div>
               
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 text-accent" />
+                    <Star className="h-4 w-4 text-yellow-500" />
                     <span className="text-sm">Rating</span>
                   </div>
                   <span className="font-semibold">{profile?.rating?.toFixed(1) || "0.0"}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Award className="h-4 w-4 text-primary" />
                     <span className="text-sm">Reviews</span>
@@ -164,14 +239,28 @@ const Profile = () => {
                   <span className="font-semibold">{profile?.total_reviews || 0}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <Briefcase className="h-4 w-4 text-secondary" />
-                    <span className="text-sm">Role</span>
+                    <Briefcase className="h-4 w-4 text-accent" />
+                    <span className="text-sm">Completed</span>
                   </div>
-                  <span className="font-semibold capitalize">
-                    {userRole?.replace("_", " ") || "N/A"}
-                  </span>
+                  <span className="font-semibold">{profile?.completed_tasks || 0}</span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">Response Rate</span>
+                  </div>
+                  <span className="font-semibold">{profile?.response_rate || 100}%</span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm">On-Time Rate</span>
+                  </div>
+                  <span className="font-semibold">{profile?.on_time_rate || 100}%</span>
                 </div>
               </div>
             </CardContent>

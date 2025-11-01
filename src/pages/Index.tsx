@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Snowflake, 
@@ -253,18 +253,17 @@ const Index = () => {
               <div className="flex flex-wrap justify-center gap-2 mt-3 text-sm">
                 <span className="text-muted-foreground">Popular:</span>
                 {popularSearches.map((term, idx) => (
-                  <>
+                  <React.Fragment key={term}>
                     <button
-                      key={term}
                       onClick={() => handlePopularSearchClick(term)}
                       className="text-primary hover:underline font-medium"
                     >
                       {term}
                     </button>
                     {idx < popularSearches.length - 1 && (
-                      <span key={`sep-${idx}`} className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">•</span>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </div>
             </div>

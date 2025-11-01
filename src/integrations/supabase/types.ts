@@ -157,38 +157,62 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          completed_tasks: number | null
           created_at: string | null
           email: string
           full_name: string | null
           id: string
+          joined_date: string | null
+          last_active: string | null
+          on_time_rate: number | null
           phone: string | null
+          profile_completion: number | null
           rating: number | null
+          response_rate: number | null
           total_reviews: number | null
+          trust_score: number | null
           updated_at: string | null
+          verification_level: string | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          completed_tasks?: number | null
           created_at?: string | null
           email: string
           full_name?: string | null
           id: string
+          joined_date?: string | null
+          last_active?: string | null
+          on_time_rate?: number | null
           phone?: string | null
+          profile_completion?: number | null
           rating?: number | null
+          response_rate?: number | null
           total_reviews?: number | null
+          trust_score?: number | null
           updated_at?: string | null
+          verification_level?: string | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          completed_tasks?: number | null
           created_at?: string | null
           email?: string
           full_name?: string | null
           id?: string
+          joined_date?: string | null
+          last_active?: string | null
+          on_time_rate?: number | null
           phone?: string | null
+          profile_completion?: number | null
           rating?: number | null
+          response_rate?: number | null
           total_reviews?: number | null
+          trust_score?: number | null
           updated_at?: string | null
+          verification_level?: string | null
         }
         Relationships: []
       }
@@ -516,6 +540,7 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_trust_score: { Args: { user_id: string }; Returns: number }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

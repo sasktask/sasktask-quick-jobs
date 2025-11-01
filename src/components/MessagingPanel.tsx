@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Send } from "lucide-react";
+import { Send, Phone, Shield, Star } from "lucide-react";
 
 interface Message {
   id: string;
@@ -23,15 +24,24 @@ interface MessagingPanelProps {
   otherUserName: string;
 }
 
+interface OtherUserProfile {
+  phone?: string;
+  rating?: number;
+  trust_score?: number;
+  verification_level?: string;
+}
+
 export const MessagingPanel = ({ bookingId, currentUserId, otherUserId, otherUserName }: MessagingPanelProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [otherUserProfile, setOtherUserProfile] = useState<OtherUserProfile | null>(null);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchMessages();
+    fetchOtherUserProfile();
     subscribeToMessages();
   }, [bookingId]);
 
@@ -41,6 +51,16 @@ export const MessagingPanel = ({ bookingId, currentUserId, otherUserId, otherUse
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const fetchOtherUserProfile = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("phone, rating, trust_score, verification_level")
+      .eq("id", otherUserId)
+      .single();
+    
+    if (data) setOtherUserProfile(data);
   };
 
   const fetchMessages = async () => {
@@ -120,7 +140,33 @@ export const MessagingPanel = ({ bookingId, currentUserId, otherUserId, otherUse
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Messages with {otherUserName}</CardTitle>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="mb-2">Messages with {otherUserName}</CardTitle>
+            {otherUserProfile && (
+              <div className="flex flex-wrap gap-2 text-sm">
+                {otherUserProfile.phone && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Phone className="h-3 w-3" />
+                    {otherUserProfile.phone}
+                  </Badge>
+                )}
+                {otherUserProfile.rating && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Star className="h-3 w-3 text-yellow-500" />
+                    {otherUserProfile.rating.toFixed(1)}
+                  </Badge>
+                )}
+                {otherUserProfile.trust_score && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Shield className="h-3 w-3 text-primary" />
+                    Trust: {otherUserProfile.trust_score}
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {/* Messages Container */}
