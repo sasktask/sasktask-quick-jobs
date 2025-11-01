@@ -11,9 +11,17 @@ import {
   Shield, 
   Clock,
   DollarSign,
-  Users
+  Users,
+  Wrench,
+  Package,
+  Monitor,
+  Trees,
+  Home,
+  PaintBucket,
+  MoreHorizontal
 } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
+import logo from "@/assets/sasktask-logo.png";
 
 const Index = () => {
   return (
@@ -23,57 +31,84 @@ const Index = () => {
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4">
         <div className="container mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6 animate-fade-in">
-              <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-                Find Quick Jobs,
-                <span className="bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent"> Get Things Done</span>
-              </h1>
-              <p className="text-xl text-muted-foreground">
-                SaskTask connects you with short-term gigs or reliable workers in minutes. 
-                Snow removal, cleaning, moving - whatever you need, we've got you covered.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link to="/auth">
-                  <Button variant="hero" size="lg" className="group">
-                    Get Started
-                    <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
-                  </Button>
-                </Link>
-                <Link to="/browse">
-                  <Button variant="outline" size="lg">
-                    Browse Tasks
-                  </Button>
-                </Link>
-              </div>
-              <div className="flex items-center gap-8 pt-4">
-                <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 fill-accent text-accent" />
-                  <span className="text-sm font-medium">4.9/5 Rating</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  <span className="text-sm font-medium">10K+ Active Users</span>
-                </div>
+          <div className="text-center space-y-8 animate-fade-in max-w-4xl mx-auto">
+            {/* Logo */}
+            <div className="flex justify-center mb-8">
+              <img 
+                src={logo} 
+                alt="SaskTask Logo" 
+                className="h-24 w-auto"
+              />
+            </div>
+            
+            {/* Main Heading */}
+            <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+              Trusted help,
+              <br />
+              <span className="bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
+                when and how you need it.
+              </span>
+            </h1>
+            
+            {/* Description */}
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              SaskTask makes it easy to find trusted local Taskers, schedule help, 
+              and get your to-dos done fast.
+            </p>
+            
+            {/* What do you need help with? */}
+            <div className="pt-8">
+              <h2 className="text-2xl font-semibold mb-6">What do you need help with?</h2>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+                {[
+                  { icon: Package, label: "Assembly" },
+                  { icon: Monitor, label: "Mounting" },
+                  { icon: Truck, label: "Moving" },
+                  { icon: Sparkles, label: "Cleaning" },
+                  { icon: Trees, label: "Outdoor Help" },
+                  { icon: Home, label: "Home Repairs" },
+                  { icon: PaintBucket, label: "Painting" },
+                  { icon: MoreHorizontal, label: "Many More" }
+                ].map((category, i) => (
+                  <Link key={i} to="/browse">
+                    <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-border hover:border-primary/50 h-full">
+                      <CardContent className="p-4 flex flex-col items-center justify-center gap-3">
+                        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <category.icon className="h-6 w-6 text-white" />
+                        </div>
+                        <span className="text-sm font-medium text-center">{category.label}</span>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
               </div>
             </div>
             
-            <div className="relative">
-              <img 
-                src={heroImage} 
-                alt="People doing various tasks" 
-                className="rounded-2xl shadow-2xl"
-              />
-              <div className="absolute -bottom-6 -left-6 bg-card p-4 rounded-lg shadow-lg border border-border">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-secondary to-secondary/70 flex items-center justify-center">
-                    <DollarSign className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Average Earnings</p>
-                    <p className="text-xl font-bold">$25-50/hour</p>
-                  </div>
-                </div>
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap justify-center gap-4 pt-6">
+              <Link to="/auth">
+                <Button variant="hero" size="lg" className="group">
+                  Get Started
+                  <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                </Button>
+              </Link>
+              <Link to="/browse">
+                <Button variant="outline" size="lg">
+                  Browse Tasks
+                </Button>
+              </Link>
+            </div>
+            
+            {/* Stats */}
+            <div className="flex items-center justify-center gap-8 pt-4">
+              <div className="flex items-center gap-2">
+                <Star className="h-5 w-5 fill-accent text-accent" />
+                <span className="text-sm font-medium">4.9/5 Rating</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium">10K+ Active Users</span>
               </div>
             </div>
           </div>
