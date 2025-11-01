@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +12,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { MessagingPanel } from "@/components/MessagingPanel";
 import { PaymentPanel } from "@/components/PaymentPanel";
-import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign } from "lucide-react";
+import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, Shield, Star, Phone, MapPin } from "lucide-react";
 
 const Bookings = () => {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -58,7 +59,7 @@ const Bookings = () => {
       
       setUserRole(roleData?.role || null);
 
-      // Fetch bookings based on role with task doer profile
+      // Fetch bookings based on role with task doer profile and verification
       let query = supabase
         .from("bookings")
         .select(`
@@ -67,7 +68,13 @@ const Bookings = () => {
             id,
             full_name,
             avatar_url,
-            rating
+            rating,
+            total_reviews
+          ),
+          task_doer_verification:verifications!verifications_user_id_fkey (
+            verification_status,
+            id_verified,
+            background_check_status
           ),
           tasks (
             id,
@@ -82,7 +89,8 @@ const Bookings = () => {
               id,
               full_name,
               avatar_url,
-              rating
+              rating,
+              total_reviews
             )
           )
         `);
@@ -209,113 +217,188 @@ const Bookings = () => {
                   </CardContent>
                 </Card>
               ) : (
-                (tab === "all" ? bookings : filterBookings(tab)).map((booking) => (
-                  <Card key={booking.id} className="border-border hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col md:flex-row gap-4 justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <h3 className="text-xl font-bold mb-1">{booking.tasks?.title}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {userRole === "task_giver" 
-                                  ? `Applied by ${booking.task_doer?.full_name || "Task Doer"}` 
-                                  : `Posted by ${booking.tasks?.task_giver?.full_name || "Task Giver"}`}
-                              </p>
+                (tab === "all" ? bookings : filterBookings(tab)).map((booking) => {
+                  const otherUser = userRole === "task_giver" ? booking.task_doer : booking.tasks?.task_giver;
+                  const isVerified = booking.task_doer_verification?.verification_status === "verified";
+                  
+                  return (
+                    <Card key={booking.id} className="border-border hover:shadow-lg transition-all">
+                      <CardContent className="p-6">
+                        {/* Uber-Style Header with Profile */}
+                        <div className="flex items-start gap-4 mb-6 pb-4 border-b border-border">
+                          <Avatar className="h-16 w-16 border-2 border-primary/20">
+                            <AvatarImage 
+                              src={otherUser?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${otherUser?.full_name}`} 
+                              alt={otherUser?.full_name || "User"} 
+                            />
+                            <AvatarFallback>{otherUser?.full_name?.charAt(0) || "U"}</AvatarFallback>
+                          </Avatar>
+                          
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-xl font-bold">{otherUser?.full_name || "User"}</h3>
+                              {isVerified && (
+                                <Badge className="bg-primary/10 text-primary border-primary/20">
+                                  <Shield className="h-3 w-3 mr-1" />
+                                  Verified
+                                </Badge>
+                              )}
                             </div>
-                            {getStatusBadge(booking.status)}
-                          </div>
-
-                          <p className="text-muted-foreground mb-3">{booking.tasks?.description}</p>
-
-                          {booking.message && (
-                            <div className="bg-muted/50 p-3 rounded-lg mb-3">
-                              <div className="flex items-start gap-2">
-                                <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5" />
-                                <div>
-                                  <p className="text-sm font-medium mb-1">Application Message:</p>
-                                  <p className="text-sm text-muted-foreground">{booking.message}</p>
+                            
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
+                              {otherUser?.rating && (
+                                <div className="flex items-center gap-1">
+                                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                  <span className="font-semibold">{otherUser.rating}</span>
+                                  {otherUser.total_reviews && (
+                                    <span>({otherUser.total_reviews} reviews)</span>
+                                  )}
                                 </div>
+                              )}
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                <span>{booking.tasks?.location}</span>
                               </div>
                             </div>
-                          )}
-
-                          <div className="flex flex-wrap gap-3 text-sm">
-                            <span className="px-3 py-1 bg-primary/10 text-primary rounded-full">
-                              {booking.tasks?.category}
-                            </span>
-                            <span className="px-3 py-1 bg-secondary/10 text-secondary rounded-full font-semibold">
-                              ${booking.tasks?.pay_amount}
-                            </span>
-                            <span className="px-3 py-1 bg-muted text-foreground rounded-full">
-                              {booking.tasks?.location}
-                            </span>
+                            
+                            <div className="flex items-center gap-2">
+                              {getStatusBadge(booking.status)}
+                            </div>
                           </div>
 
-                          {/* Action buttons for accepted bookings */}
+                          {/* Quick Actions */}
                           {booking.status === "accepted" && (
-                            <div className="flex gap-2 mt-4">
+                            <div className="flex gap-2">
                               <Button
+                                size="sm"
                                 variant="outline"
+                                className="h-10 w-10 p-0"
                                 onClick={() => {
                                   setSelectedBooking(booking);
                                   setShowMessaging(true);
                                 }}
                               >
-                                <MessageSquare className="mr-2 h-4 w-4" />
-                                Message
+                                <MessageSquare className="h-4 w-4" />
                               </Button>
-                              
                               {userRole === "task_giver" && (
                                 <Button
+                                  size="sm"
+                                  className="h-10 w-10 p-0"
                                   onClick={() => {
                                     setSelectedBooking(booking);
                                     setShowPayment(true);
                                   }}
                                 >
-                                  <DollarSign className="mr-2 h-4 w-4" />
-                                  Pay Now
+                                  <DollarSign className="h-4 w-4" />
                                 </Button>
                               )}
                             </div>
                           )}
                         </div>
 
-                        {userRole === "task_giver" && booking.status === "pending" && (
-                          <div className="flex md:flex-col gap-2">
-                            <Button
-                              onClick={() => updateBookingStatus(booking.id, "accepted")}
-                              className="flex-1 md:flex-none"
-                            >
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Accept
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              onClick={() => updateBookingStatus(booking.id, "rejected")}
-                              className="flex-1 md:flex-none"
-                            >
-                              <XCircle className="mr-2 h-4 w-4" />
-                              Reject
-                            </Button>
+                        {/* Task Details */}
+                        <div className="space-y-4">
+                          <div>
+                            <h4 className="font-semibold text-lg mb-1">{booking.tasks?.title}</h4>
+                            <p className="text-muted-foreground">{booking.tasks?.description}</p>
                           </div>
-                        )}
 
-                        {userRole === "task_doer" && booking.status === "accepted" && (
-                          <div className="flex md:flex-col gap-2">
-                            <Button
-                              onClick={() => updateBookingStatus(booking.id, "completed")}
-                              className="flex-1 md:flex-none"
-                            >
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Mark Complete
-                            </Button>
+                          {booking.message && (
+                            <div className="bg-muted/30 p-4 rounded-lg border border-border">
+                              <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                                <MessageSquare className="h-4 w-4" />
+                                Application Message:
+                              </p>
+                              <p className="text-sm text-muted-foreground">{booking.message}</p>
+                            </div>
+                          )}
+
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {booking.tasks?.category}
+                            </Badge>
+                            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs font-bold">
+                              ${booking.tasks?.pay_amount}
+                            </Badge>
+                            {booking.tasks?.scheduled_date && (
+                              <Badge variant="outline" className="text-xs">
+                                <Clock className="h-3 w-3 mr-1" />
+                                {new Date(booking.tasks.scheduled_date).toLocaleDateString()}
+                              </Badge>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 pt-4 border-t border-border">
+                            {userRole === "task_giver" && booking.status === "pending" && (
+                              <>
+                                <Button
+                                  onClick={() => updateBookingStatus(booking.id, "accepted")}
+                                  className="flex-1"
+                                  size="lg"
+                                >
+                                  <CheckCircle className="mr-2 h-5 w-5" />
+                                  Accept Request
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => updateBookingStatus(booking.id, "rejected")}
+                                  className="flex-1"
+                                  size="lg"
+                                >
+                                  <XCircle className="mr-2 h-5 w-5" />
+                                  Decline
+                                </Button>
+                              </>
+                            )}
+
+                            {booking.status === "accepted" && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedBooking(booking);
+                                    setShowMessaging(true);
+                                  }}
+                                  className="flex-1"
+                                  size="lg"
+                                >
+                                  <MessageSquare className="mr-2 h-5 w-5" />
+                                  Chat
+                                </Button>
+                                
+                                {userRole === "task_giver" && (
+                                  <Button
+                                    onClick={() => {
+                                      setSelectedBooking(booking);
+                                      setShowPayment(true);
+                                    }}
+                                    className="flex-1"
+                                    size="lg"
+                                  >
+                                    <DollarSign className="mr-2 h-5 w-5" />
+                                    Pay ${booking.tasks?.pay_amount}
+                                  </Button>
+                                )}
+
+                                {userRole === "task_doer" && (
+                                  <Button
+                                    onClick={() => updateBookingStatus(booking.id, "completed")}
+                                    className="flex-1"
+                                    size="lg"
+                                  >
+                                    <CheckCircle className="mr-2 h-5 w-5" />
+                                    Mark Complete
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
               )}
             </TabsContent>
           ))}
