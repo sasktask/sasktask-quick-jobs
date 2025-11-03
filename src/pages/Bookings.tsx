@@ -74,7 +74,7 @@ const Bookings = () => {
             rating,
             total_reviews
           ),
-          tasks (
+          tasks!inner (
             id,
             title,
             description,
@@ -92,7 +92,9 @@ const Bookings = () => {
               total_reviews
             )
           )
-        `);
+        `)
+        .not('task_doer', 'is', null)
+        .not('tasks', 'is', null);
 
       if (roleData?.role === "task_giver") {
         // Task givers see bookings for their tasks
@@ -106,14 +108,22 @@ const Bookings = () => {
 
       if (error) throw error;
       
-      // Fetch verification status for each task doer separately
+      // Filter out bookings with missing user data and fetch verification status
+      const validBookings = (data || []).filter(booking => 
+        booking.task_doer && 
+        booking.tasks && 
+        booking.tasks.task_giver &&
+        booking.task_doer.full_name &&
+        booking.tasks.task_giver.full_name
+      );
+
       const bookingsWithVerification = await Promise.all(
-        (data || []).map(async (booking) => {
+        validBookings.map(async (booking) => {
           const { data: verification } = await supabase
             .from("verifications")
             .select("verification_status, id_verified, background_check_status")
             .eq("user_id", booking.task_doer_id)
-            .single();
+            .maybeSingle();
           
           return {
             ...booking,
