@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "./ui/badge";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ interface MobileMenuProps {
 export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps) => {
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (user) {
@@ -57,7 +59,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent side="right" className="w-[300px] sm:w-[400px]">
         <SheetHeader>
-          <SheetTitle>Menu</SheetTitle>
+          <SheetTitle>{t('menu')}</SheetTitle>
         </SheetHeader>
         
         <div className="flex flex-col gap-4 mt-8">
@@ -67,7 +69,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
             className="justify-start text-base"
             onClick={() => handleNavigation("/browse")}
           >
-            Browse Tasks
+            {t('browseTasks')}
           </Button>
           
           <Button
@@ -75,7 +77,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
             className="justify-start text-base"
             onClick={() => handleNavigation("/find-taskers")}
           >
-            Find Taskers
+            {t('findTaskers')}
           </Button>
           
           <Button
@@ -84,12 +86,12 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
             onClick={() => handleNavigation("/become-tasker")}
           >
             <ShieldCheck className="h-4 w-4" />
-            Become a Tasker
+            {t('becomeTasker')}
           </Button>
 
           <div className="border-t border-border my-2" />
 
-          {user ? (
+          {user && (
             <>
               <Button
                 variant="ghost"
@@ -97,7 +99,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
                 onClick={() => handleNavigation("/dashboard")}
               >
                 <Bell className="h-4 w-4" />
-                Notifications
+                {t('notifications')}
                 {unreadCount > 0 && (
                   <Badge 
                     variant="destructive" 
@@ -115,7 +117,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
                 className="justify-start text-base"
                 onClick={() => handleNavigation("/dashboard")}
               >
-                Dashboard
+                {t('dashboard')}
               </Button>
               
               <Button
@@ -123,7 +125,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
                 className="justify-start text-base"
                 onClick={() => handleNavigation("/bookings")}
               >
-                Bookings
+                {t('bookings')}
               </Button>
               
               <Button
@@ -131,7 +133,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
                 className="justify-start text-base"
                 onClick={() => handleNavigation("/profile")}
               >
-                Profile
+                {t('profile')}
               </Button>
 
               {userRole === "task_doer" && (
@@ -141,7 +143,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
                   onClick={() => handleNavigation("/verification")}
                 >
                   <ShieldCheck className="h-4 w-4" />
-                  Get Verified
+                  {t('getVerified')}
                 </Button>
               )}
 
@@ -163,10 +165,12 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
                 className="justify-start text-base"
                 onClick={handleSignOut}
               >
-                Sign Out
+                {t('signOut')}
               </Button>
             </>
-          ) : (
+          )}
+
+          {!user && (
             <>
               <Button
                 variant="outline"
@@ -174,7 +178,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
                 className="justify-center text-base font-semibold border-2"
                 onClick={() => handleNavigation("/auth")}
               >
-                Sign In
+                {t('signIn')}
               </Button>
               
               <Button
@@ -183,7 +187,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
                 className="justify-center text-base font-semibold"
                 onClick={() => handleNavigation("/auth")}
               >
-                Get Started
+                {t('getStarted')}
               </Button>
             </>
           )}

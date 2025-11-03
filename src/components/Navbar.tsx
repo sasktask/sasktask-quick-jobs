@@ -1,10 +1,17 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Menu, ShieldCheck, Sun, Moon } from "lucide-react";
+import { Menu, ShieldCheck, Globe, Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/sasktask-logo.png";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { NotificationsDropdown } from "./NotificationsDropdown";
 import { MobileMenu } from "./MobileMenu";
 
@@ -17,6 +24,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -95,48 +103,48 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
             <div className="hidden md:flex items-center space-x-6">
               {/* Main Navigation */}
               <Link to="/browse" className="text-foreground hover:text-primary transition-colors font-medium">
-                Browse Tasks
+                {t('browseTasks')}
               </Link>
               
               <Link to="/find-taskers" className="text-foreground hover:text-primary transition-colors font-medium">
-                Find Taskers
+                {t('findTaskers')}
               </Link>
               
               <Link to="/become-tasker" className="text-foreground hover:text-primary transition-colors font-medium flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4" />
-                Become a Tasker
+                {t('becomeTasker')}
               </Link>
               
               {user ? (
                 <>
                   <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors font-medium">
-                    Dashboard
+                    {t('dashboard')}
                   </Link>
                   <Link to="/bookings" className="text-foreground hover:text-primary transition-colors font-medium">
-                    Bookings
+                    {t('bookings')}
                   </Link>
                   <Link to="/profile" className="text-foreground hover:text-primary transition-colors font-medium">
-                    Profile
+                    {t('profile')}
                   </Link>
                   {userRole === "task_doer" && (
                     <Link to="/verification" className="text-foreground hover:text-primary transition-colors flex items-center gap-2">
                       <ShieldCheck className="h-4 w-4" />
-                      Get Verified
+                      {t('getVerified')}
                     </Link>
                   )}
                   <Button variant="outline" size="default" onClick={handleSignOut}>
-                    Sign Out
+                    {t('signOut')}
                   </Button>
                 </>
               ) : (
                 <>
                   <Link to="/auth">
                     <Button variant="outline" size="lg" className="font-semibold border-2">
-                      Sign In
+                      {t('signIn')}
                     </Button>
                   </Link>
                   <Link to="/auth">
-                    <Button variant="hero" size="lg" className="font-semibold">Get Started</Button>
+                    <Button variant="hero" size="lg" className="font-semibold">{t('getStarted')}</Button>
                   </Link>
                 </>
               )}
@@ -157,6 +165,41 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 <Moon className="h-5 w-5 text-primary" />
               )}
             </Button>
+
+            {/* Language Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10">
+                  <Globe className="h-5 w-5 text-primary" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-card border-border z-50 min-w-[150px]">
+                <DropdownMenuItem 
+                  onClick={() => setLanguage('en')}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇺🇸 English {language === 'en' && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage('es')}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇪🇸 Español {language === 'es' && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage('fr')}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇫🇷 Français {language === 'fr' && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage('de')}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇩🇪 Deutsch {language === 'de' && "✓"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <button 
               onClick={() => setIsMobileMenuOpen(true)} 
