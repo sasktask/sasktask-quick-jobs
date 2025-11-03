@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet,
@@ -8,6 +8,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Badge } from "./ui/badge";
+import { useEffect, useState } from "react";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -18,6 +20,27 @@ interface MobileMenuProps {
 
 export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps) => {
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetchUnreadCount();
+    }
+  }, [user]);
+
+  const fetchUnreadCount = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('read', false);
+    
+    if (data !== null) {
+      setUnreadCount(data.length || 0);
+    }
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -68,6 +91,25 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
 
           {user ? (
             <>
+              <Button
+                variant="ghost"
+                className="justify-start text-base gap-2 relative"
+                onClick={() => handleNavigation("/dashboard")}
+              >
+                <Bell className="h-4 w-4" />
+                Notifications
+                {unreadCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="ml-auto h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  >
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Button>
+
+              <div className="border-t border-border my-2" />
+              
               <Button
                 variant="ghost"
                 className="justify-start text-base"

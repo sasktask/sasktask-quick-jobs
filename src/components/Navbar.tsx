@@ -141,7 +141,11 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
               )}
             </div>
 
-            {user && <NotificationsDropdown />}
+            {user && (
+              <div className="flex items-center">
+                <NotificationsDropdown />
+              </div>
+            )}
             
             {/* Theme Toggle */}
             <Button
