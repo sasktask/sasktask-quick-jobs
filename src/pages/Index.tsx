@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Snowflake, Sparkles, Truck, Star, Shield, Clock, DollarSign, Users, Wrench, Package, Monitor, Trees, Home, PaintBucket, MoreHorizontal, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock, Plus } from "lucide-react";
@@ -162,6 +163,12 @@ const Index = () => {
                     Post a Task
                   </Button>
                 </Link>
+                <InstallAppButton 
+                  variant="outline" 
+                  size="lg" 
+                  className="w-full sm:w-auto text-lg h-14 px-8 border-2 border-primary/50 hover:bg-primary/10"
+                  showOnDesktop={true}
+                />
               </div>
 
               {/* Trust Indicators */}
