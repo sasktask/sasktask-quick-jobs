@@ -53,10 +53,18 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
     const { data } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
-      .single();
+      .eq("user_id", userId);
     
-    setUserRole(data?.role || null);
+    // Check for admin role first, then task_doer, then task_giver
+    if (data) {
+      const adminRole = data.find(r => r.role === 'admin');
+      const taskDoerRole = data.find(r => r.role === 'task_doer');
+      const taskGiverRole = data.find(r => r.role === 'task_giver');
+      
+      setUserRole(adminRole?.role || taskDoerRole?.role || taskGiverRole?.role || null);
+    } else {
+      setUserRole(null);
+    }
   };
 
   const handleSignOut = async () => {

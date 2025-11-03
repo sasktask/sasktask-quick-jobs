@@ -68,14 +68,15 @@ const PostTask = () => {
 
       setUserId(session.user.id);
 
-      // Check if user is task_giver
+      // Check if user has task_giver role
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", session.user.id)
-        .single();
+        .eq("user_id", session.user.id);
 
-      if (roleData?.role !== "task_giver") {
+      const hasTaskGiverRole = roleData?.some(r => r.role === "task_giver" || r.role === "admin");
+
+      if (!hasTaskGiverRole) {
         toast({
           title: "Access Denied",
           description: "Only task givers can post tasks",
