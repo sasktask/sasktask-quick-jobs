@@ -17,30 +17,7 @@ const Index = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const searchRef = useRef<HTMLDivElement>(null);
-
-  // Check authentication and redirect if not logged in
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-      setIsCheckingAuth(false);
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
   const categories = [{
     name: "Snow Removal",
     icon: "❄️",
@@ -144,18 +121,6 @@ const Index = () => {
     setShowResults(false);
     setSearchQuery("");
   };
-  
-  // Show loading while checking authentication
-  if (isCheckingAuth) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return <div className="min-h-screen bg-background">
       <Navbar />
