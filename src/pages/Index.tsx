@@ -6,8 +6,9 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Snowflake, Sparkles, Truck, Star, Shield, Clock, DollarSign, Users, Wrench, Package, Monitor, Trees, Home, PaintBucket, MoreHorizontal, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock } from "lucide-react";
+import { Snowflake, Sparkles, Truck, Star, Shield, Clock, DollarSign, Users, Wrench, Package, Monitor, Trees, Home, PaintBucket, MoreHorizontal, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock, Plus } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
+import heroInfographic from "@/assets/hero-infographic.jpg";
 import logo from "@/assets/sasktask-logo.png";
 const Index = () => {
   const navigate = useNavigate();
@@ -122,291 +123,113 @@ const Index = () => {
   return <div className="min-h-screen bg-background">
       <Navbar />
       
-      {/* Hero Section */}
+      {/* Hero Section - Redesigned with Infographic */}
       <section className="pt-32 pb-20 px-4 relative overflow-hidden">
-        {/* Clean Corner Decorative Elements - SaskTask Style */}
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          {/* Top Left Corner - Large circle with stripe pattern */}
-          <div className="absolute -top-48 -left-48 w-[500px] h-[500px] pointer-events-none">
-            {/* Main circle */}
-            <div className="absolute inset-0 bg-primary/15 rounded-full" />
-            
-            {/* Diagonal stripes pattern */}
-            <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 500 500">
-              <defs>
-                <pattern id="diagonalStripes" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                  <rect width="10" height="20" fill="hsl(var(--primary))" />
-                </pattern>
-              </defs>
-              <circle cx="250" cy="250" r="250" fill="url(#diagonalStripes)" />
-            </svg>
-          </div>
-
-          {/* Top Right Corner - Layered shapes */}
-          <div className="absolute -top-40 -right-40 w-[450px] h-[450px] pointer-events-none">
-            {/* Back layer - larger */}
-            <div className="absolute top-0 right-0 w-[380px] h-[380px] bg-primary/12 rounded-full" />
-            
-            {/* Front layer - medium */}
-            <div className="absolute top-12 right-12 w-[320px] h-[320px] bg-primary/18 rounded-br-full" />
-            
-            {/* Accent circle */}
-            <div className="absolute top-24 right-32 w-32 h-32 bg-accent/40 rounded-full" />
-            
-            {/* Dot grid pattern */}
-            <div className="absolute top-40 right-48 w-28 h-28 opacity-25">
-              <div className="grid grid-cols-6 grid-rows-6 gap-2 h-full">
-                {[...Array(36)].map((_, i) => (
-                  <div key={i} className="w-1.5 h-1.5 bg-primary rounded-full" />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Left Corner - Simple wave */}
-          <div className="absolute -bottom-40 -left-40 w-[420px] h-[420px] pointer-events-none">
-            <div className="absolute inset-0 bg-primary/10 rounded-full" />
-            
-            {/* Concentric circles */}
-            <div className="absolute bottom-12 left-12 w-80 h-80 border-2 border-primary/15 rounded-full" />
-            <div className="absolute bottom-20 left-20 w-64 h-64 border-2 border-primary/20 rounded-full" />
-          </div>
-
-          {/* Bottom Right Corner - Organic shape */}
-          <div className="absolute -bottom-36 -right-36 w-[400px] h-[400px] pointer-events-none">
-            <div className="absolute inset-0 bg-primary/8 rounded-full" />
-            
-            {/* Simple geometric accent */}
-            <div className="absolute bottom-20 right-20 w-40 h-40 bg-primary/20 rounded-tl-full" />
-          </div>
-        </div>
+        {/* Background with subtle gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5 -z-10" />
         
         <div className="container mx-auto">
-          <div className="text-center space-y-8 max-w-5xl mx-auto">
-            {/* Logo with glow effect */}
-            <div className="flex justify-center mb-6 animate-fade-in">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-hero rounded-full blur-2xl opacity-30 animate-glow-pulse" />
-                
+          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
+            {/* Left: Text Content */}
+            <div className="space-y-6 animate-fade-up">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm font-medium text-primary">
+                <Sparkles className="h-4 w-4" />
+                Saskatchewan's #1 Task Platform
+              </div>
+              
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
+                Get Things Done
+                <span className="block bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
+                  The Easy Way
+                </span>
+              </h1>
+              
+              <p className="text-xl text-muted-foreground leading-relaxed">
+                Connect with verified local professionals for any task. From snow removal to home repairs, find trusted help in your Saskatchewan community.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <Link to="/browse">
+                  <Button size="lg" variant="hero" className="w-full sm:w-auto text-lg h-14 px-8">
+                    <Search className="mr-2 h-5 w-5" />
+                    Browse Tasks
+                  </Button>
+                </Link>
+                <Link to="/post-task">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-2">
+                    <FileEdit className="mr-2 h-5 w-5" />
+                    Post a Task
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Trust Indicators */}
+              <div className="flex flex-wrap gap-6 pt-6 border-t border-border">
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-foreground">Verified</p>
+                    <p className="text-sm text-muted-foreground">Taskers</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Lock className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-foreground">Secure</p>
+                    <p className="text-sm text-muted-foreground">Payments</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Star className="h-5 w-5 text-primary fill-primary" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-foreground">Top Rated</p>
+                    <p className="text-sm text-muted-foreground">Service</p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* SaskTask Brand Title */}
-            <div className="relative animate-fade-up mb-8">
-              <div className="absolute inset-0 bg-gradient-hero blur-3xl opacity-40 animate-glow-pulse" />
-              <h1 className="relative text-7xl md:text-8xl lg:text-9xl font-heading font-black text-gradient tracking-tight leading-none hover-scale">
-                SaskTask<sup className="text-3xl md:text-4xl lg:text-5xl ml-1">™</sup>
-              </h1>
-              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-48 h-1 bg-gradient-accent rounded-full blur-sm" />
-            </div>
+            {/* Right: Infographic */}
+            <div className="relative animate-fade-in">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl blur-3xl -z-10" />
+              <div className="relative bg-card/50 backdrop-blur-sm rounded-3xl p-4 border border-border shadow-2xl">
+                <img 
+                  src={heroInfographic} 
+                  alt="SaskTask workflow: Post task, connect with verified professionals, get it done" 
+                  className="w-full h-auto rounded-2xl"
+                />
+              </div>
 
-            {/* Search Feature with enhanced glass design */}
-            <div className="max-w-2xl mx-auto mb-8 relative z-10 animate-fade-up" ref={searchRef}>
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-hero rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
-                <div className="relative glass rounded-2xl p-2">
-                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-primary pointer-events-none z-10" />
-                  <Input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onFocus={() => searchQuery.length >= 2 && setShowResults(true)} placeholder="Search for tasks, services, or locations..." className="h-16 pl-16 pr-40 text-lg bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 font-medium placeholder:text-muted-foreground/70" />
-                  <Button className="absolute right-3 top-3 h-12 px-8 rounded-xl" variant="hero" onClick={handleSearchClick}>
-                    Search
-                  </Button>
+              {/* Floating stats cards */}
+              <div className="absolute -bottom-4 -left-4 bg-card border border-border rounded-2xl p-4 shadow-xl animate-bounce-slow">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Users className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">1000+</p>
+                    <p className="text-sm text-muted-foreground">Active Users</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Search Results Dropdown */}
-              {showResults && <div className="absolute w-full mt-3 glass rounded-2xl shadow-2xl max-h-96 overflow-y-auto z-50 border-2 border-primary/20">
-                  {isSearching ? <div className="p-8 text-center">
-                      <div className="animate-spin rounded-full h-10 w-10 border-b-3 border-primary mx-auto glow-sm"></div>
-                      <p className="mt-3 text-sm font-medium text-muted-foreground">Searching...</p>
-                    </div> : searchResults.length > 0 ? <div className="py-2">
-                      {searchResults.map((result, idx) => <button key={idx} onClick={() => handleResultClick(result)} className="w-full px-4 py-3 hover:bg-muted/50 flex items-start gap-3 text-left transition-colors">
-                          {result.type === "category" ? <>
-                              <span className="text-2xl">{result.icon}</span>
-                              <div>
-                                <p className="font-semibold">{result.name}</p>
-                                <p className="text-xs text-muted-foreground">Browse category</p>
-                              </div>
-                            </> : <>
-                              <Briefcase className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <p className="font-semibold truncate">{result.title}</p>
-                                <p className="text-xs text-muted-foreground truncate">{result.description}</p>
-                                <div className="flex gap-2 mt-1">
-                                  <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                                    {result.category}
-                                  </span>
-                                  <span className="text-xs px-2 py-0.5 bg-green-500/10 text-green-600 rounded-full font-bold">
-                                    ${result.pay_amount}
-                                  </span>
-                                </div>
-                              </div>
-                            </>}
-                        </button>)}
-                    </div> : <div className="p-6 text-center text-muted-foreground">
-                      <Search className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No results found for "{searchQuery}"</p>
-                      <p className="text-sm mt-1">Try browsing categories or post your own task</p>
-                    </div>}
-                </div>}
-
-              <div className="flex flex-wrap justify-center gap-2 mt-3 text-sm">
-                <span className="text-muted-foreground">Popular:</span>
-                {popularSearches.map((term, idx) => <React.Fragment key={term}>
-                    <button onClick={() => handlePopularSearchClick(term)} className="text-primary hover:underline font-medium">
-                      {term}
-                    </button>
-                    {idx < popularSearches.length - 1 && <span className="text-muted-foreground">•</span>}
-                  </React.Fragment>)}
-              </div>
-            </div>
-            
-            {/* Main Heading with gradient text */}
-            <div className="space-y-6 animate-fade-up">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold leading-tight">
-                <span className="text-gradient animate-glow-pulse">
-                  Your Tasks, Our Experts
-                </span>
-              </h1>
-              
-              <div className="flex flex-wrap justify-center gap-4 text-lg lg:text-xl font-semibold">
-                <span className="px-6 py-3 bg-gradient-primary rounded-2xl text-white shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-default">
-                  💪 Quick & Reliable
-                </span>
-                <span className="px-6 py-3 bg-gradient-secondary rounded-2xl text-white shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-default">
-                  ✓ Verified Taskers
-                </span>
-                <span className="px-6 py-3 bg-gradient-accent rounded-2xl text-white shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-default">
-                  ⚡ Same-Day Service
-                </span>
-              </div>
-            </div>
-            
-            {/* Enhanced Description */}
-            <div className="max-w-3xl mx-auto space-y-6 animate-fade-up" style={{
-            animationDelay: '0.2s'
-          }}>
-              <p className="text-2xl lg:text-3xl font-heading font-bold text-foreground leading-tight">
-                Connect with trusted local Taskers in minutes
-              </p>
-              <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
-                From home repairs to moving help, cleaning to assembly - find skilled professionals 
-                for any task. Post your job or browse opportunities. Get it done today!
-              </p>
-            </div>
-
-            {/* Key Benefits Grid with modern cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-6 animate-fade-up" style={{
-            animationDelay: '0.4s'
-          }}>
-              {[{
-              icon: Shield,
-              text: "Insured & Vetted",
-              gradient: "from-primary to-primary-glow"
-            }, {
-              icon: Clock,
-              text: "Fast Booking",
-              gradient: "from-secondary via-cyan-500 to-secondary"
-            }, {
-              icon: DollarSign,
-              text: "Fair Prices",
-              gradient: "from-accent to-pink-500"
-            }, {
-              icon: Star,
-              text: "Top Rated",
-              gradient: "from-amber-500 to-orange-500"
-            }].map((benefit, i) => <div key={i} className="group relative">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${benefit.gradient} rounded-2xl opacity-0 group-hover:opacity-10 blur-xl transition-all duration-300`} />
-                  <div className="relative flex flex-col items-center gap-3 p-6 rounded-2xl glass hover:scale-105 transition-all duration-300 cursor-default">
-                    <div className={`h-14 w-14 rounded-xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all`}>
-                      <benefit.icon className="h-6 w-6 text-white" />
-                    </div>
-                    <span className="text-sm font-bold font-heading">{benefit.text}</span>
+              <div className="absolute -top-4 -right-4 bg-card border border-border rounded-2xl p-4 shadow-xl animate-bounce-slow" style={{animationDelay: '0.5s'}}>
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <CheckCircle2 className="h-6 w-6 text-primary" />
                   </div>
-                </div>)}
-            </div>
-            
-            {/* What do you need help with? */}
-            <div className="pt-8">
-              <h2 className="text-3xl lg:text-4xl font-bold mb-3">What do you need help with?</h2>
-              <p className="text-muted-foreground mb-6">Choose a service to get started</p>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-                {[{
-                icon: Package,
-                label: "Assembly",
-                color: "from-blue-500 to-cyan-500"
-              }, {
-                icon: Monitor,
-                label: "Mounting",
-                color: "from-purple-500 to-pink-500"
-              }, {
-                icon: Truck,
-                label: "Moving",
-                color: "from-orange-500 to-red-500"
-              }, {
-                icon: Sparkles,
-                label: "Cleaning",
-                color: "from-green-500 to-emerald-500"
-              }, {
-                icon: Trees,
-                label: "Outdoor Help",
-                color: "from-teal-500 to-cyan-500"
-              }, {
-                icon: Home,
-                label: "Home Repairs",
-                color: "from-rose-500 to-pink-500"
-              }, {
-                icon: PaintBucket,
-                label: "Painting",
-                color: "from-amber-500 to-orange-500"
-              }, {
-                icon: MoreHorizontal,
-                label: "Many More",
-                color: "from-violet-500 to-purple-500"
-              }].map((category, i) => <Link key={i} to="/browse">
-                    <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-border hover:border-primary/50 h-full hover:-translate-y-1">
-                      <CardContent className="p-6 flex flex-col items-center justify-center gap-3">
-                        <div className={`h-14 w-14 rounded-xl bg-gradient-to-br ${category.color} flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}>
-                          <category.icon className="h-7 w-7 text-white" />
-                        </div>
-                        <span className="text-sm font-semibold text-center">{category.label}</span>
-                      </CardContent>
-                    </Card>
-                  </Link>)}
-              </div>
-            </div>
-            
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap justify-center gap-4 pt-8">
-              <Link to="/auth">
-                <Button variant="hero" size="lg" className="group shadow-xl hover:shadow-2xl transition-all text-lg px-8 py-6">
-                  Get Started Free
-                  <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
-                </Button>
-              </Link>
-              <Link to="/browse">
-                <Button variant="outline" size="lg" className="shadow-lg hover:shadow-xl transition-all text-lg px-8 py-6">
-                  Explore Tasks
-                </Button>
-              </Link>
-            </div>
-            
-            {/* Stats */}
-            <div className="flex flex-wrap items-center justify-center gap-8 pt-6">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20">
-                <Star className="h-6 w-6 fill-accent text-accent" />
-                <span className="font-bold text-lg">4.9/5</span>
-                <span className="text-sm text-muted-foreground">Rating</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-                <Users className="h-6 w-6 text-primary" />
-                <span className="font-bold text-lg">10K+</span>
-                <span className="text-sm text-muted-foreground">Active Users</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20">
-                <Shield className="h-6 w-6 text-secondary" />
-                <span className="font-bold text-lg">100%</span>
-                <span className="text-sm text-muted-foreground">Verified</span>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">500+</p>
+                    <p className="text-sm text-muted-foreground">Tasks Completed</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
