@@ -109,7 +109,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
               </Button>
 
               <div className="border-t border-border my-2" />
-              
+
               <Button
                 variant="ghost"
                 className="justify-start text-base"

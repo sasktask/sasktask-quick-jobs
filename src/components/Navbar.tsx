@@ -1,15 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Menu, ShieldCheck, Globe, Sun, Moon } from "lucide-react";
+import { Menu, ShieldCheck, Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/sasktask-logo.png";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
 import { NotificationsDropdown } from "./NotificationsDropdown";
 import { MobileMenu } from "./MobileMenu";
@@ -21,7 +15,6 @@ interface NavbarProps {
 export const Navbar = ({ onMenuClick }: NavbarProps) => {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [language, setLanguage] = useState("English");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
@@ -149,11 +142,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
               )}
             </div>
 
-            {user && (
-              <div className="flex items-center">
-                <NotificationsDropdown />
-              </div>
-            )}
+            {user && <NotificationsDropdown />}
             
             {/* Theme Toggle */}
             <Button
@@ -168,41 +157,6 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 <Moon className="h-5 w-5 text-primary" />
               )}
             </Button>
-
-            {/* Language Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10">
-                  <Globe className="h-5 w-5 text-primary" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-card border-border z-50 min-w-[150px]">
-                <DropdownMenuItem 
-                  onClick={() => setLanguage("English")}
-                  className="cursor-pointer hover:bg-accent/10"
-                >
-                  🇺🇸 English {language === "English" && "✓"}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setLanguage("Español")}
-                  className="cursor-pointer hover:bg-accent/10"
-                >
-                  🇪🇸 Español {language === "Español" && "✓"}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setLanguage("Français")}
-                  className="cursor-pointer hover:bg-accent/10"
-                >
-                  🇫🇷 Français {language === "Français" && "✓"}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setLanguage("Deutsch")}
-                  className="cursor-pointer hover:bg-accent/10"
-                >
-                  🇩🇪 Deutsch {language === "Deutsch" && "✓"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
             <button 
               onClick={() => setIsMobileMenuOpen(true)} 
