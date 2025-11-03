@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { useState, useEffect } from "react";
+import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,8 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { DollarSign, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { StripePaymentForm } from "./StripePaymentForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
 
 interface PaymentPanelProps {
   bookingId: string;
@@ -34,7 +32,27 @@ export const PaymentPanel = ({
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
   const { toast } = useToast();
+
+  // Fetch Stripe publishable key on mount
+  useEffect(() => {
+    const initializeStripe = async () => {
+      try {
+        const { data, error: configError } = await supabase.functions.invoke("get-stripe-config");
+        
+        if (configError) throw configError;
+        if (!data?.publishableKey) throw new Error("Publishable key not found");
+        
+        setStripePromise(loadStripe(data.publishableKey));
+      } catch (err: any) {
+        console.error("Failed to initialize Stripe:", err);
+        setError("Failed to initialize payment system. Please try again later.");
+      }
+    };
+
+    initializeStripe();
+  }, []);
 
   const platformFeePercentage = 0.15; // 15% platform fee
   const taxPercentage = 0.05; // 5% GST in Saskatchewan
@@ -153,7 +171,7 @@ export const PaymentPanel = ({
     );
   }
 
-  if (clientSecret) {
+  if (clientSecret && stripePromise) {
     return (
       <Card>
         <CardHeader>
@@ -224,12 +242,12 @@ export const PaymentPanel = ({
 
           <Button 
             onClick={handleInitiatePayment} 
-            disabled={loading}
+            disabled={loading || !stripePromise}
             className="w-full"
             size="lg"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {loading ? "Preparing Payment..." : `Pay ${(amount + platformFee + taxAmount).toFixed(2)} CAD`}
+            {!stripePromise ? "Initializing..." : loading ? "Preparing Payment..." : `Pay ${(amount + platformFee + taxAmount).toFixed(2)} CAD`}
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
