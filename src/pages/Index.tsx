@@ -20,12 +20,13 @@ const Index = () => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // Check authentication on mount
+  // Check authentication and redirect if not logged in
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
+        return;
       }
       setIsCheckingAuth(false);
     };
@@ -33,7 +34,7 @@ const Index = () => {
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session && !isCheckingAuth) {
+      if (!session) {
         navigate("/auth");
       }
     });
@@ -143,6 +144,7 @@ const Index = () => {
     setShowResults(false);
     setSearchQuery("");
   };
+  
   // Show loading while checking authentication
   if (isCheckingAuth) {
     return (
