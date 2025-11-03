@@ -96,7 +96,7 @@ const Auth = () => {
 
       toast({
         title: "Account created! ✅",
-        description: "Your profile has been set up. You can now sign in.",
+        description: "Please check your email to verify your account before signing in.",
       });
 
       // Auto switch to sign in tab after 1.5 seconds

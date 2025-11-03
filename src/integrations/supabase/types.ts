@@ -375,6 +375,10 @@ export type Database = {
           trust_score: number | null
           updated_at: string | null
           verification_level: string | null
+          verification_notes: string | null
+          verified_at: string | null
+          verified_by: string | null
+          verified_by_admin: boolean | null
         }
         Insert: {
           availability_status?: string | null
@@ -405,6 +409,10 @@ export type Database = {
           trust_score?: number | null
           updated_at?: string | null
           verification_level?: string | null
+          verification_notes?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          verified_by_admin?: boolean | null
         }
         Update: {
           availability_status?: string | null
@@ -435,6 +443,10 @@ export type Database = {
           trust_score?: number | null
           updated_at?: string | null
           verification_level?: string | null
+          verification_notes?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          verified_by_admin?: boolean | null
         }
         Relationships: []
       }

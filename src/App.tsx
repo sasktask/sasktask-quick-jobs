@@ -23,6 +23,7 @@ import FAQ from "./pages/FAQ";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Install from "./pages/Install";
+import AdminVerification from "./pages/AdminVerification";
 import { ChatButton } from "./components/ChatButton";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/install" element={<Install />} />
+            <Route path="/admin/verify-users" element={<AdminVerification />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
