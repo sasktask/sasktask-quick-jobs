@@ -121,15 +121,25 @@ const Dashboard = () => {
             </p>
           </div>
           <div className="flex gap-3">
+            <Link to="/bookings">
+              <Button variant="default">
+                <Briefcase className="mr-2 h-4 w-4" />
+                Bookings
+              </Button>
+            </Link>
             <Link to="/profile">
               <Button variant="outline">
                 <User className="mr-2 h-4 w-4" />
                 Profile
               </Button>
             </Link>
-            <Button variant="destructive" onClick={handleSignOut}>
-              Sign Out
-            </Button>
+            {userRole === "task_doer" && (
+              <Link to="/verification">
+                <Button variant="secondary">
+                  Get Verified
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
