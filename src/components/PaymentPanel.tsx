@@ -225,7 +225,7 @@ export const PaymentPanel = ({
             </div>
             <div className="flex justify-between text-lg font-bold pt-2 border-t border-primary/20">
               <span>Total to Pay:</span>
-              <span className="text-primary">${(amount + platformFee + taxAmount).toFixed(2)}</span>
+              <span className="text-primary">${amount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground pt-2">
               <span>Tasker Gets (After Completion):</span>
@@ -247,7 +247,7 @@ export const PaymentPanel = ({
             size="lg"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {!stripePromise ? "Initializing..." : loading ? "Preparing Payment..." : `Pay ${(amount + platformFee + taxAmount).toFixed(2)} CAD`}
+            {!stripePromise ? "Initializing..." : loading ? "Preparing Payment..." : `Pay $${amount.toFixed(2)} CAD`}
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">

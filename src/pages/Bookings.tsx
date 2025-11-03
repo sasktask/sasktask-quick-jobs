@@ -62,7 +62,7 @@ const Bookings = () => {
       
       setUserRole(roleData?.role || null);
 
-      // Fetch bookings based on role with task doer profile and verification
+      // Fetch bookings based on role with task doer profile (verification fetched separately)
       let query = supabase
         .from("bookings")
         .select(`
@@ -74,11 +74,6 @@ const Bookings = () => {
             rating,
             total_reviews
           ),
-          task_doer_verification:verifications!verifications_user_id_fkey (
-            verification_status,
-            id_verified,
-            background_check_status
-          ),
           tasks (
             id,
             title,
@@ -88,6 +83,7 @@ const Bookings = () => {
             pay_amount,
             scheduled_date,
             task_giver_id,
+            status,
             task_giver:profiles!tasks_task_giver_id_fkey (
               id,
               full_name,
@@ -109,7 +105,24 @@ const Bookings = () => {
       const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
-      setBookings(data || []);
+      
+      // Fetch verification status for each task doer separately
+      const bookingsWithVerification = await Promise.all(
+        (data || []).map(async (booking) => {
+          const { data: verification } = await supabase
+            .from("verifications")
+            .select("verification_status, id_verified, background_check_status")
+            .eq("user_id", booking.task_doer_id)
+            .single();
+          
+          return {
+            ...booking,
+            task_doer_verification: verification
+          };
+        })
+      );
+      
+      setBookings(bookingsWithVerification);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -273,7 +286,7 @@ const Bookings = () => {
                           </div>
 
                           {/* Quick Actions */}
-                          {booking.status === "accepted" && (
+                          {(booking.status === "accepted" || booking.status === "in_progress") && (
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
