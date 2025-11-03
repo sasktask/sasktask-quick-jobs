@@ -198,6 +198,42 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 >
                   🇩🇪 Deutsch {language === 'de' && "✓"}
                 </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage('hi')}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇮🇳 हिंदी {language === 'hi' && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage('zh')}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇨🇳 中文 {language === 'zh' && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage('ru')}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇷🇺 Русский {language === 'ru' && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage('ar')}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇸🇦 العربية {language === 'ar' && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage('pt')}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇵🇹 Português {language === 'pt' && "✓"}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setLanguage('id')}
+                  className="cursor-pointer hover:bg-accent/10"
+                >
+                  🇮🇩 Indonesia {language === 'id' && "✓"}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
