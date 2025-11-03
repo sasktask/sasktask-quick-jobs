@@ -9,15 +9,32 @@ export const ChatButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     checkUser();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUserId(session.user.id);
+        setIsAuthenticated(true);
+        fetchUnreadCount(session.user.id);
+        subscribeToMessages(session.user.id);
+      } else {
+        setUserId(null);
+        setIsAuthenticated(false);
+        setUnreadCount(0);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       setUserId(session.user.id);
+      setIsAuthenticated(true);
       fetchUnreadCount(session.user.id);
       subscribeToMessages(session.user.id);
     }
@@ -55,23 +72,29 @@ export const ChatButton = () => {
     };
   };
 
-  if (!userId) return null;
+  // Only show for authenticated users
+  if (!isAuthenticated || !userId) {
+    return null;
+  }
 
   return (
     <>
       <Button
         onClick={() => setIsOpen(true)}
         size="icon"
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:scale-110 transition-transform z-40 bg-primary hover:bg-primary/90"
+        variant="ghost"
+        className="fixed bottom-6 right-6 h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-sm hover:shadow-md hover:bg-accent/50 transition-all z-40"
       >
-        <MessageCircle className="h-6 w-6" />
-        {unreadCount > 0 && (
-          <Badge 
-            className="absolute -top-1 -right-1 h-6 w-6 flex items-center justify-center p-0 bg-destructive text-destructive-foreground border-2 border-background"
-          >
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </Badge>
-        )}
+        <div className="relative">
+          <MessageCircle className="h-5 w-5 text-muted-foreground" />
+          {unreadCount > 0 && (
+            <Badge 
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-destructive text-destructive-foreground text-xs border-2 border-background"
+            >
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </Badge>
+          )}
+        </div>
       </Button>
 
       <ChatDrawer 
