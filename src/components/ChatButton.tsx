@@ -82,11 +82,11 @@ export const ChatButton = () => {
       <Button
         onClick={() => setIsOpen(true)}
         size="icon"
-        variant="ghost"
-        className="fixed bottom-6 right-6 h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-sm hover:shadow-md hover:bg-accent/50 transition-all z-40"
+        variant="default"
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all z-40 bg-primary hover:bg-primary/90"
       >
         <div className="relative">
-          <MessageCircle className="h-5 w-5 text-muted-foreground" />
+          <MessageCircle className="h-6 w-6 text-primary-foreground" />
           {unreadCount > 0 && (
             <Badge 
               className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-destructive text-destructive-foreground text-xs border-2 border-background"

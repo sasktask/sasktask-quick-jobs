@@ -1,0 +1,152 @@
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "./ui/button";
+import { ShieldCheck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+
+interface MobileMenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+  user: any;
+  userRole: string | null;
+}
+
+export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps) => {
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    onClose();
+    navigate("/");
+  };
+
+  const handleNavigation = (path: string) => {
+    onClose();
+    navigate(path);
+  };
+
+  return (
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+        <SheetHeader>
+          <SheetTitle>Menu</SheetTitle>
+        </SheetHeader>
+        
+        <div className="flex flex-col gap-4 mt-8">
+          {/* Main Navigation */}
+          <Button
+            variant="ghost"
+            className="justify-start text-base"
+            onClick={() => handleNavigation("/browse")}
+          >
+            Browse Tasks
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="justify-start text-base"
+            onClick={() => handleNavigation("/find-taskers")}
+          >
+            Find Taskers
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="justify-start text-base gap-2"
+            onClick={() => handleNavigation("/become-tasker")}
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Become a Tasker
+          </Button>
+
+          <div className="border-t border-border my-2" />
+
+          {user ? (
+            <>
+              <Button
+                variant="ghost"
+                className="justify-start text-base"
+                onClick={() => handleNavigation("/dashboard")}
+              >
+                Dashboard
+              </Button>
+              
+              <Button
+                variant="ghost"
+                className="justify-start text-base"
+                onClick={() => handleNavigation("/bookings")}
+              >
+                Bookings
+              </Button>
+              
+              <Button
+                variant="ghost"
+                className="justify-start text-base"
+                onClick={() => handleNavigation("/profile")}
+              >
+                Profile
+              </Button>
+
+              {userRole === "task_doer" && (
+                <Button
+                  variant="ghost"
+                  className="justify-start text-base gap-2"
+                  onClick={() => handleNavigation("/verification")}
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Get Verified
+                </Button>
+              )}
+
+              {userRole === "admin" && (
+                <Button
+                  variant="ghost"
+                  className="justify-start text-base gap-2"
+                  onClick={() => handleNavigation("/admin/verify-users")}
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Verify Users
+                </Button>
+              )}
+
+              <div className="border-t border-border my-2" />
+              
+              <Button
+                variant="outline"
+                className="justify-start text-base"
+                onClick={handleSignOut}
+              >
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="lg"
+                className="justify-center text-base font-semibold border-2"
+                onClick={() => handleNavigation("/auth")}
+              >
+                Sign In
+              </Button>
+              
+              <Button
+                variant="hero"
+                size="lg"
+                className="justify-center text-base font-semibold"
+                onClick={() => handleNavigation("/auth")}
+              >
+                Get Started
+              </Button>
+            </>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+};

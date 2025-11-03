@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
 import { NotificationsDropdown } from "./NotificationsDropdown";
+import { MobileMenu } from "./MobileMenu";
 
 interface NavbarProps {
   onMenuClick?: () => void;
@@ -21,6 +22,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [language, setLanguage] = useState("English");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -190,12 +192,22 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <button onClick={onMenuClick} className="md:hidden">
-              <Menu className="h-6 w-6" />
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)} 
+              className="md:hidden p-2 hover:bg-accent/10 rounded-lg transition-colors"
+            >
+              <Menu className="h-6 w-6 text-primary" />
             </button>
           </div>
         </div>
       </div>
+
+      <MobileMenu 
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        user={user}
+        userRole={userRole}
+      />
     </nav>
   );
 };
