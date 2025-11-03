@@ -14,6 +14,7 @@ interface Message {
   receiver_id: string;
   message: string;
   created_at: string;
+  status?: string;
   sender_name?: string;
 }
 
@@ -52,6 +53,11 @@ export const MessagingPanel = ({ bookingId, currentUserId, otherUserId, otherUse
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  // Auto-scroll when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const fetchOtherUserProfile = async () => {
     const { data } = await supabase
@@ -174,25 +180,51 @@ export const MessagingPanel = ({ bookingId, currentUserId, otherUserId, otherUse
           {messages.length === 0 ? (
             <p className="text-center text-muted-foreground">No messages yet. Start the conversation!</p>
           ) : (
-            messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex ${msg.sender_id === currentUserId ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[70%] rounded-lg p-3 ${
-                    msg.sender_id === currentUserId
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-card border border-border"
-                  }`}
-                >
-                  <p className="text-sm">{msg.message}</p>
-                  <span className="text-xs opacity-70">
-                    {new Date(msg.created_at).toLocaleTimeString()}
-                  </span>
+            messages.map((msg, index) => {
+              const showTimestamp = index === 0 || 
+                new Date(msg.created_at).getTime() - new Date(messages[index - 1].created_at).getTime() > 300000; // 5 minutes
+              
+              return (
+                <div key={msg.id}>
+                  {showTimestamp && (
+                    <div className="flex justify-center my-2">
+                      <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                        {new Date(msg.created_at).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  )}
+                  <div
+                    className={`flex ${msg.sender_id === currentUserId ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm ${
+                        msg.sender_id === currentUserId
+                          ? "bg-primary text-primary-foreground rounded-br-sm"
+                          : "bg-card border border-border rounded-bl-sm"
+                      }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
+                      <div className="flex items-center justify-end gap-1 mt-1">
+                        <span className="text-xs opacity-70">
+                          {new Date(msg.created_at).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                        {msg.sender_id === currentUserId && msg.status === "read" && (
+                          <span className="text-xs opacity-70">✓✓</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
           <div ref={messagesEndRef} />
         </div>

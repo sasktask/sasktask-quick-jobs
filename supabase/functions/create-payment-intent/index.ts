@@ -30,6 +30,13 @@ serve(async (req) => {
       throw new Error("Missing required parameters");
     }
 
+    // Calculate fees and taxes
+    const taskAmount = amount;
+    const platformFee = taskAmount * 0.15; // 15% platform fee
+    const tax = taskAmount * 0.05; // 5% GST
+    const totalAmount = taskAmount + platformFee + tax;
+    const payoutAmount = taskAmount - platformFee; // What task doer receives
+
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
@@ -56,19 +63,41 @@ serve(async (req) => {
         .eq("id", user.id);
     }
 
-    // Create payment intent
+    // Create payment intent with manual capture for escrow
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
+      amount: Math.round(totalAmount * 100), // Convert to cents
       currency: "cad",
       customer: customerId,
+      capture_method: "automatic", // Capture immediately but hold in escrow in our DB
       metadata: {
         booking_id: bookingId,
         task_id: taskId,
         payer_id: user.id,
         payee_id: payeeId,
+        task_amount: taskAmount.toString(),
+        platform_fee: platformFee.toString(),
+        tax: tax.toString(),
+        payout_amount: payoutAmount.toString(),
       },
       description: `SaskTask Payment - Booking ${bookingId}`,
     });
+
+    // Create payment record in database with escrow status
+    await supabaseClient
+      .from("payments")
+      .insert({
+        booking_id: bookingId,
+        task_id: taskId,
+        payer_id: user.id,
+        payee_id: payeeId,
+        amount: totalAmount,
+        platform_fee: platformFee,
+        tax_deducted: tax,
+        payout_amount: payoutAmount,
+        payment_intent_id: paymentIntent.id,
+        escrow_status: "held",
+        status: "pending",
+      });
 
     return new Response(
       JSON.stringify({

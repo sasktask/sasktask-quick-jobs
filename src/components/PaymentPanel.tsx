@@ -1,11 +1,15 @@
 import { useState } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, CreditCard, CheckCircle } from "lucide-react";
+import { DollarSign, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { StripePaymentForm } from "./StripePaymentForm";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
 
 interface PaymentPanelProps {
   bookingId: string;
@@ -14,66 +18,76 @@ interface PaymentPanelProps {
   payeeId: string;
   amount: number;
   payeeName: string;
+  onPaymentComplete?: () => void;
 }
 
-export const PaymentPanel = ({ bookingId, taskId, payerId, payeeId, amount, payeeName }: PaymentPanelProps) => {
+export const PaymentPanel = ({ 
+  bookingId, 
+  taskId, 
+  payerId, 
+  payeeId, 
+  amount, 
+  payeeName,
+  onPaymentComplete 
+}: PaymentPanelProps) => {
   const [loading, setLoading] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const platformFeePercentage = 0.15; // 15% platform fee
   const taxPercentage = 0.05; // 5% GST in Saskatchewan
   const platformFee = amount * platformFeePercentage;
   const taxAmount = amount * taxPercentage;
-  const payoutAmount = amount - platformFee - taxAmount;
+  const payoutAmount = amount - platformFee;
 
-  const handlePayment = async () => {
+  const handleInitiatePayment = async () => {
     setLoading(true);
+    setError(null);
 
     try {
-      // Create payment record with escrow (held status)
-      const { error } = await supabase.from("payments").insert({
-        booking_id: bookingId,
-        task_id: taskId,
-        payer_id: payerId,
-        payee_id: payeeId,
-        amount,
-        platform_fee: platformFee,
-        tax_deducted: taxAmount,
-        payout_amount: payoutAmount,
-        status: "completed",
-        escrow_status: "held", // Payment held in escrow
-        payment_method: "mock_payment", // In production, integrate with Stripe
-        transaction_id: `txn_${Date.now()}`,
-        paid_at: new Date().toISOString(),
-      });
+      // Call edge function to create payment intent
+      const { data, error: functionError } = await supabase.functions.invoke(
+        "create-payment-intent",
+        {
+          body: {
+            amount,
+            bookingId,
+            taskId,
+            payeeId,
+          },
+        }
+      );
 
-      if (error) throw error;
+      if (functionError) throw functionError;
+      if (!data?.clientSecret) throw new Error("Failed to create payment intent");
 
-      // Update booking status to in_progress with payment agreed
-      await supabase
-        .from("bookings")
-        .update({ 
-          status: "in_progress",
-          payment_agreed: true,
-          agreed_at: new Date().toISOString()
-        })
-        .eq("id", bookingId);
-
-      setPaymentComplete(true);
-      
+      setClientSecret(data.clientSecret);
+    } catch (err: any) {
+      console.error("Payment initiation error:", err);
+      setError(err.message || "Failed to initiate payment");
       toast({
-        title: "Payment Held in Escrow! 🎉",
-        description: `$${amount.toFixed(2)} is held securely. ${payeeName} will receive $${payoutAmount.toFixed(2)} after task completion.`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Payment Failed",
-        description: error.message,
+        title: "Payment Error",
+        description: err.message || "Failed to initiate payment",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    setPaymentComplete(true);
+    
+    toast({
+      title: "Payment Successful! 🎉",
+      description: "Your payment is secured in escrow. The tasker will be paid after task completion.",
+    });
+
+    // Refresh the booking page
+    if (onPaymentComplete) {
+      onPaymentComplete();
     }
   };
 
@@ -83,25 +97,25 @@ export const PaymentPanel = ({ bookingId, taskId, payerId, payeeId, amount, paye
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary">
             <CheckCircle className="h-6 w-6" />
-            Payment Held in Escrow
+            Payment Secured in Escrow
           </CardTitle>
           <CardDescription>
-            Payment is secured. Tasker will be paid after you confirm task completion.
+            Payment is held securely. Tasker will be paid after you confirm task completion.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span>Amount Paid:</span>
+              <span>Task Amount:</span>
               <span className="font-semibold">${amount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
               <span>Platform Fee (15%):</span>
-              <span>-${platformFee.toFixed(2)}</span>
+              <span>${platformFee.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
               <span>Tax (5% GST):</span>
-              <span>-${taxAmount.toFixed(2)}</span>
+              <span>${taxAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold pt-2 border-t">
               <span>Tasker Will Receive:</span>
@@ -110,9 +124,56 @@ export const PaymentPanel = ({ bookingId, taskId, payerId, payeeId, amount, paye
           </div>
           <div className="mt-4 p-3 bg-accent/10 border border-accent/30 rounded-lg">
             <p className="text-xs text-muted-foreground">
-              💼 Like Uber: Payment is held securely until task completion. Confirm completion to release funds to the tasker.
+              💼 Payment is held securely until task completion. Confirm completion to release funds to the tasker.
             </p>
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error && !clientSecret) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="h-6 w-6" />
+            Payment Error
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <Button onClick={handleInitiatePayment} variant="outline" className="w-full">
+            Try Again
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (clientSecret) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-6 w-6" />
+            Complete Payment
+          </CardTitle>
+          <CardDescription>
+            Pay {payeeName} securely with Stripe
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <StripePaymentForm
+              clientSecret={clientSecret}
+              amount={amount}
+              onSuccess={handlePaymentSuccess}
+              onCancel={() => setClientSecret(null)}
+            />
+          </Elements>
         </CardContent>
       </Card>
     );
@@ -138,47 +199,41 @@ export const PaymentPanel = ({ bookingId, taskId, payerId, payeeId, amount, paye
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Platform Fee (15%):</span>
-              <span className="text-destructive font-semibold">-${platformFee.toFixed(2)}</span>
+              <span>${platformFee.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Tax (5% GST):</span>
-              <span className="text-destructive font-semibold">-${taxAmount.toFixed(2)}</span>
+              <span>${taxAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold pt-2 border-t border-primary/20">
+              <span>Total to Pay:</span>
+              <span className="text-primary">${(amount + platformFee + taxAmount).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-muted-foreground pt-2">
               <span>Tasker Gets (After Completion):</span>
-              <span className="text-primary">${payoutAmount.toFixed(2)}</span>
+              <span className="font-semibold">${payoutAmount.toFixed(2)}</span>
             </div>
           </div>
 
           <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
             <p className="text-sm text-muted-foreground">
               💰 <strong>Escrow Protection:</strong> Your payment will be held securely until you confirm task completion. 
-              The tasker receives payout only after you approve, just like Uber!
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <Label>Payment Method</Label>
-            <div className="flex items-center gap-2 p-3 border border-border rounded-lg bg-card">
-              <CreditCard className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm">Mock Payment (Demo)</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              In production, this would integrate with Stripe for secure payment processing.
+              The tasker receives payout only after you approve.
             </p>
           </div>
 
           <Button 
-            onClick={handlePayment} 
+            onClick={handleInitiatePayment} 
             disabled={loading}
             className="w-full"
             size="lg"
           >
-            {loading ? "Processing..." : `Pay $${amount.toFixed(2)}`}
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading ? "Preparing Payment..." : `Pay ${(amount + platformFee + taxAmount).toFixed(2)} CAD`}
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
-            By clicking Pay, you agree to the payment terms and authorize the transaction.
+            By clicking Pay, you agree to the payment terms and authorize the transaction via Stripe.
           </p>
         </div>
       </CardContent>

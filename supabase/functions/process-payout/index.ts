@@ -28,7 +28,7 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Get payment details
+    // Get payment details with Stripe payment intent
     const { data: payment } = await supabaseClient
       .from("payments")
       .select("*, payout_accounts!payments_payee_id_fkey(stripe_account_id, account_status)")
@@ -37,6 +37,7 @@ serve(async (req) => {
 
     if (!payment) throw new Error("Payment not found");
     if (payment.escrow_status !== "held") throw new Error("Payment not in escrow");
+    if (payment.status !== "completed") throw new Error("Payment not completed yet");
 
     const payoutAccount = payment.payout_accounts;
     if (!payoutAccount || payoutAccount.account_status !== "active") {

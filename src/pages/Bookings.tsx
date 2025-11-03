@@ -443,7 +443,13 @@ const Bookings = () => {
 
         {/* Payment Dialog */}
         <Dialog open={showPayment} onOpenChange={setShowPayment}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Complete Payment</DialogTitle>
+              <DialogDescription>
+                Secure payment via Stripe for {selectedBooking?.tasks?.title}
+              </DialogDescription>
+            </DialogHeader>
             {selectedBooking && (
               <PaymentPanel
                 bookingId={selectedBooking.id}
@@ -452,6 +458,10 @@ const Bookings = () => {
                 payeeId={selectedBooking.task_doer_id}
                 amount={selectedBooking.tasks?.pay_amount || 0}
                 payeeName={selectedBooking.task_doer?.full_name || "Task Doer"}
+                onPaymentComplete={() => {
+                  setShowPayment(false);
+                  checkUserAndFetchBookings();
+                }}
               />
             )}
           </DialogContent>

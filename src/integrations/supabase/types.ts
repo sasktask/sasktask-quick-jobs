@@ -256,6 +256,7 @@ export type Database = {
           paid_at: string | null
           payee_id: string
           payer_id: string
+          payment_intent_id: string | null
           payment_method: string | null
           payout_amount: number
           payout_at: string | null
@@ -276,6 +277,7 @@ export type Database = {
           paid_at?: string | null
           payee_id: string
           payer_id: string
+          payment_intent_id?: string | null
           payment_method?: string | null
           payout_amount: number
           payout_at?: string | null
@@ -296,6 +298,7 @@ export type Database = {
           paid_at?: string | null
           payee_id?: string
           payer_id?: string
+          payment_intent_id?: string | null
           payment_method?: string | null
           payout_amount?: number
           payout_at?: string | null
@@ -367,6 +370,7 @@ export type Database = {
           response_rate: number | null
           skills: string[] | null
           stripe_customer_id: string | null
+          stripe_payment_method_id: string | null
           total_reviews: number | null
           trust_score: number | null
           updated_at: string | null
@@ -396,6 +400,7 @@ export type Database = {
           response_rate?: number | null
           skills?: string[] | null
           stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           total_reviews?: number | null
           trust_score?: number | null
           updated_at?: string | null
@@ -425,6 +430,7 @@ export type Database = {
           response_rate?: number | null
           skills?: string[] | null
           stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           total_reviews?: number | null
           trust_score?: number | null
           updated_at?: string | null
