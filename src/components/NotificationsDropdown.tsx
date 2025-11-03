@@ -31,7 +31,14 @@ export const NotificationsDropdown = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchNotifications();
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      fetchNotifications();
+    };
+
+    checkAuth();
 
     // Subscribe to real-time notifications
     const channel = supabase
@@ -39,11 +46,14 @@ export const NotificationsDropdown = () => {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'notifications'
         },
-        () => fetchNotifications()
+        (payload) => {
+          console.log('Notification change:', payload);
+          fetchNotifications();
+        }
       )
       .subscribe();
 

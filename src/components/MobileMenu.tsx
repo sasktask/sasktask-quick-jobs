@@ -27,21 +27,38 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
   useEffect(() => {
     if (user) {
       fetchUnreadCount();
+      
+      // Set up real-time subscription for notification updates
+      const channel = supabase
+        .channel('mobile-notifications')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => fetchUnreadCount()
+        )
+        .subscribe();
+      
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
   const fetchUnreadCount = async () => {
     if (!user) return;
     
-    const { data } = await supabase
+    const { data, count } = await supabase
       .from('notifications')
-      .select('*', { count: 'exact', head: true })
+      .select('*', { count: 'exact', head: false })
       .eq('user_id', user.id)
       .eq('read', false);
     
-    if (data !== null) {
-      setUnreadCount(data.length || 0);
-    }
+    setUnreadCount(count || 0);
   };
 
   const handleSignOut = async () => {
@@ -89,27 +106,8 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
             {t('becomeTasker')}
           </Button>
 
-          <div className="border-t border-border my-2" />
-
           {user && (
             <>
-              <Button
-                variant="ghost"
-                className="justify-start text-base gap-2 relative"
-                onClick={() => handleNavigation("/dashboard")}
-              >
-                <Bell className="h-4 w-4" />
-                {t('notifications')}
-                {unreadCount > 0 && (
-                  <Badge 
-                    variant="destructive" 
-                    className="ml-auto h-5 w-5 flex items-center justify-center p-0 text-xs"
-                  >
-                    {unreadCount}
-                  </Badge>
-                )}
-              </Button>
-
               <div className="border-t border-border my-2" />
 
               <Button
