@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Browse from "./pages/Browse";
 import PostTask from "./pages/PostTask";
 import Profile from "./pages/Profile";
+import PublicProfile from "./pages/PublicProfile";
 import Bookings from "./pages/Bookings";
 import TaskDetail from "./pages/TaskDetail";
 import Verification from "./pages/Verification";
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/browse" element={<Browse />} />
             <Route path="/post-task" element={<PostTask />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:id" element={<PublicProfile />} />
             <Route path="/bookings" element={<Bookings />} />
             <Route path="/task/:id" element={<TaskDetail />} />
             <Route path="/verification" element={<Verification />} />

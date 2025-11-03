@@ -263,16 +263,21 @@ const Bookings = () => {
                             <AvatarFallback>{otherUser?.full_name?.charAt(0) || "U"}</AvatarFallback>
                           </Avatar>
                           
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="text-xl font-bold">{otherUser?.full_name || "User"}</h3>
-                              {isVerified && (
-                                <Badge className="bg-primary/10 text-primary border-primary/20">
-                                  <Shield className="h-3 w-3 mr-1" />
-                                  Verified
-                                </Badge>
-                              )}
-                            </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 
+                              className="text-xl font-bold hover:text-primary cursor-pointer transition-colors"
+                              onClick={() => navigate(`/profile/${otherUser?.id}`)}
+                            >
+                              {otherUser?.full_name || "User"}
+                            </h3>
+                            {isVerified && (
+                              <Badge className="bg-primary/10 text-primary border-primary/20">
+                                <Shield className="h-3 w-3 mr-1" />
+                                Verified
+                              </Badge>
+                            )}
+                          </div>
                             
                             <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
                               {otherUser?.rating && (
