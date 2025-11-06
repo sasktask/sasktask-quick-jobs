@@ -32,6 +32,8 @@ import RSSFeed from "./pages/RSSFeed";
 import Sitemap from "./pages/Sitemap";
 import Contact from "./pages/Contact";
 import Account from "./pages/Account";
+import Messages from "./pages/Messages";
+import ChatRoom from "./pages/ChatRoom";
 import { ChatButton } from "./components/ChatButton";
 
 const queryClient = new QueryClient();
@@ -72,6 +74,8 @@ const App = () => (
             <Route path="/sitemap.xml" element={<Sitemap />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/account" element={<Account />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/chat/:bookingId" element={<ChatRoom />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

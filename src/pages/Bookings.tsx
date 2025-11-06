@@ -125,9 +125,18 @@ const Bookings = () => {
             .eq("user_id", booking.task_doer_id)
             .maybeSingle();
           
+          // Get unread message count for this booking
+          const { count: unreadCount } = await supabase
+            .from("messages")
+            .select("*", { count: "exact", head: true })
+            .eq("booking_id", booking.id)
+            .eq("receiver_id", session.user.id)
+            .is("read_at", null);
+          
           return {
             ...booking,
-            task_doer_verification: verification
+            task_doer_verification: verification,
+            unread_count: unreadCount || 0,
           };
         })
       );
@@ -306,13 +315,19 @@ const Bookings = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-10 w-10 p-0"
-                                onClick={() => {
-                                  setSelectedBooking(booking);
-                                  setShowMessaging(true);
-                                }}
+                                className="h-10 px-3 relative"
+                                onClick={() => navigate(`/chat/${booking.id}`)}
                               >
-                                <MessageSquare className="h-4 w-4" />
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                Chat
+                                {booking.unread_count > 0 && (
+                                  <Badge 
+                                    variant="destructive" 
+                                    className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                                  >
+                                    {booking.unread_count}
+                                  </Badge>
+                                )}
                               </Button>
                               {userRole === "task_giver" && (
                                 <Button

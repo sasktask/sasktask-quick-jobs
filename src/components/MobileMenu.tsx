@@ -145,6 +145,14 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
               <Button
                 variant="ghost"
                 className="justify-start text-base"
+                onClick={() => handleNavigation("/messages")}
+              >
+                Messages
+              </Button>
+              
+              <Button
+                variant="ghost"
+                className="justify-start text-base"
                 onClick={() => handleNavigation("/profile")}
               >
                 {t('profile')}

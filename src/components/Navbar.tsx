@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
 import { Menu, ShieldCheck, Globe, Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount";
 import { NotificationsDropdown } from "./NotificationsDropdown";
 import { MobileMenu } from "./MobileMenu";
 
@@ -25,6 +27,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
+  const unreadCount = useUnreadMessageCount(user?.id);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -130,6 +133,17 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                   </Link>
                   <Link to="/bookings" className="text-foreground hover:text-primary transition-colors font-medium">
                     {t('bookings')}
+                  </Link>
+                  <Link to="/messages" className="text-foreground hover:text-primary transition-colors font-medium relative">
+                    Messages
+                    {unreadCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                      >
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </Badge>
+                    )}
                   </Link>
                   <Link to="/profile" className="text-foreground hover:text-primary transition-colors font-medium">
                     {t('profile')}
