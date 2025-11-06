@@ -240,6 +240,42 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_subscribers: {
+        Row: {
+          confirmation_token: string | null
+          confirmed: boolean | null
+          created_at: string | null
+          email: string
+          id: string
+          ip_address: string | null
+          subscribed_at: string | null
+          unsubscribed_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          confirmation_token?: string | null
+          confirmed?: boolean | null
+          created_at?: string | null
+          email: string
+          id?: string
+          ip_address?: string | null
+          subscribed_at?: string | null
+          unsubscribed_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          confirmation_token?: string | null
+          confirmed?: boolean | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          ip_address?: string | null
+          subscribed_at?: string | null
+          unsubscribed_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string | null

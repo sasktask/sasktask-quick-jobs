@@ -1,12 +1,22 @@
 import { Link } from "react-router-dom";
 import { Facebook, Twitter, Instagram, Linkedin, Mail } from "lucide-react";
+import { NewsletterSignup } from "./NewsletterSignup";
 
 export const Footer = () => {
   return (
     <footer className="bg-card border-t border-border mt-20">
       <div className="container mx-auto px-4 py-12">
-        {/* Main Footer Content - Simplified */}
-        <div className="grid md:grid-cols-4 gap-8 mb-8">
+        {/* Main Footer Content */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
+          {/* Newsletter Section */}
+          <div className="lg:col-span-2">
+            <h4 className="font-bold text-foreground mb-4">Stay Updated</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Get the latest updates, tips, and opportunities delivered to your inbox.
+            </p>
+            <NewsletterSignup />
+          </div>
+
           {/* Company */}
           <div>
             <h4 className="font-bold text-foreground mb-4">Company</h4>
