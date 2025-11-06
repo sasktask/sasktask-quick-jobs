@@ -207,6 +207,50 @@ export type Database = {
         }
         Relationships: []
       }
+      message_attachments: {
+        Row: {
+          attachment_type: string
+          created_at: string
+          duration: number | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          message_id: string
+          storage_path: string
+        }
+        Insert: {
+          attachment_type: string
+          created_at?: string
+          duration?: number | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id?: string
+          message_id: string
+          storage_path: string
+        }
+        Update: {
+          attachment_type?: string
+          created_at?: string
+          duration?: number | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          message_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           booking_id: string

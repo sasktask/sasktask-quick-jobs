@@ -7,6 +7,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Loader2, AlertCircle, RefreshCw, User } from "lucide-react";
 import { useRealtimeChat } from "@/hooks/useRealtimeChat";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { MediaUpload } from "./MediaUpload";
+import { MediaMessage } from "./MediaMessage";
+import { VoiceRecorder } from "./VoiceRecorder";
 
 interface ChatInterfaceProps {
   bookingId: string;
@@ -26,6 +31,8 @@ export const ChatInterface = ({
   otherUserRole,
 }: ChatInterfaceProps) => {
   const [inputValue, setInputValue] = useState("");
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -47,6 +54,126 @@ export const ChatInterface = ({
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  // Upload attachment helper
+  const uploadAttachment = async (file: Blob, fileName: string, type: 'image' | 'file' | 'voice', messageId: string, duration?: number) => {
+    try {
+      const fileExt = fileName.split('.').pop();
+      const filePath = `${currentUserId}/${Date.now()}-${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('message-attachments')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { error: dbError } = await (supabase as any)
+        .from('message_attachments')
+        .insert({
+          message_id: messageId,
+          file_name: fileName,
+          file_size: file.size,
+          file_type: file.type,
+          storage_path: filePath,
+          attachment_type: type,
+          duration: duration
+        });
+
+      if (dbError) throw dbError;
+    } catch (error) {
+      console.error("Error uploading attachment:", error);
+      throw error;
+    }
+  };
+
+  // Handle media upload
+  const handleMediaUpload = async (file: File, type: 'image' | 'file') => {
+    try {
+      setUploadingMedia(true);
+
+      // Create message first
+      const { data: messageData, error: messageError } = await supabase
+        .from("messages")
+        .insert({
+          booking_id: bookingId,
+          sender_id: currentUserId,
+          receiver_id: otherUserId,
+          message: type === 'image' ? '📷 Image' : `📎 ${file.name}`,
+        })
+        .select()
+        .single();
+
+      if (messageError) throw messageError;
+
+      // Upload attachment
+      await uploadAttachment(file, file.name, type, messageData.id);
+
+      toast.success(`${type === 'image' ? 'Image' : 'File'} sent successfully`);
+    } catch (error) {
+      console.error("Error sending media:", error);
+      toast.error(`Failed to send ${type}`);
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
+
+  // Handle voice recording
+  const handleVoiceSend = async (audioBlob: Blob, duration: number) => {
+    try {
+      setUploadingMedia(true);
+
+      // Create message first
+      const { data: messageData, error: messageError } = await supabase
+        .from("messages")
+        .insert({
+          booking_id: bookingId,
+          sender_id: currentUserId,
+          receiver_id: otherUserId,
+          message: '🎤 Voice message',
+        })
+        .select()
+        .single();
+
+      if (messageError) throw messageError;
+
+      // Upload voice note
+      await uploadAttachment(audioBlob, 'voice-note.webm', 'voice', messageData.id, duration);
+
+      setIsRecordingVoice(false);
+      toast.success("Voice message sent");
+    } catch (error) {
+      console.error("Error sending voice:", error);
+      toast.error("Failed to send voice message");
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
+
+  // Load attachments for messages
+  const [messageAttachments, setMessageAttachments] = useState<Record<string, any[]>>({});
+
+  useEffect(() => {
+    const loadAttachments = async () => {
+      const attachmentsMap: Record<string, any[]> = {};
+      
+      for (const message of messages) {
+        const { data } = await (supabase as any)
+          .from('message_attachments')
+          .select('*')
+          .eq('message_id', message.id);
+
+        if (data && data.length > 0) {
+          attachmentsMap[message.id] = data;
+        }
+      }
+
+      setMessageAttachments(attachmentsMap);
+    };
+
+    if (messages.length > 0) {
+      loadAttachments();
     }
   }, [messages]);
 
@@ -137,6 +264,9 @@ export const ChatInterface = ({
                     <p className="text-sm whitespace-pre-wrap break-words">
                       {message.message}
                     </p>
+                    {messageAttachments[message.id] && (
+                      <MediaMessage attachments={messageAttachments[message.id]} />
+                    )}
                     <div className={cn(
                       "flex items-center gap-2 mt-1",
                       isOwn ? "justify-end" : "justify-start"
@@ -188,31 +318,42 @@ export const ChatInterface = ({
 
       {/* Input Area */}
       <div className="p-4 border-t bg-muted/30">
-        <div className="flex gap-2">
-          <Input
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => {
-              setInputValue(e.target.value);
-              handleTyping();
-            }}
-            onKeyPress={handleKeyPress}
-            placeholder="Type a message..."
-            disabled={isSending}
-            className="flex-1"
+        {isRecordingVoice ? (
+          <VoiceRecorder
+            onSend={handleVoiceSend}
+            onCancel={() => setIsRecordingVoice(false)}
           />
-          <Button
-            onClick={handleSend}
-            disabled={!inputValue.trim() || isSending}
-            size="icon"
-          >
-            {isSending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+        ) : (
+          <div className="flex gap-2">
+            <MediaUpload
+              onFileSelect={handleMediaUpload}
+              onVoiceRecord={() => setIsRecordingVoice(true)}
+            />
+            <Input
+              ref={inputRef}
+              value={inputValue}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                handleTyping();
+              }}
+              onKeyPress={handleKeyPress}
+              placeholder="Type a message..."
+              disabled={isSending || uploadingMedia}
+              className="flex-1"
+            />
+            <Button
+              onClick={handleSend}
+              disabled={!inputValue.trim() || isSending || uploadingMedia}
+              size="icon"
+            >
+              {isSending || uploadingMedia ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
