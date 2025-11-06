@@ -16,6 +16,7 @@ import { VoiceRecorder } from "./VoiceRecorder";
 import { MessageActions } from "./MessageActions";
 import { DeleteMessageDialog } from "./DeleteMessageDialog";
 import { SearchBar, SearchFilters } from "./SearchBar";
+import { ForwardMessageDialog } from "./ForwardMessageDialog";
 
 interface ChatInterfaceProps {
   bookingId: string;
@@ -43,6 +44,8 @@ export const ChatInterface = ({
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState(false);
   const [searchFilters, setSearchFilters] = useState<SearchFilters | null>(null);
+  const [forwardDialogOpen, setForwardDialogOpen] = useState(false);
+  const [messageToForward, setMessageToForward] = useState<{ id: string; content: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -278,6 +281,17 @@ export const ChatInterface = ({
     setSearchMode(false);
   };
 
+  // Forward message handler
+  const handleForwardMessage = (messageId: string, messageContent: string) => {
+    setMessageToForward({ id: messageId, content: messageContent });
+    setForwardDialogOpen(true);
+  };
+
+  const handleForwardComplete = () => {
+    setMessageToForward(null);
+    toast.success("Message forwarded");
+  };
+
   // Filter messages based on search criteria
   const filteredMessages = searchFilters
     ? messages.filter((message) => {
@@ -505,6 +519,7 @@ export const ChatInterface = ({
                     {!selectionMode && isOwn && (
                       <MessageActions
                         onDelete={() => handleDeleteSingle(message.id)}
+                        onForward={() => handleForwardMessage(message.id, message.message)}
                         isOwn={isOwn}
                       />
                     )}
@@ -582,6 +597,18 @@ export const ChatInterface = ({
         onConfirm={confirmDelete}
         messageCount={messageToDelete ? 1 : selectedMessages.size}
       />
+
+      {/* Forward Message Dialog */}
+      {messageToForward && (
+        <ForwardMessageDialog
+          open={forwardDialogOpen}
+          onOpenChange={setForwardDialogOpen}
+          messageId={messageToForward.id}
+          messageContent={messageToForward.content}
+          currentBookingId={bookingId}
+          onForwardComplete={handleForwardComplete}
+        />
+      )}
     </div>
   );
 };

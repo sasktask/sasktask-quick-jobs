@@ -1,4 +1,4 @@
-import { Trash2, MoreVertical } from "lucide-react";
+import { Trash2, MoreVertical, Forward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,10 +9,11 @@ import {
 
 interface MessageActionsProps {
   onDelete: () => void;
+  onForward: () => void;
   isOwn: boolean;
 }
 
-export const MessageActions = ({ onDelete, isOwn }: MessageActionsProps) => {
+export const MessageActions = ({ onDelete, onForward, isOwn }: MessageActionsProps) => {
   if (!isOwn) return null;
 
   return (
@@ -27,6 +28,10 @@ export const MessageActions = ({ onDelete, isOwn }: MessageActionsProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onForward}>
+          <Forward className="mr-2 h-4 w-4" />
+          Forward message
+        </DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"
           onClick={onDelete}
