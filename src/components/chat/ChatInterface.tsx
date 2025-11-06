@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Send, Loader2, AlertCircle, RefreshCw, User, Trash2, X } from "lucide-react";
+import { Send, Loader2, AlertCircle, RefreshCw, User, Trash2, X, Search } from "lucide-react";
 import { useRealtimeChat } from "@/hooks/useRealtimeChat";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import { MediaMessage } from "./MediaMessage";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { MessageActions } from "./MessageActions";
 import { DeleteMessageDialog } from "./DeleteMessageDialog";
+import { SearchBar, SearchFilters } from "./SearchBar";
 
 interface ChatInterfaceProps {
   bookingId: string;
@@ -40,6 +41,8 @@ export const ChatInterface = ({
   const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchFilters, setSearchFilters] = useState<SearchFilters | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -265,6 +268,49 @@ export const ChatInterface = ({
     setSelectionMode(false);
   };
 
+  // Search functionality
+  const handleSearch = (filters: SearchFilters) => {
+    setSearchFilters(filters);
+  };
+
+  const handleClearSearch = () => {
+    setSearchFilters(null);
+    setSearchMode(false);
+  };
+
+  // Filter messages based on search criteria
+  const filteredMessages = searchFilters
+    ? messages.filter((message) => {
+        // Filter by content
+        if (searchFilters.query && !message.message.toLowerCase().includes(searchFilters.query.toLowerCase())) {
+          return false;
+        }
+
+        // Filter by sender
+        if (searchFilters.sender === "me" && message.sender_id !== currentUserId) {
+          return false;
+        }
+        if (searchFilters.sender === "them" && message.sender_id === currentUserId) {
+          return false;
+        }
+
+        // Filter by date range
+        const messageDate = new Date(message.created_at);
+        if (searchFilters.dateFrom && messageDate < searchFilters.dateFrom) {
+          return false;
+        }
+        if (searchFilters.dateTo) {
+          const endOfDay = new Date(searchFilters.dateTo);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (messageDate > endOfDay) {
+            return false;
+          }
+        }
+
+        return true;
+      })
+    : messages;
+
   const handleSend = async () => {
     if (!inputValue.trim() || isSending) return;
 
@@ -296,8 +342,17 @@ export const ChatInterface = ({
   return (
     <div className="flex flex-col h-[600px] border rounded-lg bg-background">
       {/* Chat Header */}
-      <div className="flex items-center gap-3 p-4 border-b bg-muted/30">
-        {selectionMode ? (
+      <div className="flex flex-col gap-3 p-4 border-b bg-muted/30">
+        {searchMode ? (
+          <SearchBar
+            onSearch={handleSearch}
+            onClear={handleClearSearch}
+            currentUserId={currentUserId}
+            otherUserName={otherUserName}
+          />
+        ) : (
+          <div className="flex items-center gap-3">
+            {selectionMode ? (
           <>
             <Button
               variant="ghost"
@@ -344,6 +399,14 @@ export const ChatInterface = ({
             </div>
             <Button
               variant="ghost"
+              size="icon"
+              onClick={() => setSearchMode(true)}
+              title="Search messages"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => setSelectionMode(true)}
             >
@@ -351,19 +414,26 @@ export const ChatInterface = ({
             </Button>
           </>
         )}
+          </div>
+        )}
+        {searchFilters && (
+          <div className="text-xs text-muted-foreground">
+            {filteredMessages.length} message{filteredMessages.length !== 1 ? "s" : ""} found
+          </div>
+        )}
       </div>
 
       {/* Messages Area */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="space-y-4">
-          {messages.length === 0 ? (
+          {filteredMessages.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
-                No messages yet. Start the conversation!
+                {searchFilters ? "No messages match your search" : "No messages yet. Start the conversation!"}
               </p>
             </div>
           ) : (
-            messages.map((message) => {
+            filteredMessages.map((message) => {
               const isOwn = message.sender_id === currentUserId;
               const isFailed = message.status === "failed";
 
