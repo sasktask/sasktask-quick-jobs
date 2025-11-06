@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,50 +47,42 @@ const handler = async (req: Request): Promise<Response> => {
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
 
     if (lastActive > twoMinutesAgo) {
-      console.log("User is online or recently active, skipping email notification");
+      console.log("User is online or recently active, skipping notification");
       return new Response(
         JSON.stringify({ skipped: true, reason: "User is online" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Send email notification
-    const chatUrl = `${req.headers.get("origin")}/chat/${bookingId}`;
-    
-    const emailResponse = await resend.emails.send({
-      from: "SaskTask Messages <onboarding@resend.dev>",
-      to: [receiver.email],
-      subject: `New message from ${senderName} - SaskTask`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #3eb5a4;">You have a new message on SaskTask</h2>
-          <p><strong>${senderName}</strong> sent you a message:</p>
-          
-          <div style="background-color: #f5f5f5; padding: 15px; border-left: 4px solid #3eb5a4; margin: 20px 0;">
-            <p style="margin: 0;">${messagePreview}</p>
-          </div>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${chatUrl}" 
-               style="background-color: #3eb5a4; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-              View Message
-            </a>
-          </div>
-          
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-          
-          <p style="color: #999; font-size: 12px;">
-            SaskTask - Your Task Partner<br>
-            To manage your notification preferences, visit your account settings.
-          </p>
-        </div>
-      `,
+    // Get user's push subscription
+    const { data: subscription, error: subError } = await supabase
+      .from("push_subscriptions")
+      .select("subscription_data")
+      .eq("user_id", receiverId)
+      .single();
+
+    if (subError || !subscription) {
+      console.log("No push subscription found for user");
+      return new Response(
+        JSON.stringify({ skipped: true, reason: "No push subscription" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Trigger web push notification
+    const pushResponse = await supabase.functions.invoke("send-push-notification", {
+      body: {
+        subscription: subscription.subscription_data,
+        title: "New Message",
+        body: `${senderName}: ${messagePreview.substring(0, 100)}`,
+        data: { bookingId }
+      }
     });
 
-    console.log("Offline notification email sent:", emailResponse);
+    console.log("Push notification sent:", pushResponse);
 
     return new Response(
-      JSON.stringify({ success: true, emailId: emailResponse.data?.id }),
+      JSON.stringify({ success: true }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },

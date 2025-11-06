@@ -80,10 +80,8 @@ export const usePushNotifications = () => {
         .from('push_subscriptions')
         .upsert({
           user_id: user.id,
-          subscription_data: subscription.toJSON(),
-        }, {
-          onConflict: 'user_id'
-        });
+          subscription_data: subscription.toJSON() as any,
+        } as any);
 
       if (error) throw error;
 

@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.confirm-newsletter]
 verify_jwt = false
+
+[functions.notify-offline-message]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false

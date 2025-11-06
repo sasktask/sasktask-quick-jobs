@@ -463,6 +463,7 @@ export type Database = {
           id: string
           joined_date: string | null
           last_active: string | null
+          last_seen: string | null
           on_time_rate: number | null
           phone: string | null
           preferred_categories: string[] | null
@@ -497,6 +498,7 @@ export type Database = {
           id: string
           joined_date?: string | null
           last_active?: string | null
+          last_seen?: string | null
           on_time_rate?: number | null
           phone?: string | null
           preferred_categories?: string[] | null
@@ -531,6 +533,7 @@ export type Database = {
           id?: string
           joined_date?: string | null
           last_active?: string | null
+          last_seen?: string | null
           on_time_rate?: number | null
           phone?: string | null
           preferred_categories?: string[] | null
@@ -549,6 +552,30 @@ export type Database = {
           verified_at?: string | null
           verified_by?: string | null
           verified_by_admin?: boolean | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          subscription_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          subscription_data: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          subscription_data?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
