@@ -28,7 +28,7 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load initial messages
+  // Load initial messages (don't mark as read immediately)
   const loadMessages = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -41,9 +41,6 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
       if (error) throw error;
 
       setMessages(data || []);
-
-      // Mark messages as read
-      await markMessagesAsRead();
     } catch (error) {
       console.error("Error loading messages:", error);
       toast.error("Failed to load messages");
@@ -271,5 +268,6 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
     sendMessage,
     retryMessage,
     handleTyping,
+    markMessagesAsRead,
   };
 };

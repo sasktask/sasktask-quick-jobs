@@ -48,6 +48,8 @@ export const ChatInterface = ({
   const [messageToForward, setMessageToForward] = useState<{ id: string; content: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const firstUnreadRef = useRef<HTMLDivElement>(null);
+  const hasScrolledToUnread = useRef(false);
 
   const {
     messages,
@@ -57,15 +59,45 @@ export const ChatInterface = ({
     sendMessage,
     retryMessage,
     handleTyping,
+    markMessagesAsRead,
   } = useRealtimeChat({
     bookingId,
     currentUserId,
     otherUserId,
   });
 
-  // Auto-scroll to bottom
+  // Find first unread message
+  const firstUnreadIndex = messages.findIndex(
+    (msg) => !msg.read_at && msg.receiver_id === currentUserId
+  );
+  const hasUnreadMessages = firstUnreadIndex !== -1;
+  const unreadCount = messages.filter(
+    (msg) => !msg.read_at && msg.receiver_id === currentUserId
+  ).length;
+
+  // Auto-scroll to first unread or bottom
   useEffect(() => {
-    if (scrollRef.current) {
+    if (!isLoading && messages.length > 0 && !hasScrolledToUnread.current) {
+      // If there are unread messages, scroll to first unread
+      if (firstUnreadRef.current && hasUnreadMessages) {
+        firstUnreadRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (scrollRef.current) {
+        // Otherwise scroll to bottom
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+      
+      // Mark messages as read after scrolling
+      setTimeout(() => {
+        markMessagesAsRead();
+      }, 500);
+      
+      hasScrolledToUnread.current = true;
+    }
+  }, [isLoading, messages.length, hasUnreadMessages]);
+
+  // Auto-scroll to bottom on new messages (after initial load)
+  useEffect(() => {
+    if (hasScrolledToUnread.current && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
@@ -411,6 +443,11 @@ export const ChatInterface = ({
               <h3 className="font-semibold">{otherUserName}</h3>
               <p className="text-xs text-muted-foreground">{otherUserRole}</p>
             </div>
+            {unreadCount > 0 && (
+              <div className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded-full">
+                {unreadCount} unread
+              </div>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -447,82 +484,103 @@ export const ChatInterface = ({
               </p>
             </div>
           ) : (
-            filteredMessages.map((message) => {
+            filteredMessages.map((message, index) => {
               const isOwn = message.sender_id === currentUserId;
               const isFailed = message.status === "failed";
+              const isUnread = !message.read_at && message.receiver_id === currentUserId;
+              const isFirstUnread = index === firstUnreadIndex && hasUnreadMessages;
 
               return (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex gap-2 group",
-                    isOwn ? "flex-row-reverse" : "flex-row"
-                  )}
-                >
-                  {selectionMode && isOwn && (
-                    <Checkbox
-                      checked={selectedMessages.has(message.id)}
-                      onCheckedChange={() => toggleMessageSelection(message.id)}
-                      className="mt-2"
-                    />
-                  )}
-                  
-                  {!isOwn && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={otherUserAvatar} />
-                      <AvatarFallback>
-                        <User className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  
-                  <div className="flex-1 max-w-[70%]">
+                <div key={message.id}>
+                  {/* Unread Messages Divider */}
+                  {isFirstUnread && (
                     <div
-                      className={cn(
-                        "rounded-lg px-4 py-2",
-                        isOwn
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted",
-                        isFailed && "opacity-50"
-                      )}
+                      ref={firstUnreadRef}
+                      className="flex items-center gap-2 my-4"
                     >
-                      <p className="text-sm whitespace-pre-wrap break-words">
-                        {message.message}
-                      </p>
-                      {messageAttachments[message.id] && (
-                        <MediaMessage attachments={messageAttachments[message.id]} />
-                      )}
-                      <div className={cn(
-                        "flex items-center gap-2 mt-1",
-                        isOwn ? "justify-end" : "justify-start"
-                      )}>
-                        <span className={cn(
-                          "text-xs",
-                          isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                        )}>
-                          {format(new Date(message.created_at), "HH:mm")}
-                        </span>
-                        {isFailed && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-auto p-0 text-xs text-destructive hover:text-destructive"
-                            onClick={() => retryMessage(message.id)}
-                          >
-                            <RefreshCw className="h-3 w-3 mr-1" />
-                            Retry
-                          </Button>
-                        )}
-                      </div>
+                      <div className="flex-1 h-px bg-primary"></div>
+                      <span className="text-xs font-medium text-primary px-2">
+                        Unread Messages
+                      </span>
+                      <div className="flex-1 h-px bg-primary"></div>
                     </div>
-                    
-                    {!selectionMode && isOwn && (
-                      <MessageActions
-                        onDelete={() => handleDeleteSingle(message.id)}
-                        onForward={() => handleForwardMessage(message.id, message.message)}
-                        isOwn={isOwn}
+                  )}
+                  
+                  <div
+                    className={cn(
+                      "flex gap-2 group",
+                      isOwn ? "flex-row-reverse" : "flex-row"
+                    )}
+                  >
+                    {selectionMode && isOwn && (
+                      <Checkbox
+                        checked={selectedMessages.has(message.id)}
+                        onCheckedChange={() => toggleMessageSelection(message.id)}
+                        className="mt-2"
                       />
                     )}
+                    
+                    {!isOwn && (
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={otherUserAvatar} />
+                        <AvatarFallback>
+                          <User className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    
+                    <div className="flex-1 max-w-[70%]">
+                      <div
+                        className={cn(
+                          "rounded-lg px-4 py-2 relative",
+                          isOwn
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted",
+                          isFailed && "opacity-50",
+                          isUnread && !isOwn && "ring-2 ring-primary/50"
+                        )}
+                      >
+                        {isUnread && !isOwn && (
+                          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-primary rounded-full" />
+                        )}
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {message.message}
+                        </p>
+                        {messageAttachments[message.id] && (
+                          <MediaMessage attachments={messageAttachments[message.id]} />
+                        )}
+                        <div className={cn(
+                          "flex items-center gap-2 mt-1",
+                          isOwn ? "justify-end" : "justify-start"
+                        )}>
+                          <span className={cn(
+                            "text-xs",
+                            isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                          )}>
+                            {format(new Date(message.created_at), "HH:mm")}
+                          </span>
+                          {isFailed && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-auto p-0 text-xs text-destructive hover:text-destructive"
+                              onClick={() => retryMessage(message.id)}
+                            >
+                              <RefreshCw className="h-3 w-3 mr-1" />
+                              Retry
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {!selectionMode && isOwn && (
+                        <MessageActions
+                          onDelete={() => handleDeleteSingle(message.id)}
+                          onForward={() => handleForwardMessage(message.id, message.message)}
+                          isOwn={isOwn}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               );
