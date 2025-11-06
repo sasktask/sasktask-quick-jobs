@@ -149,6 +149,14 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
               >
                 {t('profile')}
               </Button>
+              
+              <Button
+                variant="ghost"
+                className="justify-start text-base"
+                onClick={() => handleNavigation("/account")}
+              >
+                Settings
+              </Button>
 
               {userRole === "task_doer" && (
                 <Button
