@@ -4,7 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, AlertCircle, RefreshCw, User } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Send, Loader2, AlertCircle, RefreshCw, User, Trash2, X } from "lucide-react";
 import { useRealtimeChat } from "@/hooks/useRealtimeChat";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,8 @@ import { toast } from "sonner";
 import { MediaUpload } from "./MediaUpload";
 import { MediaMessage } from "./MediaMessage";
 import { VoiceRecorder } from "./VoiceRecorder";
+import { MessageActions } from "./MessageActions";
+import { DeleteMessageDialog } from "./DeleteMessageDialog";
 
 interface ChatInterfaceProps {
   bookingId: string;
@@ -33,6 +36,10 @@ export const ChatInterface = ({
   const [inputValue, setInputValue] = useState("");
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -177,6 +184,87 @@ export const ChatInterface = ({
     }
   }, [messages]);
 
+  // Message deletion handlers
+  const handleDeleteSingle = (messageId: string) => {
+    setMessageToDelete(messageId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteBulk = () => {
+    if (selectedMessages.size === 0) {
+      toast.error("No messages selected");
+      return;
+    }
+    setMessageToDelete(null);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const messagesToDelete = messageToDelete
+        ? [messageToDelete]
+        : Array.from(selectedMessages);
+
+      // Delete attachments from storage first
+      for (const messageId of messagesToDelete) {
+        const attachments = messageAttachments[messageId];
+        if (attachments) {
+          for (const attachment of attachments) {
+            await supabase.storage
+              .from('message-attachments')
+              .remove([attachment.storage_path]);
+          }
+        }
+      }
+
+      // Delete messages (cascades to message_attachments)
+      const { error } = await supabase
+        .from("messages")
+        .delete()
+        .in("id", messagesToDelete);
+
+      if (error) throw error;
+
+      toast.success(
+        messagesToDelete.length === 1
+          ? "Message deleted"
+          : `${messagesToDelete.length} messages deleted`
+      );
+
+      // Reset selection
+      setSelectedMessages(new Set());
+      setSelectionMode(false);
+      setMessageToDelete(null);
+    } catch (error) {
+      console.error("Error deleting messages:", error);
+      toast.error("Failed to delete messages");
+    } finally {
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  const toggleMessageSelection = (messageId: string) => {
+    const newSelected = new Set(selectedMessages);
+    if (newSelected.has(messageId)) {
+      newSelected.delete(messageId);
+    } else {
+      newSelected.add(messageId);
+    }
+    setSelectedMessages(newSelected);
+  };
+
+  const selectAll = () => {
+    const ownMessages = messages
+      .filter((msg) => msg.sender_id === currentUserId)
+      .map((msg) => msg.id);
+    setSelectedMessages(new Set(ownMessages));
+  };
+
+  const cancelSelection = () => {
+    setSelectedMessages(new Set());
+    setSelectionMode(false);
+  };
+
   const handleSend = async () => {
     if (!inputValue.trim() || isSending) return;
 
@@ -209,16 +297,60 @@ export const ChatInterface = ({
     <div className="flex flex-col h-[600px] border rounded-lg bg-background">
       {/* Chat Header */}
       <div className="flex items-center gap-3 p-4 border-b bg-muted/30">
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={otherUserAvatar} />
-          <AvatarFallback>
-            <User className="h-5 w-5" />
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <h3 className="font-semibold">{otherUserName}</h3>
-          <p className="text-xs text-muted-foreground">{otherUserRole}</p>
-        </div>
+        {selectionMode ? (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={cancelSelection}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <div className="flex-1 text-sm font-medium">
+              {selectedMessages.size} selected
+            </div>
+            {selectedMessages.size > 0 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={selectAll}
+                >
+                  Select All
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteBulk}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={otherUserAvatar} />
+              <AvatarFallback>
+                <User className="h-5 w-5" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <h3 className="font-semibold">{otherUserName}</h3>
+              <p className="text-xs text-muted-foreground">{otherUserRole}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectionMode(true)}
+            >
+              Select
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Messages Area */}
@@ -239,10 +371,18 @@ export const ChatInterface = ({
                 <div
                   key={message.id}
                   className={cn(
-                    "flex gap-2",
+                    "flex gap-2 group",
                     isOwn ? "flex-row-reverse" : "flex-row"
                   )}
                 >
+                  {selectionMode && isOwn && (
+                    <Checkbox
+                      checked={selectedMessages.has(message.id)}
+                      onCheckedChange={() => toggleMessageSelection(message.id)}
+                      className="mt-2"
+                    />
+                  )}
+                  
                   {!isOwn && (
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={otherUserAvatar} />
@@ -252,43 +392,52 @@ export const ChatInterface = ({
                     </Avatar>
                   )}
                   
-                  <div
-                    className={cn(
-                      "max-w-[70%] rounded-lg px-4 py-2",
-                      isOwn
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted",
-                      isFailed && "opacity-50"
-                    )}
-                  >
-                    <p className="text-sm whitespace-pre-wrap break-words">
-                      {message.message}
-                    </p>
-                    {messageAttachments[message.id] && (
-                      <MediaMessage attachments={messageAttachments[message.id]} />
-                    )}
-                    <div className={cn(
-                      "flex items-center gap-2 mt-1",
-                      isOwn ? "justify-end" : "justify-start"
-                    )}>
-                      <span className={cn(
-                        "text-xs",
-                        isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                      )}>
-                        {format(new Date(message.created_at), "HH:mm")}
-                      </span>
-                      {isFailed && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-auto p-0 text-xs text-destructive hover:text-destructive"
-                          onClick={() => retryMessage(message.id)}
-                        >
-                          <RefreshCw className="h-3 w-3 mr-1" />
-                          Retry
-                        </Button>
+                  <div className="flex-1 max-w-[70%]">
+                    <div
+                      className={cn(
+                        "rounded-lg px-4 py-2",
+                        isOwn
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted",
+                        isFailed && "opacity-50"
                       )}
+                    >
+                      <p className="text-sm whitespace-pre-wrap break-words">
+                        {message.message}
+                      </p>
+                      {messageAttachments[message.id] && (
+                        <MediaMessage attachments={messageAttachments[message.id]} />
+                      )}
+                      <div className={cn(
+                        "flex items-center gap-2 mt-1",
+                        isOwn ? "justify-end" : "justify-start"
+                      )}>
+                        <span className={cn(
+                          "text-xs",
+                          isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                        )}>
+                          {format(new Date(message.created_at), "HH:mm")}
+                        </span>
+                        {isFailed && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-auto p-0 text-xs text-destructive hover:text-destructive"
+                            onClick={() => retryMessage(message.id)}
+                          >
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            Retry
+                          </Button>
+                        )}
+                      </div>
                     </div>
+                    
+                    {!selectionMode && isOwn && (
+                      <MessageActions
+                        onDelete={() => handleDeleteSingle(message.id)}
+                        isOwn={isOwn}
+                      />
+                    )}
                   </div>
                 </div>
               );
@@ -355,6 +504,14 @@ export const ChatInterface = ({
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteMessageDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        messageCount={messageToDelete ? 1 : selectedMessages.size}
+      />
     </div>
   );
 };
