@@ -30,6 +30,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import RSSFeed from "./pages/RSSFeed";
 import Sitemap from "./pages/Sitemap";
+import Contact from "./pages/Contact";
 import { ChatButton } from "./components/ChatButton";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/rss.xml" element={<RSSFeed />} />
             <Route path="/sitemap.xml" element={<Sitemap />} />
+            <Route path="/contact" element={<Contact />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

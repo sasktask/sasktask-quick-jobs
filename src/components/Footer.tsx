@@ -34,10 +34,10 @@ export const Footer = () => {
             <h4 className="font-bold text-foreground mb-4">Support</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/faq" className="hover:text-primary transition-colors">Help Center</Link></li>
-              <li><a href="mailto:support@sasktask.com" className="hover:text-primary transition-colors flex items-center gap-1">
+              <li><Link to="/contact" className="hover:text-primary transition-colors flex items-center gap-1">
                 <Mail className="h-3 w-3" />
                 Contact Us
-              </a></li>
+              </Link></li>
             </ul>
           </div>
 

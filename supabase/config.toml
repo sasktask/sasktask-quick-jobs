@@ -2,3 +2,6 @@ project_id = "svvnyueuodatwnnaspvg"
 
 [functions.get-stripe-config]
 verify_jwt = false
+
+[functions.send-contact-email]
+verify_jwt = false

@@ -119,6 +119,10 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 Blog
               </Link>
               
+              <Link to="/contact" className="text-foreground hover:text-primary transition-colors font-medium">
+                Contact
+              </Link>
+              
               {user ? (
                 <>
                   <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors font-medium">

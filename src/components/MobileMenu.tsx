@@ -113,6 +113,14 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
           >
             Blog
           </Button>
+          
+          <Button
+            variant="ghost"
+            className="justify-start text-base"
+            onClick={() => handleNavigation("/contact")}
+          >
+            Contact
+          </Button>
 
           {user && (
             <>
