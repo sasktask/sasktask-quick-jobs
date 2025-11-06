@@ -130,6 +130,11 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                   <Link to="/profile" className="text-foreground hover:text-primary transition-colors font-medium">
                     {t('profile')}
                   </Link>
+                  {userRole === "admin" && (
+                    <Link to="/admin/blog" className="text-foreground hover:text-primary transition-colors font-medium">
+                      Manage Blog
+                    </Link>
+                  )}
                   {userRole === "task_doer" && (
                     <Link to="/verification" className="text-foreground hover:text-primary transition-colors flex items-center gap-2">
                       <ShieldCheck className="h-4 w-4" />

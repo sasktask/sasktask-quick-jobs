@@ -154,14 +154,23 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
               )}
 
               {userRole === "admin" && (
-                <Button
-                  variant="ghost"
-                  className="justify-start text-base gap-2"
-                  onClick={() => handleNavigation("/admin/verify-users")}
-                >
-                  <ShieldCheck className="h-4 w-4" />
-                  Verify Users
-                </Button>
+                <>
+                  <Button
+                    variant="ghost"
+                    className="justify-start text-base gap-2"
+                    onClick={() => handleNavigation("/admin/verify-users")}
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Verify Users
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="justify-start text-base"
+                    onClick={() => handleNavigation("/admin/blog")}
+                  >
+                    Manage Blog
+                  </Button>
+                </>
               )}
 
               <div className="border-t border-border my-2" />
