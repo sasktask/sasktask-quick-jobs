@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,7 +86,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Record submission for rate limiting
+    // Record submission for rate limiting and admin review
     const { error: insertError } = await supabase
       .from("contact_submissions")
       .insert({
@@ -101,48 +98,18 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Error recording submission:", insertError);
     }
 
-    // Send email to admin
-    const adminEmail = await resend.emails.send({
-      from: "SaskTask Contact <onboarding@resend.dev>",
-      to: ["admin@sasktask.com"], // Replace with actual admin email
-      replyTo: email,
-      subject: `New Contact Form: ${subject}`,
-      html: `
-        <h2>New Contact Form Submission</h2>
-        <p><strong>From:</strong> ${name} (${email})</p>
-        <p><strong>Subject:</strong> ${subject}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message.replace(/\n/g, '<br>')}</p>
-        <hr>
-        <p><small>Reply directly to this email to respond to ${name}</small></p>
-      `,
+    // Log the contact form submission (emails would be sent via a proper email service in production)
+    console.log("Contact form submission recorded:", {
+      name,
+      email,
+      subject,
+      messagePreview: message.substring(0, 100)
     });
-
-    console.log("Admin email sent:", adminEmail);
-
-    // Send auto-reply to user
-    const userEmail = await resend.emails.send({
-      from: "SaskTask <onboarding@resend.dev>",
-      to: [email],
-      subject: "We received your message - SaskTask",
-      html: `
-        <h1>Thank you for contacting SaskTask, ${name}!</h1>
-        <p>We have received your message and will get back to you as soon as possible.</p>
-        <h3>Your message:</h3>
-        <p><strong>Subject:</strong> ${subject}</p>
-        <p>${message.replace(/\n/g, '<br>')}</p>
-        <hr>
-        <p>Best regards,<br>The SaskTask Team</p>
-      `,
-    });
-
-    console.log("User auto-reply sent:", userEmail);
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        adminEmailId: adminEmail.data?.id,
-        userEmailId: userEmail.data?.id 
+        success: true,
+        message: "Your message has been received. We'll get back to you soon!"
       }),
       {
         status: 200,

@@ -69,19 +69,21 @@ export const usePushNotifications = () => {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
 
-      // Save subscription to database
+      // Save subscription to database using type assertion for new table
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Please sign in to enable notifications");
         return false;
       }
 
-      const { error } = await supabase
+      // Direct insert with type assertion
+      const subscriptionData = subscription.toJSON();
+      const { error } = await (supabase as any)
         .from('push_subscriptions')
         .upsert({
           user_id: user.id,
-          subscription_data: subscription.toJSON() as any,
-        } as any);
+          subscription_data: subscriptionData
+        });
 
       if (error) throw error;
 
@@ -107,7 +109,7 @@ export const usePushNotifications = () => {
       // Remove from database
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase
+        await (supabase as any)
           .from('push_subscriptions')
           .delete()
           .eq('user_id', user.id);

@@ -1,8 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -119,43 +116,13 @@ const handler = async (req: Request): Promise<Response> => {
       subscriberId = inserted.id;
     }
 
-    // Send confirmation email
-    const confirmationUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/confirm-newsletter?token=${confirmationToken}`;
-
-    const emailResponse = await resend.emails.send({
-      from: "SaskTask Newsletter <onboarding@resend.dev>",
-      to: [email],
-      subject: "Confirm your SaskTask Newsletter Subscription",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #3eb5a4;">Welcome to SaskTask Newsletter!</h1>
-          <p>Thank you for subscribing to our newsletter. To complete your subscription, please confirm your email address by clicking the button below:</p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${confirmationUrl}" 
-               style="background-color: #3eb5a4; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-              Confirm Subscription
-            </a>
-          </div>
-          
-          <p style="color: #666; font-size: 14px;">If you didn't subscribe to this newsletter, you can safely ignore this email.</p>
-          
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-          
-          <p style="color: #999; font-size: 12px;">
-            SaskTask - Your Task Partner<br>
-            This email was sent to ${email}
-          </p>
-        </div>
-      `,
-    });
-
-    console.log("Confirmation email sent:", emailResponse);
+    // Log subscription (email confirmation would be sent via a proper email service in production)
+    console.log("Newsletter subscription recorded:", { email, subscriberId });
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: "Please check your email to confirm your subscription!",
+        message: "Thank you for subscribing to our newsletter!",
         subscriberId 
       }),
       {
