@@ -115,6 +115,10 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 {t('becomeTasker')}
               </Link>
               
+              <Link to="/blog" className="text-foreground hover:text-primary transition-colors font-medium">
+                Blog
+              </Link>
+              
               {user ? (
                 <>
                   <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors font-medium">

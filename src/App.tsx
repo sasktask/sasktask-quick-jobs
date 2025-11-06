@@ -25,6 +25,10 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Install from "./pages/Install";
 import AdminVerification from "./pages/AdminVerification";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import RSSFeed from "./pages/RSSFeed";
+import Sitemap from "./pages/Sitemap";
 import { ChatButton } from "./components/ChatButton";
 
 const queryClient = new QueryClient();
@@ -58,6 +62,10 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/install" element={<Install />} />
             <Route path="/admin/verify-users" element={<AdminVerification />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/rss.xml" element={<RSSFeed />} />
+            <Route path="/sitemap.xml" element={<Sitemap />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

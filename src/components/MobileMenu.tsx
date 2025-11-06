@@ -105,6 +105,14 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
             <ShieldCheck className="h-4 w-4" />
             {t('becomeTasker')}
           </Button>
+          
+          <Button
+            variant="ghost"
+            className="justify-start text-base"
+            onClick={() => handleNavigation("/blog")}
+          >
+            Blog
+          </Button>
 
           {user && (
             <>
