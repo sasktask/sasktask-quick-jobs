@@ -19,6 +19,7 @@ import { SearchBar, SearchFilters } from "./SearchBar";
 import { ForwardMessageDialog } from "./ForwardMessageDialog";
 import { ReplyPreview } from "./ReplyPreview";
 import { QuotedMessage } from "./QuotedMessage";
+import { EditHistoryDialog } from "./EditHistoryDialog";
 
 interface ChatInterfaceProps {
   bookingId: string;
@@ -49,6 +50,8 @@ export const ChatInterface = ({
   const [forwardDialogOpen, setForwardDialogOpen] = useState(false);
   const [messageToForward, setMessageToForward] = useState<{ id: string; content: string } | null>(null);
   const [replyingTo, setReplyingTo] = useState<{ id: string; message: string; senderName: string; isOwn: boolean } | null>(null);
+  const [editingMessage, setEditingMessage] = useState<{ id: string; content: string } | null>(null);
+  const [editHistoryDialog, setEditHistoryDialog] = useState<{ open: boolean; messageId: string; content: string }>({ open: false, messageId: "", content: "" });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const firstUnreadRef = useRef<HTMLDivElement>(null);
@@ -354,6 +357,22 @@ export const ChatInterface = ({
     setReplyingTo(null);
   };
 
+  // Edit message handlers
+  const handleEdit = (messageId: string, currentContent: string) => {
+    setEditingMessage({ id: messageId, content: currentContent });
+    setInputValue(currentContent);
+    inputRef.current?.focus();
+  };
+
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    setInputValue("");
+  };
+
+  const handleViewHistory = (messageId: string, content: string) => {
+    setEditHistoryDialog({ open: true, messageId, content });
+  };
+
   // Filter messages based on search criteria
   const filteredMessages = searchFilters
     ? messages.filter((message) => {
@@ -392,13 +411,37 @@ export const ChatInterface = ({
 
     const message = inputValue;
     const replyToId = replyingTo?.id;
+    const editingId = editingMessage?.id;
     
     setInputValue("");
     setReplyingTo(null);
     
     try {
+      // If editing a message
+      if (editingId) {
+        // Save previous version to history
+        await supabase.from("message_edit_history").insert({
+          message_id: editingId,
+          previous_content: editingMessage.content,
+          edited_by: currentUserId,
+        });
+
+        // Update the message
+        const { error } = await supabase
+          .from("messages")
+          .update({
+            message: message,
+            edited_at: new Date().toISOString(),
+          })
+          .eq("id", editingId);
+
+        if (error) throw error;
+        
+        setEditingMessage(null);
+        toast.success("Message updated");
+      }
       // If replying, create message with reply_to_id
-      if (replyToId) {
+      else if (replyToId) {
         const { data, error } = await supabase
           .from("messages")
           .insert({
@@ -610,6 +653,11 @@ export const ChatInterface = ({
                         <p className="text-sm whitespace-pre-wrap break-words">
                           {message.message}
                         </p>
+                        {message.edited_at && (
+                          <span className="text-xs text-muted-foreground italic mt-1 block">
+                            (edited)
+                          </span>
+                        )}
                         {messageAttachments[message.id] && (
                           <MediaMessage attachments={messageAttachments[message.id]} />
                         )}
@@ -642,7 +690,10 @@ export const ChatInterface = ({
                           onDelete={() => handleDeleteSingle(message.id)}
                           onForward={() => handleForwardMessage(message.id, message.message)}
                           onReply={() => handleReply(message.id, message.message, "You", true)}
+                          onEdit={() => handleEdit(message.id, message.message)}
+                          onViewHistory={message.edited_at ? () => handleViewHistory(message.id, message.message) : undefined}
                           isOwn={isOwn}
+                          isEdited={!!message.edited_at}
                         />
                       )}
                       {!selectionMode && !isOwn && (
@@ -695,7 +746,24 @@ export const ChatInterface = ({
           />
         ) : (
           <div className="space-y-2">
-            {replyingTo && (
+            {editingMessage && (
+              <div className="flex items-center gap-2 p-3 bg-primary/10 border-l-4 border-primary rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-semibold text-primary">
+                    Editing message
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 flex-shrink-0"
+                  onClick={cancelEdit}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            {replyingTo && !editingMessage && (
               <ReplyPreview
                 senderName={replyingTo.isOwn ? "You" : replyingTo.senderName}
                 message={replyingTo.message}
@@ -716,7 +784,13 @@ export const ChatInterface = ({
                 handleTyping();
               }}
               onKeyPress={handleKeyPress}
-              placeholder={replyingTo ? `Replying to ${replyingTo.senderName}...` : "Type a message..."}
+              placeholder={
+                editingMessage 
+                  ? "Edit your message..." 
+                  : replyingTo 
+                  ? `Replying to ${replyingTo.senderName}...` 
+                  : "Type a message..."
+              }
               disabled={isSending || uploadingMedia}
               className="flex-1"
             />
@@ -755,6 +829,14 @@ export const ChatInterface = ({
           onForwardComplete={handleForwardComplete}
         />
       )}
+
+      {/* Edit History Dialog */}
+      <EditHistoryDialog
+        open={editHistoryDialog.open}
+        onOpenChange={(open) => setEditHistoryDialog({ ...editHistoryDialog, open })}
+        messageId={editHistoryDialog.messageId}
+        currentContent={editHistoryDialog.content}
+      />
     </div>
   );
 };

@@ -251,10 +251,46 @@ export type Database = {
           },
         ]
       }
+      message_edit_history: {
+        Row: {
+          created_at: string
+          edited_at: string
+          edited_by: string
+          id: string
+          message_id: string
+          previous_content: string
+        }
+        Insert: {
+          created_at?: string
+          edited_at?: string
+          edited_by: string
+          id?: string
+          message_id: string
+          previous_content: string
+        }
+        Update: {
+          created_at?: string
+          edited_at?: string
+          edited_by?: string
+          id?: string
+          message_id?: string
+          previous_content?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_edit_history_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           booking_id: string
           created_at: string
+          edited_at: string | null
           id: string
           message: string
           read_at: string | null
@@ -266,6 +302,7 @@ export type Database = {
         Insert: {
           booking_id: string
           created_at?: string
+          edited_at?: string | null
           id?: string
           message: string
           read_at?: string | null
@@ -277,6 +314,7 @@ export type Database = {
         Update: {
           booking_id?: string
           created_at?: string
+          edited_at?: string | null
           id?: string
           message?: string
           read_at?: string | null
