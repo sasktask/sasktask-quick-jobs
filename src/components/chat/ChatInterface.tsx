@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Send, Loader2, AlertCircle, RefreshCw, User, Trash2, X, Search } from "lucide-react";
+import { Send, Loader2, AlertCircle, RefreshCw, User, Trash2, X, Search, Reply } from "lucide-react";
 import { useRealtimeChat } from "@/hooks/useRealtimeChat";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +17,8 @@ import { MessageActions } from "./MessageActions";
 import { DeleteMessageDialog } from "./DeleteMessageDialog";
 import { SearchBar, SearchFilters } from "./SearchBar";
 import { ForwardMessageDialog } from "./ForwardMessageDialog";
+import { ReplyPreview } from "./ReplyPreview";
+import { QuotedMessage } from "./QuotedMessage";
 
 interface ChatInterfaceProps {
   bookingId: string;
@@ -46,6 +48,7 @@ export const ChatInterface = ({
   const [searchFilters, setSearchFilters] = useState<SearchFilters | null>(null);
   const [forwardDialogOpen, setForwardDialogOpen] = useState(false);
   const [messageToForward, setMessageToForward] = useState<{ id: string; content: string } | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ id: string; message: string; senderName: string; isOwn: boolean } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const firstUnreadRef = useRef<HTMLDivElement>(null);
@@ -196,29 +199,46 @@ export const ChatInterface = ({
     }
   };
 
-  // Load attachments for messages
+  // Load attachments and replied-to messages
   const [messageAttachments, setMessageAttachments] = useState<Record<string, any[]>>({});
+  const [repliedMessages, setRepliedMessages] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    const loadAttachments = async () => {
+    const loadMessageData = async () => {
       const attachmentsMap: Record<string, any[]> = {};
+      const repliesMap: Record<string, any> = {};
       
       for (const message of messages) {
-        const { data } = await (supabase as any)
+        // Load attachments
+        const { data: attachments } = await (supabase as any)
           .from('message_attachments')
           .select('*')
           .eq('message_id', message.id);
 
-        if (data && data.length > 0) {
-          attachmentsMap[message.id] = data;
+        if (attachments && attachments.length > 0) {
+          attachmentsMap[message.id] = attachments;
+        }
+
+        // Load replied-to message if exists
+        if (message.reply_to_id) {
+          const { data: repliedMsg } = await supabase
+            .from('messages')
+            .select('*, profiles!messages_sender_id_fkey(full_name)')
+            .eq('id', message.reply_to_id)
+            .single();
+
+          if (repliedMsg) {
+            repliesMap[message.id] = repliedMsg;
+          }
         }
       }
 
       setMessageAttachments(attachmentsMap);
+      setRepliedMessages(repliesMap);
     };
 
     if (messages.length > 0) {
-      loadAttachments();
+      loadMessageData();
     }
   }, [messages]);
 
@@ -324,6 +344,16 @@ export const ChatInterface = ({
     toast.success("Message forwarded");
   };
 
+  // Reply message handler
+  const handleReply = (messageId: string, messageContent: string, senderName: string, isOwn: boolean) => {
+    setReplyingTo({ id: messageId, message: messageContent, senderName, isOwn });
+    inputRef.current?.focus();
+  };
+
+  const cancelReply = () => {
+    setReplyingTo(null);
+  };
+
   // Filter messages based on search criteria
   const filteredMessages = searchFilters
     ? messages.filter((message) => {
@@ -361,12 +391,33 @@ export const ChatInterface = ({
     if (!inputValue.trim() || isSending) return;
 
     const message = inputValue;
+    const replyToId = replyingTo?.id;
+    
     setInputValue("");
+    setReplyingTo(null);
     
     try {
-      await sendMessage(message);
+      // If replying, create message with reply_to_id
+      if (replyToId) {
+        const { data, error } = await supabase
+          .from("messages")
+          .insert({
+            booking_id: bookingId,
+            sender_id: currentUserId,
+            receiver_id: otherUserId,
+            message: message,
+            reply_to_id: replyToId,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+      } else {
+        await sendMessage(message);
+      }
     } catch (error) {
-      // Error already handled in hook
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
     }
   };
 
@@ -543,6 +594,19 @@ export const ChatInterface = ({
                         {isUnread && !isOwn && (
                           <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-primary rounded-full" />
                         )}
+                        {/* Show quoted message if this is a reply */}
+                        {message.reply_to_id && repliedMessages[message.id] && (
+                          <QuotedMessage
+                            senderName={
+                              repliedMessages[message.id].sender_id === currentUserId
+                                ? "You"
+                                : repliedMessages[message.id].profiles?.full_name || otherUserName
+                            }
+                            message={repliedMessages[message.id].message}
+                            isOwn={repliedMessages[message.id].sender_id === currentUserId}
+                            isOwnReply={isOwn}
+                          />
+                        )}
                         <p className="text-sm whitespace-pre-wrap break-words">
                           {message.message}
                         </p>
@@ -577,8 +641,22 @@ export const ChatInterface = ({
                         <MessageActions
                           onDelete={() => handleDeleteSingle(message.id)}
                           onForward={() => handleForwardMessage(message.id, message.message)}
+                          onReply={() => handleReply(message.id, message.message, "You", true)}
                           isOwn={isOwn}
                         />
+                      )}
+                      {!selectionMode && !isOwn && (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleReply(message.id, message.message, otherUserName, false)}
+                            className="h-auto p-1 hover:text-primary"
+                            title="Reply"
+                          >
+                            <Reply className="h-3 w-3" />
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -616,7 +694,16 @@ export const ChatInterface = ({
             onCancel={() => setIsRecordingVoice(false)}
           />
         ) : (
-          <div className="flex gap-2">
+          <div className="space-y-2">
+            {replyingTo && (
+              <ReplyPreview
+                senderName={replyingTo.isOwn ? "You" : replyingTo.senderName}
+                message={replyingTo.message}
+                onCancel={cancelReply}
+                isOwn={replyingTo.isOwn}
+              />
+            )}
+            <div className="flex gap-2">
             <MediaUpload
               onFileSelect={handleMediaUpload}
               onVoiceRecord={() => setIsRecordingVoice(true)}
@@ -629,7 +716,7 @@ export const ChatInterface = ({
                 handleTyping();
               }}
               onKeyPress={handleKeyPress}
-              placeholder="Type a message..."
+              placeholder={replyingTo ? `Replying to ${replyingTo.senderName}...` : "Type a message..."}
               disabled={isSending || uploadingMedia}
               className="flex-1"
             />
@@ -644,6 +731,7 @@ export const ChatInterface = ({
                 <Send className="h-4 w-4" />
               )}
             </Button>
+          </div>
           </div>
         )}
       </div>

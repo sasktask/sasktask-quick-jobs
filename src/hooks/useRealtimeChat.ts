@@ -12,6 +12,7 @@ interface Message {
   created_at: string;
   read_at: string | null;
   status: string;
+  reply_to_id?: string | null;
 }
 
 interface UseRealtimeChatProps {

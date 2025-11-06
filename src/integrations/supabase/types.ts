@@ -259,6 +259,7 @@ export type Database = {
           message: string
           read_at: string | null
           receiver_id: string
+          reply_to_id: string | null
           sender_id: string
           status: Database["public"]["Enums"]["message_status"] | null
         }
@@ -269,6 +270,7 @@ export type Database = {
           message: string
           read_at?: string | null
           receiver_id: string
+          reply_to_id?: string | null
           sender_id: string
           status?: Database["public"]["Enums"]["message_status"] | null
         }
@@ -279,10 +281,19 @@ export type Database = {
           message?: string
           read_at?: string | null
           receiver_id?: string
+          reply_to_id?: string | null
           sender_id?: string
           status?: Database["public"]["Enums"]["message_status"] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       newsletter_subscribers: {
         Row: {
