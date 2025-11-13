@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Send, Loader2, AlertCircle, RefreshCw, User, Trash2, X, Search, Reply } from "lucide-react";
+import { Send, Loader2, AlertCircle, RefreshCw, User, Trash2, X, Search, Reply, Paperclip, Image as ImageIcon } from "lucide-react";
 import { useRealtimeChat } from "@/hooks/useRealtimeChat";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,9 @@ import { ForwardMessageDialog } from "./ForwardMessageDialog";
 import { ReplyPreview } from "./ReplyPreview";
 import { QuotedMessage } from "./QuotedMessage";
 import { EditHistoryDialog } from "./EditHistoryDialog";
+import { MessageReactions } from "./MessageReactions";
+import { FilePreview } from "./FilePreview";
+import { PinnedMessages } from "./PinnedMessages";
 
 interface ChatInterfaceProps {
   bookingId: string;
@@ -52,6 +55,8 @@ export const ChatInterface = ({
   const [replyingTo, setReplyingTo] = useState<{ id: string; message: string; senderName: string; isOwn: boolean } | null>(null);
   const [editingMessage, setEditingMessage] = useState<{ id: string; content: string } | null>(null);
   const [editHistoryDialog, setEditHistoryDialog] = useState<{ open: boolean; messageId: string; content: string }>({ open: false, messageId: "", content: "" });
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [pinnedMessageIds, setPinnedMessageIds] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const firstUnreadRef = useRef<HTMLDivElement>(null);
@@ -245,6 +250,43 @@ export const ChatInterface = ({
     }
   }, [messages]);
 
+  // Load pinned messages
+  useEffect(() => {
+    const loadPinnedMessages = async () => {
+      const { data } = await supabase
+        .from("pinned_messages")
+        .select("message_id")
+        .eq("booking_id", bookingId);
+
+      if (data) {
+        setPinnedMessageIds(new Set(data.map((p) => p.message_id)));
+      }
+    };
+
+    loadPinnedMessages();
+
+    // Subscribe to pin changes
+    const channel = supabase
+      .channel(`pins-${bookingId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pinned_messages",
+          filter: `booking_id=eq.${bookingId}`,
+        },
+        () => {
+          loadPinnedMessages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [bookingId]);
+
   // Message deletion handlers
   const handleDeleteSingle = (messageId: string) => {
     setMessageToDelete(messageId);
@@ -371,6 +413,52 @@ export const ChatInterface = ({
 
   const handleViewHistory = (messageId: string, content: string) => {
     setEditHistoryDialog({ open: true, messageId, content });
+  };
+
+  // Pin/unpin handlers
+  const handlePinMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase.from("pinned_messages").insert({
+        message_id: messageId,
+        booking_id: bookingId,
+        pinned_by: currentUserId,
+      });
+
+      if (error) throw error;
+      toast.success("Message pinned");
+    } catch (error) {
+      console.error("Error pinning message:", error);
+      toast.error("Failed to pin message");
+    }
+  };
+
+  const handleUnpinMessage = async (messageId: string) => {
+    try {
+      const { error} = await supabase
+        .from("pinned_messages")
+        .delete()
+        .eq("message_id", messageId)
+        .eq("booking_id", bookingId);
+
+      if (error) throw error;
+      toast.success("Message unpinned");
+    } catch (error) {
+      console.error("Error unpinning message:", error);
+      toast.error("Failed to unpin message");
+    }
+  };
+
+  // File preview handler
+  const handleFileSelected = (file: File) => {
+    setPreviewFile(file);
+  };
+
+  const handleSendFile = async () => {
+    if (!previewFile) return;
+    
+    const isImage = previewFile.type.startsWith("image/");
+    await handleMediaUpload(previewFile, isImage ? "image" : "file");
+    setPreviewFile(null);
   };
 
   // Filter messages based on search criteria
@@ -568,6 +656,19 @@ export const ChatInterface = ({
         )}
       </div>
 
+      {/* Pinned Messages */}
+      <PinnedMessages
+        bookingId={bookingId}
+        currentUserId={currentUserId}
+        onMessageClick={(messageId) => {
+          // Scroll to message
+          const messageElement = document.getElementById(`message-${messageId}`);
+          if (messageElement) {
+            messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }}
+      />
+
       {/* Messages Area */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="space-y-4">
@@ -585,7 +686,7 @@ export const ChatInterface = ({
               const isFirstUnread = index === firstUnreadIndex && hasUnreadMessages;
 
               return (
-                <div key={message.id}>
+                <div key={message.id} id={`message-${message.id}`}>
                   {/* Unread Messages Divider */}
                   {isFirstUnread && (
                     <div
@@ -685,29 +786,28 @@ export const ChatInterface = ({
                         </div>
                       </div>
                       
-                      {!selectionMode && isOwn && (
+                      {/* Message Reactions */}
+                      {!selectionMode && (
+                        <MessageReactions
+                          messageId={message.id}
+                          currentUserId={currentUserId}
+                          isOwn={isOwn}
+                        />
+                      )}
+                      
+                      {!selectionMode && (
                         <MessageActions
                           onDelete={() => handleDeleteSingle(message.id)}
                           onForward={() => handleForwardMessage(message.id, message.message)}
-                          onReply={() => handleReply(message.id, message.message, "You", true)}
+                          onReply={() => handleReply(message.id, message.message, isOwn ? "You" : otherUserName, isOwn)}
                           onEdit={() => handleEdit(message.id, message.message)}
                           onViewHistory={message.edited_at ? () => handleViewHistory(message.id, message.message) : undefined}
+                          onPin={() => handlePinMessage(message.id)}
+                          onUnpin={() => handleUnpinMessage(message.id)}
                           isOwn={isOwn}
                           isEdited={!!message.edited_at}
+                          isPinned={pinnedMessageIds.has(message.id)}
                         />
-                      )}
-                      {!selectionMode && !isOwn && (
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleReply(message.id, message.message, otherUserName, false)}
-                            className="h-auto p-1 hover:text-primary"
-                            title="Reply"
-                          >
-                            <Reply className="h-3 w-3" />
-                          </Button>
-                        </div>
                       )}
                     </div>
                   </div>
@@ -771,41 +871,53 @@ export const ChatInterface = ({
                 isOwn={replyingTo.isOwn}
               />
             )}
-            <div className="flex gap-2">
-            <MediaUpload
-              onFileSelect={handleMediaUpload}
-              onVoiceRecord={() => setIsRecordingVoice(true)}
-            />
-            <Input
-              ref={inputRef}
-              value={inputValue}
-              onChange={(e) => {
-                setInputValue(e.target.value);
-                handleTyping();
-              }}
-              onKeyPress={handleKeyPress}
-              placeholder={
-                editingMessage 
-                  ? "Edit your message..." 
-                  : replyingTo 
-                  ? `Replying to ${replyingTo.senderName}...` 
-                  : "Type a message..."
-              }
-              disabled={isSending || uploadingMedia}
-              className="flex-1"
-            />
-            <Button
-              onClick={handleSend}
-              disabled={!inputValue.trim() || isSending || uploadingMedia}
-              size="icon"
-            >
-              {isSending || uploadingMedia ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
+            
+            {/* File Preview */}
+            {previewFile && (
+              <FilePreview
+                file={previewFile}
+                onRemove={() => setPreviewFile(null)}
+                onSend={handleSendFile}
+              />
+            )}
+            
+            {!previewFile && (
+              <div className="flex gap-2">
+                <MediaUpload
+                  onFileSelect={(file, type) => setPreviewFile(file)}
+                  onVoiceRecord={() => setIsRecordingVoice(true)}
+                />
+                <Input
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={(e) => {
+                    setInputValue(e.target.value);
+                    handleTyping();
+                  }}
+                  onKeyPress={handleKeyPress}
+                  placeholder={
+                    editingMessage 
+                      ? "Edit your message..." 
+                      : replyingTo 
+                      ? `Replying to ${replyingTo.senderName}...` 
+                      : "Type a message..."
+                  }
+                  disabled={isSending || uploadingMedia}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleSend}
+                  disabled={!inputValue.trim() || isSending || uploadingMedia}
+                  size="icon"
+                >
+                  {isSending || uploadingMedia ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
