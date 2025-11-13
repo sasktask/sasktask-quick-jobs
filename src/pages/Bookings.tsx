@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { MessagingPanel } from "@/components/MessagingPanel";
 import { PaymentPanel } from "@/components/PaymentPanel";
 import { TaskCompletionFlow } from "@/components/TaskCompletionFlow";
 import { CancellationDialog } from "@/components/CancellationDialog";
@@ -22,7 +21,6 @@ const Bookings = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
-  const [showMessaging, setShowMessaging] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showCancellation, setShowCancellation] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
@@ -392,23 +390,9 @@ const Bookings = () => {
                                 onStatusUpdate={checkUserAndFetchBookings}
                               />
                               
-                              {/* Chat Button - Always available for accepted/in_progress */}
+                              {/* Cancel Button for accepted/in_progress bookings */}
                               {(booking.status === "accepted" || booking.status === "in_progress") && (
-                                <div className="space-y-2 mt-3">
-                                  <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                      setSelectedBooking(booking);
-                                      setShowMessaging(true);
-                                    }}
-                                    className="w-full"
-                                    size="lg"
-                                  >
-                                    <MessageSquare className="mr-2 h-5 w-5" />
-                                    Chat with {userRole === "task_giver" ? "Tasker" : "Task Giver"}
-                                  </Button>
-                                  
-                                  {/* Cancel Button */}
+                                <div className="mt-3">
                                   <Button
                                     variant="outline"
                                     onClick={() => {
@@ -457,32 +441,6 @@ const Bookings = () => {
             </TabsContent>
           ))}
         </Tabs>
-
-        {/* Messaging Dialog */}
-        <Dialog open={showMessaging} onOpenChange={setShowMessaging}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Messages</DialogTitle>
-              <DialogDescription>
-                Chat with {userRole === "task_giver" 
-                  ? selectedBooking?.task_doer?.full_name 
-                  : selectedBooking?.tasks?.task_giver?.full_name}
-              </DialogDescription>
-            </DialogHeader>
-            {selectedBooking && (
-              <MessagingPanel
-                bookingId={selectedBooking.id}
-                currentUserId={currentUserId}
-                otherUserId={userRole === "task_giver" 
-                  ? selectedBooking.task_doer_id 
-                  : selectedBooking.tasks?.task_giver_id}
-                otherUserName={userRole === "task_giver" 
-                  ? selectedBooking.task_doer?.full_name 
-                  : selectedBooking.tasks?.task_giver?.full_name}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
 
         {/* Payment Dialog */}
         <Dialog open={showPayment} onOpenChange={setShowPayment}>
