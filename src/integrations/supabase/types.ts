@@ -876,6 +876,48 @@ export type Database = {
           },
         ]
       }
+      portfolio_items: {
+        Row: {
+          category: string
+          client_name: string | null
+          completed_date: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          images: string[] | null
+          is_featured: boolean | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          client_name?: string | null
+          completed_date?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_featured?: boolean | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          client_name?: string | null
+          completed_date?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_featured?: boolean | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -1297,6 +1339,30 @@ export type Database = {
         }
         Relationships: []
       }
+      skill_endorsements: {
+        Row: {
+          created_at: string | null
+          endorsed_by: string
+          id: string
+          skill: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          endorsed_by: string
+          id?: string
+          skill: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          endorsed_by?: string
+          id?: string
+          skill?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sms_logs: {
         Row: {
           created_at: string
@@ -1508,9 +1574,11 @@ export type Database = {
       }
       tasks: {
         Row: {
+          budget_type: string | null
           category: string
           created_at: string | null
           description: string
+          estimated_duration: number | null
           id: string
           latitude: number | null
           location: string
@@ -1527,9 +1595,11 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          budget_type?: string | null
           category: string
           created_at?: string | null
           description: string
+          estimated_duration?: number | null
           id?: string
           latitude?: number | null
           location: string
@@ -1546,9 +1616,11 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          budget_type?: string | null
           category?: string
           created_at?: string | null
           description?: string
+          estimated_duration?: number | null
           id?: string
           latitude?: number | null
           location?: string

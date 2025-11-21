@@ -131,6 +131,12 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                   <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors font-medium">
                     {t('dashboard')}
                   </Link>
+                  <Link to="/post-task" className="text-foreground hover:text-primary transition-colors font-medium">
+                    Post Task
+                  </Link>
+                  <Link to="/my-tasks" className="text-foreground hover:text-primary transition-colors font-medium">
+                    My Tasks
+                  </Link>
                   <Link to="/bookings" className="text-foreground hover:text-primary transition-colors font-medium">
                     {t('bookings')}
                   </Link>
