@@ -15,6 +15,7 @@ import { useTheme } from "next-themes";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount";
 import { NotificationsDropdown } from "./NotificationsDropdown";
+import { NotificationBell } from "./NotificationBell";
 import { MobileMenu } from "./MobileMenu";
 
 interface NavbarProps {
@@ -158,9 +159,14 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                     Settings
                   </Link>
                   {userRole === "admin" && (
-                    <Link to="/admin/blog" className="text-foreground hover:text-primary transition-colors font-medium">
-                      Manage Blog
-                    </Link>
+                    <>
+                      <Link to="/admin/blog" className="text-foreground hover:text-primary transition-colors font-medium">
+                        Manage Blog
+                      </Link>
+                      <Link to="/admin/dashboard" className="text-foreground hover:text-primary transition-colors font-medium">
+                        Admin Dashboard
+                      </Link>
+                    </>
                   )}
                   {userRole === "task_doer" && (
                     <Link to="/verification" className="text-foreground hover:text-primary transition-colors flex items-center gap-2">
@@ -186,7 +192,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
               )}
             </div>
 
-            {user && <NotificationsDropdown />}
+            {user && <NotificationBell userId={user.id} />}
             
             {/* Theme Toggle */}
             <Button
