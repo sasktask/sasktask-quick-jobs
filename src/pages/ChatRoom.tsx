@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useRealtimeChatNotifications } from "@/hooks/useRealtimeChatNotifications";
+import { VideoCallDialog } from "@/components/VideoCallDialog";
+import { Video, Phone } from "lucide-react";
 
 const ChatRoom = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -18,6 +20,8 @@ const ChatRoom = () => {
   const [booking, setBooking] = useState<any>(null);
   const [otherUser, setOtherUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const [callType, setCallType] = useState<'video' | 'audio'>('video');
   
   // Enable realtime chat notifications
   const { unreadCount } = useRealtimeChatNotifications(user?.id || "");
@@ -132,10 +136,38 @@ const ChatRoom = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-2xl">{booking.tasks.title}</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Chat with your {isTaskGiver ? "task doer" : "task giver"}
-                </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-2xl">{booking.tasks.title}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Chat with your {isTaskGiver ? "task doer" : "task giver"}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        setCallType('audio');
+                        setShowVideoCall(true);
+                      }}
+                      title="Start audio call"
+                    >
+                      <Phone className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        setCallType('video');
+                        setShowVideoCall(true);
+                      }}
+                      title="Start video call"
+                    >
+                      <Video className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <ChatInterface
@@ -153,6 +185,17 @@ const ChatRoom = () => {
 
         <Footer />
       </div>
+
+      {showVideoCall && otherUser && (
+        <VideoCallDialog
+          isOpen={showVideoCall}
+          onClose={() => setShowVideoCall(false)}
+          bookingId={bookingId!}
+          otherUserId={otherUser.id}
+          otherUserName={otherUser.full_name || "User"}
+          callType={callType}
+        />
+      )}
     </>
   );
 };

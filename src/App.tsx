@@ -28,6 +28,7 @@ import Install from "./pages/Install";
 import AdminVerification from "./pages/AdminVerification";
 import AdminBlog from "./pages/AdminBlog";
 import AdminDisputes from "./pages/AdminDisputes";
+import AdminFraud from "./pages/AdminFraud";
 import Analytics from "./pages/Analytics";
 import ReferralProgram from "./pages/ReferralProgram";
 import Blog from "./pages/Blog";
@@ -73,7 +74,8 @@ const App = () => (
             <Route path="/install" element={<Install />} />
             <Route path="/admin/verify-users" element={<AdminVerification />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
-            <Route path="/admin/disputes" element={<AdminDisputes />} />
+          <Route path="/admin/disputes" element={<AdminDisputes />} />
+          <Route path="/admin/fraud" element={<AdminFraud />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/referrals" element={<ReferralProgram />} />
             <Route path="/blog" element={<Blog />} />
