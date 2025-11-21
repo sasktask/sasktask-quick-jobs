@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,7 +35,7 @@ interface ProfileSettingsProps {
 export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Tables<"profiles"> | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>("");
@@ -66,10 +67,10 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
         bio: data.bio || "",
         skills: data.skills?.join(", ") || "",
         hourly_rate: data.hourly_rate?.toString() || "",
-        website: (data as any).website || "",
-        linkedin: (data as any).linkedin || "",
-        twitter: (data as any).twitter || "",
-        facebook: (data as any).facebook || "",
+        website: data.website || "",
+        linkedin: data.linkedin || "",
+        twitter: data.twitter || "",
+        facebook: data.facebook || "",
       });
     } catch (error) {
       console.error("Error loading profile:", error);
