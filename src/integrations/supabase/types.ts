@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      availability_slots: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean
+          start_time: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_available?: boolean
+          start_time: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           badge_level: string | null
@@ -845,12 +878,15 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           availability_status: string | null
           avatar_url: string | null
           bio: string | null
           cancellation_count: number | null
           cancellation_rate: number | null
+          city: string | null
           completed_tasks: number | null
+          country: string | null
           created_at: string | null
           email: string
           experience_years: number | null
@@ -860,6 +896,8 @@ export type Database = {
           joined_date: string | null
           last_active: string | null
           last_seen: string | null
+          latitude: number | null
+          longitude: number | null
           on_time_rate: number | null
           phone: string | null
           preferred_categories: string[] | null
@@ -880,12 +918,15 @@ export type Database = {
           verified_by_admin: boolean | null
         }
         Insert: {
+          address?: string | null
           availability_status?: string | null
           avatar_url?: string | null
           bio?: string | null
           cancellation_count?: number | null
           cancellation_rate?: number | null
+          city?: string | null
           completed_tasks?: number | null
+          country?: string | null
           created_at?: string | null
           email: string
           experience_years?: number | null
@@ -895,6 +936,8 @@ export type Database = {
           joined_date?: string | null
           last_active?: string | null
           last_seen?: string | null
+          latitude?: number | null
+          longitude?: number | null
           on_time_rate?: number | null
           phone?: string | null
           preferred_categories?: string[] | null
@@ -915,12 +958,15 @@ export type Database = {
           verified_by_admin?: boolean | null
         }
         Update: {
+          address?: string | null
           availability_status?: string | null
           avatar_url?: string | null
           bio?: string | null
           cancellation_count?: number | null
           cancellation_rate?: number | null
+          city?: string | null
           completed_tasks?: number | null
+          country?: string | null
           created_at?: string | null
           email?: string
           experience_years?: number | null
@@ -930,6 +976,8 @@ export type Database = {
           joined_date?: string | null
           last_active?: string | null
           last_seen?: string | null
+          latitude?: number | null
+          longitude?: number | null
           on_time_rate?: number | null
           phone?: string | null
           preferred_categories?: string[] | null
@@ -974,6 +1022,107 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      recurring_tasks: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          frequency: string
+          id: string
+          is_active: boolean
+          next_occurrence: string
+          start_date: string
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          frequency: string
+          id?: string
+          is_active?: boolean
+          next_occurrence: string
+          start_date: string
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          next_occurrence?: string
+          start_date?: string
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_tasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reminders: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          id: string
+          message: string
+          reminder_time: string
+          reminder_type: string
+          send_method: string
+          sent_at: string | null
+          status: string
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          reminder_time: string
+          reminder_type: string
+          send_method?: string
+          sent_at?: string | null
+          status?: string
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          reminder_time?: string
+          reminder_type?: string
+          send_method?: string
+          sent_at?: string | null
+          status?: string
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminders_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       review_responses: {
         Row: {
@@ -1133,6 +1282,39 @@ export type Database = {
           tasker_id?: string
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sms_logs: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          phone_number: string
+          provider_response: Json | null
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          phone_number: string
+          provider_response?: Json | null
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          phone_number?: string
+          provider_response?: Json | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1318,7 +1500,10 @@ export type Database = {
           created_at: string | null
           description: string
           id: string
+          latitude: number | null
           location: string
+          location_details: Json | null
+          longitude: number | null
           pay_amount: number
           scheduled_date: string | null
           status: Database["public"]["Enums"]["task_status"] | null
@@ -1334,7 +1519,10 @@ export type Database = {
           created_at?: string | null
           description: string
           id?: string
+          latitude?: number | null
           location: string
+          location_details?: Json | null
+          longitude?: number | null
           pay_amount: number
           scheduled_date?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
@@ -1350,7 +1538,10 @@ export type Database = {
           created_at?: string | null
           description?: string
           id?: string
+          latitude?: number | null
           location?: string
+          location_details?: Json | null
+          longitude?: number | null
           pay_amount?: number
           scheduled_date?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
@@ -1650,6 +1841,10 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_distance: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
       calculate_trust_score: { Args: { user_id: string }; Returns: number }
       create_notification: {
         Args: {
