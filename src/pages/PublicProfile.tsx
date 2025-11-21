@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { SEOHead } from "@/components/SEOHead";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -137,8 +138,14 @@ export default function PublicProfile() {
   const isVerified = verification?.verification_status === "verified";
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <>
+      <SEOHead
+        title={`${profile.full_name || "User"} - SaskTask Profile`}
+        description={profile.bio || `View ${profile.full_name}'s profile, ratings, and completed work`}
+      />
+      
+      <div className="min-h-screen bg-background">
+        <Navbar />
 
       <div className="container mx-auto px-4 pt-24 pb-20">
         <div className="max-w-4xl mx-auto">
@@ -428,5 +435,6 @@ export default function PublicProfile() {
 
       <Footer />
     </div>
+    </>
   );
 }

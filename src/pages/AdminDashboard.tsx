@@ -140,26 +140,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleVerificationAction = async (verificationId: string, action: "verified" | "rejected") => {
-    try {
-      const { error } = await supabase
-        .from("verifications")
-        .update({
-          verification_status: action,
-          verified_at: action === "verified" ? new Date().toISOString() : null,
-        })
-        .eq("id", verificationId);
-
-      if (error) throw error;
-
-      toast.success(`Verification ${action}`);
-      loadVerifications();
-    } catch (error: any) {
-      console.error("Error updating verification:", error);
-      toast.error("Failed to update verification");
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
