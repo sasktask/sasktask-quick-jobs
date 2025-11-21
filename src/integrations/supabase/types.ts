@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      badges: {
+        Row: {
+          badge_level: string | null
+          badge_type: string
+          earned_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_level?: string | null
+          badge_type: string
+          earned_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_level?: string | null
+          badge_type?: string
+          earned_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string | null
@@ -186,6 +210,72 @@ export type Database = {
         }
         Relationships: []
       }
+      disputes: {
+        Row: {
+          against_user: string
+          booking_id: string
+          created_at: string | null
+          dispute_details: string | null
+          dispute_reason: string
+          evidence_urls: string[] | null
+          id: string
+          raised_by: string
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string | null
+          task_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          against_user: string
+          booking_id: string
+          created_at?: string | null
+          dispute_details?: string | null
+          dispute_reason: string
+          evidence_urls?: string[] | null
+          id?: string
+          raised_by: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          task_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          against_user?: string
+          booking_id?: string
+          created_at?: string | null
+          dispute_details?: string | null
+          dispute_reason?: string
+          evidence_urls?: string[] | null
+          id?: string
+          raised_by?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          task_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           created_at: string | null
@@ -206,6 +296,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      insurance_claims: {
+        Row: {
+          admin_notes: string | null
+          claim_amount: number
+          claim_reason: string
+          claimed_by: string
+          created_at: string | null
+          evidence_urls: string[] | null
+          id: string
+          insurance_id: string
+          resolved_at: string | null
+          status: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          claim_amount: number
+          claim_reason: string
+          claimed_by: string
+          created_at?: string | null
+          evidence_urls?: string[] | null
+          id?: string
+          insurance_id: string
+          resolved_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          claim_amount?: number
+          claim_reason?: string
+          claimed_by?: string
+          created_at?: string | null
+          evidence_urls?: string[] | null
+          id?: string
+          insurance_id?: string
+          resolved_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_claims_insurance_id_fkey"
+            columns: ["insurance_id"]
+            isOneToOne: false
+            referencedRelation: "task_insurance"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       message_attachments: {
         Row: {
@@ -743,33 +880,86 @@ export type Database = {
         }
         Relationships: []
       }
+      review_responses: {
+        Row: {
+          created_at: string | null
+          id: string
+          responded_by: string
+          response_text: string
+          review_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          responded_by: string
+          response_text: string
+          review_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          responded_by?: string
+          response_text?: string
+          review_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_responses_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           comment: string | null
+          communication_rating: number | null
           created_at: string | null
+          helpful_count: number | null
           id: string
+          quality_rating: number | null
           rating: number
+          responded_at: string | null
+          response: string | null
           reviewee_id: string
           reviewer_id: string
           task_id: string
+          timeliness_rating: number | null
+          verified: boolean | null
         }
         Insert: {
           comment?: string | null
+          communication_rating?: number | null
           created_at?: string | null
+          helpful_count?: number | null
           id?: string
+          quality_rating?: number | null
           rating: number
+          responded_at?: string | null
+          response?: string | null
           reviewee_id: string
           reviewer_id: string
           task_id: string
+          timeliness_rating?: number | null
+          verified?: boolean | null
         }
         Update: {
           comment?: string | null
+          communication_rating?: number | null
           created_at?: string | null
+          helpful_count?: number | null
           id?: string
+          quality_rating?: number | null
           rating?: number
+          responded_at?: string | null
+          response?: string | null
           reviewee_id?: string
           reviewer_id?: string
           task_id?: string
+          timeliness_rating?: number | null
+          verified?: boolean | null
         }
         Relationships: [
           {
@@ -851,6 +1041,113 @@ export type Database = {
         }
         Relationships: []
       }
+      task_insurance: {
+        Row: {
+          coverage_amount: number
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          insurance_type: string
+          policy_details: Json | null
+          premium_amount: number
+          status: string | null
+          task_id: string
+        }
+        Insert: {
+          coverage_amount: number
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          insurance_type: string
+          policy_details?: Json | null
+          premium_amount: number
+          status?: string | null
+          task_id: string
+        }
+        Update: {
+          coverage_amount?: number
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          insurance_type?: string
+          policy_details?: Json | null
+          premium_amount?: number
+          status?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_insurance_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_milestones: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          milestone_order: number
+          paid_at: string | null
+          payment_id: string | null
+          status: string | null
+          task_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          milestone_order: number
+          paid_at?: string | null
+          payment_id?: string | null
+          status?: string | null
+          task_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          milestone_order?: number
+          paid_at?: string | null
+          payment_id?: string | null
+          status?: string | null
+          task_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_milestones_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_milestones_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_photos: {
         Row: {
           caption: string | null
@@ -875,6 +1172,48 @@ export type Database = {
           photo_url?: string
           task_id?: string
           uploaded_by?: string
+        }
+        Relationships: []
+      }
+      task_templates: {
+        Row: {
+          category: string
+          created_at: string | null
+          description_template: string
+          estimated_duration: string | null
+          id: string
+          is_active: boolean | null
+          required_skills: string[] | null
+          suggested_rate: number | null
+          title: string
+          tools_needed: string[] | null
+          usage_count: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description_template: string
+          estimated_duration?: string | null
+          id?: string
+          is_active?: boolean | null
+          required_skills?: string[] | null
+          suggested_rate?: number | null
+          title: string
+          tools_needed?: string[] | null
+          usage_count?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description_template?: string
+          estimated_duration?: string | null
+          id?: string
+          is_active?: boolean | null
+          required_skills?: string[] | null
+          suggested_rate?: number | null
+          title?: string
+          tools_needed?: string[] | null
+          usage_count?: number | null
         }
         Relationships: []
       }
