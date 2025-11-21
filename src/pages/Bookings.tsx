@@ -13,7 +13,8 @@ import { Footer } from "@/components/Footer";
 import { PaymentPanel } from "@/components/PaymentPanel";
 import { TaskCompletionFlow } from "@/components/TaskCompletionFlow";
 import { CancellationDialog } from "@/components/CancellationDialog";
-import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, Shield, Star, Phone, MapPin, Ban } from "lucide-react";
+import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, Shield, Star, Phone, MapPin, Ban, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Bookings = () => {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -24,6 +25,7 @@ const Bookings = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [showCancellation, setShowCancellation] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [autoPaymentTriggered, setAutoPaymentTriggered] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -155,7 +157,10 @@ const Bookings = () => {
     try {
       const { error } = await supabase
         .from("bookings")
-        .update({ status })
+        .update({ 
+          status,
+          agreed_at: status === "accepted" ? new Date().toISOString() : null
+        })
         .eq("id", bookingId);
 
       if (error) throw error;
@@ -164,6 +169,19 @@ const Bookings = () => {
         title: "Success!",
         description: `Booking ${status}`,
       });
+
+      // Trigger automatic payment when task giver accepts booking
+      if (status === "accepted" && userRole === "task_giver") {
+        const booking = bookings.find(b => b.id === bookingId);
+        setSelectedBooking(booking);
+        setShowPayment(true);
+        setAutoPaymentTriggered(true);
+        
+        toast({
+          title: "Payment Required",
+          description: "Please complete payment to secure this booking. Payment will be held in escrow.",
+        });
+      }
 
       checkUserAndFetchBookings();
     } catch (error: any) {
@@ -443,27 +461,45 @@ const Bookings = () => {
         </Tabs>
 
         {/* Payment Dialog */}
-        <Dialog open={showPayment} onOpenChange={setShowPayment}>
+        <Dialog open={showPayment} onOpenChange={(open) => {
+          setShowPayment(open);
+          if (!open) setAutoPaymentTriggered(false);
+        }}>
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Complete Payment</DialogTitle>
-              <DialogDescription>
-                Secure payment via Stripe for {selectedBooking?.tasks?.title}
-              </DialogDescription>
+              <DialogTitle>
+                {autoPaymentTriggered ? "🔒 Automatic Escrow Payment Required" : "Complete Payment"}
+              </DialogTitle>
+              {autoPaymentTriggered && (
+                <DialogDescription>
+                  Your payment will be securely held in escrow until task completion. This protects both parties.
+                </DialogDescription>
+              )}
             </DialogHeader>
             {selectedBooking && (
-              <PaymentPanel
-                bookingId={selectedBooking.id}
-                taskId={selectedBooking.task_id}
-                payerId={currentUserId}
-                payeeId={selectedBooking.task_doer_id}
-                amount={selectedBooking.tasks?.pay_amount || 0}
-                payeeName={selectedBooking.task_doer?.full_name || "Task Doer"}
-                onPaymentComplete={() => {
-                  setShowPayment(false);
-                  checkUserAndFetchBookings();
-                }}
-              />
+              <>
+                {autoPaymentTriggered && (
+                  <Alert className="mb-4">
+                    <Shield className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Escrow Protection:</strong> Payment is held securely and only released when you confirm task completion.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <PaymentPanel
+                  bookingId={selectedBooking.id}
+                  taskId={selectedBooking.task_id}
+                  payerId={currentUserId}
+                  payeeId={selectedBooking.task_doer_id}
+                  amount={selectedBooking.tasks?.pay_amount || 0}
+                  payeeName={selectedBooking.task_doer?.full_name || "Task Doer"}
+                  onPaymentComplete={() => {
+                    setShowPayment(false);
+                    setAutoPaymentTriggered(false);
+                    checkUserAndFetchBookings();
+                  }}
+                />
+              </>
             )}
           </DialogContent>
         </Dialog>
@@ -474,8 +510,7 @@ const Bookings = () => {
             open={showCancellation}
             onOpenChange={setShowCancellation}
             bookingId={selectedBooking.id}
-            taskAmount={selectedBooking.tasks?.pay_amount || 0}
-            scheduledDate={selectedBooking.tasks?.scheduled_date || new Date().toISOString()}
+            taskId={selectedBooking.tasks?.id}
             onSuccess={checkUserAndFetchBookings}
           />
         )}
