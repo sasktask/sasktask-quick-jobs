@@ -14,6 +14,10 @@ import { Loader2, Upload, User } from "lucide-react";
 const profileSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters").max(100),
   phone: z.string().optional(),
+  city: z.string().optional(),
+  bio: z.string().max(500, "Bio must be under 500 characters").optional(),
+  skills: z.string().optional(),
+  hourly_rate: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -51,6 +55,10 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
       reset({
         full_name: data.full_name || "",
         phone: data.phone || "",
+        city: data.city || "",
+        bio: data.bio || "",
+        skills: data.skills?.join(", ") || "",
+        hourly_rate: data.hourly_rate?.toString() || "",
       });
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -60,12 +68,26 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
   const onSubmit = async (data: ProfileFormData) => {
     setLoading(true);
     try {
+      const updateData: any = {
+        full_name: data.full_name,
+        phone: data.phone,
+        city: data.city,
+        bio: data.bio,
+      };
+
+      // Parse skills if provided
+      if (data.skills) {
+        updateData.skills = data.skills.split(",").map(s => s.trim()).filter(Boolean);
+      }
+
+      // Parse hourly rate if provided
+      if (data.hourly_rate) {
+        updateData.hourly_rate = parseFloat(data.hourly_rate);
+      }
+
       const { error } = await supabase
         .from("profiles")
-        .update({
-          full_name: data.full_name,
-          phone: data.phone,
-        })
+        .update(updateData)
         .eq("id", user.id);
 
       if (error) throw error;
@@ -201,6 +223,62 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
             />
             {errors.phone && (
               <p className="text-sm text-destructive">{errors.phone.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="city">City / Location</Label>
+            <Input
+              id="city"
+              {...register("city")}
+              placeholder="e.g., Saskatoon, SK"
+            />
+            {errors.city && (
+              <p className="text-sm text-destructive">{errors.city.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bio">Short Bio</Label>
+            <textarea
+              id="bio"
+              {...register("bio")}
+              placeholder="Tell us about yourself..."
+              className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              maxLength={500}
+            />
+            {errors.bio && (
+              <p className="text-sm text-destructive">{errors.bio.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="skills">Skills (comma-separated)</Label>
+            <Input
+              id="skills"
+              {...register("skills")}
+              placeholder="e.g., Plumbing, Electrical, Moving"
+            />
+            {errors.skills && (
+              <p className="text-sm text-destructive">{errors.skills.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              List your skills to help clients find you
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="hourly_rate">Hourly Rate (CAD)</Label>
+            <Input
+              id="hourly_rate"
+              type="number"
+              {...register("hourly_rate")}
+              placeholder="e.g., 25"
+              min="0"
+              step="0.01"
+            />
+            {errors.hourly_rate && (
+              <p className="text-sm text-destructive">{errors.hourly_rate.message}</p>
             )}
           </div>
 
