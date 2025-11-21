@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Upload, User } from "lucide-react";
+import { ImageCropDialog } from "@/components/ImageCropDialog";
 
 const profileSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters").max(100),
@@ -18,6 +19,10 @@ const profileSchema = z.object({
   bio: z.string().max(500, "Bio must be under 500 characters").optional(),
   skills: z.string().optional(),
   hourly_rate: z.string().optional(),
+  website: z.string().url("Invalid URL").optional().or(z.literal("")),
+  linkedin: z.string().optional(),
+  twitter: z.string().optional(),
+  facebook: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -31,6 +36,8 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
   const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string>("");
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -59,6 +66,10 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
         bio: data.bio || "",
         skills: data.skills?.join(", ") || "",
         hourly_rate: data.hourly_rate?.toString() || "",
+        website: data.website || "",
+        linkedin: data.linkedin || "",
+        twitter: data.twitter || "",
+        facebook: data.facebook || "",
       });
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -73,6 +84,10 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
         phone: data.phone,
         city: data.city,
         bio: data.bio,
+        website: data.website || null,
+        linkedin: data.linkedin || null,
+        twitter: data.twitter || null,
+        facebook: data.facebook || null,
       };
 
       // Parse skills if provided
@@ -104,20 +119,51 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
-      setUploading(true);
-
       if (!event.target.files || event.target.files.length === 0) {
         return;
       }
 
       const file = event.target.files[0];
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size must be less than 5MB");
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please upload an image file");
+        return;
+      }
+
+      // Read file as data URL for cropping
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImageToCrop(reader.result as string);
+        setCropDialogOpen(true);
+      };
+      reader.readAsDataURL(file);
+
+      // Reset input
+      event.target.value = "";
+    } catch (error: any) {
+      console.error("Error preparing image:", error);
+      toast.error(error.message || "Failed to load image");
+    }
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    try {
+      setUploading(true);
+
+      const fileExt = "jpg";
+      const filePath = `${user.id}-${Date.now()}.${fileExt}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from("profile-photos")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, croppedBlob, { upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -135,7 +181,8 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
       if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
-      toast.success("Avatar updated successfully!");
+      toast.success("Profile photo updated successfully!");
+      loadProfile();
     } catch (error: any) {
       console.error("Error uploading avatar:", error);
       toast.error(error.message || "Failed to upload avatar");
@@ -145,14 +192,22 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Profile Information</CardTitle>
-        <CardDescription>
-          Update your personal information and profile picture
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <>
+      <ImageCropDialog
+        open={cropDialogOpen}
+        onClose={() => setCropDialogOpen(false)}
+        imageSrc={imageToCrop}
+        onCropComplete={handleCropComplete}
+      />
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Information</CardTitle>
+          <CardDescription>
+            Update your personal information and profile picture
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
         {/* Avatar Section */}
         <div className="flex items-center gap-6">
           <Avatar className="h-24 w-24">
@@ -282,6 +337,50 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
             )}
           </div>
 
+          <div className="border-t pt-6 space-y-4">
+            <h3 className="text-lg font-semibold">Social Media & Links</h3>
+            
+            <div className="space-y-2">
+              <Label htmlFor="website">Website</Label>
+              <Input
+                id="website"
+                type="url"
+                {...register("website")}
+                placeholder="https://yourwebsite.com"
+              />
+              {errors.website && (
+                <p className="text-sm text-destructive">{errors.website.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="linkedin">LinkedIn Profile</Label>
+              <Input
+                id="linkedin"
+                {...register("linkedin")}
+                placeholder="https://linkedin.com/in/yourprofile"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="twitter">Twitter / X Profile</Label>
+              <Input
+                id="twitter"
+                {...register("twitter")}
+                placeholder="https://twitter.com/yourhandle"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="facebook">Facebook Profile</Label>
+              <Input
+                id="facebook"
+                {...register("facebook")}
+                placeholder="https://facebook.com/yourprofile"
+              />
+            </div>
+          </div>
+
           <Button type="submit" disabled={loading}>
             {loading ? (
               <>
@@ -295,5 +394,6 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
         </form>
       </CardContent>
     </Card>
+    </>
   );
 };
