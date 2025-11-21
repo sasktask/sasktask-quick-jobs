@@ -28,6 +28,8 @@ import Install from "./pages/Install";
 import AdminVerification from "./pages/AdminVerification";
 import AdminBlog from "./pages/AdminBlog";
 import AdminDisputes from "./pages/AdminDisputes";
+import Analytics from "./pages/Analytics";
+import ReferralProgram from "./pages/ReferralProgram";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import RSSFeed from "./pages/RSSFeed";
@@ -72,6 +74,8 @@ const App = () => (
             <Route path="/admin/verify-users" element={<AdminVerification />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
             <Route path="/admin/disputes" element={<AdminDisputes />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/referrals" element={<ReferralProgram />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/rss.xml" element={<RSSFeed />} />

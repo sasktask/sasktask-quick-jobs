@@ -9,6 +9,7 @@ import { ChatInterface } from "@/components/chat/ChatInterface";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { useRealtimeChatNotifications } from "@/hooks/useRealtimeChatNotifications";
 
 const ChatRoom = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -17,6 +18,9 @@ const ChatRoom = () => {
   const [booking, setBooking] = useState<any>(null);
   const [otherUser, setOtherUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Enable realtime chat notifications
+  const { unreadCount } = useRealtimeChatNotifications(user?.id || "");
 
   useEffect(() => {
     checkAccess();
