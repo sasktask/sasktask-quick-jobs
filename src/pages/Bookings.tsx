@@ -13,7 +13,11 @@ import { Footer } from "@/components/Footer";
 import { PaymentPanel } from "@/components/PaymentPanel";
 import { TaskCompletionFlow } from "@/components/TaskCompletionFlow";
 import { CancellationDialog } from "@/components/CancellationDialog";
-import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, Shield, Star, Phone, MapPin, Ban, AlertCircle } from "lucide-react";
+import { DisputeDialog } from "@/components/DisputeDialog";
+import { MilestoneManager } from "@/components/MilestoneManager";
+import { EnhancedReviewForm } from "@/components/EnhancedReviewForm";
+import { BadgeDisplay } from "@/components/BadgeDisplay";
+import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, Shield, Star, Phone, MapPin, Ban, AlertCircle, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Bookings = () => {
@@ -24,6 +28,8 @@ const Bookings = () => {
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [showCancellation, setShowCancellation] = useState(false);
+  const [showDispute, setShowDispute] = useState(false);
+  const [showReview, setShowReview] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [autoPaymentTriggered, setAutoPaymentTriggered] = useState(false);
   const navigate = useNavigate();
@@ -395,7 +401,7 @@ const Bookings = () => {
 
                           {/* Task Completion Flow - Escrow System */}
                           {(booking.status === "accepted" || booking.status === "in_progress" || booking.status === "completed") && (
-                            <div className="pt-4 border-t border-border">
+                            <div className="pt-4 border-t border-border space-y-4">
                               <TaskCompletionFlow
                                 bookingId={booking.id}
                                 taskId={booking.tasks?.id}
@@ -407,24 +413,60 @@ const Bookings = () => {
                                 paymentAmount={booking.tasks?.pay_amount || 0}
                                 onStatusUpdate={checkUserAndFetchBookings}
                               />
+
+                              {/* Milestone Manager */}
+                              {userRole === "task_giver" && (
+                                <MilestoneManager
+                                  taskId={booking.tasks?.id}
+                                  isTaskGiver={true}
+                                  totalTaskAmount={booking.tasks?.pay_amount || 0}
+                                />
+                              )}
+
+                              {/* Show Review Form after completion */}
+                              {booking.status === "completed" && booking.tasks?.status === "completed" && !showReview && (
+                                <Button
+                                  onClick={() => {
+                                    setSelectedBooking(booking);
+                                    setShowReview(true);
+                                  }}
+                                  className="w-full"
+                                  variant="outline"
+                                >
+                                  <Star className="mr-2 h-5 w-5" />
+                                  Write a Review
+                                </Button>
+                              )}
                               
-                              {/* Cancel Button for accepted/in_progress bookings */}
-                              {(booking.status === "accepted" || booking.status === "in_progress") && (
-                                <div className="mt-3">
+                              {/* Cancel and Dispute Buttons */}
+                              <div className="flex gap-2">
+                                {(booking.status === "accepted" || booking.status === "in_progress") && (
                                   <Button
                                     variant="outline"
                                     onClick={() => {
                                       setSelectedBooking(booking);
                                       setShowCancellation(true);
                                     }}
-                                    className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                                    size="lg"
+                                    className="flex-1 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
                                   >
-                                    <Ban className="mr-2 h-5 w-5" />
-                                    Cancel Booking
+                                    <Ban className="mr-2 h-4 w-4" />
+                                    Cancel
                                   </Button>
-                                </div>
-                              )}
+                                )}
+                                {(booking.status === "in_progress" || booking.status === "completed") && (
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedBooking(booking);
+                                      setShowDispute(true);
+                                    }}
+                                    className="flex-1 border-yellow-500 text-yellow-600 hover:bg-yellow-500 hover:text-white dark:text-yellow-400"
+                                  >
+                                    <AlertTriangle className="mr-2 h-4 w-4" />
+                                    Dispute
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           )}
                           
@@ -513,6 +555,43 @@ const Bookings = () => {
             taskId={selectedBooking.tasks?.id}
             onSuccess={checkUserAndFetchBookings}
           />
+        )}
+
+        {/* Dispute Dialog */}
+        {selectedBooking && (
+          <DisputeDialog
+            open={showDispute}
+            onOpenChange={setShowDispute}
+            bookingId={selectedBooking.id}
+            taskId={selectedBooking.tasks?.id}
+            againstUserId={userRole === "task_giver" ? selectedBooking.task_doer_id : selectedBooking.tasks?.task_giver_id}
+          />
+        )}
+
+        {/* Review Form Dialog */}
+        {selectedBooking && showReview && (
+          <Dialog open={showReview} onOpenChange={setShowReview}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Leave a Review</DialogTitle>
+                <DialogDescription>
+                  Share your experience with {userRole === "task_giver" ? selectedBooking.task_doer?.full_name : selectedBooking.tasks?.task_giver?.full_name}
+                </DialogDescription>
+              </DialogHeader>
+              <EnhancedReviewForm
+                taskId={selectedBooking.tasks?.id}
+                revieweeId={userRole === "task_giver" ? selectedBooking.task_doer_id : selectedBooking.tasks?.task_giver_id}
+                revieweeName={userRole === "task_giver" ? selectedBooking.task_doer?.full_name : selectedBooking.tasks?.task_giver?.full_name}
+                onReviewSubmitted={() => {
+                  setShowReview(false);
+                  toast({
+                    title: "Review Submitted",
+                    description: "Thank you for your feedback!",
+                  });
+                }}
+              />
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
