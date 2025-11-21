@@ -45,9 +45,20 @@ const Auth = () => {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session) {
-        navigate("/dashboard");
+        // Check if profile needs onboarding
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("profile_completion")
+          .eq("id", session.user.id)
+          .single();
+        
+        if (!profile || profile.profile_completion < 80) {
+          navigate("/onboarding");
+        } else {
+          navigate("/dashboard");
+        }
       }
     });
 
