@@ -88,19 +88,28 @@ export const TaskCompletionFlow = ({
     }
   };
 
-  // Task Giver confirms completion and releases payment
+  // Task Giver confirms completion and releases payment - with automatic transfer
   const handleConfirmAndRelease = async () => {
     setIsProcessing(true);
     try {
-      // Update payment to released
+      // Get payment details
+      const { data: payment, error: fetchError } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("booking_id", bookingId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update payment to released and status to completed
       const { error: paymentError } = await supabase
         .from("payments")
         .update({ 
+          status: "completed",
           escrow_status: "released",
           released_at: new Date().toISOString()
         })
-        .eq("booking_id", bookingId)
-        .eq("task_id", taskId);
+        .eq("booking_id", bookingId);
 
       if (paymentError) throw paymentError;
 
@@ -112,10 +121,23 @@ export const TaskCompletionFlow = ({
 
       if (taskError) throw taskError;
 
-      toast({
-        title: "Payment Released! 💰",
-        description: `$${taskerPayout} has been released to the tasker. Task completed!`,
+      // Trigger automatic payout to task doer
+      const { error: payoutError } = await supabase.functions.invoke('process-payout', {
+        body: { paymentId: payment.id }
       });
+
+      if (payoutError) {
+        console.error("Payout error:", payoutError);
+        toast({
+          title: "Payment Released",
+          description: "Payment released from escrow. Automatic transfer to tasker may take a few minutes.",
+        });
+      } else {
+        toast({
+          title: "Success! 💰",
+          description: `Payment of $${taskerPayout} automatically transferred to tasker. Task completed!`,
+        });
+      }
       
       onStatusUpdate();
     } catch (error: any) {

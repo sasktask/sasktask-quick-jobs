@@ -1,46 +1,77 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, DollarSign, Clock } from "lucide-react";
+import { AlertTriangle, DollarSign, Clock, Shield } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CancellationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bookingId: string;
-  taskAmount: number;
-  scheduledDate: string;
+  taskId: string;
   onSuccess: () => void;
 }
-
-const calculateEstimatedFee = (scheduledDate: string, taskAmount: number) => {
-  const scheduled = new Date(scheduledDate);
-  const now = new Date();
-  const hoursUntilTask = (scheduled.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-  if (hoursUntilTask < 1) return taskAmount * 0.5;
-  if (hoursUntilTask < 24) return taskAmount * 0.25;
-  return 5;
-};
 
 export const CancellationDialog = ({
   open,
   onOpenChange,
   bookingId,
-  taskAmount,
-  scheduledDate,
+  taskId,
   onSuccess,
 }: CancellationDialogProps) => {
   const { toast } = useToast();
   const [reason, setReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [penaltyAmount, setPenaltyAmount] = useState<number>(0);
+  const [bookingDetails, setBookingDetails] = useState<any>(null);
 
-  const estimatedFee = calculateEstimatedFee(scheduledDate, taskAmount);
-  const hoursUntilTask = Math.max(0, (new Date(scheduledDate).getTime() - new Date().getTime()) / (1000 * 60 * 60));
+  useEffect(() => {
+    const fetchDetails = async () => {
+      const { data: booking } = await supabase
+        .from("bookings")
+        .select("*, tasks(pay_amount, scheduled_date)")
+        .eq("id", bookingId)
+        .single();
+
+      if (booking) {
+        setBookingDetails(booking);
+        
+        // Calculate penalty based on booking status and timing
+        const taskAmount = (booking.tasks as any)?.pay_amount || 0;
+        let penalty = 0;
+
+        if (booking.status === "accepted" || booking.status === "in_progress") {
+          const hoursFromAcceptance = booking.agreed_at 
+            ? (Date.now() - new Date(booking.agreed_at).getTime()) / (1000 * 60 * 60)
+            : 0;
+
+          // Penalty structure similar to Uber:
+          // - Within 1 hour of acceptance: 10% of task amount
+          // - 1-24 hours: 15% of task amount
+          // - After 24 hours or in_progress: 20% of task amount
+          if (booking.status === "in_progress") {
+            penalty = taskAmount * 0.20;
+          } else if (hoursFromAcceptance > 24) {
+            penalty = taskAmount * 0.20;
+          } else if (hoursFromAcceptance > 1) {
+            penalty = taskAmount * 0.15;
+          } else {
+            penalty = taskAmount * 0.10;
+          }
+        }
+
+        setPenaltyAmount(penalty);
+      }
+    };
+
+    if (open) {
+      fetchDetails();
+    }
+  }, [open, bookingId]);
 
   const handleCancel = async () => {
     setIsProcessing(true);
@@ -54,7 +85,10 @@ export const CancellationDialog = ({
         },
         body: {
           bookingId,
+          taskId,
           reason,
+          cancelledBy: session.user.id,
+          cancellationFee: penaltyAmount
         },
       });
 
@@ -62,7 +96,9 @@ export const CancellationDialog = ({
 
       toast({
         title: "Booking Cancelled",
-        description: data.message,
+        description: penaltyAmount > 0 
+          ? `Cancellation fee of $${penaltyAmount.toFixed(2)} will be processed`
+          : "Booking cancelled successfully",
       });
 
       onOpenChange(false);
@@ -93,27 +129,26 @@ export const CancellationDialog = ({
 
         <div className="space-y-4">
           {/* Cancellation Fee Warning */}
-          <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
-            <DollarSign className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800 dark:text-amber-200">
-              <strong>Cancellation Fee: ${estimatedFee.toFixed(2)}</strong>
-              <p className="text-sm mt-1">
-                {hoursUntilTask < 1
-                  ? "Less than 1 hour until task - 50% fee applies"
-                  : hoursUntilTask < 24
-                  ? "Less than 24 hours until task - 25% fee applies"
-                  : "More than 24 hours - $5 flat fee"}
-              </p>
+          {penaltyAmount > 0 && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Cancellation Penalty: ${penaltyAmount.toFixed(2)}</strong>
+                <p className="text-sm mt-1">
+                  {bookingDetails?.status === "in_progress" && "Cancelling work in progress incurs a 20% penalty"}
+                  {bookingDetails?.status === "accepted" && "Cancelling after acceptance incurs a penalty (10-20% based on timing)"}
+                </p>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Escrow Protection Info */}
+          <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+            <Shield className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800 dark:text-blue-200">
+              <strong>Escrow Protection:</strong> If payment is in escrow, cancellation fees help compensate the other party for their time commitment.
             </AlertDescription>
           </Alert>
-
-          {/* Time Until Task */}
-          <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg text-sm">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>
-              Time until task: <strong>{Math.floor(hoursUntilTask)} hours</strong>
-            </span>
-          </div>
 
           {/* Cancellation Reason */}
           <div className="space-y-2">
@@ -129,11 +164,12 @@ export const CancellationDialog = ({
 
           {/* Policy Info */}
           <div className="p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground">
-            <p className="font-semibold mb-1">Cancellation Policy:</p>
+            <p className="font-semibold mb-1">Cancellation Policy (Similar to Uber):</p>
             <ul className="space-y-1">
+              <li>• Penalties protect both parties in the transaction</li>
               <li>• Frequent cancellations affect your reliability score</li>
-              <li>• Refunds are processed within 5-10 business days</li>
-              <li>• Cancellation fees support the other party</li>
+              <li>• Fees are deducted from your payment method or future earnings</li>
+              <li>• Cancellation fees compensate the other party for lost opportunity</li>
             </ul>
           </div>
         </div>
@@ -151,7 +187,7 @@ export const CancellationDialog = ({
             onClick={handleCancel}
             disabled={isProcessing}
           >
-            {isProcessing ? "Processing..." : `Cancel & Pay $${estimatedFee.toFixed(2)}`}
+            {isProcessing ? "Processing..." : penaltyAmount > 0 ? `Confirm & Pay $${penaltyAmount.toFixed(2)} Penalty` : "Confirm Cancellation"}
           </Button>
         </DialogFooter>
       </DialogContent>

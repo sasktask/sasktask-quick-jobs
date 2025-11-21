@@ -45,7 +45,7 @@ serve(async (req) => {
     const user = userData.user;
     if (!user) throw new Error("User not authenticated");
 
-    const { bookingId, reason } = await req.json();
+    const { bookingId, taskId, reason, cancelledBy, cancellationFee } = await req.json();
     
     if (!bookingId) throw new Error("Booking ID is required");
 
@@ -61,7 +61,6 @@ serve(async (req) => {
         tasks(
           id,
           pay_amount,
-          scheduled_date,
           task_giver_id,
           task_giver:profiles!tasks_task_giver_id_fkey(stripe_customer_id)
         )
@@ -81,17 +80,8 @@ serve(async (req) => {
       throw new Error("Not authorized to cancel this booking");
     }
 
-    // Calculate time until task
-    const scheduledDate = new Date(booking.tasks.scheduled_date);
-    const now = new Date();
-    const timeUntilTask = scheduledDate.getTime() - now.getTime();
-
-    // Calculate cancellation fee
-    const cancellationFee = calculateCancellationFee(
-      timeUntilTask,
-      booking.tasks.pay_amount,
-      isTaskGiver ? "task_giver" : "task_doer"
-    );
+    // Use the penalty provided by the frontend (already calculated based on booking status and timing)
+    const finalCancellationFee = cancellationFee || 0;
 
     let refundAmount = 0;
     let stripeRefundId = null;
@@ -106,36 +96,54 @@ serve(async (req) => {
     if (payment && payment.status === "completed") {
       if (isTaskGiver) {
         // Task giver cancels - refund minus cancellation fee
-        refundAmount = payment.amount - cancellationFee;
+        refundAmount = payment.amount - finalCancellationFee;
         
-        if (refundAmount > 0 && payment.transaction_id) {
+        if (refundAmount > 0 && payment.payment_intent_id) {
           const refund = await stripe.refunds.create({
-            payment_intent: payment.transaction_id,
+            payment_intent: payment.payment_intent_id,
             amount: Math.round(refundAmount * 100),
             reason: "requested_by_customer",
           });
           stripeRefundId = refund.id;
         }
 
-        // Charge cancellation fee if needed
-        if (cancellationFee > 0 && booking.tasks.task_giver.stripe_customer_id) {
-          await stripe.paymentIntents.create({
-            amount: Math.round(cancellationFee * 100),
-            currency: "cad",
-            customer: booking.tasks.task_giver.stripe_customer_id,
-            description: `Cancellation fee for booking ${bookingId}`,
-            confirm: true,
-            automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+        // Charge cancellation fee if needed (transfer to task doer as compensation)
+        if (finalCancellationFee > 0) {
+          await supabaseClient.from("payments").insert({
+            booking_id: bookingId,
+            task_id: taskId,
+            payer_id: user.id,
+            payee_id: booking.task_doer_id,
+            amount: finalCancellationFee,
+            status: "completed",
+            platform_fee: 0,
+            payout_amount: finalCancellationFee,
+            escrow_status: "released",
           });
         }
       } else {
-        // Task doer cancels - full refund to task giver, penalty to task doer
-        if (payment.transaction_id) {
+        // Task doer cancels - full refund to task giver, penalty deducted from future earnings
+        if (payment.payment_intent_id) {
           const refund = await stripe.refunds.create({
-            payment_intent: payment.transaction_id,
+            payment_intent: payment.payment_intent_id,
             amount: Math.round(payment.amount * 100),
           });
           stripeRefundId = refund.id;
+        }
+        
+        // Record penalty debt for task doer
+        if (finalCancellationFee > 0) {
+          await supabaseClient.from("payments").insert({
+            booking_id: bookingId,
+            task_id: taskId,
+            payer_id: user.id,
+            payee_id: booking.tasks.task_giver_id,
+            amount: finalCancellationFee,
+            status: "pending",
+            platform_fee: 0,
+            payout_amount: finalCancellationFee,
+            escrow_status: "debt",
+          });
         }
       }
     }
@@ -143,10 +151,10 @@ serve(async (req) => {
     // Record cancellation
     await supabaseClient.from("cancellations").insert({
       booking_id: bookingId,
-      task_id: booking.tasks.id,
+      task_id: taskId,
       cancelled_by: user.id,
       cancellation_reason: reason,
-      cancellation_fee: cancellationFee,
+      cancellation_fee: finalCancellationFee,
       stripe_refund_id: stripeRefundId,
     });
 
@@ -180,11 +188,11 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        cancellationFee,
+        cancellationFee: finalCancellationFee,
         refundAmount,
         message: `Booking cancelled. ${
-          cancellationFee > 0
-            ? `Cancellation fee: $${cancellationFee.toFixed(2)}.`
+          finalCancellationFee > 0
+            ? `Cancellation penalty: $${finalCancellationFee.toFixed(2)}.`
             : ""
         } ${
           refundAmount > 0
