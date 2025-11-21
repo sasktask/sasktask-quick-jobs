@@ -40,6 +40,7 @@ import Contact from "./pages/Contact";
 import Account from "./pages/Account";
 import Messages from "./pages/Messages";
 import ChatRoom from "./pages/ChatRoom";
+import MyTasks from "./pages/MyTasks";
 import { ChatButton } from "./components/ChatButton";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/browse" element={<Browse />} />
             <Route path="/post-task" element={<PostTask />} />
+            <Route path="/my-tasks" element={<MyTasks />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:id" element={<PublicProfile />} />
             <Route path="/bookings" element={<Bookings />} />

@@ -20,6 +20,8 @@ const taskSchema = z.object({
   category: z.string().min(1, "Category is required"),
   location: z.string().trim().min(3, "Location must be at least 3 characters").max(200, "Location too long"),
   pay_amount: z.number().positive("Pay amount must be positive").max(100000, "Pay amount too high"),
+  estimated_duration: z.number().positive("Duration must be positive").optional(),
+  budget_type: z.enum(["fixed", "hourly"]),
   scheduled_date: z.string().optional(),
   tools_provided: z.boolean(),
   tools_description: z.string().max(1000, "Tools description too long").optional(),
@@ -37,6 +39,8 @@ const PostTask = () => {
     category: "",
     location: "",
     pay_amount: "",
+    estimated_duration: "",
+    budget_type: "fixed" as "fixed" | "hourly",
     scheduled_date: "",
     tools_provided: false,
     tools_description: ""
@@ -115,6 +119,8 @@ const PostTask = () => {
         category: formData.category,
         location: formData.location,
         pay_amount: parseFloat(formData.pay_amount),
+        estimated_duration: formData.estimated_duration ? parseFloat(formData.estimated_duration) : undefined,
+        budget_type: formData.budget_type,
         scheduled_date: formData.scheduled_date,
         tools_provided: formData.tools_provided,
         tools_description: formData.tools_description,
@@ -134,6 +140,8 @@ const PostTask = () => {
           category: validation.data.category,
           location: validation.data.location,
           pay_amount: validation.data.pay_amount,
+          estimated_duration: validation.data.estimated_duration,
+          budget_type: validation.data.budget_type,
           scheduled_date: validation.data.scheduled_date || null,
           tools_provided: validation.data.tools_provided,
           tools_description: validation.data.tools_description || null,
@@ -232,16 +240,49 @@ const PostTask = () => {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="pay_amount">Pay Amount ($) *</Label>
+                  <Label htmlFor="pay_amount">
+                    {formData.budget_type === "hourly" ? "Hourly Rate ($) *" : "Total Budget ($) *"}
+                  </Label>
                   <Input
                     id="pay_amount"
                     type="number"
                     step="0.01"
                     min="0"
-                    placeholder="e.g., 50.00"
+                    placeholder={formData.budget_type === "hourly" ? "e.g., 25.00" : "e.g., 150.00"}
                     value={formData.pay_amount}
                     onChange={(e) => setFormData({ ...formData, pay_amount: e.target.value })}
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="budget_type">Budget Type *</Label>
+                  <Select
+                    value={formData.budget_type}
+                    onValueChange={(value: "fixed" | "hourly") => setFormData({ ...formData, budget_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fixed">Fixed Price</SelectItem>
+                      <SelectItem value="hourly">Hourly Rate</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="estimated_duration">Estimated Duration (hours)</Label>
+                  <Input
+                    id="estimated_duration"
+                    type="number"
+                    step="0.5"
+                    min="0.5"
+                    placeholder="e.g., 2.5"
+                    value={formData.estimated_duration}
+                    onChange={(e) => setFormData({ ...formData, estimated_duration: e.target.value })}
                   />
                 </div>
 

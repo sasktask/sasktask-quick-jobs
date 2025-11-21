@@ -10,6 +10,9 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Star, Shield, MapPin, Briefcase, Award, TrendingUp, CheckCircle, Mail, Phone, Calendar, Globe, Linkedin, Facebook, Twitter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PortfolioManager } from "@/components/PortfolioManager";
+import { SkillsShowcase } from "@/components/SkillsShowcase";
+import { VerificationBadges } from "@/components/VerificationBadges";
 
 interface Review {
   id: string;
@@ -33,12 +36,19 @@ export default function PublicProfile() {
   const [verification, setVerification] = useState<any>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
       fetchProfile();
+      loadCurrentUser();
     }
   }, [id]);
+
+  const loadCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setCurrentUserId(user?.id || null);
+  };
 
   const fetchProfile = async () => {
     try {
@@ -147,12 +157,14 @@ export default function PublicProfile() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h1 className="text-3xl font-bold">{profile.full_name}</h1>
-                    {isVerified && (
-                      <Badge className="bg-primary/10 text-primary border-primary/20">
-                        <Shield className="h-4 w-4 mr-1" />
-                        Verified
-                      </Badge>
-                    )}
+                    <VerificationBadges
+                      verifiedByAdmin={profile.verified_by_admin}
+                      idVerified={verification?.id_verified}
+                      backgroundCheckStatus={verification?.background_check_status}
+                      hasInsurance={verification?.has_insurance}
+                      rating={profile.rating}
+                      totalReviews={profile.total_reviews}
+                    />
                   </div>
 
                   {profile.city && (
@@ -164,6 +176,40 @@ export default function PublicProfile() {
 
                   {profile.bio && (
                     <p className="text-muted-foreground mb-4">{profile.bio}</p>
+                  )}
+
+                  {/* Social Links */}
+                  {(profile.website || profile.linkedin || profile.twitter || profile.facebook) && (
+                    <div className="flex gap-3 mb-4">
+                      {profile.website && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={profile.website} target="_blank" rel="noopener noreferrer">
+                            <Globe className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {profile.linkedin && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={profile.linkedin} target="_blank" rel="noopener noreferrer">
+                            <Linkedin className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {profile.twitter && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={profile.twitter} target="_blank" rel="noopener noreferrer">
+                            <Twitter className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {profile.facebook && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={profile.facebook} target="_blank" rel="noopener noreferrer">
+                            <Facebook className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                    </div>
                   )}
 
                   <div className="flex flex-wrap gap-4 mb-4">
@@ -191,15 +237,12 @@ export default function PublicProfile() {
                   </div>
 
                   {profile.skills && profile.skills.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Skills:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {profile.skills.map((skill: string, idx: number) => (
-                          <Badge key={idx} variant="secondary">
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
+                    <div className="mb-4">
+                      <SkillsShowcase
+                        userId={id!}
+                        userSkills={profile.skills}
+                        isOwnProfile={currentUserId === id}
+                      />
                     </div>
                   )}
 
@@ -304,6 +347,14 @@ export default function PublicProfile() {
               </CardContent>
             </Card>
           )}
+
+          {/* Portfolio Section */}
+          <div className="mb-8">
+            <PortfolioManager
+              userId={id!}
+              isOwnProfile={currentUserId === id}
+            />
+          </div>
 
           {/* Reviews Section */}
           <Card className="border-border">
