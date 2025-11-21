@@ -66,10 +66,10 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
         bio: data.bio || "",
         skills: data.skills?.join(", ") || "",
         hourly_rate: data.hourly_rate?.toString() || "",
-        website: data.website || "",
-        linkedin: data.linkedin || "",
-        twitter: data.twitter || "",
-        facebook: data.facebook || "",
+        website: (data as any).website || "",
+        linkedin: (data as any).linkedin || "",
+        twitter: (data as any).twitter || "",
+        facebook: (data as any).facebook || "",
       });
     } catch (error) {
       console.error("Error loading profile:", error);
