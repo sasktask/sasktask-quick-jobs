@@ -111,12 +111,12 @@ const AdminVerification = () => {
         .from("verifications")
         .select(`
           *,
-          profiles:user_id(email, full_name, avatar_url)
+          profiles!verifications_user_id_fkey(email, full_name, avatar_url)
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setVerifications(data || []);
+      setVerifications((data as any) || []);
     } catch (error: any) {
       toast({
         title: "Error",
