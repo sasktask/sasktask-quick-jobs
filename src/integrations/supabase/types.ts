@@ -890,6 +890,7 @@ export type Database = {
           created_at: string | null
           email: string
           experience_years: number | null
+          facebook: string | null
           full_name: string | null
           hourly_rate: number | null
           id: string
@@ -897,6 +898,7 @@ export type Database = {
           last_active: string | null
           last_seen: string | null
           latitude: number | null
+          linkedin: string | null
           longitude: number | null
           on_time_rate: number | null
           phone: string | null
@@ -910,12 +912,14 @@ export type Database = {
           stripe_payment_method_id: string | null
           total_reviews: number | null
           trust_score: number | null
+          twitter: string | null
           updated_at: string | null
           verification_level: string | null
           verification_notes: string | null
           verified_at: string | null
           verified_by: string | null
           verified_by_admin: boolean | null
+          website: string | null
         }
         Insert: {
           address?: string | null
@@ -930,6 +934,7 @@ export type Database = {
           created_at?: string | null
           email: string
           experience_years?: number | null
+          facebook?: string | null
           full_name?: string | null
           hourly_rate?: number | null
           id: string
@@ -937,6 +942,7 @@ export type Database = {
           last_active?: string | null
           last_seen?: string | null
           latitude?: number | null
+          linkedin?: string | null
           longitude?: number | null
           on_time_rate?: number | null
           phone?: string | null
@@ -950,12 +956,14 @@ export type Database = {
           stripe_payment_method_id?: string | null
           total_reviews?: number | null
           trust_score?: number | null
+          twitter?: string | null
           updated_at?: string | null
           verification_level?: string | null
           verification_notes?: string | null
           verified_at?: string | null
           verified_by?: string | null
           verified_by_admin?: boolean | null
+          website?: string | null
         }
         Update: {
           address?: string | null
@@ -970,6 +978,7 @@ export type Database = {
           created_at?: string | null
           email?: string
           experience_years?: number | null
+          facebook?: string | null
           full_name?: string | null
           hourly_rate?: number | null
           id?: string
@@ -977,6 +986,7 @@ export type Database = {
           last_active?: string | null
           last_seen?: string | null
           latitude?: number | null
+          linkedin?: string | null
           longitude?: number | null
           on_time_rate?: number | null
           phone?: string | null
@@ -990,12 +1000,14 @@ export type Database = {
           stripe_payment_method_id?: string | null
           total_reviews?: number | null
           trust_score?: number | null
+          twitter?: string | null
           updated_at?: string | null
           verification_level?: string | null
           verification_notes?: string | null
           verified_at?: string | null
           verified_by?: string | null
           verified_by_admin?: boolean | null
+          website?: string | null
         }
         Relationships: []
       }
