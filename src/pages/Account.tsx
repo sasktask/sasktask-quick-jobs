@@ -17,6 +17,7 @@ import { ProfileSettings } from "@/components/account/ProfileSettings";
 import { SecuritySettings } from "@/components/account/SecuritySettings";
 import { DataSettings } from "@/components/account/DataSettings";
 import { BillingSettings } from "@/components/account/BillingSettings";
+import { ProfileCompletionBadge } from "@/components/ProfileCompletionBadge";
 import { User, CreditCard, Shield, Database } from "lucide-react";
 
 const Account = () => {
@@ -77,6 +78,11 @@ const Account = () => {
               <p className="text-muted-foreground">
                 Manage your profile, security, and account preferences
               </p>
+            </div>
+
+            {/* Profile Completion Badge */}
+            <div className="mb-6">
+              <ProfileCompletionBadge userId={user.id} />
             </div>
 
             <Tabs defaultValue="profile" className="space-y-6">

@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Star, Shield, MapPin, Briefcase, Award, TrendingUp, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Star, Shield, MapPin, Briefcase, Award, TrendingUp, CheckCircle, Mail, Phone, Calendar, Globe, Linkedin, Facebook, Twitter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Review {
@@ -154,6 +155,13 @@ export default function PublicProfile() {
                     )}
                   </div>
 
+                  {profile.city && (
+                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>{profile.city}</span>
+                    </div>
+                  )}
+
                   {profile.bio && (
                     <p className="text-muted-foreground mb-4">{profile.bio}</p>
                   )}
@@ -183,18 +191,85 @@ export default function PublicProfile() {
                   </div>
 
                   {profile.skills && profile.skills.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {profile.skills.map((skill: string, idx: number) => (
-                        <Badge key={idx} variant="secondary">
-                          {skill}
-                        </Badge>
-                      ))}
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground">Skills:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {profile.skills.map((skill: string, idx: number) => (
+                          <Badge key={idx} variant="secondary">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.hourly_rate && (
+                    <div className="mt-4 p-4 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground">Hourly Rate</p>
+                      <p className="text-2xl font-bold text-primary">
+                        ${profile.hourly_rate}/hr
+                      </p>
                     </div>
                   )}
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Additional Info */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {/* Availability & Contact */}
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-lg">Availability & Stats</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Response Rate</span>
+                  <span className="font-semibold">{profile.response_rate || 100}%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">On-Time Rate</span>
+                  <span className="font-semibold">{profile.on_time_rate || 100}%</span>
+                </div>
+                {profile.experience_years > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Experience</span>
+                    <span className="font-semibold">{profile.experience_years} years</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Member Since</span>
+                  <span className="font-semibold">
+                    {new Date(profile.joined_date || profile.created_at).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      year: 'numeric' 
+                    })}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-lg">Get in Touch</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button className="w-full" variant="default">
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send Message
+                </Button>
+                <Button className="w-full" variant="outline">
+                  <Briefcase className="mr-2 h-4 w-4" />
+                  Offer a Task
+                </Button>
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  Last active: {profile.last_seen ? new Date(profile.last_seen).toLocaleDateString() : 'Recently'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Verification Details */}
           {isVerified && verification && (
