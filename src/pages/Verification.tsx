@@ -10,14 +10,21 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, FileCheck, Award, CreditCard, CheckCircle } from "lucide-react";
+import { Shield, FileCheck, Award, CreditCard, CheckCircle, Upload, FileText, X } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 export default function Verification() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(1);
   const [userId, setUserId] = useState<string | null>(null);
+  const [idDocument, setIdDocument] = useState<File | null>(null);
+  const [idDocumentUrl, setIdDocumentUrl] = useState<string | null>(null);
+  const [insuranceDocument, setInsuranceDocument] = useState<File | null>(null);
+  const [insuranceDocumentUrl, setInsuranceDocumentUrl] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     // Legal
@@ -28,6 +35,7 @@ export default function Verification() {
     
     // Identity
     idType: "",
+    idNumber: "",
     
     // Background check
     backgroundCheckConsent: false,
@@ -74,8 +82,68 @@ export default function Verification() {
     }
   };
 
+  const handleFileUpload = async (file: File, type: 'id' | 'insurance') => {
+    if (!userId) return;
+    
+    setUploading(true);
+    setUploadProgress(0);
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}_${type}_${Date.now()}.${fileExt}`;
+      const filePath = `${type}-documents/${fileName}`;
+
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+
+      const { error: uploadError } = await supabase.storage
+        .from('verification-documents')
+        .upload(filePath, file);
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('verification-documents')
+        .getPublicUrl(filePath);
+
+      if (type === 'id') {
+        setIdDocumentUrl(publicUrl);
+      } else {
+        setInsuranceDocumentUrl(publicUrl);
+      }
+
+      toast({
+        title: "Upload Successful",
+        description: `${type === 'id' ? 'ID' : 'Insurance'} document uploaded successfully.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate ID document on step 2
+    if (currentStep === 2 && !idDocumentUrl) {
+      toast({
+        title: "ID Document Required",
+        description: "Please upload your government ID document to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
@@ -85,6 +153,13 @@ export default function Verification() {
     setLoading(true);
     
     try {
+      // Hash ID number for security
+      const encoder = new TextEncoder();
+      const data = encoder.encode(formData.idNumber);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const idNumberHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
       const { error } = await supabase.from("verifications").insert({
         user_id: userId,
         terms_accepted: formData.termsAccepted,
@@ -95,11 +170,14 @@ export default function Verification() {
         legal_name: formData.legalName,
         date_of_birth: formData.dateOfBirth,
         id_type: formData.idType,
+        id_number_hash: idNumberHash,
+        id_document_url: idDocumentUrl,
         background_check_consent: formData.backgroundCheckConsent,
         has_insurance: formData.hasInsurance,
         insurance_provider: formData.insuranceProvider || null,
         insurance_policy_number: formData.insurancePolicyNumber || null,
         insurance_expiry_date: formData.insuranceExpiryDate || null,
+        insurance_document_url: insuranceDocumentUrl,
         skills: formData.skills ? formData.skills.split(",").map(s => s.trim()) : [],
         certifications: formData.certifications ? formData.certifications.split(",").map(c => c.trim()) : [],
         sin_provided: formData.sinProvided,
@@ -226,6 +304,74 @@ export default function Verification() {
                 </select>
               </div>
 
+              <div className="space-y-3">
+                <Label htmlFor="idNumber">ID Number (Last 4 digits) *</Label>
+                <Input
+                  id="idNumber"
+                  value={formData.idNumber}
+                  onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
+                  placeholder="Last 4 digits only"
+                  maxLength={4}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  For security, only enter the last 4 digits of your ID number
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Upload ID Document *</Label>
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                  {idDocumentUrl ? (
+                    <div className="space-y-3">
+                      <FileText className="h-12 w-12 mx-auto text-primary" />
+                      <p className="text-sm text-muted-foreground">Document uploaded successfully</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIdDocument(null);
+                          setIdDocumentUrl(null);
+                        }}
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Upload a clear photo or scan of your government ID
+                      </p>
+                      <Input
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setIdDocument(file);
+                            handleFileUpload(file, 'id');
+                          }
+                        }}
+                        disabled={uploading}
+                        className="max-w-xs mx-auto"
+                      />
+                      {uploading && (
+                        <div className="mt-4 space-y-2">
+                          <Progress value={uploadProgress} />
+                          <p className="text-xs text-muted-foreground">Uploading... {uploadProgress}%</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Accepted formats: JPG, PNG, PDF (Max 5MB)
+                </p>
+              </div>
+
               <div className="flex items-start space-x-3">
                 <Checkbox
                   id="backgroundCheck"
@@ -293,6 +439,47 @@ export default function Verification() {
                       value={formData.insuranceExpiryDate}
                       onChange={(e) => setFormData({ ...formData, insuranceExpiryDate: e.target.value })}
                     />
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label>Upload Insurance Document (Optional)</Label>
+                    <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                      {insuranceDocumentUrl ? (
+                        <div className="space-y-3">
+                          <FileText className="h-12 w-12 mx-auto text-primary" />
+                          <p className="text-sm text-muted-foreground">Insurance document uploaded</p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setInsuranceDocument(null);
+                              setInsuranceDocumentUrl(null);
+                            }}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                          <Input
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setInsuranceDocument(file);
+                                handleFileUpload(file, 'insurance');
+                              }
+                            }}
+                            disabled={uploading}
+                            className="max-w-xs mx-auto"
+                          />
+                        </>
+                      )}
+                    </div>
                   </div>
                 </>
               )}
