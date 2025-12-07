@@ -1579,6 +1579,8 @@ export type Database = {
           created_at: string | null
           description: string
           estimated_duration: number | null
+          expires_at: string | null
+          expiry_reminder_sent: boolean | null
           id: string
           latitude: number | null
           location: string
@@ -1600,6 +1602,8 @@ export type Database = {
           created_at?: string | null
           description: string
           estimated_duration?: number | null
+          expires_at?: string | null
+          expiry_reminder_sent?: boolean | null
           id?: string
           latitude?: number | null
           location: string
@@ -1621,6 +1625,8 @@ export type Database = {
           created_at?: string | null
           description?: string
           estimated_duration?: number | null
+          expires_at?: string | null
+          expiry_reminder_sent?: boolean | null
           id?: string
           latitude?: number | null
           location?: string
@@ -1749,6 +1755,63 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_task_templates: {
+        Row: {
+          budget_type: string | null
+          category: string
+          created_at: string | null
+          description: string | null
+          estimated_duration: number | null
+          id: string
+          is_default: boolean | null
+          location: string | null
+          name: string
+          pay_amount: number | null
+          title: string
+          tools_description: string | null
+          tools_provided: boolean | null
+          updated_at: string | null
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          budget_type?: string | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          estimated_duration?: number | null
+          id?: string
+          is_default?: boolean | null
+          location?: string | null
+          name: string
+          pay_amount?: number | null
+          title: string
+          tools_description?: string | null
+          tools_provided?: boolean | null
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          budget_type?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          estimated_duration?: number | null
+          id?: string
+          is_default?: boolean | null
+          location?: string | null
+          name?: string
+          pay_amount?: number | null
+          title?: string
+          tools_description?: string | null
+          tools_provided?: boolean | null
+          updated_at?: string | null
+          usage_count?: number | null
           user_id?: string
         }
         Relationships: []
