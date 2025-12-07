@@ -131,6 +131,15 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
+    // Check if email sending failed
+    if (emailResponse.error) {
+      console.error("Failed to send OTP email:", emailResponse.error);
+      return new Response(
+        JSON.stringify({ error: "Failed to send verification email. Please try again." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log("OTP email sent successfully:", emailResponse);
 
     return new Response(
