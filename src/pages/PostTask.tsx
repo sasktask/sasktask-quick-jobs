@@ -13,8 +13,10 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Loader2, Save, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
+import { DurationSelector } from "@/components/DurationSelector";
 import { z } from "zod";
 import { TaskTemplateManager } from "@/components/TaskTemplateManager";
+import { getCategoryTitles } from "@/lib/categories";
 
 // Full validation for publishing
 const taskSchema = z.object({
@@ -62,16 +64,7 @@ const [formData, setFormData] = useState({
     priority: "medium" as "low" | "medium" | "high" | "urgent"
   });
 
-  const categories = [
-    "Snow Removal",
-    "Cleaning",
-    "Moving",
-    "Delivery",
-    "Handyman",
-    "Gardening",
-    "Pet Care",
-    "Other"
-  ];
+  const categories = getCategoryTitles();
 
   useEffect(() => {
     checkUser();
@@ -460,29 +453,22 @@ const [formData, setFormData] = useState({
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="estimated_duration">Estimated Duration (hours)</Label>
-                  <Input
-                    id="estimated_duration"
-                    type="number"
-                    step="0.5"
-                    min="0.5"
-                    placeholder="e.g., 2.5"
-                    value={formData.estimated_duration}
-                    onChange={(e) => handleFormChange({ estimated_duration: e.target.value })}
-                  />
-                </div>
+              {/* Duration Selector */}
+              <div className="p-4 bg-muted/50 border border-border rounded-lg">
+                <DurationSelector
+                  value={formData.estimated_duration}
+                  onChange={(value) => handleFormChange({ estimated_duration: value })}
+                />
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="scheduled_date">Scheduled Date</Label>
-                  <Input
-                    id="scheduled_date"
-                    type="datetime-local"
-                    value={formData.scheduled_date}
-                    onChange={(e) => handleFormChange({ scheduled_date: e.target.value })}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="scheduled_date">Scheduled Date</Label>
+                <Input
+                  id="scheduled_date"
+                  type="datetime-local"
+                  value={formData.scheduled_date}
+                  onChange={(e) => handleFormChange({ scheduled_date: e.target.value })}
+                />
               </div>
 
               {/* Priority Selection */}

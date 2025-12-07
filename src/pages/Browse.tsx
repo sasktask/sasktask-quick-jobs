@@ -242,15 +242,21 @@ const Browse = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 pt-24 pb-20">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">
-            {userRole === "task_doer" ? "Recommended Tasks For You" : "Browse Available Tasks"}
-          </h1>
-          <p className="text-muted-foreground">
-            {userRole === "task_doer" 
-              ? "Tasks matched to your skills and preferences" 
-              : "Find and accept tasks near you instantly"}
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">
+              {userRole === "task_doer" ? "Recommended Tasks For You" : "Browse Available Tasks"}
+            </h1>
+            <p className="text-muted-foreground">
+              {userRole === "task_doer" 
+                ? "Tasks matched to your skills and preferences" 
+                : "Find and accept tasks near you instantly"}
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => navigate("/map")} className="gap-2">
+            <MapPin className="h-4 w-4" />
+            Map View
+          </Button>
         </div>
 
         {/* Search and Filters */}
