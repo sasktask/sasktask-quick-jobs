@@ -149,7 +149,7 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
         });
       } else {
         // Create new bid
-        const { error } = await supabase
+        const { data: bidData, error } = await supabase
           .from("task_bids")
           .insert({
             task_id: taskId,
@@ -157,9 +157,26 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
             bid_amount: validation.data.bid_amount,
             message: validation.data.message || null,
             estimated_hours: validation.data.estimated_hours || null,
-          });
+          })
+          .select()
+          .single();
 
         if (error) throw error;
+
+        // Send notification to task giver
+        try {
+          await supabase.functions.invoke('notify-new-bid', {
+            body: {
+              taskId,
+              bidId: bidData.id,
+              bidderId: currentUserId,
+              bidAmount: validation.data.bid_amount,
+              message: validation.data.message || null,
+            },
+          });
+        } catch (notifyError) {
+          console.error("Error sending bid notification:", notifyError);
+        }
 
         toast({
           title: "Bid Submitted",
