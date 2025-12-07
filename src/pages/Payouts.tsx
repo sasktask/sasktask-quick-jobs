@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { PayoutAccountSetup } from '@/components/PayoutAccountSetup';
+import { EarningsAnalytics } from '@/components/EarningsAnalytics';
+import { AutoPayoutSettings } from '@/components/AutoPayoutSettings';
+import { TaxReports } from '@/components/TaxReports';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +26,10 @@ import {
   Loader2,
   CreditCard,
   BanknoteIcon,
-  ArrowUpRight
+  ArrowUpRight,
+  FileText,
+  Zap,
+  PieChart
 } from 'lucide-react';
 import { SEOHead } from '@/components/SEOHead';
 import { useToast } from '@/hooks/use-toast';
@@ -54,6 +60,7 @@ interface PayoutTransaction {
   id: string;
   amount: number;
   payout_amount: number;
+  platform_fee: number;
   status: string;
   escrow_status: string | null;
   created_at: string;
@@ -422,14 +429,26 @@ export default function Payouts() {
 
         {/* Tabs */}
         <Tabs defaultValue="transactions" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="transactions" className="gap-2">
               <DollarSign className="h-4 w-4" />
               Transactions
             </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <PieChart className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="auto-payout" className="gap-2">
+              <Zap className="h-4 w-4" />
+              Auto-Payout
+            </TabsTrigger>
+            <TabsTrigger value="tax" className="gap-2">
+              <FileText className="h-4 w-4" />
+              Tax Reports
+            </TabsTrigger>
             <TabsTrigger value="account" className="gap-2">
               <BanknoteIcon className="h-4 w-4" />
-              Payout Account
+              Account
             </TabsTrigger>
           </TabsList>
 
@@ -487,6 +506,18 @@ export default function Payouts() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <EarningsAnalytics transactions={transactions} />
+          </TabsContent>
+
+          <TabsContent value="auto-payout">
+            <AutoPayoutSettings payoutAccountActive={payoutAccount?.account_status === 'active'} />
+          </TabsContent>
+
+          <TabsContent value="tax">
+            <TaxReports transactions={transactions} />
           </TabsContent>
 
           <TabsContent value="account">
