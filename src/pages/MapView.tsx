@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MapPin, List, Filter, Loader2, Navigation, Target } from "lucide-react";
 import { getCategoryTitles } from "@/lib/categories";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { calculateDistance } from "@/lib/distance";
 
 interface Task {
   id: string;
@@ -84,12 +85,32 @@ export default function MapView() {
     }
   };
 
-  const filteredTasks = categoryFilter === "all" 
+  // Filter by category first
+  const categoryFilteredTasks = categoryFilter === "all" 
     ? tasks 
     : tasks.filter(t => t.category === categoryFilter);
 
+  // Then filter by radius if user location is available
+  const filteredTasks = userLocation 
+    ? categoryFilteredTasks.filter(task => {
+        if (!task.latitude || !task.longitude) return true; // Keep tasks without location
+        const distance = calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          task.latitude,
+          task.longitude
+        );
+        return distance <= radiusKm;
+      })
+    : categoryFilteredTasks;
+
   const tasksWithLocation = filteredTasks.filter(t => t.latitude && t.longitude);
   const tasksWithoutLocation = filteredTasks.filter(t => !t.latitude || !t.longitude);
+  
+  // Count tasks within radius for stats
+  const tasksInRadius = userLocation 
+    ? tasksWithLocation.length 
+    : tasksWithLocation.length;
 
   if (isLoading) {
     return (
@@ -193,8 +214,10 @@ export default function MapView() {
                 <MapPin className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{tasksWithLocation.length}</p>
-                <p className="text-xs text-muted-foreground">On Map</p>
+                <p className="text-2xl font-bold">{tasksInRadius}</p>
+                <p className="text-xs text-muted-foreground">
+                  {userLocation ? `Within ${radiusKm}km` : "On Map"}
+                </p>
               </div>
             </CardContent>
           </Card>
