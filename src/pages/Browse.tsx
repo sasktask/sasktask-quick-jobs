@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X } from "lucide-react";
+import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X, Gavel } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -16,6 +16,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { TaskPriorityBadge, type TaskPriority } from "@/components/TaskPriorityBadge";
 
 const Browse = () => {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -24,6 +25,7 @@ const Browse = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [budgetRange, setBudgetRange] = useState<[number, number]>([0, 1000]);
   const [dateFilter, setDateFilter] = useState<string>("");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -56,7 +58,7 @@ const Browse = () => {
 
   useEffect(() => {
     filterTasks();
-  }, [searchTerm, categoryFilter, budgetRange, dateFilter, tasks]);
+  }, [searchTerm, categoryFilter, budgetRange, dateFilter, priorityFilter, tasks]);
 
   const checkAuthAndFetchTasks = async () => {
     try {
@@ -159,11 +161,21 @@ const Browse = () => {
       });
     }
 
+    // Priority filter
+    if (priorityFilter !== "all") {
+      filtered = filtered.filter(task => task.priority === priorityFilter);
+    }
+
     // Smart recommendations for task doers
     if (userRole === "task_doer" && userProfile) {
       filtered = filtered.sort((a, b) => {
         let scoreA = 0;
         let scoreB = 0;
+
+        // Priority score (urgent tasks first)
+        const priorityScore = { urgent: 40, high: 30, medium: 20, low: 10 };
+        scoreA += priorityScore[a.priority as keyof typeof priorityScore] || 20;
+        scoreB += priorityScore[b.priority as keyof typeof priorityScore] || 20;
 
         if (userProfile.preferred_categories?.includes(a.category)) scoreA += 10;
         if (userProfile.preferred_categories?.includes(b.category)) scoreB += 10;
@@ -192,9 +204,10 @@ const Browse = () => {
     setCategoryFilter("all");
     setBudgetRange([0, 1000]);
     setDateFilter("");
+    setPriorityFilter("all");
   };
 
-  const hasActiveFilters = searchTerm || categoryFilter !== "all" || dateFilter || budgetRange[0] > 0;
+  const hasActiveFilters = searchTerm || categoryFilter !== "all" || dateFilter || budgetRange[0] > 0 || priorityFilter !== "all";
 
   if (isLoading) {
     return (
@@ -265,7 +278,7 @@ const Browse = () => {
               {/* Advanced Filters */}
               <Collapsible open={showFilters} onOpenChange={setShowFilters}>
                 <CollapsibleContent className="space-y-4 pt-4 border-t">
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Budget Range */}
                     <div className="space-y-3">
                       <Label>Budget Range: ${budgetRange[0]} - ${budgetRange[1]}</Label>
@@ -277,6 +290,23 @@ const Browse = () => {
                         step={10}
                         className="w-full"
                       />
+                    </div>
+
+                    {/* Priority Filter */}
+                    <div className="space-y-2">
+                      <Label>Priority</Label>
+                      <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Priorities" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border z-[100]">
+                          <SelectItem value="all">All Priorities</SelectItem>
+                          <SelectItem value="urgent">🔴 Urgent</SelectItem>
+                          <SelectItem value="high">🟠 High</SelectItem>
+                          <SelectItem value="medium">🔵 Medium</SelectItem>
+                          <SelectItem value="low">⚪ Low</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     {/* Date Filter */}
@@ -362,6 +392,7 @@ const Browse = () => {
                       </div>
 
                       <div className="flex flex-wrap gap-2">
+                        <TaskPriorityBadge priority={(task.priority || 'medium') as TaskPriority} />
                         <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
                           {task.category}
                         </span>

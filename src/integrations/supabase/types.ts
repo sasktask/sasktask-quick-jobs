@@ -1396,6 +1396,64 @@ export type Database = {
         }
         Relationships: []
       }
+      task_bids: {
+        Row: {
+          bid_amount: number
+          bidder_id: string
+          created_at: string | null
+          estimated_hours: number | null
+          id: string
+          message: string | null
+          status: string
+          task_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          bid_amount: number
+          bidder_id: string
+          created_at?: string | null
+          estimated_hours?: number | null
+          id?: string
+          message?: string | null
+          status?: string
+          task_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          bid_amount?: number
+          bidder_id?: string
+          created_at?: string | null
+          estimated_hours?: number | null
+          id?: string
+          message?: string | null
+          status?: string
+          task_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_bids_bidder_id_fkey"
+            columns: ["bidder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_bids_bidder_id_fkey"
+            columns: ["bidder_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_bids_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_insurance: {
         Row: {
           coverage_amount: number
@@ -1587,6 +1645,7 @@ export type Database = {
           location_details: Json | null
           longitude: number | null
           pay_amount: number
+          priority: string | null
           scheduled_date: string | null
           status: Database["public"]["Enums"]["task_status"] | null
           task_doer_id: string | null
@@ -1610,6 +1669,7 @@ export type Database = {
           location_details?: Json | null
           longitude?: number | null
           pay_amount: number
+          priority?: string | null
           scheduled_date?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           task_doer_id?: string | null
@@ -1633,6 +1693,7 @@ export type Database = {
           location_details?: Json | null
           longitude?: number | null
           pay_amount?: number
+          priority?: string | null
           scheduled_date?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           task_doer_id?: string | null
