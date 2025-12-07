@@ -14,6 +14,7 @@ import { Footer } from "@/components/Footer";
 import { Loader2, Save, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
 import { DurationSelector } from "@/components/DurationSelector";
+import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { z } from "zod";
 import { TaskTemplateManager } from "@/components/TaskTemplateManager";
 import { getCategoryTitles } from "@/lib/categories";
@@ -54,6 +55,8 @@ const [formData, setFormData] = useState({
     description: "",
     category: "",
     location: "",
+    latitude: null as number | null,
+    longitude: null as number | null,
     pay_amount: "",
     estimated_duration: "",
     budget_type: "fixed" as "fixed" | "hourly",
@@ -155,6 +158,8 @@ const [formData, setFormData] = useState({
       description: template.description || "",
       category: template.category || "",
       location: template.location || "",
+      latitude: null,
+      longitude: null,
       pay_amount: template.pay_amount?.toString() || "",
       estimated_duration: template.estimated_duration?.toString() || "",
       budget_type: (template.budget_type as "fixed" | "hourly") || "fixed",
@@ -303,6 +308,8 @@ const [formData, setFormData] = useState({
           description: validation.data.description,
           category: validation.data.category,
           location: validation.data.location,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
           pay_amount: validation.data.pay_amount,
           estimated_duration: validation.data.estimated_duration,
           budget_type: validation.data.budget_type,
@@ -409,13 +416,22 @@ const [formData, setFormData] = useState({
 
                 <div className="space-y-2">
                   <Label htmlFor="location">Location *</Label>
-                  <Input
-                    id="location"
-                    placeholder="e.g., Saskatoon, SK"
+                  <LocationAutocomplete
                     value={formData.location}
-                    onChange={(e) => handleFormChange({ location: e.target.value })}
-                    required
+                    onChange={(location, coordinates) => {
+                      handleFormChange({ 
+                        location,
+                        latitude: coordinates?.latitude ?? null,
+                        longitude: coordinates?.longitude ?? null
+                      });
+                    }}
+                    placeholder="Start typing an address..."
                   />
+                  {formData.latitude && formData.longitude && (
+                    <p className="text-xs text-muted-foreground">
+                      📍 Coordinates saved for map display
+                    </p>
+                  )}
                 </div>
               </div>
 
