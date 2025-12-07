@@ -225,9 +225,24 @@ export default function Payouts() {
 
       if (error) throw error;
 
+      // Send payout notification email
+      try {
+        await supabase.functions.invoke('send-payout-notification', {
+          body: { 
+            payoutAmount: parseFloat(withdrawAmount),
+            payoutType: 'manual',
+            bankLast4: payoutAccount?.bank_last4,
+            transactionCount: data?.processedCount || 1
+          }
+        });
+      } catch (emailError) {
+        console.error('Failed to send payout notification:', emailError);
+        // Don't fail the withdrawal if email fails
+      }
+
       toast({
         title: 'Withdrawal Requested',
-        description: `Your withdrawal of $${withdrawAmount} has been submitted for processing.`
+        description: `Your withdrawal of $${withdrawAmount} has been submitted. You'll receive an email confirmation shortly.`
       });
 
       setWithdrawDialogOpen(false);

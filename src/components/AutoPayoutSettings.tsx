@@ -14,7 +14,8 @@ import {
   Loader2,
   CheckCircle,
   Settings,
-  Zap
+  Zap,
+  Mail
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -33,7 +34,8 @@ export function AutoPayoutSettings({ payoutAccountActive }: AutoPayoutSettingsPr
     frequency: 'weekly',
     minimumAmount: 50,
     dayOfWeek: 'friday',
-    dayOfMonth: 1
+    dayOfMonth: 1,
+    emailNotifications: true
   });
 
   useEffect(() => {
@@ -216,6 +218,24 @@ export function AutoPayoutSettings({ payoutAccountActive }: AutoPayoutSettingsPr
               <p className="text-xs text-muted-foreground">
                 Payouts will only be triggered when your balance exceeds this amount
               </p>
+            </div>
+
+            {/* Email Notifications */}
+            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+              <div className="space-y-0.5">
+                <Label htmlFor="email-notify" className="font-medium flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email Notifications
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Receive email confirmation when payouts are processed
+                </p>
+              </div>
+              <Switch
+                id="email-notify"
+                checked={settings.emailNotifications}
+                onCheckedChange={(checked) => setSettings({ ...settings, emailNotifications: checked })}
+              />
             </div>
 
             {/* Schedule Summary */}

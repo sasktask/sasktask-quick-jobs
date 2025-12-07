@@ -1,5 +1,8 @@
 project_id = "svvnyueuodatwnnaspvg"
 
+[functions.send-payout-notification]
+verify_jwt = true
+
 [functions.send-invoice-email]
 verify_jwt = true
 
