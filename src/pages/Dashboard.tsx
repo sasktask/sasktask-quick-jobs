@@ -7,17 +7,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SEOHead } from "@/components/SEOHead";
+import { RecommendedTasks } from "@/components/RecommendedTasks";
 import { 
   Briefcase, 
   DollarSign, 
   Star, 
-  TrendingUp,
   Plus,
   Search,
   User,
   MapPin,
   MessageSquare,
-  Calendar,
   CheckCircle,
   Clock,
   Trophy
@@ -326,6 +325,13 @@ const Dashboard = () => {
             </Card>
           </Link>
         </div>
+
+        {/* AI-Powered Recommendations for Task Doers */}
+        {userRole === "task_doer" && user?.id && (
+          <div className="mb-8">
+            <RecommendedTasks userId={user.id} />
+          </div>
+        )}
 
         {/* Recent Tasks */}
         <Card className="border-border">

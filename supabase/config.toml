@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.notify-new-bid]
 verify_jwt = true
+
+[functions.ai-task-recommendations]
+verify_jwt = true
