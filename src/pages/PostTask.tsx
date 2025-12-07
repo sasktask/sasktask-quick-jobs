@@ -11,8 +11,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Loader2, Save, CheckCircle } from "lucide-react";
+import { Loader2, Save, CheckCircle, Clock } from "lucide-react";
 import { z } from "zod";
+import { TaskTemplateManager } from "@/components/TaskTemplateManager";
 
 // Full validation for publishing
 const taskSchema = z.object({
@@ -26,6 +27,7 @@ const taskSchema = z.object({
   scheduled_date: z.string().optional(),
   tools_provided: z.boolean(),
   tools_description: z.string().max(1000, "Tools description too long").optional(),
+  expires_at: z.string().optional(),
 });
 
 // Minimal validation for drafts
@@ -54,7 +56,8 @@ const PostTask = () => {
     budget_type: "fixed" as "fixed" | "hourly",
     scheduled_date: "",
     tools_provided: false,
-    tools_description: ""
+    tools_description: "",
+    expires_at: ""
   });
 
   const categories = [
@@ -148,6 +151,23 @@ const PostTask = () => {
 
   const handleFormChange = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSelectTemplate = (template: any) => {
+    setFormData({
+      title: template.title || "",
+      description: template.description || "",
+      category: template.category || "",
+      location: template.location || "",
+      pay_amount: template.pay_amount?.toString() || "",
+      estimated_duration: template.estimated_duration?.toString() || "",
+      budget_type: (template.budget_type as "fixed" | "hourly") || "fixed",
+      scheduled_date: "",
+      tools_provided: template.tools_provided || false,
+      tools_description: template.tools_description || "",
+      expires_at: ""
+    });
     setHasUnsavedChanges(true);
   };
 
@@ -293,6 +313,7 @@ const PostTask = () => {
           scheduled_date: validation.data.scheduled_date || null,
           tools_provided: validation.data.tools_provided,
           tools_description: validation.data.tools_description || null,
+          expires_at: formData.expires_at || null,
           status: "open"
         });
 
@@ -331,6 +352,14 @@ const PostTask = () => {
               Auto-saved {lastSaved.toLocaleTimeString()}
             </div>
           )}
+        </div>
+
+        {/* Task Templates */}
+        <div className="mb-6">
+          <TaskTemplateManager 
+            onSelectTemplate={handleSelectTemplate}
+            currentFormData={formData}
+          />
         </div>
 
         <Card className="border-border">
@@ -449,6 +478,32 @@ const PostTask = () => {
                     value={formData.scheduled_date}
                     onChange={(e) => handleFormChange({ scheduled_date: e.target.value })}
                   />
+                </div>
+              </div>
+
+              {/* Expiration Date */}
+              <div className="space-y-4 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Clock className="h-5 w-5 text-amber-600 mt-0.5" />
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <Label htmlFor="expires_at" className="text-amber-900 dark:text-amber-100">Task Expiration</Label>
+                      <p className="text-sm text-amber-700 dark:text-amber-300">
+                        Set when this task should automatically close if no tasker is assigned
+                      </p>
+                    </div>
+                    <Input
+                      id="expires_at"
+                      type="datetime-local"
+                      value={formData.expires_at}
+                      onChange={(e) => handleFormChange({ expires_at: e.target.value })}
+                      min={new Date().toISOString().slice(0, 16)}
+                      className="max-w-xs"
+                    />
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      You'll receive a reminder 24 hours before expiration
+                    </p>
+                  </div>
                 </div>
               </div>
 

@@ -23,3 +23,6 @@ verify_jwt = true
 
 [functions.send-task-notification]
 verify_jwt = true
+
+[functions.check-task-expiration]
+verify_jwt = false
