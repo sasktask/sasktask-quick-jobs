@@ -37,16 +37,12 @@ const AddPaymentMethodForm = ({ onSuccess }: { onSuccess: () => void }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Save to database
+      // Save to database - only store the Stripe token reference for security
       const { error: dbError } = await supabase
         .from("payment_methods")
         .insert({
           user_id: user.id,
           stripe_payment_method_id: paymentMethod.id,
-          card_brand: paymentMethod.card?.brand,
-          card_last4: paymentMethod.card?.last4,
-          card_exp_month: paymentMethod.card?.exp_month,
-          card_exp_year: paymentMethod.card?.exp_year,
         });
 
       if (dbError) throw dbError;
@@ -200,11 +196,11 @@ export const PaymentMethodManager = () => {
               <div className="flex items-center gap-3">
                 <CreditCard className="h-5 w-5 text-primary" />
                 <div>
-                  <p className="font-semibold capitalize">
-                    {method.card_brand} •••• {method.card_last4}
+                  <p className="font-semibold">
+                    Payment Method
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Expires {method.card_exp_month}/{method.card_exp_year}
+                    Securely stored via Stripe
                   </p>
                 </div>
                 {method.is_default && (

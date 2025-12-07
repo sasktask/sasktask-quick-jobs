@@ -737,10 +737,6 @@ export type Database = {
       }
       payment_methods: {
         Row: {
-          card_brand: string | null
-          card_exp_month: number | null
-          card_exp_year: number | null
-          card_last4: string | null
           created_at: string | null
           id: string
           is_default: boolean | null
@@ -749,10 +745,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          card_brand?: string | null
-          card_exp_month?: number | null
-          card_exp_year?: number | null
-          card_last4?: string | null
           created_at?: string | null
           id?: string
           is_default?: boolean | null
@@ -761,10 +753,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          card_brand?: string | null
-          card_exp_month?: number | null
-          card_exp_year?: number | null
-          card_last4?: string | null
           created_at?: string | null
           id?: string
           is_default?: boolean | null
