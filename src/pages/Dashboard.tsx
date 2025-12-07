@@ -8,6 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SEOHead } from "@/components/SEOHead";
 import { RecommendedTasks } from "@/components/RecommendedTasks";
+import { PaymentHistory } from "@/components/PaymentHistory";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
   Briefcase, 
@@ -358,77 +359,85 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Recent Tasks */}
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {userRole === "task_giver" ? "Your Recent Tasks" : "Available Tasks - Accept Instantly"}
-              {userRole === "task_doer" && (
-                <span className="text-sm font-normal text-muted-foreground">
-                  (Like Uber - One Tap Accept)
-                </span>
-              )}
-            </CardTitle>
-            <CardDescription>
-              {userRole === "task_giver" 
-                ? "Manage your posted tasks" 
-                : "Browse and instantly accept tasks near you"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {tasks.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No tasks available yet</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {tasks.map((task) => (
-                  <Card key={task.id} className="border-border hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-lg mb-1">{task.title}</h4>
-                          <p className="text-muted-foreground text-sm mb-2 line-clamp-2">{task.description}</p>
-                          <div className="flex flex-wrap gap-2">
-                            <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
-                              {task.category}
-                            </span>
-                            <span className="px-3 py-1 bg-green-500/10 text-green-600 rounded-full text-xs font-bold">
-                              ${task.pay_amount}
-                            </span>
-                            <span className="px-3 py-1 bg-muted text-foreground rounded-full text-xs flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {task.location}
-                            </span>
+        {/* Recent Tasks and Payment History Grid */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Recent Tasks - Takes 2 columns */}
+          <Card className="border-border lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {userRole === "task_giver" ? "Your Recent Tasks" : "Available Tasks - Accept Instantly"}
+                {userRole === "task_doer" && (
+                  <span className="text-sm font-normal text-muted-foreground">
+                    (Like Uber - One Tap Accept)
+                  </span>
+                )}
+              </CardTitle>
+              <CardDescription>
+                {userRole === "task_giver" 
+                  ? "Manage your posted tasks" 
+                  : "Browse and instantly accept tasks near you"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {tasks.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No tasks available yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {tasks.map((task) => (
+                    <Card key={task.id} className="border-border hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-lg mb-1">{task.title}</h4>
+                            <p className="text-muted-foreground text-sm mb-2 line-clamp-2">{task.description}</p>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
+                                {task.category}
+                              </span>
+                              <span className="px-3 py-1 bg-green-500/10 text-green-600 rounded-full text-xs font-bold">
+                                ${task.pay_amount}
+                              </span>
+                              <span className="px-3 py-1 bg-muted text-foreground rounded-full text-xs flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {task.location}
+                              </span>
+                            </div>
                           </div>
+                          {userRole === "task_doer" ? (
+                            <Button 
+                              variant="default" 
+                              size="lg"
+                              className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 font-bold shrink-0"
+                              onClick={() => navigate(`/task/${task.id}`)}
+                            >
+                              Accept Task
+                            </Button>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => navigate(`/task/${task.id}`)}
+                            >
+                              View Details
+                            </Button>
+                          )}
                         </div>
-                        {userRole === "task_doer" ? (
-                          <Button 
-                            variant="default" 
-                            size="lg"
-                            className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 font-bold shrink-0"
-                            onClick={() => navigate(`/task/${task.id}`)}
-                          >
-                            Accept Task
-                          </Button>
-                        ) : (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => navigate(`/task/${task.id}`)}
-                          >
-                            View Details
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Payment History - Takes 1 column */}
+          {user?.id && (
+            <PaymentHistory userId={user.id} limit={5} />
+          )}
+        </div>
       </div>
 
       <Footer />
