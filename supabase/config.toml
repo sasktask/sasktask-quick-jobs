@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.ai-task-suggestions]
 verify_jwt = true
+
+[functions.generate-invoice]
+verify_jwt = true
