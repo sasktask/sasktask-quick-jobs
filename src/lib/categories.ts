@@ -36,6 +36,7 @@ import {
   Zap,
   Heart,
   Briefcase,
+  MapPin,
   LucideIcon
 } from "lucide-react";
 
@@ -169,6 +170,17 @@ export const categories: Category[] = [
     description: "Walking, sitting, grooming",
     timeEstimate: "short",
     categoryType: "both",
+    skillLevel: "beginner",
+    featured: true
+  },
+  {
+    icon: MapPin,
+    title: "Rides & Transport",
+    count: "85+ tasks",
+    color: "from-emerald-500 to-teal-500",
+    description: "Pick up, drop off, rural & remote areas",
+    timeEstimate: "flexible",
+    categoryType: "outdoor",
     skillLevel: "beginner",
     featured: true
   },

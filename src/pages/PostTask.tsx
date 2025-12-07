@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Loader2, Save, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { Loader2, Save, CheckCircle, Clock, AlertTriangle, MapPin } from "lucide-react";
 import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
 import { DurationSelector } from "@/components/DurationSelector";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
@@ -64,7 +64,15 @@ const [formData, setFormData] = useState({
     tools_provided: false,
     tools_description: "",
     expires_at: "",
-    priority: "medium" as "low" | "medium" | "high" | "urgent"
+    priority: "medium" as "low" | "medium" | "high" | "urgent",
+    // Transport-specific fields
+    ride_type: "" as "" | "pickup_dropoff" | "long_distance" | "rural_remote" | "airport" | "medical",
+    destination: "",
+    destination_latitude: null as number | null,
+    destination_longitude: null as number | null,
+    passengers: "1",
+    has_luggage: false,
+    is_round_trip: false,
   });
 
   const categories = getCategoryTitles();
@@ -167,7 +175,14 @@ const [formData, setFormData] = useState({
       tools_provided: template.tools_provided || false,
       tools_description: template.tools_description || "",
       expires_at: "",
-      priority: "medium"
+      priority: "medium",
+      ride_type: "",
+      destination: "",
+      destination_latitude: null,
+      destination_longitude: null,
+      passengers: "1",
+      has_luggage: false,
+      is_round_trip: false,
     });
     setHasUnsavedChanges(true);
   };
@@ -434,6 +449,95 @@ const [formData, setFormData] = useState({
                   )}
                 </div>
               </div>
+
+              {/* Transport-specific fields - only show when Rides & Transport is selected */}
+              {formData.category === "Rides & Transport" && (
+                <div className="space-y-4 p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                  <div className="flex items-center gap-2 mb-4">
+                    <MapPin className="h-5 w-5 text-emerald-600" />
+                    <h3 className="font-semibold text-emerald-900 dark:text-emerald-100">Transport Details</h3>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Ride Type *</Label>
+                    <Select
+                      value={formData.ride_type}
+                      onValueChange={(value: typeof formData.ride_type) => handleFormChange({ ride_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select ride type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pickup_dropoff">Pick Up & Drop Off (Short Distance)</SelectItem>
+                        <SelectItem value="long_distance">Long Distance Drive</SelectItem>
+                        <SelectItem value="rural_remote">Rural/Remote Area (Where Uber Can't Go)</SelectItem>
+                        <SelectItem value="airport">Airport Transfer</SelectItem>
+                        <SelectItem value="medical">Medical Appointment Transport</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                      Perfect for areas without rideshare coverage, remote locations, or special transport needs
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Destination *</Label>
+                    <LocationAutocomplete
+                      value={formData.destination}
+                      onChange={(destination, coordinates) => {
+                        handleFormChange({ 
+                          destination,
+                          destination_latitude: coordinates?.latitude ?? null,
+                          destination_longitude: coordinates?.longitude ?? null
+                        });
+                      }}
+                      placeholder="Where do you need to go?"
+                    />
+                    {formData.destination_latitude && formData.destination_longitude && (
+                      <p className="text-xs text-muted-foreground">
+                        📍 Destination coordinates saved
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Number of Passengers</Label>
+                      <Select
+                        value={formData.passengers}
+                        onValueChange={(value) => handleFormChange({ passengers: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 Passenger</SelectItem>
+                          <SelectItem value="2">2 Passengers</SelectItem>
+                          <SelectItem value="3">3 Passengers</SelectItem>
+                          <SelectItem value="4">4+ Passengers</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label>Has Luggage?</Label>
+                        <Switch
+                          checked={formData.has_luggage}
+                          onCheckedChange={(checked) => handleFormChange({ has_luggage: checked })}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label>Round Trip?</Label>
+                        <Switch
+                          checked={formData.is_round_trip}
+                          onCheckedChange={(checked) => handleFormChange({ is_round_trip: checked })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
