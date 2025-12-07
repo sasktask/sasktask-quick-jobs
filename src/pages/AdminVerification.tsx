@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { OWNER_USER_ID } from "@/lib/constants";
 
 interface Verification {
   id: string;
@@ -75,16 +76,10 @@ const AdminVerification = () => {
         return;
       }
 
-      const { data: roleData, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id)
-        .single();
-
-      if (roleError || roleData?.role !== "admin") {
+      if (session.user.id !== OWNER_USER_ID) {
         toast({
           title: "Access Denied",
-          description: "You do not have permission to access this page.",
+          description: "Owner only access.",
           variant: "destructive",
         });
         navigate("/dashboard");
@@ -97,7 +92,7 @@ const AdminVerification = () => {
       console.error("Error checking admin status:", error);
       toast({
         title: "Error",
-        description: "Failed to verify admin access.",
+        description: "Failed to verify access.",
         variant: "destructive",
       });
       navigate("/dashboard");

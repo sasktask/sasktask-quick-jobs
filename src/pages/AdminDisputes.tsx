@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +11,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AlertTriangle, CheckCircle, Clock, XCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OWNER_USER_ID } from "@/lib/constants";
 
 interface Dispute {
   id: string;
@@ -25,6 +27,7 @@ interface Dispute {
 }
 
 export default function AdminDisputes() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
@@ -32,8 +35,22 @@ export default function AdminDisputes() {
   const [isResolving, setIsResolving] = useState(false);
 
   useEffect(() => {
-    fetchDisputes();
+    checkOwnerAndFetch();
   }, []);
+
+  const checkOwnerAndFetch = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    if (user.id !== OWNER_USER_ID) {
+      toast({ title: "Access denied", description: "Owner only", variant: "destructive" });
+      navigate("/dashboard");
+      return;
+    }
+    fetchDisputes();
+  };
 
   const fetchDisputes = async () => {
     const { data, error } = await supabase

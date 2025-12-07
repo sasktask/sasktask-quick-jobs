@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
+import { OWNER_USER_ID } from "@/lib/constants";
 
 const AdminBlog = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -43,14 +44,8 @@ const AdminBlog = () => {
       return;
     }
 
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
-
-    const hasAdminRole = roles?.some((r) => r.role === "admin");
-    if (!hasAdminRole) {
-      toast.error("Access denied. Admin role required.");
+    if (user.id !== OWNER_USER_ID) {
+      toast.error("Access denied. Owner only.");
       navigate("/");
       return;
     }

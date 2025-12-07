@@ -11,6 +11,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount";
 import { NotificationBell } from "./NotificationBell";
 import { MobileMenu } from "./MobileMenu";
+import { OWNER_USER_ID } from "@/lib/constants";
 
 interface NavbarProps {
   onMenuClick?: () => void;
@@ -153,8 +154,8 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                     )}
                   </Button>
 
-                  {/* Admin Dropdown */}
-                  {userRole === "admin" && (
+                  {/* Admin Dropdown - Owner Only */}
+                  {user?.id === OWNER_USER_ID && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="gap-1 font-medium text-destructive">
