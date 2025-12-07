@@ -98,13 +98,21 @@ export default function MyTasks() {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive"> = {
+    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       open: "default",
       in_progress: "secondary",
       completed: "secondary",
       cancelled: "destructive",
+      draft: "outline",
     };
-    return <Badge variant={variants[status] || "default"}>{status}</Badge>;
+    const labels: Record<string, string> = {
+      draft: "Draft",
+      open: "Open",
+      in_progress: "In Progress",
+      completed: "Completed",
+      cancelled: "Cancelled",
+    };
+    return <Badge variant={variants[status] || "default"}>{labels[status] || status}</Badge>;
   };
 
   const filterTasks = (status?: string) => {
@@ -157,7 +165,7 @@ export default function MyTasks() {
             <Eye className="h-4 w-4 mr-2" />
             View
           </Button>
-          {task.status === "open" && (
+          {(task.status === "open" || task.status === "draft") && (
             <>
               <Button
                 variant="outline"
@@ -167,13 +175,15 @@ export default function MyTasks() {
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleCloseTask(task.id)}
-              >
-                Close
-              </Button>
+              {task.status === "open" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCloseTask(task.id)}
+                >
+                  Close
+                </Button>
+              )}
             </>
           )}
           <Button
@@ -220,9 +230,12 @@ export default function MyTasks() {
           </div>
 
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="all">
                 All ({tasks.length})
+              </TabsTrigger>
+              <TabsTrigger value="draft">
+                Drafts ({filterTasks("draft").length})
               </TabsTrigger>
               <TabsTrigger value="open">
                 Open ({filterTasks("open").length})
@@ -258,14 +271,14 @@ export default function MyTasks() {
               </div>
             </TabsContent>
 
-            {["open", "in_progress", "completed", "cancelled"].map(status => (
+            {["draft", "open", "in_progress", "completed", "cancelled"].map(status => (
               <TabsContent key={status} value={status} className="mt-6">
                 <div className="grid gap-6">
                   {filterTasks(status).length === 0 ? (
                     <Card>
                       <CardContent className="text-center py-12">
                         <p className="text-muted-foreground">
-                          No {status} tasks
+                          No {status === "draft" ? "draft" : status.replace("_", " ")} tasks
                         </p>
                       </CardContent>
                     </Card>

@@ -141,7 +141,7 @@ const PostTask = () => {
           scheduled_date: formData.scheduled_date || null,
           tools_provided: formData.tools_provided,
           tools_description: formData.tools_description || null,
-          status: "cancelled" // Using cancelled as draft placeholder since there's no draft status
+          status: "draft"
         });
 
       if (error) throw error;
