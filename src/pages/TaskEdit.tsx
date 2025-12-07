@@ -263,6 +263,26 @@ const TaskEdit = () => {
 
       if (error) throw error;
 
+      // Send email notification
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", user.id)
+          .single();
+
+        supabase.functions.invoke("send-task-notification", {
+          body: {
+            type: "draft_published",
+            taskId: id,
+            taskTitle: validation.data.title,
+            recipientEmail: profile?.email || user.email,
+            recipientName: profile?.full_name,
+          },
+        }).catch(console.error);
+      }
+
       toast({
         title: "Published!",
         description: "Your task is now live and visible to taskers",

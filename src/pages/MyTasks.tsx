@@ -16,7 +16,8 @@ import {
   DollarSign, 
   MapPin,
   Loader2,
-  Send
+  Send,
+  Copy
 } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -30,6 +31,7 @@ export default function MyTasks() {
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [publishingTaskId, setPublishingTaskId] = useState<string | null>(null);
+  const [duplicatingTaskId, setDuplicatingTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     loadTasks();
@@ -123,6 +125,26 @@ export default function MyTasks() {
 
       if (error) throw error;
 
+      // Send email notification
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", user.id)
+          .single();
+
+        supabase.functions.invoke("send-task-notification", {
+          body: {
+            type: "draft_published",
+            taskId: task.id,
+            taskTitle: task.title,
+            recipientEmail: profile?.email || user.email,
+            recipientName: profile?.full_name,
+          },
+        }).catch(console.error);
+      }
+
       toast.success("Task published successfully!");
       loadTasks();
     } catch (error: any) {
@@ -130,6 +152,45 @@ export default function MyTasks() {
       toast.error(error.message || "Failed to publish task");
     } finally {
       setPublishingTaskId(null);
+    }
+  };
+
+  const handleDuplicateTask = async (taskId: string) => {
+    setDuplicatingTaskId(taskId);
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) throw new Error("Task not found");
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase
+        .from("tasks")
+        .insert({
+          task_giver_id: user.id,
+          title: `${task.title} (Copy)`,
+          description: task.description,
+          category: task.category,
+          location: task.location,
+          pay_amount: task.pay_amount,
+          estimated_duration: task.estimated_duration,
+          budget_type: task.budget_type,
+          tools_provided: task.tools_provided,
+          tools_description: task.tools_description,
+          status: "draft"
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Task duplicated as draft!");
+      loadTasks();
+    } catch (error: any) {
+      console.error("Error duplicating task:", error);
+      toast.error(error.message || "Failed to duplicate task");
+    } finally {
+      setDuplicatingTaskId(null);
     }
   };
 
@@ -237,6 +298,19 @@ export default function MyTasks() {
               )}
             </>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleDuplicateTask(task.id)}
+            disabled={duplicatingTaskId === task.id}
+          >
+            {duplicatingTaskId === task.id ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Copy className="h-4 w-4 mr-2" />
+            )}
+            Duplicate
+          </Button>
           <Button
             variant="destructive"
             size="sm"

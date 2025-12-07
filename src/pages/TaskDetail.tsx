@@ -111,6 +111,14 @@ const TaskDetail = () => {
         throw new Error(firstError.message);
       }
 
+      // Check if this is the first booking for this task
+      const { count: existingBookings } = await supabase
+        .from("bookings")
+        .select("*", { count: "exact", head: true })
+        .eq("task_id", id);
+
+      const isFirstBooking = (existingBookings || 0) === 0;
+
       const { error } = await supabase
         .from("bookings")
         .insert({
@@ -121,6 +129,36 @@ const TaskDetail = () => {
         });
 
       if (error) throw error;
+
+      // Send first booking notification if applicable
+      if (isFirstBooking && task?.task_giver_id) {
+        // Get task giver profile and current user profile
+        const [taskGiverResult, currentUserResult] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("full_name, email")
+            .eq("id", task.task_giver_id)
+            .single(),
+          supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", userId)
+            .single()
+        ]);
+
+        if (taskGiverResult.data) {
+          supabase.functions.invoke("send-task-notification", {
+            body: {
+              type: "first_booking",
+              taskId: id,
+              taskTitle: task.title,
+              recipientEmail: taskGiverResult.data.email,
+              recipientName: taskGiverResult.data.full_name,
+              bookerName: currentUserResult.data?.full_name,
+            },
+          }).catch(console.error);
+        }
+      }
 
       toast({
         title: "Success!",
