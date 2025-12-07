@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { SEOHead } from "@/components/SEOHead";
 import { 
   Briefcase, 
   DollarSign, 
@@ -14,7 +15,12 @@ import {
   Plus,
   Search,
   User,
-  MapPin
+  MapPin,
+  MessageSquare,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Trophy
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -22,6 +28,13 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    totalBookings: 0,
+    pendingBookings: 0,
+    completedTasks: 0,
+    totalEarnings: 0,
+    unreadMessages: 0
+  });
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -46,7 +59,7 @@ const Dashboard = () => {
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
       setProfile(profileData);
@@ -56,9 +69,12 @@ const Dashboard = () => {
         .from("user_roles")
         .select("role")
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
       
       setUserRole(roleData?.role || null);
+
+      // Fetch stats
+      await fetchStats(session.user.id, roleData?.role);
 
       // Fetch tasks based on role
       if (roleData?.role === "task_giver") {
@@ -89,6 +105,56 @@ const Dashboard = () => {
     }
   };
 
+  const fetchStats = async (userId: string, role: string | undefined) => {
+    try {
+      // Get bookings count
+      const { count: totalBookings } = await supabase
+        .from("bookings")
+        .select("*", { count: "exact", head: true })
+        .eq("task_doer_id", userId);
+
+      // Get pending bookings
+      const { count: pendingBookings } = await supabase
+        .from("bookings")
+        .select("*", { count: "exact", head: true })
+        .eq("task_doer_id", userId)
+        .eq("status", "pending");
+
+      // Get completed tasks
+      const { count: completedTasks } = await supabase
+        .from("bookings")
+        .select("*", { count: "exact", head: true })
+        .eq("task_doer_id", userId)
+        .eq("status", "completed");
+
+      // Get earnings (sum of completed payment amounts)
+      const { data: payments } = await supabase
+        .from("payments")
+        .select("payout_amount")
+        .eq("payee_id", userId)
+        .eq("status", "completed");
+
+      const totalEarnings = payments?.reduce((sum, p) => sum + (p.payout_amount || 0), 0) || 0;
+
+      // Get unread messages
+      const { count: unreadMessages } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .eq("receiver_id", userId)
+        .is("read_at", null);
+
+      setStats({
+        totalBookings: totalBookings || 0,
+        pendingBookings: pendingBookings || 0,
+        completedTasks: completedTasks || 0,
+        totalEarnings,
+        unreadMessages: unreadMessages || 0
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/");
@@ -107,6 +173,11 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead 
+        title="Dashboard - SaskTask"
+        description="Manage your tasks, bookings, and earnings on SaskTask"
+        url="/dashboard"
+      />
       <Navbar />
       
       <div className="container mx-auto px-4 pt-24 pb-20">
@@ -144,102 +215,113 @@ const Dashboard = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <Card className="border-border">
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Rating</p>
-                  <p className="text-3xl font-bold">{profile?.rating?.toFixed(1) || "0.0"}</p>
+                  <p className="text-xs text-muted-foreground">Rating</p>
+                  <p className="text-2xl font-bold">{profile?.rating?.toFixed(1) || "0.0"}</p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
-                  <Star className="h-6 w-6 text-accent" />
-                </div>
+                <Star className="h-5 w-5 text-yellow-500" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-border">
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Reviews</p>
-                  <p className="text-3xl font-bold">{profile?.total_reviews || 0}</p>
+                  <p className="text-xs text-muted-foreground">Completed</p>
+                  <p className="text-2xl font-bold">{stats.completedTasks}</p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-primary" />
-                </div>
+                <CheckCircle className="h-5 w-5 text-green-500" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-border">
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">
-                    {userRole === "task_giver" ? "Posted Tasks" : "Completed Tasks"}
-                  </p>
-                  <p className="text-3xl font-bold">{tasks.length}</p>
+                  <p className="text-xs text-muted-foreground">Pending</p>
+                  <p className="text-2xl font-bold">{stats.pendingBookings}</p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-secondary/10 flex items-center justify-center">
-                  <Briefcase className="h-6 w-6 text-secondary" />
-                </div>
+                <Clock className="h-5 w-5 text-orange-500" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-border">
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Earnings</p>
-                  <p className="text-3xl font-bold">$0</p>
+                  <p className="text-xs text-muted-foreground">Messages</p>
+                  <p className="text-2xl font-bold">{stats.unreadMessages}</p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                  <DollarSign className="h-6 w-6 text-green-500" />
+                <MessageSquare className="h-5 w-5 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Earnings</p>
+                  <p className="text-2xl font-bold">${stats.totalEarnings.toFixed(0)}</p>
                 </div>
+                <DollarSign className="h-5 w-5 text-green-500" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Action Buttons */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {userRole === "task_giver" ? (
-            <Link to="/post-task">
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow border-primary/50 h-full">
-                <CardContent className="p-8 text-center">
-                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Plus className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2">Post a New Task</h3>
-                  <p className="text-muted-foreground">Get help with your tasks quickly</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ) : (
-            <Link to="/browse">
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow border-primary/50 h-full">
-                <CardContent className="p-8 text-center">
-                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Search className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2">Browse Available Tasks</h3>
-                  <p className="text-muted-foreground">Find your next opportunity</p>
-                </CardContent>
-              </Card>
-            </Link>
-          )}
+        {/* Quick Actions */}
+        <div className="grid md:grid-cols-4 gap-4 mb-8">
+          <Link to={userRole === "task_giver" ? "/post-task" : "/browse"}>
+            <Card className="cursor-pointer hover:shadow-lg transition-all border-primary/30 hover:border-primary h-full">
+              <CardContent className="p-6 text-center">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                  {userRole === "task_giver" ? <Plus className="h-6 w-6 text-primary" /> : <Search className="h-6 w-6 text-primary" />}
+                </div>
+                <h3 className="font-bold">{userRole === "task_giver" ? "Post Task" : "Find Tasks"}</h3>
+              </CardContent>
+            </Card>
+          </Link>
 
           <Link to="/bookings">
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow border-secondary/50 h-full">
-              <CardContent className="p-8 text-center">
-                <div className="h-16 w-16 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-4">
-                  <Briefcase className="h-8 w-8 text-secondary" />
+            <Card className="cursor-pointer hover:shadow-lg transition-all border-secondary/30 hover:border-secondary h-full">
+              <CardContent className="p-6 text-center">
+                <div className="h-12 w-12 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-3">
+                  <Briefcase className="h-6 w-6 text-secondary" />
                 </div>
-                <h3 className="text-2xl font-bold mb-2">View Bookings</h3>
-                <p className="text-muted-foreground">Manage your task bookings</p>
+                <h3 className="font-bold">Bookings</h3>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/messages">
+            <Card className="cursor-pointer hover:shadow-lg transition-all border-blue-500/30 hover:border-blue-500 h-full">
+              <CardContent className="p-6 text-center">
+                <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-3">
+                  <MessageSquare className="h-6 w-6 text-blue-500" />
+                </div>
+                <h3 className="font-bold">Messages</h3>
+                {stats.unreadMessages > 0 && (
+                  <span className="text-xs text-blue-500">{stats.unreadMessages} unread</span>
+                )}
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/leaderboard">
+            <Card className="cursor-pointer hover:shadow-lg transition-all border-yellow-500/30 hover:border-yellow-500 h-full">
+              <CardContent className="p-6 text-center">
+                <div className="h-12 w-12 rounded-full bg-yellow-500/10 flex items-center justify-center mx-auto mb-3">
+                  <Trophy className="h-6 w-6 text-yellow-500" />
+                </div>
+                <h3 className="font-bold">Leaderboard</h3>
               </CardContent>
             </Card>
           </Link>
