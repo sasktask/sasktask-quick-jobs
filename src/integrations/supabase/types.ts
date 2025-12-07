@@ -699,6 +699,42 @@ export type Database = {
         }
         Relationships: []
       }
+      otp_codes: {
+        Row: {
+          attempts: number | null
+          code: string
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          code: string
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          code?: string
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       payment_methods: {
         Row: {
           card_brand: string | null
@@ -2126,6 +2162,7 @@ export type Database = {
         Returns: number
       }
       calculate_trust_score: { Args: { user_id: string }; Returns: number }
+      cleanup_expired_otp_codes: { Args: never; Returns: undefined }
       create_notification: {
         Args: {
           p_link?: string
