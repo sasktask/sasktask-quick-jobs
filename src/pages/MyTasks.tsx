@@ -15,7 +15,8 @@ import {
   Clock, 
   DollarSign, 
   MapPin,
-  Loader2 
+  Loader2,
+  Send
 } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -28,6 +29,7 @@ export default function MyTasks() {
   const [loading, setLoading] = useState(true);
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [publishingTaskId, setPublishingTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     loadTasks();
@@ -94,6 +96,40 @@ export default function MyTasks() {
     } catch (error: any) {
       console.error("Error closing task:", error);
       toast.error("Failed to close task");
+    }
+  };
+
+  const handlePublishDraft = async (taskId: string) => {
+    setPublishingTaskId(taskId);
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) throw new Error("Task not found");
+
+      // Validate minimum requirements for publishing
+      if (!task.title || task.title.length < 5) {
+        throw new Error("Title must be at least 5 characters");
+      }
+      if (!task.description || task.description.length < 20 || task.description === "Draft - no description yet") {
+        throw new Error("Description must be at least 20 characters");
+      }
+      if (!task.pay_amount || task.pay_amount <= 0) {
+        throw new Error("Pay amount must be positive");
+      }
+
+      const { error } = await supabase
+        .from("tasks")
+        .update({ status: "open" })
+        .eq("id", taskId);
+
+      if (error) throw error;
+
+      toast.success("Task published successfully!");
+      loadTasks();
+    } catch (error: any) {
+      console.error("Error publishing task:", error);
+      toast.error(error.message || "Failed to publish task");
+    } finally {
+      setPublishingTaskId(null);
     }
   };
 
@@ -165,6 +201,21 @@ export default function MyTasks() {
             <Eye className="h-4 w-4 mr-2" />
             View
           </Button>
+          {task.status === "draft" && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => handlePublishDraft(task.id)}
+              disabled={publishingTaskId === task.id}
+            >
+              {publishingTaskId === task.id ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4 mr-2" />
+              )}
+              Publish
+            </Button>
+          )}
           {(task.status === "open" || task.status === "draft") && (
             <>
               <Button
