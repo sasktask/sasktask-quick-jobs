@@ -1972,7 +1972,7 @@ export type Database = {
         | "completed"
         | "failed"
         | "refunded"
-      task_status: "open" | "in_progress" | "completed" | "cancelled"
+      task_status: "open" | "in_progress" | "completed" | "cancelled" | "draft"
       user_role: "task_giver" | "task_doer"
       verification_status: "pending" | "verified" | "rejected" | "expired"
     }
@@ -2119,7 +2119,7 @@ export const Constants = {
         "failed",
         "refunded",
       ],
-      task_status: ["open", "in_progress", "completed", "cancelled"],
+      task_status: ["open", "in_progress", "completed", "cancelled", "draft"],
       user_role: ["task_giver", "task_doer"],
       verification_status: ["pending", "verified", "rejected", "expired"],
     },
