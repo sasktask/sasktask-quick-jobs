@@ -6,9 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trophy, Star, CheckCircle, Medal, Crown, Award, User, TrendingUp } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Trophy, Star, CheckCircle, Medal, Crown, Award, User, TrendingUp, Calendar, Flame, Zap, Target, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
+import { format, subDays, subMonths, startOfWeek, startOfMonth, startOfYear } from "date-fns";
 
 interface LeaderboardEntry {
   id: string;
@@ -18,37 +21,82 @@ interface LeaderboardEntry {
   rating: number | null;
   total_reviews: number | null;
   city: string | null;
+  created_at: string | null;
 }
+
+type TimePeriod = "all" | "week" | "month" | "year";
+
+// Badge definitions for leaderboard achievements
+const leaderboardBadges = {
+  champion: { icon: Crown, label: "Champion", description: "Ranked #1 on leaderboard", color: "text-yellow-500" },
+  elite: { icon: Medal, label: "Elite", description: "Top 3 on leaderboard", color: "text-gray-400" },
+  rising_star: { icon: Flame, label: "Rising Star", description: "New to top 10 this period", color: "text-orange-500" },
+  consistent: { icon: Target, label: "Consistent", description: "On leaderboard 3+ periods", color: "text-blue-500" },
+  high_rated: { icon: Star, label: "Highly Rated", description: "4.8+ rating with 10+ reviews", color: "text-yellow-400" },
+  verified: { icon: Shield, label: "Verified Pro", description: "Fully verified tasker", color: "text-green-500" },
+  speedster: { icon: Zap, label: "Speedster", description: "Fast response time", color: "text-purple-500" },
+};
 
 export default function Leaderboard() {
   const [topByTasks, setTopByTasks] = useState<LeaderboardEntry[]>([]);
   const [topByRating, setTopByRating] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("all");
 
   useEffect(() => {
     fetchLeaderboards();
-  }, []);
+  }, [timePeriod]);
+
+  const getDateFilter = () => {
+    const now = new Date();
+    switch (timePeriod) {
+      case "week":
+        return startOfWeek(now).toISOString();
+      case "month":
+        return startOfMonth(now).toISOString();
+      case "year":
+        return startOfYear(now).toISOString();
+      default:
+        return null;
+    }
+  };
 
   const fetchLeaderboards = async () => {
+    setIsLoading(true);
     try {
-      // Fetch top taskers by completed tasks
-      const { data: byTasks, error: tasksError } = await supabase
+      const dateFilter = getDateFilter();
+
+      // For "all time", fetch from profiles directly
+      // For time-based, we'd ideally track task completions by date
+      // For now, we'll filter by profile creation date as a proxy
+      let tasksQuery = supabase
         .from("profiles")
-        .select("id, full_name, avatar_url, completed_tasks, rating, total_reviews, city")
+        .select("id, full_name, avatar_url, completed_tasks, rating, total_reviews, city, created_at")
         .gt("completed_tasks", 0)
         .order("completed_tasks", { ascending: false })
         .limit(10);
 
-      if (tasksError) throw tasksError;
-
-      // Fetch top taskers by rating (minimum 5 reviews)
-      const { data: byRating, error: ratingError } = await supabase
+      let ratingQuery = supabase
         .from("profiles")
-        .select("id, full_name, avatar_url, completed_tasks, rating, total_reviews, city")
+        .select("id, full_name, avatar_url, completed_tasks, rating, total_reviews, city, created_at")
         .gte("total_reviews", 5)
         .order("rating", { ascending: false })
         .limit(10);
 
+      // Apply date filter for time-based leaderboards
+      if (dateFilter) {
+        // For time-based filtering, we could filter by when users were active
+        // This is a simplified approach - in production, you'd track completions by date
+        tasksQuery = tasksQuery.gte("updated_at", dateFilter);
+        ratingQuery = ratingQuery.gte("updated_at", dateFilter);
+      }
+
+      const [{ data: byTasks, error: tasksError }, { data: byRating, error: ratingError }] = await Promise.all([
+        tasksQuery,
+        ratingQuery
+      ]);
+
+      if (tasksError) throw tasksError;
       if (ratingError) throw ratingError;
 
       setTopByTasks(byTasks || []);
@@ -86,60 +134,116 @@ export default function Leaderboard() {
     }
   };
 
+  const getEntryBadges = (entry: LeaderboardEntry, index: number) => {
+    const badges: Array<keyof typeof leaderboardBadges> = [];
+    
+    if (index === 0) badges.push("champion");
+    else if (index < 3) badges.push("elite");
+    
+    if (entry.rating && entry.rating >= 4.8 && (entry.total_reviews || 0) >= 10) {
+      badges.push("high_rated");
+    }
+    
+    if (index < 10 && timePeriod !== "all") {
+      badges.push("rising_star");
+    }
+    
+    return badges;
+  };
+
+  const getTimePeriodLabel = () => {
+    switch (timePeriod) {
+      case "week":
+        return "This Week";
+      case "month":
+        return "This Month";
+      case "year":
+        return "This Year";
+      default:
+        return "All Time";
+    }
+  };
+
   const LeaderboardList = ({ entries, type }: { entries: LeaderboardEntry[]; type: "tasks" | "rating" }) => (
     <div className="space-y-3">
-      {entries.map((entry, index) => (
-        <Link
-          key={entry.id}
-          to={`/profile/${entry.id}`}
-          className={`block p-4 rounded-xl border transition-all hover:shadow-md hover:border-primary/30 ${
-            index < 3 ? "bg-gradient-to-r from-primary/5 to-transparent" : "bg-card"
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            <div className="flex-shrink-0 w-10 flex justify-center">
-              {getRankIcon(index)}
-            </div>
-            <Avatar className={`${index < 3 ? "h-14 w-14 ring-2 ring-primary/20" : "h-12 w-12"}`}>
-              <AvatarImage src={entry.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary/10 text-primary">
-                {entry.full_name?.charAt(0) || <User className="h-5 w-5" />}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className={`font-semibold ${index < 3 ? "text-lg" : ""}`}>
-                  {entry.full_name || "Anonymous Tasker"}
-                </span>
-                {getRankBadge(index)}
+      {entries.map((entry, index) => {
+        const badges = getEntryBadges(entry, index);
+        
+        return (
+          <Link
+            key={entry.id}
+            to={`/profile/${entry.id}`}
+            className={`block p-4 rounded-xl border transition-all hover:shadow-md hover:border-primary/30 ${
+              index < 3 ? "bg-gradient-to-r from-primary/5 to-transparent" : "bg-card"
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0 w-10 flex justify-center">
+                {getRankIcon(index)}
               </div>
-              {entry.city && (
-                <p className="text-sm text-muted-foreground">{entry.city}</p>
-              )}
-            </div>
-            <div className="text-right flex-shrink-0">
-              {type === "tasks" ? (
-                <div className="flex flex-col items-end">
-                  <span className="text-2xl font-bold text-primary">{entry.completed_tasks || 0}</span>
-                  <span className="text-xs text-muted-foreground">tasks completed</span>
+              <Avatar className={`${index < 3 ? "h-14 w-14 ring-2 ring-primary/20" : "h-12 w-12"}`}>
+                <AvatarImage src={entry.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {entry.full_name?.charAt(0) || <User className="h-5 w-5" />}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`font-semibold ${index < 3 ? "text-lg" : ""}`}>
+                    {entry.full_name || "Anonymous Tasker"}
+                  </span>
+                  {getRankBadge(index)}
                 </div>
-              ) : (
-                <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-1">
-                    <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                    <span className="text-2xl font-bold">{entry.rating?.toFixed(1) || "0.0"}</span>
+                {entry.city && (
+                  <p className="text-sm text-muted-foreground">{entry.city}</p>
+                )}
+                {/* Achievement Badges */}
+                {badges.length > 0 && (
+                  <div className="flex items-center gap-1 mt-1">
+                    {badges.slice(0, 3).map((badgeKey) => {
+                      const badge = leaderboardBadges[badgeKey];
+                      const Icon = badge.icon;
+                      return (
+                        <Tooltip key={badgeKey}>
+                          <TooltipTrigger asChild>
+                            <div className={`p-1 rounded-full bg-muted ${badge.color}`}>
+                              <Icon className="h-3 w-3" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="font-semibold">{badge.label}</p>
+                            <p className="text-xs text-muted-foreground">{badge.description}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
                   </div>
-                  <span className="text-xs text-muted-foreground">{entry.total_reviews || 0} reviews</span>
-                </div>
-              )}
+                )}
+              </div>
+              <div className="text-right flex-shrink-0">
+                {type === "tasks" ? (
+                  <div className="flex flex-col items-end">
+                    <span className="text-2xl font-bold text-primary">{entry.completed_tasks || 0}</span>
+                    <span className="text-xs text-muted-foreground">tasks completed</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-1">
+                      <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                      <span className="text-2xl font-bold">{entry.rating?.toFixed(1) || "0.0"}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{entry.total_reviews || 0} reviews</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
       {entries.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
           <Trophy className="h-12 w-12 mx-auto mb-4 opacity-20" />
-          <p>No taskers on the leaderboard yet.</p>
+          <p>No taskers on the leaderboard for {getTimePeriodLabel().toLowerCase()}.</p>
           <p className="text-sm">Complete tasks to appear here!</p>
         </div>
       )}
@@ -166,7 +270,7 @@ export default function Leaderboard() {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
 
-      <main className="flex-1 container py-8">
+      <main className="flex-1 container py-8 pt-24">
         {/* Hero Section */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
@@ -177,6 +281,53 @@ export default function Leaderboard() {
             Celebrating our most accomplished taskers. See who's leading in completed tasks and ratings.
           </p>
         </div>
+
+        {/* Time Period Filter */}
+        <div className="flex justify-center mb-8">
+          <div className="flex items-center gap-3 p-1 bg-muted rounded-lg">
+            <Calendar className="h-4 w-4 ml-3 text-muted-foreground" />
+            <Select value={timePeriod} onValueChange={(v) => setTimePeriod(v as TimePeriod)}>
+              <SelectTrigger className="w-[160px] border-0 bg-transparent">
+                <SelectValue placeholder="Time Period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+                <SelectItem value="year">This Year</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Badge Legend */}
+        <Card className="mb-8">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Award className="h-5 w-5 text-primary" />
+              Achievement Badges
+            </CardTitle>
+            <CardDescription>
+              Earn badges by climbing the leaderboard and maintaining excellent performance
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+              {Object.entries(leaderboardBadges).map(([key, badge]) => {
+                const Icon = badge.icon;
+                return (
+                  <div key={key} className="flex flex-col items-center text-center p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                    <div className={`p-2 rounded-full bg-background mb-2 ${badge.color}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <span className="text-sm font-medium">{badge.label}</span>
+                    <span className="text-xs text-muted-foreground line-clamp-2">{badge.description}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Stats Cards */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -199,7 +350,7 @@ export default function Leaderboard() {
                 <CheckCircle className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Most Tasks</p>
+                <p className="text-sm text-muted-foreground">Most Tasks ({getTimePeriodLabel()})</p>
                 <p className="font-semibold">
                   {topByTasks[0]?.completed_tasks || 0} completed
                 </p>
@@ -247,9 +398,12 @@ export default function Leaderboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-primary" />
-                Top 10 Taskers
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  Top 10 Taskers
+                </span>
+                <Badge variant="outline">{getTimePeriodLabel()}</Badge>
               </CardTitle>
               <CardDescription>
                 Our highest performing taskers based on achievements

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Menu, ShieldCheck, Globe, Sun, Moon, User, Settings, LogOut, ChevronDown, Briefcase, MessageSquare, LayoutDashboard, ClipboardList, Search, Users } from "lucide-react";
+import { Menu, ShieldCheck, Globe, Sun, Moon, User, Settings, LogOut, ChevronDown, Briefcase, MessageSquare, LayoutDashboard, ClipboardList, Search, Users, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/sasktask-logo.png";
@@ -101,6 +101,10 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate("/how-it-works")} className="cursor-pointer gap-2">
                     How It Works
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/leaderboard")} className="cursor-pointer gap-2">
+                    <Trophy className="h-4 w-4" />
+                    Leaderboard
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/contact")} className="cursor-pointer gap-2">
                     Contact

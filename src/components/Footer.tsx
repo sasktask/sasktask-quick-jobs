@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Facebook, Twitter, Instagram, Linkedin, Mail } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin, Mail, Trophy } from "lucide-react";
 import { NewsletterSignup } from "./NewsletterSignup";
 
 export const Footer = () => {
@@ -36,6 +36,10 @@ export const Footer = () => {
               <li><Link to="/browse" className="hover:text-primary transition-colors">All Tasks</Link></li>
               <li><Link to="/find-taskers" className="hover:text-primary transition-colors">Find Taskers</Link></li>
               <li><Link to="/categories" className="hover:text-primary transition-colors">Categories</Link></li>
+              <li><Link to="/leaderboard" className="hover:text-primary transition-colors flex items-center gap-1">
+                <Trophy className="h-3 w-3" />
+                Leaderboard
+              </Link></li>
             </ul>
           </div>
 
