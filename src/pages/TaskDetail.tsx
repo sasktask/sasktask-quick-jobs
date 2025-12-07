@@ -17,9 +17,12 @@ import {
   Star,
   Loader2,
   ArrowLeft,
-  User
+  User,
+  Gavel
 } from "lucide-react";
 import { z } from "zod";
+import { TaskPriorityBadge, type TaskPriority } from "@/components/TaskPriorityBadge";
+import { TaskBidding } from "@/components/TaskBidding";
 
 const bookingMessageSchema = z.object({
   message: z.string().max(1000, "Message too long (max 1000 characters)").optional(),
@@ -222,9 +225,12 @@ const TaskDetail = () => {
                   <CardTitle className="text-3xl mb-2">{task.title}</CardTitle>
                   <CardDescription>Posted on {new Date(task.created_at).toLocaleDateString()}</CardDescription>
                 </div>
-                <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                  {task.category}
-                </span>
+                <div className="flex flex-col gap-2 items-end">
+                  <TaskPriorityBadge priority={(task.priority || 'medium') as TaskPriority} />
+                  <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                    {task.category}
+                  </span>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -280,9 +286,26 @@ const TaskDetail = () => {
                 </div>
               )}
 
+              {/* Bidding Section */}
+              {task.status === "open" && userId && (
+                <div className="pt-6 border-t">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Gavel className="h-5 w-5" />
+                    <h3 className="font-semibold text-lg">Bidding</h3>
+                  </div>
+                  <TaskBidding
+                    taskId={task.id}
+                    taskGiverId={task.task_giver_id}
+                    currentUserId={userId}
+                    userRole={userRole}
+                    originalAmount={task.pay_amount}
+                  />
+                </div>
+              )}
+
               {userRole === "task_doer" && task.status === "open" && (
                 <div className="pt-6 border-t">
-                  <h3 className="font-semibold text-lg mb-4">Apply for this Task</h3>
+                  <h3 className="font-semibold text-lg mb-4">Quick Apply (No Bid)</h3>
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="message">Message to Task Giver (Optional)</Label>
@@ -298,11 +321,12 @@ const TaskDetail = () => {
                     <Button
                       onClick={handleApply}
                       disabled={isApplying}
+                      variant="outline"
                       className="w-full"
                       size="lg"
                     >
                       {isApplying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Apply Now
+                      Apply at Posted Rate (${task.pay_amount})
                     </Button>
                   </div>
                 </div>

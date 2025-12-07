@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Loader2, Save, CheckCircle, Clock } from "lucide-react";
+import { Loader2, Save, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
 import { z } from "zod";
 import { TaskTemplateManager } from "@/components/TaskTemplateManager";
 
@@ -46,7 +47,7 @@ const PostTask = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     title: "",
     description: "",
     category: "",
@@ -57,7 +58,8 @@ const PostTask = () => {
     scheduled_date: "",
     tools_provided: false,
     tools_description: "",
-    expires_at: ""
+    expires_at: "",
+    priority: "medium" as "low" | "medium" | "high" | "urgent"
   });
 
   const categories = [
@@ -166,7 +168,8 @@ const PostTask = () => {
       scheduled_date: "",
       tools_provided: template.tools_provided || false,
       tools_description: template.tools_description || "",
-      expires_at: ""
+      expires_at: "",
+      priority: "medium"
     });
     setHasUnsavedChanges(true);
   };
@@ -314,6 +317,7 @@ const PostTask = () => {
           tools_provided: validation.data.tools_provided,
           tools_description: validation.data.tools_description || null,
           expires_at: formData.expires_at || null,
+          priority: formData.priority,
           status: "open"
         });
 
@@ -478,6 +482,33 @@ const PostTask = () => {
                     value={formData.scheduled_date}
                     onChange={(e) => handleFormChange({ scheduled_date: e.target.value })}
                   />
+                </div>
+              </div>
+
+              {/* Priority Selection */}
+              <div className="space-y-4 p-4 bg-muted/50 border border-border rounded-lg">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <Label className="text-foreground">Task Priority</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Set the urgency level to help taskers prioritize
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(["low", "medium", "high", "urgent"] as const).map((priority) => (
+                        <button
+                          key={priority}
+                          type="button"
+                          onClick={() => handleFormChange({ priority })}
+                          className={`transition-all ${formData.priority === priority ? "ring-2 ring-primary ring-offset-2" : ""} rounded-full`}
+                        >
+                          <TaskPriorityBadge priority={priority} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
