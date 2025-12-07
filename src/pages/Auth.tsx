@@ -11,8 +11,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
+import { OTPVerification } from "@/components/OTPVerification";
 import { z } from "zod";
-import { Eye, EyeOff, Mail, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Mail, ArrowLeft, Shield } from "lucide-react";
 
 const signInSchema = z.object({
   email: z.string().email("Invalid email address").max(255, "Email too long"),
@@ -41,6 +42,12 @@ const Auth = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  
+  // OTP verification state
+  const [showOTPVerification, setShowOTPVerification] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -53,7 +60,8 @@ const Auth = () => {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session) {
+      // Only auto-redirect if we're not in OTP verification mode
+      if (event === "SIGNED_IN" && session && !showOTPVerification) {
         // Check if profile needs onboarding
         const { data: profile } = await supabase
           .from("profiles")
@@ -70,7 +78,7 @@ const Auth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, showOTPVerification]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,7 +121,7 @@ const Auth = () => {
       }
 
       toast({
-        title: "Account created! ✅",
+        title: "Account created!",
         description: "Please check your email to verify your account before signing in.",
       });
 
@@ -165,9 +173,17 @@ const Auth = () => {
       }
 
       if (data.user) {
+        // Don't redirect yet - require OTP verification
+        setPendingUserId(data.user.id);
+        setPendingEmail(data.user.email || validation.data.email);
+        setShowOTPVerification(true);
+        
+        // Sign out immediately - we'll sign back in after OTP verification
+        await supabase.auth.signOut();
+        
         toast({
-          title: "Welcome back! 👋",
-          description: "Redirecting to your dashboard...",
+          title: "Verification Required",
+          description: "A verification code has been sent to your email.",
         });
       }
     } catch (error: any) {
@@ -180,6 +196,51 @@ const Auth = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleOTPVerified = async () => {
+    // Re-authenticate the user after OTP verification
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: pendingEmail!,
+        password: password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Welcome back!",
+        description: "Login successful. Redirecting...",
+      });
+
+      // Navigate after successful verification
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("profile_completion")
+        .eq("id", data.user.id)
+        .single();
+
+      if (!profile || profile.profile_completion < 80) {
+        navigate("/onboarding");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
+      console.error("Re-authentication error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to complete login. Please try again.",
+        variant: "destructive",
+      });
+      setShowOTPVerification(false);
+    }
+  };
+
+  const handleBackFromOTP = () => {
+    setShowOTPVerification(false);
+    setPendingUserId(null);
+    setPendingEmail(null);
+    setPassword("");
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -198,7 +259,7 @@ const Auth = () => {
       if (error) throw error;
 
       toast({
-        title: "Reset Email Sent ✉️",
+        title: "Reset Email Sent",
         description: "Check your email for a password reset link.",
       });
       setShowForgotPassword(false);
@@ -213,6 +274,31 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+
+  // OTP Verification View
+  if (showOTPVerification && pendingUserId && pendingEmail) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+        <SEOHead 
+          title="Verify Login - SaskTask"
+          description="Enter your verification code to complete login"
+          url="/auth"
+        />
+        <Navbar />
+        
+        <div className="container mx-auto px-4 pt-32 pb-20">
+          <div className="max-w-md mx-auto">
+            <OTPVerification
+              email={pendingEmail}
+              userId={pendingUserId}
+              onVerified={handleOTPVerified}
+              onBack={handleBackFromOTP}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Forgot Password View
   if (showForgotPassword) {
@@ -288,8 +374,16 @@ const Auth = () => {
 
           <Card className="shadow-2xl border-border glass">
             <CardHeader>
-              <CardTitle className="text-2xl">Get Started</CardTitle>
-              <CardDescription>Sign in or create your free account</CardDescription>
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                <CardTitle className="text-2xl">Get Started</CardTitle>
+              </div>
+              <CardDescription>
+                Sign in or create your free account
+                <span className="block text-xs text-primary mt-1">
+                  Protected with 2-Factor Authentication
+                </span>
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="signin" className="w-full">
