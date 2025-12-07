@@ -45,6 +45,9 @@ import TaskEdit from "./pages/TaskEdit";
 import Leaderboard from "./pages/Leaderboard";
 import HelpCenter from "./pages/HelpCenter";
 import MapView from "./pages/MapView";
+import Payments from "./pages/Payments";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancelled from "./pages/PaymentCancelled";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import { ChatButton } from "./components/ChatButton";
@@ -101,6 +104,9 @@ const App = () => (
             <Route path="/account" element={<Account />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/chat/:bookingId" element={<ChatRoom />} />
+            <Route path="/payments" element={<Payments />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-cancelled" element={<PaymentCancelled />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
