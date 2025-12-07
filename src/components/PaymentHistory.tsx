@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 import { 
   DollarSign, 
   ArrowUpRight, 
@@ -13,7 +14,10 @@ import {
   XCircle,
   RefreshCw,
   Receipt,
-  ChevronRight
+  ChevronRight,
+  Download,
+  Loader2,
+  FileText
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -51,6 +55,8 @@ export function PaymentHistory({ userId, limit = 10, showHeader = true }: Paymen
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchPayments();
@@ -113,6 +119,52 @@ export function PaymentHistory({ userId, limit = 10, showHeader = true }: Paymen
   };
 
   const isIncoming = (payment: Payment) => payment.payee_id === userId;
+
+  const downloadInvoice = async (paymentId: string) => {
+    setDownloadingId(paymentId);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-invoice', {
+        body: { paymentId }
+      });
+
+      if (error) throw error;
+      if (!data?.html) throw new Error('Failed to generate invoice');
+
+      // Create a new window with the invoice HTML and trigger print
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(data.html);
+        printWindow.document.close();
+        
+        // Add print functionality
+        printWindow.onload = () => {
+          const printBtn = printWindow.document.createElement('button');
+          printBtn.innerHTML = '🖨️ Print / Save as PDF';
+          printBtn.style.cssText = 'position:fixed;top:10px;right:10px;padding:12px 24px;background:#2563eb;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;z-index:1000;';
+          printBtn.onclick = () => printWindow.print();
+          printWindow.document.body.appendChild(printBtn);
+        };
+      }
+
+      toast({
+        title: 'Invoice Generated',
+        description: 'Your invoice is ready. Use the print button to save as PDF.',
+      });
+    } catch (error: any) {
+      console.error('Invoice download error:', error);
+      toast({
+        title: 'Download Failed',
+        description: error.message || 'Failed to generate invoice',
+        variant: 'destructive',
+      });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const canDownloadInvoice = (payment: Payment) => {
+    return payment.status === 'completed' || payment.escrow_status === 'held' || payment.escrow_status === 'released';
+  };
 
   if (isLoading) {
     return (
@@ -199,12 +251,32 @@ export function PaymentHistory({ userId, limit = 10, showHeader = true }: Paymen
                     </div>
                   </div>
 
-                  {/* Amount & Status */}
-                  <div className="text-right space-y-1">
-                    <p className={`font-bold ${incoming ? 'text-green-600' : 'text-foreground'}`}>
-                      {incoming ? '+' : '-'}${displayAmount.toFixed(2)}
-                    </p>
-                    {getStatusBadge(payment.status, payment.escrow_status)}
+                  {/* Amount, Status & Actions */}
+                  <div className="flex items-center gap-3">
+                    <div className="text-right space-y-1">
+                      <p className={`font-bold ${incoming ? 'text-green-600' : 'text-foreground'}`}>
+                        {incoming ? '+' : '-'}${displayAmount.toFixed(2)}
+                      </p>
+                      {getStatusBadge(payment.status, payment.escrow_status)}
+                    </div>
+                    
+                    {/* Download Invoice Button */}
+                    {canDownloadInvoice(payment) && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={() => downloadInvoice(payment.id)}
+                        disabled={downloadingId === payment.id}
+                        title="Download Invoice"
+                      >
+                        {downloadingId === payment.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <FileText className="h-4 w-4" />
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
