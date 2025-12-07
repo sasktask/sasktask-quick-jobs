@@ -5,13 +5,15 @@ import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Trophy, Star, CheckCircle, Medal, Crown, Award, User, TrendingUp, Calendar, Flame, Zap, Target, Shield } from "lucide-react";
-import { Link } from "react-router-dom";
-import { format, subDays, subMonths, startOfWeek, startOfMonth, startOfYear } from "date-fns";
+import { Progress } from "@/components/ui/progress";
+import { Trophy, Star, CheckCircle, Medal, Crown, Award, User, TrendingUp, Calendar, Flame, Zap, Target, Shield, ArrowUp, LogIn } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { startOfWeek, startOfMonth, startOfYear } from "date-fns";
 
 interface LeaderboardEntry {
   id: string;
@@ -22,6 +24,27 @@ interface LeaderboardEntry {
   total_reviews: number | null;
   city: string | null;
   created_at: string | null;
+}
+
+interface UserRank {
+  tasks_rank: number | null;
+  rating_rank: number | null;
+  total_taskers: number | null;
+}
+
+interface UserProfile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  completed_tasks: number | null;
+  rating: number | null;
+  total_reviews: number | null;
+}
+
+interface UserBadge {
+  badge_type: string;
+  badge_level: string | null;
+  earned_at: string | null;
 }
 
 type TimePeriod = "all" | "week" | "month" | "year";
@@ -37,15 +60,79 @@ const leaderboardBadges = {
   speedster: { icon: Zap, label: "Speedster", description: "Fast response time", color: "text-purple-500" },
 };
 
+// Database badge type mapping
+const dbBadgeMap: Record<string, { label: string; icon: typeof Crown; color: string }> = {
+  leaderboard_champion: { label: "Leaderboard Champion", icon: Crown, color: "text-yellow-500" },
+  leaderboard_elite: { label: "Elite Tasker", icon: Medal, color: "text-gray-400" },
+  leaderboard_top10: { label: "Top 10", icon: Trophy, color: "text-amber-500" },
+  highly_rated: { label: "Highly Rated", icon: Star, color: "text-yellow-400" },
+  rating_champion: { label: "Rating Champion", icon: Star, color: "text-yellow-500" },
+  century_tasker: { label: "Century Tasker", icon: Award, color: "text-purple-500" },
+  fifty_tasks: { label: "50 Tasks", icon: CheckCircle, color: "text-blue-500" },
+  twentyfive_tasks: { label: "25 Tasks", icon: CheckCircle, color: "text-green-500" },
+  ten_tasks: { label: "10 Tasks", icon: CheckCircle, color: "text-teal-500" },
+};
+
 export default function Leaderboard() {
   const [topByTasks, setTopByTasks] = useState<LeaderboardEntry[]>([]);
   const [topByRating, setTopByRating] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("all");
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userRank, setUserRank] = useState<UserRank | null>(null);
+  const [userBadges, setUserBadges] = useState<UserBadge[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    checkUser();
     fetchLeaderboards();
   }, [timePeriod]);
+
+  const checkUser = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setCurrentUser(session?.user ?? null);
+    if (session?.user) {
+      await Promise.all([
+        fetchUserProfile(session.user.id),
+        fetchUserRank(session.user.id),
+        fetchUserBadges(session.user.id),
+      ]);
+    }
+  };
+
+  const fetchUserProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url, completed_tasks, rating, total_reviews")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!error && data) {
+      setUserProfile(data);
+    }
+  };
+
+  const fetchUserRank = async (userId: string) => {
+    const { data, error } = await supabase
+      .rpc("get_user_leaderboard_rank", { p_user_id: userId });
+
+    if (!error && data && data.length > 0) {
+      setUserRank(data[0]);
+    }
+  };
+
+  const fetchUserBadges = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("badges")
+      .select("badge_type, badge_level, earned_at")
+      .eq("user_id", userId)
+      .order("earned_at", { ascending: false });
+
+    if (!error && data) {
+      setUserBadges(data);
+    }
+  };
 
   const getDateFilter = () => {
     const now = new Date();
@@ -66,9 +153,6 @@ export default function Leaderboard() {
     try {
       const dateFilter = getDateFilter();
 
-      // For "all time", fetch from profiles directly
-      // For time-based, we'd ideally track task completions by date
-      // For now, we'll filter by profile creation date as a proxy
       let tasksQuery = supabase
         .from("profiles")
         .select("id, full_name, avatar_url, completed_tasks, rating, total_reviews, city, created_at")
@@ -83,10 +167,7 @@ export default function Leaderboard() {
         .order("rating", { ascending: false })
         .limit(10);
 
-      // Apply date filter for time-based leaderboards
       if (dateFilter) {
-        // For time-based filtering, we could filter by when users were active
-        // This is a simplified approach - in production, you'd track completions by date
         tasksQuery = tasksQuery.gte("updated_at", dateFilter);
         ratingQuery = ratingQuery.gte("updated_at", dateFilter);
       }
@@ -164,17 +245,164 @@ export default function Leaderboard() {
     }
   };
 
+  const getProgressToNextRank = () => {
+    if (!userRank || !userRank.tasks_rank) return 0;
+    const rank = userRank.tasks_rank;
+    if (rank <= 3) return 100;
+    if (rank <= 10) return Math.min(100, ((10 - rank) / 7) * 100 + 30);
+    return Math.min(100, Math.max(0, 100 - (rank - 10) * 2));
+  };
+
+  const getNextMilestone = () => {
+    if (!userRank || !userRank.tasks_rank) return "Complete tasks to join the leaderboard!";
+    const rank = userRank.tasks_rank;
+    if (rank === 1) return "You're the champion! 🏆";
+    if (rank <= 3) return `${rank - 1} spot${rank > 2 ? 's' : ''} away from Champion!`;
+    if (rank <= 10) return `${rank - 3} spots away from Top 3!`;
+    return `${rank - 10} spots away from Top 10!`;
+  };
+
+  // Personal Ranking Card Component
+  const PersonalRankingCard = () => {
+    if (!currentUser) {
+      return (
+        <Card className="mb-8 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-center sm:text-left">
+                <h3 className="text-lg font-semibold mb-2">Track Your Progress</h3>
+                <p className="text-muted-foreground">Sign in to see your leaderboard ranking and earn badges</p>
+              </div>
+              <Button onClick={() => navigate("/auth")} className="gap-2">
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <Card className="mb-8 bg-gradient-to-br from-primary/5 via-background to-primary/10 border-primary/20 overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5 text-primary" />
+            Your Ranking
+          </CardTitle>
+          <CardDescription>Track your progress on the leaderboard</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* User Info */}
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16 ring-2 ring-primary/20">
+                <AvatarImage src={userProfile?.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                  {userProfile?.full_name?.charAt(0) || <User className="h-6 w-6" />}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold text-lg">{userProfile?.full_name || "Anonymous"}</p>
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle className="h-4 w-4" />
+                    {userProfile?.completed_tasks || 0} tasks
+                  </span>
+                  {userProfile?.rating && (
+                    <span className="flex items-center gap-1">
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      {userProfile.rating.toFixed(1)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Rankings */}
+            <div className="flex items-center justify-center gap-8">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <CheckCircle className="h-4 w-4 text-primary" />
+                  <span className="text-sm text-muted-foreground">Tasks Rank</span>
+                </div>
+                <div className="text-3xl font-bold text-primary">
+                  {userRank?.tasks_rank ? `#${userRank.tasks_rank}` : "—"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  of {userRank?.total_taskers || 0} taskers
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Star className="h-4 w-4 text-yellow-500" />
+                  <span className="text-sm text-muted-foreground">Rating Rank</span>
+                </div>
+                <div className="text-3xl font-bold text-yellow-500">
+                  {userRank?.rating_rank ? `#${userRank.rating_rank}` : "—"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {!userRank?.rating_rank && "Need 5+ reviews"}
+                </p>
+              </div>
+            </div>
+
+            {/* Progress to Next Rank */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Progress to next rank</span>
+                <span className="flex items-center gap-1 text-primary font-medium">
+                  <ArrowUp className="h-3 w-3" />
+                  {getNextMilestone()}
+                </span>
+              </div>
+              <Progress value={getProgressToNextRank()} className="h-2" />
+              
+              {/* User's Earned Badges */}
+              {userBadges.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {userBadges.slice(0, 5).map((badge, idx) => {
+                    const badgeInfo = dbBadgeMap[badge.badge_type];
+                    if (!badgeInfo) return null;
+                    const Icon = badgeInfo.icon;
+                    return (
+                      <Tooltip key={idx}>
+                        <TooltipTrigger asChild>
+                          <div className={`p-1.5 rounded-full bg-muted ${badgeInfo.color}`}>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="font-semibold">{badgeInfo.label}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{badge.badge_level} level</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                  {userBadges.length > 5 && (
+                    <Badge variant="outline" className="text-xs">+{userBadges.length - 5} more</Badge>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   const LeaderboardList = ({ entries, type }: { entries: LeaderboardEntry[]; type: "tasks" | "rating" }) => (
     <div className="space-y-3">
       {entries.map((entry, index) => {
         const badges = getEntryBadges(entry, index);
+        const isCurrentUser = currentUser && entry.id === currentUser.id;
         
         return (
           <Link
             key={entry.id}
             to={`/profile/${entry.id}`}
             className={`block p-4 rounded-xl border transition-all hover:shadow-md hover:border-primary/30 ${
-              index < 3 ? "bg-gradient-to-r from-primary/5 to-transparent" : "bg-card"
+              isCurrentUser ? "ring-2 ring-primary bg-primary/5" : index < 3 ? "bg-gradient-to-r from-primary/5 to-transparent" : "bg-card"
             }`}
           >
             <div className="flex items-center gap-4">
@@ -192,12 +420,12 @@ export default function Leaderboard() {
                   <span className={`font-semibold ${index < 3 ? "text-lg" : ""}`}>
                     {entry.full_name || "Anonymous Tasker"}
                   </span>
+                  {isCurrentUser && <Badge variant="secondary">You</Badge>}
                   {getRankBadge(index)}
                 </div>
                 {entry.city && (
                   <p className="text-sm text-muted-foreground">{entry.city}</p>
                 )}
-                {/* Achievement Badges */}
                 {badges.length > 0 && (
                   <div className="flex items-center gap-1 mt-1">
                     {badges.slice(0, 3).map((badgeKey) => {
@@ -281,6 +509,9 @@ export default function Leaderboard() {
             Celebrating our most accomplished taskers. See who's leading in completed tasks and ratings.
           </p>
         </div>
+
+        {/* Personal Ranking Card */}
+        <PersonalRankingCard />
 
         {/* Time Period Filter */}
         <div className="flex justify-center mb-8">

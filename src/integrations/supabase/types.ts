@@ -2049,6 +2049,10 @@ export type Database = {
       }
     }
     Functions: {
+      award_leaderboard_badges: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       calculate_distance: {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
@@ -2063,6 +2067,14 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      get_user_leaderboard_rank: {
+        Args: { p_user_id: string }
+        Returns: {
+          rating_rank: number
+          tasks_rank: number
+          total_taskers: number
+        }[]
       }
       get_user_role: {
         Args: { _user_id: string }
