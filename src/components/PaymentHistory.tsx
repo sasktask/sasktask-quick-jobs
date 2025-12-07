@@ -15,10 +15,17 @@ import {
   RefreshCw,
   Receipt,
   ChevronRight,
-  Download,
   Loader2,
-  FileText
+  FileText,
+  Mail,
+  MoreVertical
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 
 interface Payment {
@@ -56,6 +63,7 @@ export function PaymentHistory({ userId, limit = 10, showHeader = true }: Paymen
   const [isLoading, setIsLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [emailingId, setEmailingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -166,6 +174,31 @@ export function PaymentHistory({ userId, limit = 10, showHeader = true }: Paymen
     return payment.status === 'completed' || payment.escrow_status === 'held' || payment.escrow_status === 'released';
   };
 
+  const emailInvoice = async (paymentId: string, recipientEmail?: string) => {
+    setEmailingId(paymentId);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-invoice-email', {
+        body: { paymentId, recipientEmail }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Invoice Sent',
+        description: data.message || 'Invoice has been sent to your email.',
+      });
+    } catch (error: any) {
+      console.error('Email invoice error:', error);
+      toast({
+        title: 'Email Failed',
+        description: error.message || 'Failed to send invoice email',
+        variant: 'destructive',
+      });
+    } finally {
+      setEmailingId(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -260,22 +293,34 @@ export function PaymentHistory({ userId, limit = 10, showHeader = true }: Paymen
                       {getStatusBadge(payment.status, payment.escrow_status)}
                     </div>
                     
-                    {/* Download Invoice Button */}
+                    {/* Invoice Actions */}
                     {canDownloadInvoice(payment) && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 shrink-0"
-                        onClick={() => downloadInvoice(payment.id)}
-                        disabled={downloadingId === payment.id}
-                        title="Download Invoice"
-                      >
-                        {downloadingId === payment.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <FileText className="h-4 w-4" />
-                        )}
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 shrink-0"
+                            disabled={downloadingId === payment.id || emailingId === payment.id}
+                          >
+                            {(downloadingId === payment.id || emailingId === payment.id) ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <MoreVertical className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => downloadInvoice(payment.id)}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Download Invoice
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => emailInvoice(payment.id)}>
+                            <Mail className="h-4 w-4 mr-2" />
+                            Email Invoice
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                 </div>

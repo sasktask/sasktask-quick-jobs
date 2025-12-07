@@ -1,5 +1,8 @@
 project_id = "svvnyueuodatwnnaspvg"
 
+[functions.send-invoice-email]
+verify_jwt = true
+
 [functions.get-stripe-config]
 verify_jwt = false
 
