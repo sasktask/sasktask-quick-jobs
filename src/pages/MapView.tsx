@@ -8,9 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, List, Filter, Loader2 } from "lucide-react";
+import { MapPin, List, Filter, Loader2, Navigation, Target } from "lucide-react";
 import { getCategoryTitles } from "@/lib/categories";
+import { useUserLocation } from "@/hooks/useUserLocation";
 
 interface Task {
   id: string;
@@ -30,8 +32,10 @@ export default function MapView() {
   const [isLoading, setIsLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [mapboxToken, setMapboxToken] = useState<string>("");
+  const [radiusKm, setRadiusKm] = useState(50);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { location: userLocation, isLoading: locationLoading, error: locationError, requestLocation } = useUserLocation();
   
   const categories = getCategoryTitles();
 
@@ -121,7 +125,38 @@ export default function MapView() {
             </p>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Location button */}
+            <Button 
+              variant={userLocation ? "default" : "outline"}
+              onClick={requestLocation}
+              disabled={locationLoading}
+              className="gap-2"
+            >
+              {locationLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Navigation className="h-4 w-4" />
+              )}
+              {userLocation ? "Location On" : "Use My Location"}
+            </Button>
+
+            {/* Radius slider - only show when location is available */}
+            {userLocation && (
+              <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                <Target className="h-4 w-4 text-muted-foreground" />
+                <Slider
+                  value={[radiusKm]}
+                  onValueChange={(v) => setRadiusKm(v[0])}
+                  min={5}
+                  max={200}
+                  step={5}
+                  className="w-24"
+                />
+                <span className="text-sm font-medium w-14">{radiusKm} km</span>
+              </div>
+            )}
+
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
@@ -141,6 +176,14 @@ export default function MapView() {
             </Button>
           </div>
         </div>
+
+        {/* Location error message */}
+        {locationError && (
+          <div className="mb-4 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-sm text-yellow-600 dark:text-yellow-400">
+            <Navigation className="h-4 w-4 inline mr-2" />
+            {locationError}. You can still browse tasks without location filtering.
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -186,6 +229,8 @@ export default function MapView() {
           tasks={filteredTasks} 
           mapboxToken={mapboxToken}
           isLoading={isLoading}
+          userLocation={userLocation}
+          radiusKm={radiusKm}
         />
 
         {/* Tasks without location */}
