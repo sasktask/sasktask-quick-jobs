@@ -26,3 +26,6 @@ verify_jwt = true
 
 [functions.check-task-expiration]
 verify_jwt = false
+
+[functions.notify-new-bid]
+verify_jwt = true
