@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PortfolioManager } from "@/components/PortfolioManager";
 import { SkillsShowcase } from "@/components/SkillsShowcase";
 import { VerificationBadges } from "@/components/VerificationBadges";
+import { BadgeDisplay } from "@/components/BadgeDisplay";
 
 interface Review {
   id: string;
@@ -250,6 +251,13 @@ export default function PublicProfile() {
                         userSkills={profile.skills}
                         isOwnProfile={currentUserId === id}
                       />
+                    </div>
+                  )}
+
+                  {/* Badges */}
+                  {id && (
+                    <div className="mb-4">
+                      <BadgeDisplay userId={id} size="md" />
                     </div>
                   )}
 
