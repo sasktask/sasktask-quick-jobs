@@ -71,8 +71,8 @@ const Messages = () => {
     try {
       setLoading(true);
 
-      // Get all bookings where user is involved
-      const { data: bookings, error: bookingsError } = await supabase
+      // Get bookings where user is task_doer
+      const { data: doerBookings, error: doerError } = await supabase
         .from("bookings")
         .select(`
           id,
@@ -84,14 +84,39 @@ const Messages = () => {
             task_giver_id
           )
         `)
-        .or(`task_doer_id.eq.${userId},tasks.task_giver_id.eq.${userId}`)
+        .eq("task_doer_id", userId)
         .eq("status", "accepted");
 
-      if (bookingsError) throw bookingsError;
+      if (doerError) throw doerError;
+
+      // Get bookings where user is task_giver (via tasks table)
+      const { data: giverBookings, error: giverError } = await supabase
+        .from("bookings")
+        .select(`
+          id,
+          task_id,
+          task_doer_id,
+          tasks!inner (
+            id,
+            title,
+            task_giver_id
+          )
+        `)
+        .eq("tasks.task_giver_id", userId)
+        .eq("status", "accepted");
+
+      if (giverError) throw giverError;
+
+      // Combine and deduplicate bookings
+      const allBookings = [...(doerBookings || []), ...(giverBookings || [])];
+      const uniqueBookings = allBookings.filter(
+        (booking, index, self) =>
+          index === self.findIndex((b) => b.id === booking.id)
+      );
 
       // For each booking, get last message and unread count
       const conversationsData = await Promise.all(
-        (bookings || []).map(async (booking: any) => {
+        uniqueBookings.map(async (booking: any) => {
           const otherId =
             booking.task_doer_id === userId
               ? booking.tasks.task_giver_id
