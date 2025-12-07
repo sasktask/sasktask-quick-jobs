@@ -43,6 +43,7 @@ import ChatRoom from "./pages/ChatRoom";
 import MyTasks from "./pages/MyTasks";
 import TaskEdit from "./pages/TaskEdit";
 import Leaderboard from "./pages/Leaderboard";
+import HelpCenter from "./pages/HelpCenter";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import { ChatButton } from "./components/ChatButton";
@@ -94,6 +95,7 @@ const App = () => (
             <Route path="/rss.xml" element={<RSSFeed />} />
             <Route path="/sitemap.xml" element={<Sitemap />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/help" element={<HelpCenter />} />
             <Route path="/account" element={<Account />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/chat/:bookingId" element={<ChatRoom />} />
