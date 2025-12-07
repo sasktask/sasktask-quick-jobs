@@ -92,10 +92,24 @@ const badgeConfig: Record<string, {
     gradient: "from-purple-500 to-indigo-600",
     bgColor: "bg-purple-500/10",
   },
+  leaderboard_top10: {
+    icon: Trophy,
+    label: "Top 10",
+    description: "Ranked in the top 10 on the leaderboard",
+    gradient: "from-indigo-400 to-purple-500",
+    bgColor: "bg-indigo-400/10",
+  },
+  rating_champion: {
+    icon: Star,
+    label: "Rating Champion",
+    description: "Highest rated tasker on the platform",
+    gradient: "from-yellow-500 to-orange-600",
+    bgColor: "bg-yellow-500/10",
+  },
   highly_rated: {
     icon: Star,
     label: "Highly Rated",
-    description: "Achieved a 4.5+ rating with multiple reviews",
+    description: "Achieved a 4.8+ rating with 10+ reviews",
     gradient: "from-amber-400 to-orange-500",
     bgColor: "bg-amber-400/10",
   },
@@ -108,7 +122,7 @@ const badgeConfig: Record<string, {
   },
   fifty_tasks: {
     icon: Target,
-    label: "Fifty Tasks",
+    label: "50 Tasks",
     description: "Completed 50+ tasks",
     gradient: "from-blue-400 to-indigo-500",
     bgColor: "bg-blue-400/10",
@@ -141,7 +155,9 @@ export const BadgeShowcase = ({ userId }: BadgeShowcaseProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchBadges();
+    if (userId) {
+      fetchBadges();
+    }
   }, [userId]);
 
   const fetchBadges = async () => {
