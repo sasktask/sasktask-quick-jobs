@@ -16,6 +16,7 @@ import { CancellationDialog } from "@/components/CancellationDialog";
 import { DisputeDialog } from "@/components/DisputeDialog";
 import { MilestoneManager } from "@/components/MilestoneManager";
 import { EnhancedReviewForm } from "@/components/EnhancedReviewForm";
+import { PaymentEscrow } from "@/components/PaymentEscrow";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, Shield, Star, Phone, MapPin, Ban, AlertCircle, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -139,10 +140,26 @@ const Bookings = () => {
             .eq("receiver_id", session.user.id)
             .is("read_at", null);
           
+          // Fetch payment for this booking
+          const { data: paymentData } = await supabase
+            .from("payments")
+            .select("*")
+            .eq("booking_id", booking.id)
+            .maybeSingle();
+
+          // Fetch milestones for this task
+          const { data: milestonesData } = await supabase
+            .from("task_milestones")
+            .select("*")
+            .eq("task_id", booking.task_id)
+            .order("milestone_order", { ascending: true });
+          
           return {
             ...booking,
             task_doer_verification: verification,
             unread_count: unreadCount || 0,
+            payment: paymentData,
+            milestones: milestonesData || [],
           };
         })
       );
@@ -422,6 +439,16 @@ const Bookings = () => {
                                   totalTaskAmount={booking.tasks?.pay_amount || 0}
                                 />
                               )}
+
+                              {/* Payment Escrow Status */}
+                              <PaymentEscrow
+                                bookingId={booking.id}
+                                taskId={booking.tasks?.id}
+                                isTaskGiver={userRole === "task_giver"}
+                                payment={booking.payment}
+                                milestones={booking.milestones}
+                                onPaymentComplete={checkUserAndFetchBookings}
+                              />
 
                               {/* Show Review Form after completion */}
                               {booking.status === "completed" && booking.tasks?.status === "completed" && !showReview && (
