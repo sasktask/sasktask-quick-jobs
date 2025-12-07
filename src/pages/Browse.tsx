@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X, Gavel, Clock } from "lucide-react";
+import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X, Clock, Navigation, Sparkles } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { TaskPriorityBadge, type TaskPriority } from "@/components/TaskPriorityBadge";
-import { getCategoryTitles, categories as allCategories, timeEstimateLabels, TimeEstimate } from "@/lib/categories";
+import { getCategoryTitles, timeEstimateLabels, TimeEstimate } from "@/lib/categories";
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { calculateDistance, formatDistance } from "@/lib/distance";
+import { useTaskRecommendations } from "@/hooks/useTaskRecommendations";
 
 const Browse = () => {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -29,13 +32,20 @@ const Browse = () => {
   const [dateFilter, setDateFilter] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [timeFilter, setTimeFilter] = useState<string>("all");
+  const [distanceFilter, setDistanceFilter] = useState<number>(100);
+  const [sortBy, setSortBy] = useState<string>("newest");
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { location: userLocation, isLoading: locationLoading, requestLocation } = useUserLocation();
+  
+  // Get AI recommendations for scoring
+  const { data: recommendationsData } = useTaskRecommendations(userId || undefined);
 
   const categories = getCategoryTitles();
 
@@ -52,7 +62,7 @@ const Browse = () => {
 
   useEffect(() => {
     filterTasks();
-  }, [searchTerm, categoryFilter, budgetRange, dateFilter, priorityFilter, timeFilter, tasks]);
+  }, [searchTerm, categoryFilter, budgetRange, dateFilter, priorityFilter, timeFilter, distanceFilter, sortBy, tasks, userLocation, recommendationsData]);
 
   const checkAuthAndFetchTasks = async () => {
     try {
@@ -62,6 +72,8 @@ const Browse = () => {
         navigate("/auth");
         return;
       }
+
+      setUserId(session.user.id);
 
       const { data: profileData } = await supabase
         .from("profiles")
@@ -123,6 +135,24 @@ const Browse = () => {
     }
   };
 
+  // Build recommendation scores map
+  const getRecommendationScore = (taskId: string): number | null => {
+    if (!recommendationsData?.recommendations) return null;
+    const rec = recommendationsData.recommendations.find((r: any) => r.id === taskId);
+    return rec?.matchScore ?? null;
+  };
+
+  // Calculate distance for a task
+  const getTaskDistance = (task: any): number | null => {
+    if (!userLocation || !task.latitude || !task.longitude) return null;
+    return calculateDistance(
+      userLocation.latitude,
+      userLocation.longitude,
+      task.latitude,
+      task.longitude
+    );
+  };
+
   const filterTasks = () => {
     let filtered = tasks;
 
@@ -174,35 +204,41 @@ const Browse = () => {
       });
     }
 
-    // Smart recommendations for task doers
-    if (userRole === "task_doer" && userProfile) {
-      filtered = filtered.sort((a, b) => {
-        let scoreA = 0;
-        let scoreB = 0;
-
-        // Priority score (urgent tasks first)
-        const priorityScore = { urgent: 40, high: 30, medium: 20, low: 10 };
-        scoreA += priorityScore[a.priority as keyof typeof priorityScore] || 20;
-        scoreB += priorityScore[b.priority as keyof typeof priorityScore] || 20;
-
-        if (userProfile.preferred_categories?.includes(a.category)) scoreA += 10;
-        if (userProfile.preferred_categories?.includes(b.category)) scoreB += 10;
-
-        const aSkillMatches = userProfile.skills?.filter((skill: string) => 
-          a.description.toLowerCase().includes(skill.toLowerCase()) ||
-          a.title.toLowerCase().includes(skill.toLowerCase())
-        ).length || 0;
-        const bSkillMatches = userProfile.skills?.filter((skill: string) => 
-          b.description.toLowerCase().includes(skill.toLowerCase()) ||
-          b.title.toLowerCase().includes(skill.toLowerCase())
-        ).length || 0;
-
-        scoreA += aSkillMatches * 5;
-        scoreB += bSkillMatches * 5;
-
-        return scoreB - scoreA;
+    // Distance filter (only if user location is available)
+    if (userLocation && distanceFilter < 100) {
+      filtered = filtered.filter(task => {
+        const distance = getTaskDistance(task);
+        return distance === null || distance <= distanceFilter;
       });
     }
+
+    // Apply sorting
+    filtered = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "best_match": {
+          const scoreA = getRecommendationScore(a.id) ?? 0;
+          const scoreB = getRecommendationScore(b.id) ?? 0;
+          return scoreB - scoreA;
+        }
+        case "distance": {
+          const distA = getTaskDistance(a) ?? Infinity;
+          const distB = getTaskDistance(b) ?? Infinity;
+          return distA - distB;
+        }
+        case "pay_high":
+          return (b.pay_amount || 0) - (a.pay_amount || 0);
+        case "pay_low":
+          return (a.pay_amount || 0) - (b.pay_amount || 0);
+        case "priority": {
+          const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
+          return (priorityOrder[a.priority as keyof typeof priorityOrder] ?? 2) - 
+                 (priorityOrder[b.priority as keyof typeof priorityOrder] ?? 2);
+        }
+        case "newest":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
 
     setFilteredTasks(filtered);
   };
@@ -214,9 +250,11 @@ const Browse = () => {
     setDateFilter("");
     setPriorityFilter("all");
     setTimeFilter("all");
+    setDistanceFilter(100);
+    setSortBy("newest");
   };
 
-  const hasActiveFilters = searchTerm || categoryFilter !== "all" || dateFilter || budgetRange[0] > 0 || priorityFilter !== "all" || timeFilter !== "all";
+  const hasActiveFilters = searchTerm || categoryFilter !== "all" || dateFilter || budgetRange[0] > 0 || priorityFilter !== "all" || timeFilter !== "all" || distanceFilter < 100;
 
   // Get time estimate for a task based on its duration
   const getTaskTimeEstimate = (duration: number | null): TimeEstimate => {
@@ -301,10 +339,32 @@ const Browse = () => {
               {/* Advanced Filters */}
               <Collapsible open={showFilters} onOpenChange={setShowFilters}>
                 <CollapsibleContent className="space-y-4 pt-4 border-t">
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                    {/* Sort By */}
+                    <div className="space-y-2">
+                      <Label>Sort By</Label>
+                      <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sort by..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border z-[100]">
+                          <SelectItem value="newest">🕐 Newest First</SelectItem>
+                          <SelectItem value="best_match">
+                            <span className="flex items-center gap-1">
+                              <Sparkles className="h-3 w-3" /> Best Match
+                            </span>
+                          </SelectItem>
+                          {userLocation && <SelectItem value="distance">📍 Nearest</SelectItem>}
+                          <SelectItem value="pay_high">💰 Highest Pay</SelectItem>
+                          <SelectItem value="pay_low">💵 Lowest Pay</SelectItem>
+                          <SelectItem value="priority">🔥 Priority</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     {/* Budget Range */}
                     <div className="space-y-3">
-                      <Label>Budget Range: ${budgetRange[0]} - ${budgetRange[1]}</Label>
+                      <Label>Budget: ${budgetRange[0]} - ${budgetRange[1]}</Label>
                       <Slider
                         value={budgetRange}
                         onValueChange={(value) => setBudgetRange(value as [number, number])}
@@ -312,6 +372,34 @@ const Browse = () => {
                         max={1000}
                         step={10}
                         className="w-full"
+                      />
+                    </div>
+
+                    {/* Distance Filter */}
+                    <div className="space-y-3">
+                      <Label className="flex items-center justify-between">
+                        <span>Distance: {distanceFilter === 100 ? 'Any' : `${distanceFilter}km`}</span>
+                        {!userLocation && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 text-xs text-primary"
+                            onClick={requestLocation}
+                            disabled={locationLoading}
+                          >
+                            <Navigation className="h-3 w-3 mr-1" />
+                            Enable
+                          </Button>
+                        )}
+                      </Label>
+                      <Slider
+                        value={[distanceFilter]}
+                        onValueChange={(value) => setDistanceFilter(value[0])}
+                        min={5}
+                        max={100}
+                        step={5}
+                        className="w-full"
+                        disabled={!userLocation}
                       />
                     </div>
 
@@ -334,41 +422,40 @@ const Browse = () => {
 
                     {/* Time Estimate Filter */}
                     <div className="space-y-2">
-                      <Label>Time Required</Label>
+                      <Label>Duration</Label>
                       <Select value={timeFilter} onValueChange={setTimeFilter}>
                         <SelectTrigger>
                           <SelectValue placeholder="All Durations" />
                         </SelectTrigger>
                         <SelectContent className="bg-card border-border z-[100]">
                           <SelectItem value="all">All Durations</SelectItem>
-                          <SelectItem value="quick">⚡ Quick (15-30 min)</SelectItem>
-                          <SelectItem value="short">🕐 Short (1-2 hrs)</SelectItem>
-                          <SelectItem value="medium">🕑 Medium (2-4 hrs)</SelectItem>
+                          <SelectItem value="quick">⚡ Quick</SelectItem>
+                          <SelectItem value="short">🕐 1-2 hrs</SelectItem>
+                          <SelectItem value="medium">🕑 2-4 hrs</SelectItem>
                           <SelectItem value="long">🕓 Half Day+</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
-                    {/* Date Filter */}
+                    {/* Date Filter + Clear */}
                     <div className="space-y-2">
-                      <Label>Scheduled Date</Label>
-                      <Input
-                        type="date"
-                        value={dateFilter}
-                        onChange={(e) => setDateFilter(e.target.value)}
-                      />
-                    </div>
-
-                    {/* Clear Filters */}
-                    <div className="flex items-end">
-                      <Button 
-                        variant="ghost" 
-                        className="gap-2 text-muted-foreground"
-                        onClick={clearFilters}
-                      >
-                        <X className="h-4 w-4" />
-                        Clear Filters
-                      </Button>
+                      <Label>Date</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="date"
+                          value={dateFilter}
+                          onChange={(e) => setDateFilter(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="shrink-0"
+                          onClick={clearFilters}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CollapsibleContent>
@@ -432,6 +519,32 @@ const Browse = () => {
                       </div>
 
                       <div className="flex flex-wrap gap-2">
+                        {/* Match Score Badge */}
+                        {(() => {
+                          const matchScore = getRecommendationScore(task.id);
+                          if (matchScore && matchScore > 50) {
+                            return (
+                              <Badge className="bg-primary/20 text-primary border-primary/30 text-xs">
+                                <Sparkles className="h-3 w-3 mr-1" />
+                                {matchScore}% match
+                              </Badge>
+                            );
+                          }
+                          return null;
+                        })()}
+                        {/* Distance Badge */}
+                        {(() => {
+                          const distance = getTaskDistance(task);
+                          if (distance !== null) {
+                            return (
+                              <Badge variant="outline" className="text-xs">
+                                <Navigation className="h-3 w-3 mr-1" />
+                                {formatDistance(distance)}
+                              </Badge>
+                            );
+                          }
+                          return null;
+                        })()}
                         <TaskPriorityBadge priority={(task.priority || 'medium') as TaskPriority} />
                         {(() => {
                           const timeEst = getTaskTimeEstimate(task.estimated_duration);
