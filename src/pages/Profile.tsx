@@ -16,7 +16,8 @@ import { PaymentMethodManager } from "@/components/PaymentMethodManager";
 import { PayoutAccountSetup } from "@/components/PayoutAccountSetup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Star, Briefcase, Award, Upload, Shield, TrendingUp, Clock, Settings, CreditCard, Wallet, Lock, User } from "lucide-react";
+import { BadgeShowcase } from "@/components/BadgeShowcase";
+import { Loader2, Star, Briefcase, Award, Upload, Shield, TrendingUp, Clock, Settings, CreditCard, Wallet, Lock, User, Trophy } from "lucide-react";
 
 const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -276,10 +277,14 @@ const Profile = () => {
           {/* Main Content with Tabs */}
           <div className="lg:col-span-3">
             <Tabs defaultValue="basic" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="basic">
                   <User className="h-4 w-4 mr-2" />
                   Basic Info
+                </TabsTrigger>
+                <TabsTrigger value="badges">
+                  <Trophy className="h-4 w-4 mr-2" />
+                  Badges
                 </TabsTrigger>
                 <TabsTrigger value="settings">
                   <Settings className="h-4 w-4 mr-2" />
@@ -379,6 +384,11 @@ const Profile = () => {
                     </form>
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* Badges Tab */}
+              <TabsContent value="badges">
+                {userId && <BadgeShowcase userId={userId} />}
               </TabsContent>
 
               {/* Settings Tab */}
