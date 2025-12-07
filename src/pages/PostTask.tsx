@@ -11,9 +11,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Loader2 } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { z } from "zod";
 
+// Full validation for publishing
 const taskSchema = z.object({
   title: z.string().trim().min(5, "Title must be at least 5 characters").max(200, "Title too long"),
   description: z.string().trim().min(20, "Description must be at least 20 characters").max(5000, "Description too long"),
@@ -27,8 +28,14 @@ const taskSchema = z.object({
   tools_description: z.string().max(1000, "Tools description too long").optional(),
 });
 
+// Minimal validation for drafts
+const draftSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(200, "Title too long"),
+});
+
 const PostTask = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -72,7 +79,6 @@ const PostTask = () => {
 
       setUserId(session.user.id);
 
-      // Check if user has task_giver role
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
@@ -97,6 +103,66 @@ const PostTask = () => {
     }
   };
 
+  const handleSaveDraft = async () => {
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to save a draft",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate minimum draft requirements
+    const draftValidation = draftSchema.safeParse({ title: formData.title });
+    if (!draftValidation.success) {
+      toast({
+        title: "Error",
+        description: draftValidation.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSavingDraft(true);
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .insert({
+          task_giver_id: userId,
+          title: formData.title.trim(),
+          description: formData.description.trim() || "Draft - no description yet",
+          category: formData.category || "Other",
+          location: formData.location.trim() || "TBD",
+          pay_amount: parseFloat(formData.pay_amount) || 0,
+          estimated_duration: formData.estimated_duration ? parseFloat(formData.estimated_duration) : null,
+          budget_type: formData.budget_type,
+          scheduled_date: formData.scheduled_date || null,
+          tools_provided: formData.tools_provided,
+          tools_description: formData.tools_description || null,
+          status: "cancelled" // Using cancelled as draft placeholder since there's no draft status
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Draft Saved",
+        description: "Your task has been saved as a draft. You can edit it from My Tasks.",
+      });
+
+      navigate("/my-tasks");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -112,7 +178,6 @@ const PostTask = () => {
     setIsSubmitting(true);
 
     try {
-      // Validate input
       const validation = taskSchema.safeParse({
         title: formData.title,
         description: formData.description,
@@ -155,7 +220,7 @@ const PostTask = () => {
         description: "Your task has been posted successfully",
       });
 
-      navigate("/dashboard");
+      navigate("/my-tasks");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -328,10 +393,10 @@ const PostTask = () => {
                 )}
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isSavingDraft}
                   className="flex-1"
                 >
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -339,9 +404,23 @@ const PostTask = () => {
                 </Button>
                 <Button
                   type="button"
+                  variant="secondary"
+                  onClick={handleSaveDraft}
+                  disabled={isSubmitting || isSavingDraft}
+                  className="gap-2"
+                >
+                  {isSavingDraft ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Save as Draft
+                </Button>
+                <Button
+                  type="button"
                   variant="outline"
                   onClick={() => navigate("/dashboard")}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isSavingDraft}
                 >
                   Cancel
                 </Button>
