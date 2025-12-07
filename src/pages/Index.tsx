@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { SEOHead } from "@/components/SEOHead";
+import { FeaturedCategories } from "@/components/FeaturedCategories";
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Snowflake, Sparkles, Truck, Star, Shield, Clock, DollarSign, Users, Wrench, Package, Monitor, Trees, Home, PaintBucket, MoreHorizontal, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock, Plus } from "lucide-react";
@@ -252,47 +253,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Popular Categories</h2>
-            <p className="text-xl text-muted-foreground">Whatever the task, we have someone ready to help</p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[{
-            icon: Snowflake,
-            title: "Snow Removal",
-            desc: "Quick snow clearing services",
-            color: "from-blue-500 to-cyan-500"
-          }, {
-            icon: Sparkles,
-            title: "Cleaning",
-            desc: "Professional cleaning help",
-            color: "from-purple-500 to-pink-500"
-          }, {
-            icon: Truck,
-            title: "Moving",
-            desc: "Help with moving items",
-            color: "from-orange-500 to-red-500"
-          }, {
-            icon: Users,
-            title: "General Labor",
-            desc: "Various short-term tasks",
-            color: "from-green-500 to-emerald-500"
-          }].map((category, i) => <Card key={i} className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-border hover:border-primary/50">
-                <CardContent className="p-6">
-                  <div className={`h-14 w-14 rounded-lg bg-gradient-to-br ${category.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                    <category.icon className="h-7 w-7 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">{category.title}</h3>
-                  <p className="text-muted-foreground">{category.desc}</p>
-                </CardContent>
-              </Card>)}
-          </div>
-        </div>
-      </section>
+      {/* Featured Categories Section */}
+      <FeaturedCategories />
 
       {/* How It Works Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-background via-muted/20 to-background">

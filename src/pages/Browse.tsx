@@ -8,15 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X, Gavel } from "lucide-react";
+import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X, Gavel, Clock } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { TaskPriorityBadge, type TaskPriority } from "@/components/TaskPriorityBadge";
+import { getCategoryTitles, categories as allCategories, timeEstimateLabels, TimeEstimate } from "@/lib/categories";
 
 const Browse = () => {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -26,6 +28,7 @@ const Browse = () => {
   const [budgetRange, setBudgetRange] = useState<[number, number]>([0, 1000]);
   const [dateFilter, setDateFilter] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [timeFilter, setTimeFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -34,16 +37,7 @@ const Browse = () => {
   const location = useLocation();
   const { toast } = useToast();
 
-  const categories = [
-    "Snow Removal",
-    "Cleaning",
-    "Moving",
-    "Delivery",
-    "Handyman",
-    "Gardening",
-    "Pet Care",
-    "Other"
-  ];
+  const categories = getCategoryTitles();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -58,7 +52,7 @@ const Browse = () => {
 
   useEffect(() => {
     filterTasks();
-  }, [searchTerm, categoryFilter, budgetRange, dateFilter, priorityFilter, tasks]);
+  }, [searchTerm, categoryFilter, budgetRange, dateFilter, priorityFilter, timeFilter, tasks]);
 
   const checkAuthAndFetchTasks = async () => {
     try {
@@ -166,6 +160,20 @@ const Browse = () => {
       filtered = filtered.filter(task => task.priority === priorityFilter);
     }
 
+    // Time estimate filter based on estimated_duration
+    if (timeFilter !== "all") {
+      filtered = filtered.filter(task => {
+        const duration = task.estimated_duration || 0;
+        switch (timeFilter) {
+          case "quick": return duration <= 0.5;
+          case "short": return duration > 0.5 && duration <= 2;
+          case "medium": return duration > 2 && duration <= 4;
+          case "long": return duration > 4;
+          default: return true;
+        }
+      });
+    }
+
     // Smart recommendations for task doers
     if (userRole === "task_doer" && userProfile) {
       filtered = filtered.sort((a, b) => {
@@ -205,9 +213,18 @@ const Browse = () => {
     setBudgetRange([0, 1000]);
     setDateFilter("");
     setPriorityFilter("all");
+    setTimeFilter("all");
   };
 
-  const hasActiveFilters = searchTerm || categoryFilter !== "all" || dateFilter || budgetRange[0] > 0 || priorityFilter !== "all";
+  const hasActiveFilters = searchTerm || categoryFilter !== "all" || dateFilter || budgetRange[0] > 0 || priorityFilter !== "all" || timeFilter !== "all";
+
+  // Get time estimate for a task based on its duration
+  const getTaskTimeEstimate = (duration: number | null): TimeEstimate => {
+    if (!duration || duration <= 0.5) return "quick";
+    if (duration <= 2) return "short";
+    if (duration <= 4) return "medium";
+    return "long";
+  };
 
   if (isLoading) {
     return (
@@ -278,7 +295,7 @@ const Browse = () => {
               {/* Advanced Filters */}
               <Collapsible open={showFilters} onOpenChange={setShowFilters}>
                 <CollapsibleContent className="space-y-4 pt-4 border-t">
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     {/* Budget Range */}
                     <div className="space-y-3">
                       <Label>Budget Range: ${budgetRange[0]} - ${budgetRange[1]}</Label>
@@ -305,6 +322,23 @@ const Browse = () => {
                           <SelectItem value="high">🟠 High</SelectItem>
                           <SelectItem value="medium">🔵 Medium</SelectItem>
                           <SelectItem value="low">⚪ Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Time Estimate Filter */}
+                    <div className="space-y-2">
+                      <Label>Time Required</Label>
+                      <Select value={timeFilter} onValueChange={setTimeFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Durations" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border z-[100]">
+                          <SelectItem value="all">All Durations</SelectItem>
+                          <SelectItem value="quick">⚡ Quick (15-30 min)</SelectItem>
+                          <SelectItem value="short">🕐 Short (1-2 hrs)</SelectItem>
+                          <SelectItem value="medium">🕑 Medium (2-4 hrs)</SelectItem>
+                          <SelectItem value="long">🕓 Half Day+</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -393,6 +427,16 @@ const Browse = () => {
 
                       <div className="flex flex-wrap gap-2">
                         <TaskPriorityBadge priority={(task.priority || 'medium') as TaskPriority} />
+                        {(() => {
+                          const timeEst = getTaskTimeEstimate(task.estimated_duration);
+                          const timeInfo = timeEstimateLabels[timeEst];
+                          return (
+                            <Badge variant="outline" className={`${timeInfo.color} text-xs`}>
+                              <Clock className="h-3 w-3 mr-1" />
+                              {timeInfo.label}
+                            </Badge>
+                          );
+                        })()}
                         <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
                           {task.category}
                         </span>
