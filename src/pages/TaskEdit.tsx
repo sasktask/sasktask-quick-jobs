@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Loader2, Save, CheckCircle } from "lucide-react";
+import { Loader2, Save, Send, CheckCircle } from "lucide-react";
 import { z } from "zod";
+import { SEOHead } from "@/components/SEOHead";
 
-// Full validation for publishing
 const taskSchema = z.object({
   title: z.string().trim().min(5, "Title must be at least 5 characters").max(200, "Title too long"),
   description: z.string().trim().min(20, "Description must be at least 20 characters").max(5000, "Description too long"),
@@ -28,16 +29,13 @@ const taskSchema = z.object({
   tools_description: z.string().max(1000, "Tools description too long").optional(),
 });
 
-// Minimal validation for drafts
-const draftSchema = z.object({
-  title: z.string().trim().min(1, "Title is required").max(200, "Title too long"),
-});
-
-const PostTask = () => {
+const TaskEdit = () => {
+  const { id } = useParams<{ id: string }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [draftId, setDraftId] = useState<string | null>(null);
+  const [taskStatus, setTaskStatus] = useState<string>("open");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -69,12 +67,12 @@ const PostTask = () => {
   ];
 
   useEffect(() => {
-    checkUser();
-  }, []);
+    checkUserAndLoadTask();
+  }, [id]);
 
-  // Auto-save effect
+  // Auto-save effect for drafts
   useEffect(() => {
-    if (hasUnsavedChanges && formData.title.trim() && userId) {
+    if (taskStatus === "draft" && hasUnsavedChanges && formData.title.trim()) {
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
       }
@@ -89,69 +87,9 @@ const PostTask = () => {
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [formData, hasUnsavedChanges, userId]);
+  }, [formData, taskStatus, hasUnsavedChanges]);
 
-  const handleAutoSave = useCallback(async () => {
-    if (!userId || !formData.title.trim()) return;
-
-    try {
-      if (draftId) {
-        // Update existing draft
-        const { error } = await supabase
-          .from("tasks")
-          .update({
-            title: formData.title.trim(),
-            description: formData.description.trim() || "Draft - no description yet",
-            category: formData.category || "Other",
-            location: formData.location.trim() || "TBD",
-            pay_amount: parseFloat(formData.pay_amount) || 0,
-            estimated_duration: formData.estimated_duration ? parseFloat(formData.estimated_duration) : null,
-            budget_type: formData.budget_type,
-            scheduled_date: formData.scheduled_date || null,
-            tools_provided: formData.tools_provided,
-            tools_description: formData.tools_description || null,
-          })
-          .eq("id", draftId);
-
-        if (error) throw error;
-      } else {
-        // Create new draft
-        const { data, error } = await supabase
-          .from("tasks")
-          .insert({
-            task_giver_id: userId,
-            title: formData.title.trim(),
-            description: formData.description.trim() || "Draft - no description yet",
-            category: formData.category || "Other",
-            location: formData.location.trim() || "TBD",
-            pay_amount: parseFloat(formData.pay_amount) || 0,
-            estimated_duration: formData.estimated_duration ? parseFloat(formData.estimated_duration) : null,
-            budget_type: formData.budget_type,
-            scheduled_date: formData.scheduled_date || null,
-            tools_provided: formData.tools_provided,
-            tools_description: formData.tools_description || null,
-            status: "draft"
-          })
-          .select("id")
-          .single();
-
-        if (error) throw error;
-        if (data) setDraftId(data.id);
-      }
-
-      setLastSaved(new Date());
-      setHasUnsavedChanges(false);
-    } catch (error) {
-      console.error("Auto-save failed:", error);
-    }
-  }, [userId, formData, draftId]);
-
-  const handleFormChange = (updates: Partial<typeof formData>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
-    setHasUnsavedChanges(true);
-  };
-
-  const checkUser = async () => {
+  const checkUserAndLoadTask = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -162,58 +100,62 @@ const PostTask = () => {
 
       setUserId(session.user.id);
 
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id);
+      // Load the task
+      const { data: task, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-      const hasTaskGiverRole = roleData?.some(r => r.role === "task_giver" || r.role === "admin");
+      if (error) throw error;
 
-      if (!hasTaskGiverRole) {
+      if (task.task_giver_id !== session.user.id) {
         toast({
           title: "Access Denied",
-          description: "Only task givers can post tasks",
+          description: "You can only edit your own tasks",
           variant: "destructive",
         });
-        navigate("/dashboard");
+        navigate("/my-tasks");
+        return;
       }
+
+      setTaskStatus(task.status || "open");
+      setFormData({
+        title: task.title || "",
+        description: task.description || "",
+        category: task.category || "",
+        location: task.location || "",
+        pay_amount: task.pay_amount?.toString() || "",
+        estimated_duration: task.estimated_duration?.toString() || "",
+        budget_type: (task.budget_type as "fixed" | "hourly") || "fixed",
+        scheduled_date: task.scheduled_date ? new Date(task.scheduled_date).toISOString().slice(0, 16) : "",
+        tools_provided: task.tools_provided || false,
+        tools_description: task.tools_description || ""
+      });
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
+      navigate("/my-tasks");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSaveDraft = async () => {
-    if (!userId) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to save a draft",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleFormChange = (updates: Partial<typeof formData>) => {
+    setFormData(prev => ({ ...prev, ...updates }));
+    setHasUnsavedChanges(true);
+  };
 
-    // Validate minimum draft requirements
-    const draftValidation = draftSchema.safeParse({ title: formData.title });
-    if (!draftValidation.success) {
-      toast({
-        title: "Error",
-        description: draftValidation.error.errors[0].message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSavingDraft(true);
+  const handleAutoSave = useCallback(async () => {
+    if (!userId || !id || taskStatus !== "draft") return;
 
     try {
       const { error } = await supabase
         .from("tasks")
-        .insert({
-          task_giver_id: userId,
+        .update({
           title: formData.title.trim(),
           description: formData.description.trim() || "Draft - no description yet",
           category: formData.category || "Other",
@@ -224,14 +166,106 @@ const PostTask = () => {
           scheduled_date: formData.scheduled_date || null,
           tools_provided: formData.tools_provided,
           tools_description: formData.tools_description || null,
-          status: "draft"
-        });
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setLastSaved(new Date());
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error("Auto-save failed:", error);
+    }
+  }, [userId, id, formData, taskStatus]);
+
+  const handleSave = async () => {
+    if (!userId || !id) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({
+          title: formData.title.trim(),
+          description: formData.description.trim() || "Draft - no description yet",
+          category: formData.category || "Other",
+          location: formData.location.trim() || "TBD",
+          pay_amount: parseFloat(formData.pay_amount) || 0,
+          estimated_duration: formData.estimated_duration ? parseFloat(formData.estimated_duration) : null,
+          budget_type: formData.budget_type,
+          scheduled_date: formData.scheduled_date || null,
+          tools_provided: formData.tools_provided,
+          tools_description: formData.tools_description || null,
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setLastSaved(new Date());
+      setHasUnsavedChanges(false);
+
+      toast({
+        title: "Saved",
+        description: "Your changes have been saved",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!userId || !id) return;
+
+    setIsPublishing(true);
+
+    try {
+      const validation = taskSchema.safeParse({
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        location: formData.location,
+        pay_amount: parseFloat(formData.pay_amount),
+        estimated_duration: formData.estimated_duration ? parseFloat(formData.estimated_duration) : undefined,
+        budget_type: formData.budget_type,
+        scheduled_date: formData.scheduled_date,
+        tools_provided: formData.tools_provided,
+        tools_description: formData.tools_description,
+      });
+
+      if (!validation.success) {
+        const firstError = validation.error.errors[0];
+        throw new Error(firstError.message);
+      }
+
+      const { error } = await supabase
+        .from("tasks")
+        .update({
+          title: validation.data.title,
+          description: validation.data.description,
+          category: validation.data.category,
+          location: validation.data.location,
+          pay_amount: validation.data.pay_amount,
+          estimated_duration: validation.data.estimated_duration,
+          budget_type: validation.data.budget_type,
+          scheduled_date: validation.data.scheduled_date || null,
+          tools_provided: validation.data.tools_provided,
+          tools_description: validation.data.tools_description || null,
+          status: "open"
+        })
+        .eq("id", id);
 
       if (error) throw error;
 
       toast({
-        title: "Draft Saved",
-        description: "Your task has been saved as a draft. You can edit it from My Tasks.",
+        title: "Published!",
+        description: "Your task is now live and visible to taskers",
       });
 
       navigate("/my-tasks");
@@ -242,21 +276,14 @@ const PostTask = () => {
         variant: "destructive",
       });
     } finally {
-      setIsSavingDraft(false);
+      setIsPublishing(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!userId) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to post a task",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!userId || !id) return;
 
     setIsSubmitting(true);
 
@@ -281,8 +308,7 @@ const PostTask = () => {
 
       const { error } = await supabase
         .from("tasks")
-        .insert({
-          task_giver_id: userId,
+        .update({
           title: validation.data.title,
           description: validation.data.description,
           category: validation.data.category,
@@ -293,14 +319,14 @@ const PostTask = () => {
           scheduled_date: validation.data.scheduled_date || null,
           tools_provided: validation.data.tools_provided,
           tools_description: validation.data.tools_description || null,
-          status: "open"
-        });
+        })
+        .eq("id", id);
 
       if (error) throw error;
 
       toast({
         title: "Success!",
-        description: "Your task has been posted successfully",
+        description: "Your task has been updated",
       });
 
       navigate("/my-tasks");
@@ -315,28 +341,50 @@ const PostTask = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Edit Task - SaskTask"
+        description="Edit your task details"
+      />
       <Navbar />
       
       <div className="container mx-auto px-4 pt-24 pb-20 max-w-3xl">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Post a New Task</h1>
-            <p className="text-muted-foreground">Fill in the details to find the right person for your task</p>
+            <h1 className="text-4xl font-bold mb-2">Edit Task</h1>
+            <p className="text-muted-foreground">Update your task details</p>
           </div>
-          {lastSaved && (
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              Auto-saved {lastSaved.toLocaleTimeString()}
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            <Badge variant={taskStatus === "draft" ? "outline" : "default"}>
+              {taskStatus === "draft" ? "Draft" : taskStatus}
+            </Badge>
+            {taskStatus === "draft" && lastSaved && (
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Saved {lastSaved.toLocaleTimeString()}
+              </div>
+            )}
+          </div>
         </div>
 
         <Card className="border-border">
           <CardHeader>
             <CardTitle>Task Details</CardTitle>
-            <CardDescription>Provide clear information to attract qualified task doers. Auto-saves every 30 seconds.</CardDescription>
+            <CardDescription>
+              {taskStatus === "draft" 
+                ? "Complete the details and publish when ready. Auto-saves every 30 seconds."
+                : "Update your task information"
+              }
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -482,33 +530,48 @@ const PostTask = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || isSavingDraft}
-                  className="flex-1"
-                >
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Post Task
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleSaveDraft}
-                  disabled={isSubmitting || isSavingDraft}
-                  className="gap-2"
-                >
-                  {isSavingDraft ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  Save as Draft
-                </Button>
+                {taskStatus === "draft" ? (
+                  <>
+                    <Button
+                      type="button"
+                      onClick={handlePublish}
+                      disabled={isSubmitting || isPublishing}
+                      className="flex-1"
+                    >
+                      {isPublishing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      <Send className="mr-2 h-4 w-4" />
+                      Publish Task
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleSave}
+                      disabled={isSubmitting || isPublishing}
+                      className="gap-2"
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      Save Draft
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1"
+                  >
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Update Task
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate("/dashboard")}
-                  disabled={isSubmitting || isSavingDraft}
+                  onClick={() => navigate("/my-tasks")}
+                  disabled={isSubmitting || isPublishing}
                 >
                   Cancel
                 </Button>
@@ -523,4 +586,4 @@ const PostTask = () => {
   );
 };
 
-export default PostTask;
+export default TaskEdit;
