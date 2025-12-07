@@ -211,7 +211,7 @@ const Messages = () => {
                   <Card
                     key={conversation.booking_id}
                     className="cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => navigate(`/bookings?chat=${conversation.booking_id}`)}
+                    onClick={() => navigate(`/chat/${conversation.booking_id}`)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center gap-4">

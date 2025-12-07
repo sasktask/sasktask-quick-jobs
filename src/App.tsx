@@ -41,7 +41,7 @@ import Account from "./pages/Account";
 import Messages from "./pages/Messages";
 import ChatRoom from "./pages/ChatRoom";
 import MyTasks from "./pages/MyTasks";
-import BookingManagement from "./pages/BookingManagement";
+
 import AdminDashboard from "./pages/AdminDashboard";
 import { ChatButton } from "./components/ChatButton";
 
@@ -68,7 +68,6 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:id" element={<PublicProfile />} />
             <Route path="/bookings" element={<Bookings />} />
-            <Route path="/booking-management" element={<BookingManagement />} />
             <Route path="/task/:id" element={<TaskDetail />} />
             <Route path="/verification" element={<Verification />} />
             <Route path="/find-taskers" element={<FindTaskers />} />
