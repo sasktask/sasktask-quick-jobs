@@ -6,12 +6,14 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
+import { SEOHead } from "@/components/SEOHead";
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Snowflake, Sparkles, Truck, Star, Shield, Clock, DollarSign, Users, Wrench, Package, Monitor, Trees, Home, PaintBucket, MoreHorizontal, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock, Plus } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
 import heroInfographic from "@/assets/hero-infographic.jpg";
 import logo from "@/assets/sasktask-logo.png";
+
 const Index = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -124,6 +126,11 @@ const Index = () => {
   };
 
   return <div className="min-h-screen bg-background">
+      <SEOHead 
+        title="SaskTask - Find Local Help or Earn Money in Saskatchewan"
+        description="SaskTask connects you with verified local professionals for any task. From snow removal to home repairs, find trusted help in your Saskatchewan community or earn money completing tasks."
+        url="/"
+      />
       <Navbar />
       
       {/* Hero Section - Redesigned with Infographic */}
