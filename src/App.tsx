@@ -42,6 +42,7 @@ import Messages from "./pages/Messages";
 import ChatRoom from "./pages/ChatRoom";
 import MyTasks from "./pages/MyTasks";
 import TaskEdit from "./pages/TaskEdit";
+import Leaderboard from "./pages/Leaderboard";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import { ChatButton } from "./components/ChatButton";
@@ -86,6 +87,7 @@ const App = () => (
           <Route path="/admin/disputes" element={<AdminDisputes />} />
           <Route path="/admin/fraud" element={<AdminFraud />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/referrals" element={<ReferralProgram />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
