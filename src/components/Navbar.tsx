@@ -9,7 +9,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useTheme } from "next-themes";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount";
-import { NotificationsDropdown } from "./NotificationsDropdown";
 import { NotificationBell } from "./NotificationBell";
 import { MobileMenu } from "./MobileMenu";
 interface NavbarProps {
@@ -128,7 +127,7 @@ export const Navbar = ({
                   <Link to="/my-tasks" className="text-foreground hover:text-primary transition-colors font-medium">
                     My Tasks
                   </Link>
-                  <Link to="/booking-management" className="text-foreground hover:text-primary transition-colors font-medium">
+                  <Link to="/bookings" className="text-foreground hover:text-primary transition-colors font-medium">
                     My Bookings
                   </Link>
                   <Link to="/messages" className="text-foreground hover:text-primary transition-colors font-medium relative">
