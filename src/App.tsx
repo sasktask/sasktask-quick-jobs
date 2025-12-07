@@ -44,6 +44,7 @@ import MyTasks from "./pages/MyTasks";
 import TaskEdit from "./pages/TaskEdit";
 import Leaderboard from "./pages/Leaderboard";
 import HelpCenter from "./pages/HelpCenter";
+import MapView from "./pages/MapView";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import { ChatButton } from "./components/ChatButton";
@@ -78,6 +79,7 @@ const App = () => (
             <Route path="/become-tasker" element={<BecomeTasker />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/categories" element={<Categories />} />
+            <Route path="/map" element={<MapView />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
