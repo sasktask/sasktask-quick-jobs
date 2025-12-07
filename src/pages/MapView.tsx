@@ -3,14 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TaskMap } from "@/components/TaskMap";
+import { TaskClusterMap } from "@/components/TaskClusterMap";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, List, Filter, Loader2, Navigation, Target } from "lucide-react";
+import { MapPin, List, Filter, Loader2, Navigation, Target, Flame } from "lucide-react";
 import { getCategoryTitles } from "@/lib/categories";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { calculateDistance } from "@/lib/distance";
@@ -34,6 +36,7 @@ export default function MapView() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [mapboxToken, setMapboxToken] = useState<string>("");
   const [radiusKm, setRadiusKm] = useState(50);
+  const [showHeatmap, setShowHeatmap] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { location: userLocation, isLoading: locationLoading, error: locationError, requestLocation } = useUserLocation();
@@ -178,6 +181,17 @@ export default function MapView() {
               </div>
             )}
 
+            {/* Heatmap toggle */}
+            <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+              <Flame className="h-4 w-4 text-orange-500" />
+              <Label htmlFor="heatmap" className="text-sm cursor-pointer">Heatmap</Label>
+              <Switch
+                id="heatmap"
+                checked={showHeatmap}
+                onCheckedChange={setShowHeatmap}
+              />
+            </div>
+
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
@@ -248,12 +262,13 @@ export default function MapView() {
         </div>
 
         {/* Map */}
-        <TaskMap 
+        <TaskClusterMap 
           tasks={filteredTasks} 
           mapboxToken={mapboxToken}
           isLoading={isLoading}
           userLocation={userLocation}
           radiusKm={radiusKm}
+          showHeatmap={showHeatmap}
         />
 
         {/* Tasks without location */}

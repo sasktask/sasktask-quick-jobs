@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SEOHead } from "@/components/SEOHead";
 import { RecommendedTasks } from "@/components/RecommendedTasks";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
   Briefcase, 
   DollarSign, 
@@ -37,6 +38,30 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Realtime notifications
+  const handleNewTask = useCallback((task: any) => {
+    if (userRole === "task_doer") {
+      setTasks(prev => [task, ...prev.slice(0, 4)]);
+    }
+  }, [userRole]);
+
+  const handleNewMessage = useCallback(() => {
+    setStats(prev => ({ ...prev, unreadMessages: prev.unreadMessages + 1 }));
+  }, []);
+
+  const handleBookingUpdate = useCallback(() => {
+    if (user?.id && userRole) {
+      fetchStats(user.id, userRole);
+    }
+  }, [user?.id, userRole]);
+
+  useRealtimeNotifications({
+    userId: user?.id || null,
+    onNewTask: handleNewTask,
+    onNewMessage: handleNewMessage,
+    onBookingUpdate: handleBookingUpdate,
+  });
 
   useEffect(() => {
     checkUser();

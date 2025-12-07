@@ -32,3 +32,9 @@ verify_jwt = true
 
 [functions.ai-task-recommendations]
 verify_jwt = true
+
+[functions.ai-task-matching]
+verify_jwt = true
+
+[functions.ai-task-suggestions]
+verify_jwt = true
