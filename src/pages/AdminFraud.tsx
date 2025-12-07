@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AlertTriangle, Shield, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { OWNER_USER_ID } from "@/lib/constants";
 
 const AdminFraud = () => {
   const navigate = useNavigate();
@@ -35,16 +36,9 @@ const AdminFraud = () => {
       return;
     }
 
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .single();
-
-    if (!roles) {
-      toast.error("Access denied");
-      navigate("/");
+    if (user.id !== OWNER_USER_ID) {
+      toast.error("Access denied: Owner only");
+      navigate("/dashboard");
     }
   };
 

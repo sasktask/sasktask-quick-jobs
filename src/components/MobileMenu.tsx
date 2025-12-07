@@ -16,6 +16,7 @@ import {
   Mail
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { OWNER_USER_ID } from "@/lib/constants";
 import {
   Sheet,
   SheetContent,
@@ -189,8 +190,8 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
                 </Button>
               )}
 
-              {/* Admin Section */}
-              {userRole === "admin" && (
+              {/* Admin Section - Owner Only */}
+              {user?.id === OWNER_USER_ID && (
                 <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
                   <CollapsibleTrigger asChild>
                     <Button variant="ghost" className="w-full justify-between text-base font-medium text-destructive">

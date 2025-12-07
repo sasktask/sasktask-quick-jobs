@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SEOHead } from "@/components/SEOHead";
+import { OWNER_USER_ID } from "@/lib/constants";
 import {
   Table,
   TableBody,
@@ -54,14 +55,9 @@ export default function AdminDashboard() {
         return;
       }
 
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
-
-      const hasAdmin = roles?.some(r => r.role === "admin");
-      if (!hasAdmin) {
-        toast.error("Access denied: Admin only");
+      // Check if user is the owner
+      if (user.id !== OWNER_USER_ID) {
+        toast.error("Access denied: Owner only");
         navigate("/dashboard");
         return;
       }
