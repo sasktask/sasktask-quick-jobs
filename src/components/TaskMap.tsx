@@ -4,7 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, MapPin, DollarSign, Clock, X, Navigation } from 'lucide-react';
+import { Loader2, MapPin, DollarSign, Clock, X, Navigation, Crosshair } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { timeEstimateLabels, TimeEstimate } from '@/lib/categories';
 
@@ -32,18 +32,30 @@ interface TaskMapProps {
   isLoading?: boolean;
   userLocation?: UserLocation | null;
   radiusKm?: number;
+  onCenterOnLocation?: () => void;
 }
 
 // Saskatchewan center coordinates
 const SASKATCHEWAN_CENTER: [number, number] = [-106.4509, 52.9399];
 
-export function TaskMap({ tasks, mapboxToken, isLoading, userLocation, radiusKm = 50 }: TaskMapProps) {
+export function TaskMap({ tasks, mapboxToken, isLoading, userLocation, radiusKm = 50, onCenterOnLocation }: TaskMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const navigate = useNavigate();
+
+  const centerOnUserLocation = () => {
+    if (map.current && userLocation) {
+      map.current.flyTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        zoom: 11,
+        duration: 1000
+      });
+    }
+    onCenterOnLocation?.();
+  };
 
   const getTimeEstimate = (duration: number | undefined): TimeEstimate => {
     if (!duration || duration <= 0.5) return "quick";
@@ -262,6 +274,21 @@ export function TaskMap({ tasks, mapboxToken, isLoading, userLocation, radiusKm 
           </Badge>
         )}
       </div>
+
+      {/* Center on location button */}
+      {userLocation && (
+        <div className="absolute top-4 right-24 z-10">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={centerOnUserLocation}
+            className="bg-background/90 backdrop-blur-sm shadow-lg gap-1"
+          >
+            <Crosshair className="h-4 w-4" />
+            Center
+          </Button>
+        </div>
+      )}
 
       {/* Selected task popup */}
       {selectedTask && (
