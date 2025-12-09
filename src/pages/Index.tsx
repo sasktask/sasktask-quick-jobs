@@ -8,6 +8,7 @@ import { InstallAppButton } from "@/components/InstallAppButton";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { SEOHead } from "@/components/SEOHead";
 import { FeaturedCategories } from "@/components/FeaturedCategories";
+import { PopularThisWeek } from "@/components/PopularThisWeek";
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Snowflake, Sparkles, Truck, Star, Shield, Clock, DollarSign, Users, Wrench, Package, Monitor, Trees, Home, PaintBucket, MoreHorizontal, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock, Plus } from "lucide-react";
@@ -346,6 +347,9 @@ const Index = () => {
 
       {/* Featured Categories Section */}
       <FeaturedCategories />
+
+      {/* Popular This Week Section */}
+      <PopularThisWeek />
 
       {/* How It Works Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-background via-muted/20 to-background">
