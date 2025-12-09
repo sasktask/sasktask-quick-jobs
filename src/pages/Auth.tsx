@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,17 @@ import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import { z } from "zod";
-import { Eye, EyeOff, Mail, ArrowLeft, Shield, Loader2, Check, AlertCircle, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Mail, ArrowLeft, Shield, Loader2, Check, AlertCircle, Lock, User, Phone, Smartphone } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Separator } from "@/components/ui/separator";
 
 // Email validation schema
 const emailSchema = z.string().trim().toLowerCase().email("Please enter a valid email address").max(255, "Email is too long");
+
+// Phone validation
+const phoneSchema = z.string()
+  .regex(/^\+?[1-9]\d{6,14}$/, "Please enter a valid phone number (e.g., +1234567890)");
 
 // Sign in validation
 const signInSchema = z.object({
@@ -97,6 +103,9 @@ const recordAttempt = (success: boolean) => {
   localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(data));
 };
 
+type LoginMethod = "email" | "phone";
+type PhoneStep = "enter" | "verify";
+
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const isPasswordReset = searchParams.get("reset") === "true";
@@ -117,6 +126,12 @@ const Auth = () => {
   const [showNewPassword, setShowNewPassword] = useState(isPasswordReset);
   const [newPassword, setNewPassword] = useState("");
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  
+  // New states for simplified login
+  const [loginMethod, setLoginMethod] = useState<LoginMethod>("email");
+  const [phoneStep, setPhoneStep] = useState<PhoneStep>("enter");
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [otpCountdown, setOtpCountdown] = useState(0);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -161,6 +176,14 @@ const Auth = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate, isPasswordReset]);
+
+  // OTP countdown timer
+  useEffect(() => {
+    if (otpCountdown > 0) {
+      const timer = setTimeout(() => setOtpCountdown(otpCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpCountdown]);
 
   const clearErrors = () => {
     setFormErrors({});
@@ -310,6 +333,126 @@ const Auth = () => {
     }
   };
 
+  const handlePhoneLogin = async () => {
+    clearErrors();
+    setRateLimitError(null);
+    
+    const { allowed, remainingTime } = checkRateLimit();
+    if (!allowed) {
+      setRateLimitError(`Too many failed attempts. Please try again in ${remainingTime} minutes.`);
+      return;
+    }
+
+    // Validate phone
+    const validation = phoneSchema.safeParse(phone);
+    if (!validation.success) {
+      setFormErrors({ phone: validation.error.errors[0].message });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: validation.data,
+      });
+
+      if (error) {
+        if (error.message.includes("not found") || error.message.includes("not registered")) {
+          setFormErrors({ phone: "This phone number is not registered. Please sign up first." });
+          return;
+        }
+        throw error;
+      }
+
+      toast({
+        title: "Code sent!",
+        description: "Enter the 6-digit code sent to your phone.",
+      });
+      setPhoneStep("verify");
+      setOtpCountdown(60);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to send code. Please try again.";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (phoneOtp.length !== 6) {
+      toast({
+        title: "Invalid code",
+        description: "Please enter the 6-digit code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone,
+        token: phoneOtp,
+        type: "sms",
+      });
+
+      if (error) {
+        recordAttempt(false);
+        throw error;
+      }
+
+      recordAttempt(true);
+      toast({
+        title: "Welcome back!",
+        description: "Signing you in...",
+      });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Invalid or expired code";
+      toast({
+        title: "Verification failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      setPhoneOtp("");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (otpCountdown > 0) return;
+    
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Code resent",
+        description: "A new code has been sent to your phone.",
+      });
+      setOtpCountdown(60);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to resend code";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     clearErrors();
@@ -335,10 +478,11 @@ const Auth = () => {
       });
       setShowForgotPassword(false);
       setResetEmail("");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to send reset email. Please try again.";
       toast({
         title: "Error",
-        description: error.message || "Failed to send reset email. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -369,10 +513,11 @@ const Auth = () => {
       });
       
       navigate("/dashboard");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to update password. Please try again.";
       toast({
         title: "Error",
-        description: error.message || "Failed to update password. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -552,113 +697,267 @@ const Auth = () => {
             <CardContent>
               <Tabs defaultValue="signin" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="signin" onClick={clearErrors}>Sign In</TabsTrigger>
+                  <TabsTrigger value="signin" onClick={() => { clearErrors(); setPhoneStep("enter"); setPhoneOtp(""); }}>Sign In</TabsTrigger>
                   <TabsTrigger value="signup" onClick={clearErrors}>Sign Up</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="signin">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    {rateLimitError && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{rateLimitError}</AlertDescription>
-                      </Alert>
-                    )}
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signin-email"
-                          type="email"
-                          placeholder="you@example.com"
-                          value={email}
-                          onChange={(e) => {
-                            setEmail(e.target.value.toLowerCase().trim());
-                            if (formErrors.email) clearErrors();
-                          }}
-                          className={`pl-10 ${formErrors.email ? "border-destructive" : ""}`}
-                          required
-                          autoComplete="email"
-                          disabled={!!rateLimitError}
-                        />
+                  {/* Login Method Toggle */}
+                  <div className="flex gap-2 mb-6">
+                    <Button
+                      type="button"
+                      variant={loginMethod === "email" ? "default" : "outline"}
+                      className="flex-1 gap-2"
+                      onClick={() => { setLoginMethod("email"); setPhoneStep("enter"); setPhoneOtp(""); clearErrors(); }}
+                    >
+                      <Mail className="h-4 w-4" />
+                      Email
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={loginMethod === "phone" ? "default" : "outline"}
+                      className="flex-1 gap-2"
+                      onClick={() => { setLoginMethod("phone"); clearErrors(); }}
+                    >
+                      <Phone className="h-4 w-4" />
+                      Phone
+                    </Button>
+                  </div>
+
+                  {rateLimitError && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{rateLimitError}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Email/Password Login */}
+                  {loginMethod === "email" && (
+                    <form onSubmit={handleSignIn} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="signin-email">Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="signin-email"
+                            type="email"
+                            placeholder="you@example.com"
+                            value={email}
+                            onChange={(e) => {
+                              setEmail(e.target.value.toLowerCase().trim());
+                              if (formErrors.email) clearErrors();
+                            }}
+                            className={`pl-10 ${formErrors.email ? "border-destructive" : ""}`}
+                            required
+                            autoComplete="email"
+                            disabled={!!rateLimitError}
+                          />
+                        </div>
+                        {formErrors.email && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {formErrors.email}
+                          </p>
+                        )}
                       </div>
-                      {formErrors.email && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {formErrors.email}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signin-password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => {
-                            setPassword(e.target.value);
-                            if (formErrors.password) clearErrors();
-                          }}
-                          className={`pl-10 pr-10 ${formErrors.password ? "border-destructive" : ""}`}
-                          required
-                          autoComplete="current-password"
-                          disabled={!!rateLimitError}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                          tabIndex={-1}
+                      <div className="space-y-2">
+                        <Label htmlFor="signin-password">Password</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="signin-password"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => {
+                              setPassword(e.target.value);
+                              if (formErrors.password) clearErrors();
+                            }}
+                            className={`pl-10 pr-10 ${formErrors.password ? "border-destructive" : ""}`}
+                            required
+                            autoComplete="current-password"
+                            disabled={!!rateLimitError}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                            tabIndex={-1}
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        {formErrors.password && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {formErrors.password}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="remember" 
+                            checked={rememberMe}
+                            onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                          />
+                          <Label htmlFor="remember" className="text-sm cursor-pointer">Remember me</Label>
+                        </div>
+                        <Button 
+                          type="button" 
+                          variant="link" 
+                          className="p-0 h-auto text-sm"
+                          onClick={() => setShowForgotPassword(true)}
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          Forgot password?
                         </Button>
                       </div>
-                      {formErrors.password && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {formErrors.password}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="remember" 
-                          checked={rememberMe}
-                          onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                        />
-                        <Label htmlFor="remember" className="text-sm cursor-pointer">Remember me</Label>
-                      </div>
-                      <Button 
-                        type="button" 
-                        variant="link" 
-                        className="p-0 h-auto text-sm"
-                        onClick={() => setShowForgotPassword(true)}
-                      >
-                        Forgot password?
+                      <Button type="submit" className="w-full" disabled={isLoading || !!rateLimitError} variant="hero">
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Signing in...
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="h-4 w-4 mr-2" />
+                            Sign In
+                          </>
+                        )}
                       </Button>
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLoading || !!rateLimitError} variant="hero">
-                      {isLoading ? (
+                    </form>
+                  )}
+
+                  {/* Phone OTP Login */}
+                  {loginMethod === "phone" && (
+                    <div className="space-y-4">
+                      {phoneStep === "enter" && (
                         <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Signing in...
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="h-4 w-4 mr-2" />
-                          Sign In Securely
+                          <div className="space-y-2">
+                            <Label htmlFor="signin-phone">Phone Number</Label>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                id="signin-phone"
+                                type="tel"
+                                placeholder="+1234567890"
+                                value={phone}
+                                onChange={(e) => {
+                                  setPhone(e.target.value);
+                                  if (formErrors.phone) clearErrors();
+                                }}
+                                className={`pl-10 ${formErrors.phone ? "border-destructive" : ""}`}
+                                required
+                                disabled={!!rateLimitError}
+                              />
+                            </div>
+                            {formErrors.phone && (
+                              <p className="text-sm text-destructive flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                {formErrors.phone}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              We'll send a 6-digit code to verify your phone
+                            </p>
+                          </div>
+                          <Button 
+                            type="button" 
+                            className="w-full" 
+                            disabled={isLoading || !!rateLimitError || !phone}
+                            variant="hero"
+                            onClick={handlePhoneLogin}
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Sending code...
+                              </>
+                            ) : (
+                              <>
+                                <Smartphone className="h-4 w-4 mr-2" />
+                                Send Code
+                              </>
+                            )}
+                          </Button>
                         </>
                       )}
-                    </Button>
-                  </form>
+
+                      {phoneStep === "verify" && (
+                        <>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="w-fit mb-2"
+                            onClick={() => { setPhoneStep("enter"); setPhoneOtp(""); }}
+                          >
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Change number
+                          </Button>
+                          
+                          <div className="text-center mb-4">
+                            <p className="text-sm text-muted-foreground">
+                              Enter the 6-digit code sent to
+                            </p>
+                            <p className="font-medium">{phone}</p>
+                          </div>
+
+                          <div className="flex justify-center mb-4">
+                            <InputOTP
+                              maxLength={6}
+                              value={phoneOtp}
+                              onChange={setPhoneOtp}
+                              disabled={isLoading}
+                            >
+                              <InputOTPGroup>
+                                <InputOTPSlot index={0} />
+                                <InputOTPSlot index={1} />
+                                <InputOTPSlot index={2} />
+                                <InputOTPSlot index={3} />
+                                <InputOTPSlot index={4} />
+                                <InputOTPSlot index={5} />
+                              </InputOTPGroup>
+                            </InputOTP>
+                          </div>
+
+                          <Button 
+                            type="button" 
+                            className="w-full" 
+                            disabled={isLoading || phoneOtp.length !== 6}
+                            variant="hero"
+                            onClick={handleVerifyPhoneOtp}
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Verifying...
+                              </>
+                            ) : (
+                              <>
+                                <Check className="h-4 w-4 mr-2" />
+                                Verify & Sign In
+                              </>
+                            )}
+                          </Button>
+
+                          <div className="text-center mt-4">
+                            <Button
+                              type="button"
+                              variant="link"
+                              size="sm"
+                              onClick={handleResendOtp}
+                              disabled={otpCountdown > 0 || isLoading}
+                            >
+                              {otpCountdown > 0 ? `Resend code in ${otpCountdown}s` : "Resend code"}
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="signup">
@@ -714,26 +1013,33 @@ const Auth = () => {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-phone">Phone Number (Optional)</Label>
-                      <Input
-                        id="signup-phone"
-                        type="tel"
-                        placeholder="+1234567890"
-                        value={phone}
-                        onChange={(e) => {
-                          setPhone(e.target.value);
-                          if (formErrors.phone) clearErrors();
-                        }}
-                        className={formErrors.phone ? "border-destructive" : ""}
-                        autoComplete="tel"
-                      />
+                      <Label htmlFor="signup-phone">Phone Number (for quick login later)</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-phone"
+                          type="tel"
+                          placeholder="+1234567890"
+                          value={phone}
+                          onChange={(e) => {
+                            setPhone(e.target.value);
+                            if (formErrors.phone) clearErrors();
+                          }}
+                          className={`pl-10 ${formErrors.phone ? "border-destructive" : ""}`}
+                          autoComplete="tel"
+                        />
+                      </div>
                       {formErrors.phone && (
                         <p className="text-sm text-destructive">{formErrors.phone}</p>
                       )}
+                      <p className="text-xs text-muted-foreground">
+                        Add your phone to enable quick login with SMS code
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-password">Password</Label>
                       <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signup-password"
                           type={showPassword ? "text" : "password"}
@@ -743,7 +1049,7 @@ const Auth = () => {
                             setPassword(e.target.value);
                             if (formErrors.password) clearErrors();
                           }}
-                          className={formErrors.password ? "border-destructive" : ""}
+                          className={`pl-10 pr-10 ${formErrors.password ? "border-destructive" : ""}`}
                           required
                           autoComplete="new-password"
                         />
@@ -804,6 +1110,7 @@ const Auth = () => {
                     <div className="space-y-2">
                       <Label htmlFor="signup-confirm-password">Confirm Password</Label>
                       <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signup-confirm-password"
                           type={showConfirmPassword ? "text" : "password"}
@@ -813,7 +1120,7 @@ const Auth = () => {
                             setConfirmPassword(e.target.value);
                             if (formErrors.confirmPassword) clearErrors();
                           }}
-                          className={formErrors.confirmPassword ? "border-destructive" : ""}
+                          className={`pl-10 pr-10 ${formErrors.confirmPassword ? "border-destructive" : ""}`}
                           required
                           autoComplete="new-password"
                         />
@@ -856,14 +1163,6 @@ const Auth = () => {
                         </div>
                       </RadioGroup>
                     </div>
-                    
-                    <Alert>
-                      <Shield className="h-4 w-4" />
-                      <AlertDescription className="text-xs">
-                        By signing up, you agree to our Terms of Service and Privacy Policy. Your data is encrypted and secure.
-                      </AlertDescription>
-                    </Alert>
-
                     <Button type="submit" className="w-full" disabled={isLoading} variant="hero">
                       {isLoading ? (
                         <>
@@ -871,14 +1170,34 @@ const Auth = () => {
                           Creating account...
                         </>
                       ) : (
-                        "Create Account"
+                        <>
+                          <User className="h-4 w-4 mr-2" />
+                          Create Account
+                        </>
                       )}
                     </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      By signing up, you agree to our{" "}
+                      <a href="/terms" className="text-primary hover:underline">
+                        Terms of Service
+                      </a>{" "}
+                      and{" "}
+                      <a href="/privacy" className="text-primary hover:underline">
+                        Privacy Policy
+                      </a>
+                    </p>
                   </form>
                 </TabsContent>
               </Tabs>
             </CardContent>
           </Card>
+
+          <p className="text-center mt-6 text-sm text-muted-foreground">
+            Need help?{" "}
+            <a href="/contact" className="text-primary hover:underline">
+              Contact Support
+            </a>
+          </p>
         </div>
       </div>
     </div>
