@@ -1277,6 +1277,1062 @@ export const categories: Category[] = [
     timeEstimate: "medium",
     categoryType: "outdoor",
     skillLevel: "beginner"
+  },
+
+  // ========== ADDITIONAL TRADES & SERVICES ==========
+  {
+    icon: Thermometer,
+    title: "Insulation Installation",
+    count: "30+ tasks",
+    color: "from-pink-600 to-rose-600",
+    description: "Attic, walls, basement insulation",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Droplet,
+    title: "Well & Pump Services",
+    count: "20+ tasks",
+    color: "from-blue-800 to-indigo-800",
+    description: "Well maintenance, pump repairs",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: Flame,
+    title: "Furnace Maintenance",
+    count: "35+ tasks",
+    color: "from-red-600 to-orange-600",
+    description: "Cleaning, filters, tune-ups",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Bath,
+    title: "Bathroom Renovation",
+    count: "40+ tasks",
+    color: "from-cyan-500 to-teal-500",
+    description: "Fixtures, tiling, plumbing",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: CookingPot,
+    title: "Kitchen Renovation",
+    count: "35+ tasks",
+    color: "from-amber-500 to-orange-500",
+    description: "Cabinets, counters, appliances",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: Armchair,
+    title: "Upholstery Repair",
+    count: "25+ tasks",
+    color: "from-purple-600 to-indigo-600",
+    description: "Furniture fabric, cushions, springs",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Lamp,
+    title: "Lamp & Light Repair",
+    count: "30+ tasks",
+    color: "from-yellow-400 to-amber-400",
+    description: "Rewiring, fixtures, antiques",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Fan,
+    title: "Ceiling Fan Installation",
+    count: "40+ tasks",
+    color: "from-sky-500 to-blue-500",
+    description: "Installation, balancing, repairs",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: WashingMachine,
+    title: "Washer/Dryer Hookup",
+    count: "35+ tasks",
+    color: "from-slate-500 to-gray-500",
+    description: "Installation, venting, connections",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Microwave,
+    title: "Appliance Installation",
+    count: "45+ tasks",
+    color: "from-zinc-500 to-stone-500",
+    description: "Microwaves, dishwashers, ranges",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+
+  // ========== OUTDOOR RECREATION & EQUIPMENT ==========
+  {
+    icon: Tent,
+    title: "Camping Equipment Setup",
+    count: "20+ tasks",
+    color: "from-green-700 to-emerald-700",
+    description: "Tents, campers, gear assembly",
+    timeEstimate: "short",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Backpack,
+    title: "Outdoor Guide",
+    count: "25+ tasks",
+    color: "from-teal-600 to-green-600",
+    description: "Hiking, fishing, hunting spots",
+    timeEstimate: "long",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Target,
+    title: "Archery & Shooting Range",
+    count: "15+ tasks",
+    color: "from-red-700 to-rose-700",
+    description: "Target setup, instruction",
+    timeEstimate: "short",
+    categoryType: "outdoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: Fish,
+    title: "Fishing Guide",
+    count: "25+ tasks",
+    color: "from-blue-600 to-cyan-600",
+    description: "Lake, river, ice fishing",
+    timeEstimate: "long",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Mountain,
+    title: "Trail Maintenance",
+    count: "20+ tasks",
+    color: "from-stone-600 to-amber-600",
+    description: "Clearing, marking, repairs",
+    timeEstimate: "long",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Snowflake,
+    title: "Ice Rink Maintenance",
+    count: "20+ tasks",
+    color: "from-cyan-400 to-blue-400",
+    description: "Flooding, cleaning, repairs",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Gamepad2,
+    title: "Pool Table Services",
+    count: "15+ tasks",
+    color: "from-green-800 to-emerald-800",
+    description: "Moving, leveling, refelting",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: Trophy,
+    title: "Sports Field Setup",
+    count: "30+ tasks",
+    color: "from-lime-500 to-green-500",
+    description: "Lines, nets, goals, equipment",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+
+  // ========== SPECIALTY CLEANING ==========
+  {
+    icon: Sparkles,
+    title: "Post-Construction Cleanup",
+    count: "40+ tasks",
+    color: "from-amber-500 to-yellow-500",
+    description: "Debris removal, deep cleaning",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Sparkles,
+    title: "Move-Out Cleaning",
+    count: "55+ tasks",
+    color: "from-cyan-500 to-teal-500",
+    description: "Deep clean for rentals, homes",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Sparkles,
+    title: "Hoarding Cleanup",
+    count: "20+ tasks",
+    color: "from-gray-600 to-slate-600",
+    description: "Sorting, cleaning, disposal",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Sofa,
+    title: "Carpet Cleaning",
+    count: "45+ tasks",
+    color: "from-blue-500 to-indigo-500",
+    description: "Steam cleaning, stain removal",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Bed,
+    title: "Mattress Cleaning",
+    count: "25+ tasks",
+    color: "from-purple-400 to-pink-400",
+    description: "Sanitizing, stain removal",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Armchair,
+    title: "Upholstery Cleaning",
+    count: "35+ tasks",
+    color: "from-rose-500 to-pink-500",
+    description: "Couches, chairs, fabric care",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Sparkles,
+    title: "Grout Cleaning",
+    count: "30+ tasks",
+    color: "from-stone-400 to-zinc-400",
+    description: "Tile grout, sealing, restoration",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Car,
+    title: "Garage Floor Coating",
+    count: "20+ tasks",
+    color: "from-gray-500 to-zinc-500",
+    description: "Epoxy, sealing, prep work",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+
+  // ========== WELLNESS & CARE ==========
+  {
+    icon: Heart,
+    title: "Respite Care",
+    count: "30+ tasks",
+    color: "from-pink-500 to-rose-500",
+    description: "Caregiver relief, supervision",
+    timeEstimate: "flexible",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Stethoscope,
+    title: "Post-Surgery Help",
+    count: "25+ tasks",
+    color: "from-red-400 to-pink-400",
+    description: "Recovery assistance, errands",
+    timeEstimate: "flexible",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Accessibility,
+    title: "Disability Assistance",
+    count: "35+ tasks",
+    color: "from-blue-400 to-indigo-400",
+    description: "Daily tasks, transportation",
+    timeEstimate: "flexible",
+    categoryType: "both",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Eye,
+    title: "Vision Assistance",
+    count: "20+ tasks",
+    color: "from-indigo-500 to-purple-500",
+    description: "Reading, navigation, errands",
+    timeEstimate: "flexible",
+    categoryType: "both",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Ear,
+    title: "Hearing Assistance",
+    count: "15+ tasks",
+    color: "from-teal-400 to-cyan-400",
+    description: "Communication support, errands",
+    timeEstimate: "flexible",
+    categoryType: "both",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Soup,
+    title: "Meal Delivery",
+    count: "40+ tasks",
+    color: "from-orange-400 to-amber-400",
+    description: "Hot meals, special diets",
+    timeEstimate: "short",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+
+  // ========== ANIMAL & PET SERVICES ==========
+  {
+    icon: Dog,
+    title: "Dog Training",
+    count: "30+ tasks",
+    color: "from-amber-500 to-orange-500",
+    description: "Basic commands, behavior",
+    timeEstimate: "short",
+    categoryType: "both",
+    skillLevel: "expert"
+  },
+  {
+    icon: Dog,
+    title: "Pet Bathing",
+    count: "35+ tasks",
+    color: "from-cyan-400 to-blue-400",
+    description: "Washing, drying, brushing",
+    timeEstimate: "short",
+    categoryType: "both",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Home,
+    title: "Pet Fence Installation",
+    count: "25+ tasks",
+    color: "from-green-600 to-teal-600",
+    description: "Invisible fence, kennel runs",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Syringe,
+    title: "Pet Medication",
+    count: "20+ tasks",
+    color: "from-blue-500 to-indigo-500",
+    description: "Administering meds, injections",
+    timeEstimate: "quick",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Car,
+    title: "Pet Transport",
+    count: "35+ tasks",
+    color: "from-purple-500 to-pink-500",
+    description: "Vet visits, groomer, boarding",
+    timeEstimate: "short",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Milk,
+    title: "Farm Animal Feeding",
+    count: "25+ tasks",
+    color: "from-amber-600 to-yellow-600",
+    description: "Cattle, horses, goats, pigs",
+    timeEstimate: "short",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Fence,
+    title: "Livestock Fencing",
+    count: "30+ tasks",
+    color: "from-stone-600 to-amber-600",
+    description: "Electric, barbed wire, panels",
+    timeEstimate: "long",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+
+  // ========== EQUIPMENT & MACHINERY ==========
+  {
+    icon: Cog,
+    title: "Small Engine Repair",
+    count: "35+ tasks",
+    color: "from-gray-600 to-slate-600",
+    description: "Mowers, trimmers, chainsaws",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: Shovel,
+    title: "Equipment Operation",
+    count: "25+ tasks",
+    color: "from-yellow-600 to-amber-600",
+    description: "Bobcat, tractor, excavator",
+    timeEstimate: "long",
+    categoryType: "outdoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: Wrench,
+    title: "Lawn Mower Service",
+    count: "40+ tasks",
+    color: "from-green-600 to-lime-600",
+    description: "Tune-ups, blade sharpening",
+    timeEstimate: "short",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Axe,
+    title: "Chainsaw Services",
+    count: "30+ tasks",
+    color: "from-orange-700 to-red-700",
+    description: "Sharpening, repairs, tree work",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: Settings,
+    title: "Generator Maintenance",
+    count: "25+ tasks",
+    color: "from-zinc-600 to-gray-600",
+    description: "Service, testing, fuel systems",
+    timeEstimate: "short",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Gauge,
+    title: "Pressure Washer Repair",
+    count: "20+ tasks",
+    color: "from-blue-600 to-cyan-600",
+    description: "Pumps, hoses, engines",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+
+  // ========== CREATIVE & ARTISAN ==========
+  {
+    icon: Paintbrush,
+    title: "Mural Painting",
+    count: "20+ tasks",
+    color: "from-pink-500 to-purple-500",
+    description: "Wall art, custom murals",
+    timeEstimate: "long",
+    categoryType: "both",
+    skillLevel: "expert"
+  },
+  {
+    icon: PenTool,
+    title: "Sign Making",
+    count: "25+ tasks",
+    color: "from-blue-500 to-indigo-500",
+    description: "Custom signs, lettering",
+    timeEstimate: "medium",
+    categoryType: "both",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Gem,
+    title: "Jewelry Repair",
+    count: "20+ tasks",
+    color: "from-yellow-400 to-amber-400",
+    description: "Ring sizing, chain repair",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: Watch,
+    title: "Watch Repair",
+    count: "15+ tasks",
+    color: "from-gray-500 to-slate-500",
+    description: "Battery, bands, movement",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: Glasses,
+    title: "Eyeglass Repair",
+    count: "15+ tasks",
+    color: "from-indigo-400 to-purple-400",
+    description: "Frame adjustments, repairs",
+    timeEstimate: "quick",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Crown,
+    title: "Antique Restoration",
+    count: "25+ tasks",
+    color: "from-amber-600 to-yellow-600",
+    description: "Furniture, decor, refinishing",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: Paintbrush,
+    title: "Furniture Refinishing",
+    count: "30+ tasks",
+    color: "from-amber-700 to-orange-700",
+    description: "Stripping, staining, finishing",
+    timeEstimate: "long",
+    categoryType: "both",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Scissors,
+    title: "Custom Curtains",
+    count: "20+ tasks",
+    color: "from-purple-400 to-pink-400",
+    description: "Measuring, sewing, installation",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+
+  // ========== TRANSPORTATION & LOGISTICS ==========
+  {
+    icon: Truck,
+    title: "Trailer Moving",
+    count: "30+ tasks",
+    color: "from-orange-600 to-red-600",
+    description: "Boat, utility, RV trailers",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Plane,
+    title: "Airport Pickup",
+    count: "40+ tasks",
+    color: "from-sky-500 to-blue-500",
+    description: "Arrivals, departures, luggage",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Bus,
+    title: "Group Transport",
+    count: "25+ tasks",
+    color: "from-yellow-500 to-amber-500",
+    description: "Events, tours, shuttles",
+    timeEstimate: "long",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: TrainFront,
+    title: "Station Pickup",
+    count: "20+ tasks",
+    color: "from-teal-500 to-cyan-500",
+    description: "Train, bus station transfers",
+    timeEstimate: "short",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Ambulance,
+    title: "Medical Transport",
+    count: "30+ tasks",
+    color: "from-red-500 to-pink-500",
+    description: "Appointments, dialysis, therapy",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+
+  // ========== SPECIALTY INSTALLATIONS ==========
+  {
+    icon: Radio,
+    title: "Antenna Installation",
+    count: "20+ tasks",
+    color: "from-gray-500 to-slate-500",
+    description: "TV, radio, satellite dishes",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Satellite,
+    title: "Satellite Dish Setup",
+    count: "25+ tasks",
+    color: "from-blue-600 to-indigo-600",
+    description: "Installation, alignment, cables",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Speaker,
+    title: "Surround Sound Install",
+    count: "30+ tasks",
+    color: "from-purple-500 to-indigo-500",
+    description: "Speakers, wiring, calibration",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Headphones,
+    title: "Home Studio Setup",
+    count: "15+ tasks",
+    color: "from-violet-500 to-purple-500",
+    description: "Recording, acoustic treatment",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: Scan,
+    title: "Home Network Setup",
+    count: "35+ tasks",
+    color: "from-cyan-500 to-blue-500",
+    description: "WiFi, ethernet, mesh systems",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: QrCode,
+    title: "Intercom Installation",
+    count: "20+ tasks",
+    color: "from-gray-600 to-zinc-600",
+    description: "Video doorbells, intercoms",
+    timeEstimate: "short",
+    categoryType: "both",
+    skillLevel: "intermediate"
+  },
+
+  // ========== BUILDING & GROUNDS ==========
+  {
+    icon: Building,
+    title: "Commercial Cleaning",
+    count: "45+ tasks",
+    color: "from-blue-500 to-cyan-500",
+    description: "Offices, retail, warehouses",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Building2,
+    title: "Office Setup",
+    count: "30+ tasks",
+    color: "from-indigo-500 to-purple-500",
+    description: "Desks, chairs, equipment",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Store,
+    title: "Retail Display Setup",
+    count: "25+ tasks",
+    color: "from-pink-500 to-rose-500",
+    description: "Shelving, displays, signage",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Factory,
+    title: "Warehouse Organization",
+    count: "35+ tasks",
+    color: "from-gray-600 to-slate-600",
+    description: "Racking, inventory, cleanup",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Church,
+    title: "Church Maintenance",
+    count: "20+ tasks",
+    color: "from-purple-600 to-indigo-600",
+    description: "Cleaning, repairs, grounds",
+    timeEstimate: "medium",
+    categoryType: "both",
+    skillLevel: "beginner"
+  },
+  {
+    icon: School,
+    title: "School Event Help",
+    count: "30+ tasks",
+    color: "from-green-500 to-teal-500",
+    description: "Setup, decorating, cleanup",
+    timeEstimate: "medium",
+    categoryType: "both",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Library,
+    title: "Library Organization",
+    count: "20+ tasks",
+    color: "from-amber-500 to-orange-500",
+    description: "Sorting, shelving, cataloging",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+
+  // ========== SAFETY & EMERGENCY ==========
+  {
+    icon: FireExtinguisher,
+    title: "Fire Safety Check",
+    count: "25+ tasks",
+    color: "from-red-600 to-orange-600",
+    description: "Extinguishers, alarms, exits",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: HardHat,
+    title: "Safety Inspection",
+    count: "20+ tasks",
+    color: "from-yellow-500 to-amber-500",
+    description: "Home, workplace safety audit",
+    timeEstimate: "medium",
+    categoryType: "both",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Shield,
+    title: "Emergency Prep",
+    count: "25+ tasks",
+    color: "from-red-500 to-pink-500",
+    description: "Kits, supplies, planning",
+    timeEstimate: "medium",
+    categoryType: "both",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Thermometer,
+    title: "Water Damage Cleanup",
+    count: "30+ tasks",
+    color: "from-blue-700 to-cyan-700",
+    description: "Extraction, drying, repairs",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Wind,
+    title: "Storm Cleanup",
+    count: "45+ tasks",
+    color: "from-gray-500 to-slate-500",
+    description: "Debris, branches, damage",
+    timeEstimate: "long",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+
+  // ========== SEASONAL SPECIALTY ==========
+  {
+    icon: Gift,
+    title: "Holiday Decorating",
+    count: "50+ tasks",
+    color: "from-red-500 to-green-500",
+    description: "Christmas, Halloween, seasonal",
+    timeEstimate: "medium",
+    categoryType: "both",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Sparkles,
+    title: "Christmas Light Install",
+    count: "40+ tasks",
+    color: "from-red-500 to-yellow-500",
+    description: "Outdoor lights, trees, displays",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Umbrella,
+    title: "Rain Gutter Guards",
+    count: "25+ tasks",
+    color: "from-gray-500 to-blue-500",
+    description: "Installation, cleaning, repairs",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: CloudRain,
+    title: "Sump Pump Service",
+    count: "25+ tasks",
+    color: "from-blue-600 to-indigo-600",
+    description: "Testing, repairs, installation",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Moon,
+    title: "Outdoor Lighting",
+    count: "30+ tasks",
+    color: "from-amber-400 to-yellow-400",
+    description: "Path lights, security, solar",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+
+  // ========== MISCELLANEOUS SERVICES ==========
+  {
+    icon: Bookmark,
+    title: "Estate Sale Help",
+    count: "25+ tasks",
+    color: "from-purple-500 to-pink-500",
+    description: "Pricing, setup, sales",
+    timeEstimate: "long",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Tag,
+    title: "Garage Sale Setup",
+    count: "35+ tasks",
+    color: "from-green-500 to-lime-500",
+    description: "Organizing, pricing, display",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Flag,
+    title: "Flag Pole Services",
+    count: "15+ tasks",
+    color: "from-blue-500 to-red-500",
+    description: "Installation, repairs, flags",
+    timeEstimate: "short",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Medal,
+    title: "Trophy Engraving",
+    count: "15+ tasks",
+    color: "from-yellow-500 to-amber-500",
+    description: "Awards, plaques, personalization",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Award,
+    title: "Certificate Framing",
+    count: "20+ tasks",
+    color: "from-amber-600 to-yellow-600",
+    description: "Custom frames, matting",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Map,
+    title: "Property Survey Help",
+    count: "20+ tasks",
+    color: "from-green-600 to-teal-600",
+    description: "Boundary marking, clearing",
+    timeEstimate: "medium",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Signpost,
+    title: "Mailbox Installation",
+    count: "25+ tasks",
+    color: "from-blue-500 to-indigo-500",
+    description: "Posts, boxes, house numbers",
+    timeEstimate: "short",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Castle,
+    title: "Playground Equipment",
+    count: "20+ tasks",
+    color: "from-pink-500 to-purple-500",
+    description: "Assembly, repairs, safety",
+    timeEstimate: "long",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Landmark,
+    title: "Cemetery Cleanup",
+    count: "20+ tasks",
+    color: "from-gray-500 to-stone-500",
+    description: "Grave cleaning, flowers, care",
+    timeEstimate: "short",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Navigation,
+    title: "GPS Installation",
+    count: "20+ tasks",
+    color: "from-blue-500 to-cyan-500",
+    description: "Vehicle trackers, dashcams",
+    timeEstimate: "short",
+    categoryType: "both",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Route,
+    title: "Delivery Route Help",
+    count: "25+ tasks",
+    color: "from-green-500 to-emerald-500",
+    description: "Package delivery, routes",
+    timeEstimate: "flexible",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Crosshair,
+    title: "Pest Control Help",
+    count: "30+ tasks",
+    color: "from-red-600 to-orange-600",
+    description: "Traps, spraying, prevention",
+    timeEstimate: "short",
+    categoryType: "both",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Fingerprint,
+    title: "Access Control Setup",
+    count: "20+ tasks",
+    color: "from-indigo-500 to-purple-500",
+    description: "Keypads, card readers, biometric",
+    timeEstimate: "medium",
+    categoryType: "both",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Barcode,
+    title: "Inventory Management",
+    count: "30+ tasks",
+    color: "from-slate-500 to-gray-500",
+    description: "Counting, organizing, tagging",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Unlock,
+    title: "Safe Installation",
+    count: "20+ tasks",
+    color: "from-gray-700 to-zinc-700",
+    description: "Home safes, gun safes, bolting",
+    timeEstimate: "short",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Telescope,
+    title: "Home Observatory",
+    count: "10+ tasks",
+    color: "from-indigo-700 to-purple-700",
+    description: "Telescope setup, dome assembly",
+    timeEstimate: "long",
+    categoryType: "outdoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: Microscope,
+    title: "Lab Equipment Setup",
+    count: "15+ tasks",
+    color: "from-cyan-600 to-teal-600",
+    description: "Scientific equipment assembly",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "expert"
+  },
+  {
+    icon: TestTube,
+    title: "Water Testing",
+    count: "20+ tasks",
+    color: "from-blue-500 to-cyan-500",
+    description: "Well, pool, aquarium testing",
+    timeEstimate: "short",
+    categoryType: "both",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: Pipette,
+    title: "Pool Chemical Balance",
+    count: "35+ tasks",
+    color: "from-cyan-400 to-blue-400",
+    description: "Testing, balancing, maintenance",
+    timeEstimate: "short",
+    categoryType: "outdoor",
+    skillLevel: "intermediate"
+  },
+  {
+    icon: IceCream,
+    title: "Ice Cream Cart",
+    count: "15+ tasks",
+    color: "from-pink-400 to-purple-400",
+    description: "Event service, cart rental",
+    timeEstimate: "long",
+    categoryType: "outdoor",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Pizza,
+    title: "Pizza Party Setup",
+    count: "25+ tasks",
+    color: "from-red-500 to-orange-500",
+    description: "Oven setup, serving, cleanup",
+    timeEstimate: "medium",
+    categoryType: "both",
+    skillLevel: "beginner"
+  },
+  {
+    icon: Hospital,
+    title: "Medical Equipment Setup",
+    count: "20+ tasks",
+    color: "from-blue-500 to-indigo-500",
+    description: "Home medical devices, beds",
+    timeEstimate: "medium",
+    categoryType: "indoor",
+    skillLevel: "intermediate"
   }
 ];
 
