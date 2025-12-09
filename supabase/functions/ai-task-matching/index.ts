@@ -34,7 +34,7 @@ serve(async (req) => {
 
     if (taskError) throw taskError;
 
-    // Fetch available task doers with their skills and ratings
+    // Fetch available task doers with their skills, ratings, and reputation - sorted by reputation
     const { data: taskers, error: taskersError } = await supabaseClient
       .from("profiles")
       .select(`
@@ -48,10 +48,15 @@ serve(async (req) => {
         on_time_rate,
         availability_status,
         preferred_categories,
-        hourly_rate
+        hourly_rate,
+        trust_score,
+        reputation_score
       `)
       .eq("availability_status", "available")
-      .gte("rating", 3.5);
+      .gte("rating", 3.5)
+      .order("reputation_score", { ascending: false })
+      .order("rating", { ascending: false })
+      .limit(50);
 
     if (taskersError) throw taskersError;
 
@@ -60,14 +65,17 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const systemPrompt = `You are an AI task matching expert. Analyze the task requirements and match them with the best available taskers based on:
-1. Skills match - How well their skills align with task requirements
-2. Experience - Number of completed tasks and expertise
-3. Ratings - Overall rating and review count
-4. Availability - Current availability status
-5. Pricing - If their hourly rate fits the task budget
-6. Category preference - If they prefer this type of work
-7. Reliability - On-time rate and response rate
+1. Reputation Score (HIGHEST PRIORITY) - Their overall reputation combining trust, badges, and history
+2. Skills match - How well their skills align with task requirements
+3. Experience - Number of completed tasks and expertise
+4. Ratings - Overall rating and review count
+5. Trust Score - Platform trust level
+6. Availability - Current availability status
+7. Pricing - If their hourly rate fits the task budget
+8. Category preference - If they prefer this type of work
+9. Reliability - On-time rate and response rate
 
+IMPORTANT: Prioritize taskers with higher reputation_score and trust_score as they are proven reliable performers.
 Return exactly 5 best matches ranked by fit score.`;
 
     const userPrompt = `Task Details:

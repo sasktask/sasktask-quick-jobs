@@ -27,16 +27,22 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch user profile
+    // Fetch user profile including reputation_score
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('*, reputation_score, trust_score')
       .eq('id', userId)
       .single();
 
     if (profileError) {
       console.error('Error fetching profile:', profileError);
     }
+
+    // Get user's badge count for reputation calculation
+    const { count: badgeCount } = await supabase
+      .from('badges')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
 
     // Fetch user's completed bookings with task details
     const { data: completedBookings, error: bookingsError } = await supabase
@@ -239,10 +245,28 @@ serve(async (req) => {
         score += 3;
       }
 
+      // Reputation bonus - Higher reputation users get more recommendations visibility
+      const userReputation = profile?.reputation_score || 0;
+      const userTrustScore = profile?.trust_score || 50;
+      const userBadges = badgeCount || 0;
+      
+      // Users with high reputation get bonus points for task matching (up to 15 points)
+      if (userReputation >= 80) {
+        score += 15;
+        reasons.push('Top performer match');
+      } else if (userReputation >= 60) {
+        score += 10;
+        reasons.push('Recommended for verified professionals');
+      } else if (userTrustScore >= 70 || userBadges >= 3) {
+        score += 5;
+        reasons.push('Trusted performer match');
+      }
+
       return {
         ...task,
         matchScore: Math.min(100, score),
-        reasons: reasons.length > 0 ? reasons : ['New task in your area']
+        reasons: reasons.length > 0 ? reasons : ['New task in your area'],
+        userReputation: userReputation
       };
     });
 
