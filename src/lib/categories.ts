@@ -156,6 +156,12 @@ export type TimeEstimate = "quick" | "short" | "medium" | "long" | "flexible";
 export type CategoryType = "indoor" | "outdoor" | "both";
 export type SkillLevel = "beginner" | "intermediate" | "expert";
 
+export interface Subcategory {
+  title: string;
+  description: string;
+  trending?: boolean;
+}
+
 export interface Category {
   icon: LucideIcon;
   title: string;
@@ -166,7 +172,31 @@ export interface Category {
   categoryType: CategoryType;
   skillLevel: SkillLevel;
   featured?: boolean;
+  subcategories?: Subcategory[];
 }
+
+export interface LocalTrend {
+  category: string;
+  subcategory: string;
+  demand: "high" | "medium" | "low";
+  change: number; // percentage change
+  region: string;
+}
+
+export const localTrends: LocalTrend[] = [
+  { category: "Snow Removal", subcategory: "Driveway Clearing", demand: "high", change: 45, region: "Saskatchewan" },
+  { category: "Snow Removal", subcategory: "Roof Snow Removal", demand: "high", change: 38, region: "Saskatchewan" },
+  { category: "Cleaning", subcategory: "Move-out Cleaning", demand: "high", change: 32, region: "Urban Areas" },
+  { category: "Yard Work", subcategory: "Fall Leaf Cleanup", demand: "medium", change: 28, region: "Saskatchewan" },
+  { category: "Handyman Services", subcategory: "Weatherproofing", demand: "high", change: 55, region: "Rural Areas" },
+  { category: "Moving & Delivery", subcategory: "Furniture Delivery", demand: "medium", change: 22, region: "Saskatoon" },
+  { category: "Pet Care", subcategory: "Dog Walking", demand: "medium", change: 18, region: "Urban Areas" },
+  { category: "Senior Care", subcategory: "Grocery Shopping", demand: "high", change: 40, region: "All Regions" },
+  { category: "Electrical Work", subcategory: "Holiday Lighting", demand: "high", change: 65, region: "Saskatchewan" },
+  { category: "Plumbing", subcategory: "Pipe Winterization", demand: "high", change: 50, region: "Rural Areas" },
+  { category: "HVAC Services", subcategory: "Furnace Maintenance", demand: "high", change: 42, region: "Saskatchewan" },
+  { category: "Firewood Services", subcategory: "Firewood Delivery", demand: "high", change: 35, region: "Rural Areas" },
+];
 
 export const timeEstimateLabels: Record<TimeEstimate, { label: string; color: string }> = {
   quick: { label: "Quick (15-30 min)", color: "bg-green-500/10 text-green-600 border-green-500/20" },
@@ -199,7 +229,17 @@ export const categories: Category[] = [
     timeEstimate: "short",
     categoryType: "outdoor",
     skillLevel: "beginner",
-    featured: true
+    featured: true,
+    subcategories: [
+      { title: "Driveway Clearing", description: "Shovel or plow residential driveways", trending: true },
+      { title: "Walkway & Sidewalk", description: "Clear paths and sidewalks safely" },
+      { title: "Roof Snow Removal", description: "Prevent ice dams and roof damage", trending: true },
+      { title: "Commercial Lots", description: "Parking lots and business areas" },
+      { title: "Ice Control & Salting", description: "De-icing and salt application" },
+      { title: "Snow Blowing", description: "Machine-assisted snow removal" },
+      { title: "Emergency Snow Service", description: "Urgent same-day clearing" },
+      { title: "Seasonal Contracts", description: "Regular winter maintenance" }
+    ]
   },
   {
     icon: Sparkles,
@@ -210,7 +250,19 @@ export const categories: Category[] = [
     timeEstimate: "medium",
     categoryType: "indoor",
     skillLevel: "beginner",
-    featured: true
+    featured: true,
+    subcategories: [
+      { title: "Regular House Cleaning", description: "Weekly or bi-weekly home cleaning" },
+      { title: "Deep Cleaning", description: "Thorough top-to-bottom cleaning", trending: true },
+      { title: "Move-out Cleaning", description: "End of lease cleaning service", trending: true },
+      { title: "Move-in Cleaning", description: "Prepare new home for occupancy" },
+      { title: "Post-Construction", description: "Clean up after renovations" },
+      { title: "Office Cleaning", description: "Commercial and office spaces" },
+      { title: "Carpet Cleaning", description: "Steam and spot cleaning" },
+      { title: "Window Cleaning", description: "Interior and exterior windows" },
+      { title: "Kitchen Deep Clean", description: "Appliances, cabinets, surfaces" },
+      { title: "Bathroom Sanitization", description: "Deep clean and disinfect" }
+    ]
   },
   {
     icon: Truck,
@@ -221,7 +273,18 @@ export const categories: Category[] = [
     timeEstimate: "medium",
     categoryType: "both",
     skillLevel: "beginner",
-    featured: true
+    featured: true,
+    subcategories: [
+      { title: "Local Moving", description: "Same city residential moves" },
+      { title: "Furniture Delivery", description: "Pickup and deliver large items", trending: true },
+      { title: "Appliance Moving", description: "Safely move heavy appliances" },
+      { title: "Loading/Unloading", description: "Help with truck loading" },
+      { title: "Packing Services", description: "Professional packing assistance" },
+      { title: "Storage Moving", description: "To/from storage units" },
+      { title: "Marketplace Pickup", description: "Facebook, Kijiji item pickup" },
+      { title: "Donation Drop-off", description: "Deliver items to charity" },
+      { title: "Rural Delivery", description: "Remote area deliveries" }
+    ]
   },
   {
     icon: Hammer,
@@ -232,7 +295,19 @@ export const categories: Category[] = [
     timeEstimate: "short",
     categoryType: "both",
     skillLevel: "intermediate",
-    featured: true
+    featured: true,
+    subcategories: [
+      { title: "General Repairs", description: "Fix various household issues" },
+      { title: "Door & Window Repair", description: "Hinges, locks, weatherstripping" },
+      { title: "Drywall Repair", description: "Patch holes and cracks" },
+      { title: "Caulking & Sealing", description: "Bathroom, kitchen, windows" },
+      { title: "Weatherproofing", description: "Prepare home for winter", trending: true },
+      { title: "Shelf Installation", description: "Mount shelves and brackets" },
+      { title: "Picture Hanging", description: "Artwork and mirror mounting" },
+      { title: "Furniture Repair", description: "Fix wobbly or broken pieces" },
+      { title: "Lock Replacement", description: "Change door locks" },
+      { title: "Minor Plumbing", description: "Faucet, toilet fixes" }
+    ]
   },
   {
     icon: Leaf,
@@ -243,7 +318,19 @@ export const categories: Category[] = [
     timeEstimate: "medium",
     categoryType: "outdoor",
     skillLevel: "beginner",
-    featured: true
+    featured: true,
+    subcategories: [
+      { title: "Lawn Mowing", description: "Regular grass cutting service" },
+      { title: "Fall Leaf Cleanup", description: "Rake and bag fallen leaves", trending: true },
+      { title: "Garden Weeding", description: "Remove weeds from beds" },
+      { title: "Hedge Trimming", description: "Shape and trim hedges" },
+      { title: "Garden Bed Prep", description: "Spring planting preparation" },
+      { title: "Mulching", description: "Spread mulch in garden beds" },
+      { title: "Tree Branch Pickup", description: "Collect fallen branches" },
+      { title: "Flower Planting", description: "Plant seasonal flowers" },
+      { title: "Vegetable Garden", description: "Start or maintain veggie garden" },
+      { title: "Lawn Aeration", description: "Improve lawn health" }
+    ]
   },
   {
     icon: Dog,
@@ -254,7 +341,18 @@ export const categories: Category[] = [
     timeEstimate: "short",
     categoryType: "both",
     skillLevel: "beginner",
-    featured: true
+    featured: true,
+    subcategories: [
+      { title: "Dog Walking", description: "Daily walks and exercise", trending: true },
+      { title: "Pet Sitting", description: "In-home pet care" },
+      { title: "Pet Boarding", description: "Overnight stays at sitter's home" },
+      { title: "Pet Grooming", description: "Bathing, brushing, nail trim" },
+      { title: "Cat Sitting", description: "Check-ins and care for cats" },
+      { title: "Pet Transport", description: "Vet visits, groomer trips" },
+      { title: "Farm Animal Care", description: "Feeding livestock, chickens" },
+      { title: "Fish & Reptile Care", description: "Specialized pet care" },
+      { title: "Pet Waste Cleanup", description: "Yard poop scooping" }
+    ]
   },
   {
     icon: MapPin,
@@ -265,7 +363,17 @@ export const categories: Category[] = [
     timeEstimate: "flexible",
     categoryType: "outdoor",
     skillLevel: "beginner",
-    featured: true
+    featured: true,
+    subcategories: [
+      { title: "Airport Rides", description: "To/from airport transport" },
+      { title: "Medical Appointments", description: "Doctor, hospital visits" },
+      { title: "Senior Transportation", description: "Errands for elderly" },
+      { title: "Rural Area Rides", description: "Remote location transport" },
+      { title: "Kid Pickup/Drop-off", description: "School, activities transport" },
+      { title: "Event Transportation", description: "Weddings, parties" },
+      { title: "Long Distance Rides", description: "Inter-city transport" },
+      { title: "Package Courier", description: "Document and parcel delivery" }
+    ]
   },
   {
     icon: ShoppingBag,
@@ -276,7 +384,17 @@ export const categories: Category[] = [
     timeEstimate: "quick",
     categoryType: "outdoor",
     skillLevel: "beginner",
-    featured: true
+    featured: true,
+    subcategories: [
+      { title: "Grocery Shopping", description: "Buy and deliver groceries", trending: true },
+      { title: "Prescription Pickup", description: "Pharmacy runs" },
+      { title: "Gift Shopping", description: "Shop for presents" },
+      { title: "Return Items", description: "Handle store returns" },
+      { title: "Wait in Line", description: "Queue for tickets, releases" },
+      { title: "Personal Shopping", description: "Shop for clothing, items" },
+      { title: "Costco Runs", description: "Bulk shopping trips" },
+      { title: "Restaurant Pickup", description: "Pick up food orders" }
+    ]
   },
   {
     icon: Package,
@@ -287,7 +405,17 @@ export const categories: Category[] = [
     timeEstimate: "short",
     categoryType: "indoor",
     skillLevel: "intermediate",
-    featured: true
+    featured: true,
+    subcategories: [
+      { title: "IKEA Furniture", description: "Assemble IKEA products" },
+      { title: "Bed Frame Assembly", description: "Set up beds and headboards" },
+      { title: "Office Furniture", description: "Desks, chairs, cabinets" },
+      { title: "Outdoor Furniture", description: "Patio sets, gazebos" },
+      { title: "Kids Furniture", description: "Cribs, bunk beds, toy storage" },
+      { title: "Exercise Equipment", description: "Treadmills, home gyms" },
+      { title: "Shelving Units", description: "Bookcases, storage shelves" },
+      { title: "BBQ & Grills", description: "Assemble outdoor grills" }
+    ]
   },
   {
     icon: Heart,
@@ -298,7 +426,17 @@ export const categories: Category[] = [
     timeEstimate: "flexible",
     categoryType: "both",
     skillLevel: "beginner",
-    featured: true
+    featured: true,
+    subcategories: [
+      { title: "Companionship Visits", description: "Social visits and conversation" },
+      { title: "Grocery Shopping", description: "Shop for elderly clients", trending: true },
+      { title: "Meal Preparation", description: "Cook nutritious meals" },
+      { title: "Light Housekeeping", description: "Tidy up and organize" },
+      { title: "Medication Reminders", description: "Help track medications" },
+      { title: "Escort to Appointments", description: "Accompany to doctors" },
+      { title: "Technology Help", description: "Phone, computer assistance" },
+      { title: "Reading & Games", description: "Entertainment and activities" }
+    ]
   },
   {
     icon: Baby,
@@ -309,7 +447,17 @@ export const categories: Category[] = [
     timeEstimate: "flexible",
     categoryType: "indoor",
     skillLevel: "beginner",
-    featured: true
+    featured: true,
+    subcategories: [
+      { title: "Evening Babysitting", description: "Date night childcare" },
+      { title: "Daytime Care", description: "Full day supervision" },
+      { title: "After School Care", description: "Pickup and supervision" },
+      { title: "Weekend Babysitting", description: "Weekend childcare" },
+      { title: "Newborn Care", description: "Infant specialized care" },
+      { title: "Homework Help", description: "Tutoring while babysitting" },
+      { title: "Nanny Services", description: "Regular scheduled care" },
+      { title: "Special Needs Care", description: "Care for special needs kids" }
+    ]
   },
   {
     icon: Plug,
@@ -320,7 +468,18 @@ export const categories: Category[] = [
     timeEstimate: "short",
     categoryType: "indoor",
     skillLevel: "expert",
-    featured: true
+    featured: true,
+    subcategories: [
+      { title: "Outlet Installation", description: "Add or replace outlets" },
+      { title: "Light Fixture Install", description: "Chandeliers, ceiling lights" },
+      { title: "Dimmer Switches", description: "Install dimmer controls" },
+      { title: "Ceiling Fan Install", description: "Mount and wire fans" },
+      { title: "Holiday Lighting", description: "Install Christmas lights", trending: true },
+      { title: "Outdoor Lighting", description: "Landscape, security lights" },
+      { title: "Smart Home Wiring", description: "Smart switches, outlets" },
+      { title: "Panel Upgrades", description: "Electrical panel work" },
+      { title: "Troubleshooting", description: "Fix electrical issues" }
+    ]
   },
 
   // ========== HOME & PROPERTY ==========
