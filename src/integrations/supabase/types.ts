@@ -972,6 +972,7 @@ export type Database = {
           profile_completion: number | null
           rating: number | null
           reliability_score: number | null
+          reputation_score: number | null
           response_rate: number | null
           skills: string[] | null
           stripe_customer_id: string | null
@@ -1016,6 +1017,7 @@ export type Database = {
           profile_completion?: number | null
           rating?: number | null
           reliability_score?: number | null
+          reputation_score?: number | null
           response_rate?: number | null
           skills?: string[] | null
           stripe_customer_id?: string | null
@@ -1060,6 +1062,7 @@ export type Database = {
           profile_completion?: number | null
           rating?: number | null
           reliability_score?: number | null
+          reputation_score?: number | null
           response_rate?: number | null
           skills?: string[] | null
           stripe_customer_id?: string | null
@@ -2147,6 +2150,10 @@ export type Database = {
       }
       calculate_distance: {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
+      calculate_reputation_score: {
+        Args: { p_user_id: string }
         Returns: number
       }
       calculate_trust_score: { Args: { p_user_id: string }; Returns: number }

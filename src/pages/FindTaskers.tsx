@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Star, MapPin, Shield, Loader2 } from "lucide-react";
+import { Search, Star, MapPin, Shield, Loader2, Award, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function FindTaskers() {
@@ -26,18 +26,19 @@ export default function FindTaskers() {
     try {
       setIsLoading(true);
 
-      // Fetch task doers with complete profiles
+      // Fetch task doers with complete profiles, ordered by reputation_score
       const { data: taskDoers, error } = await supabase
         .from("profiles")
         .select("*")
         .not("full_name", "is", null)
         .not("full_name", "eq", "")
-        .gte("rating", 0)
-        .order("rating", { ascending: false });
+        .order("reputation_score", { ascending: false })
+        .order("rating", { ascending: false })
+        .order("trust_score", { ascending: false });
 
       if (error) throw error;
 
-      // Filter verified task doers with complete data
+      // Filter verified task doers with complete data and get badge counts
       const verifiedTaskers = await Promise.all(
         (taskDoers || []).map(async (tasker) => {
           // Check if user has task_doer role
@@ -60,14 +61,21 @@ export default function FindTaskers() {
           // Only include verified users
           if (verification?.verification_status !== "verified") return null;
 
+          // Get badge count for display
+          const { count: badgeCount } = await supabase
+            .from("badges")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", tasker.id);
+
           return {
             ...tasker,
-            verifications: verification
+            verifications: verification,
+            badgeCount: badgeCount || 0
           };
         })
       );
 
-      // Remove nulls
+      // Remove nulls - already sorted by reputation_score from DB
       const filtered = verifiedTaskers.filter((tasker) => tasker !== null);
 
       setTaskers(filtered);
@@ -171,9 +179,23 @@ export default function FindTaskers() {
                           </span>
                         </div>
                       )}
-                      <Badge variant="secondary" className="text-xs">
-                        {tasker.completed_tasks || 0} tasks completed
-                      </Badge>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="secondary" className="text-xs">
+                          {tasker.completed_tasks || 0} tasks
+                        </Badge>
+                        {tasker.badgeCount > 0 && (
+                          <Badge variant="outline" className="text-xs border-primary/50 text-primary">
+                            <Award className="h-3 w-3 mr-1" />
+                            {tasker.badgeCount} badges
+                          </Badge>
+                        )}
+                        {tasker.reputation_score > 70 && (
+                          <Badge variant="default" className="text-xs bg-gradient-to-r from-primary to-secondary">
+                            <TrendingUp className="h-3 w-3 mr-1" />
+                            Top Rated
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
 
