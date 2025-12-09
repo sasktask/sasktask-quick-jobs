@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,92 +11,146 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
-import { OTPVerification } from "@/components/OTPVerification";
 import { z } from "zod";
-import { Eye, EyeOff, Mail, ArrowLeft, Shield } from "lucide-react";
+import { Eye, EyeOff, Mail, ArrowLeft, Shield, Loader2, Check, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
+// Email validation schema
+const emailSchema = z.string().trim().email("Please enter a valid email address").max(255, "Email is too long");
+
+// Sign in validation
 const signInSchema = z.object({
-  email: z.string().email("Invalid email address").max(255, "Email too long"),
+  email: emailSchema,
   password: z.string().min(1, "Password is required"),
 });
 
+// Sign up validation with strong password requirements
 const signUpSchema = z.object({
-  fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name too long"),
-  email: z.string().email("Invalid email address").max(255, "Email too long"),
-  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number").optional().or(z.literal("")),
+  fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name is too long"),
+  email: emailSchema,
+  phone: z.string()
+    .regex(/^\+?[1-9]\d{6,14}$/, "Please enter a valid phone number (e.g., +1234567890)")
+    .optional()
+    .or(z.literal("")),
   password: z.string()
     .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain an uppercase letter")
-    .regex(/[0-9]/, "Password must contain a number"),
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
   role: z.enum(["task_giver", "task_doer"]),
 });
 
+// Password strength checker
+const getPasswordStrength = (password: string): { score: number; label: string; color: string } => {
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  if (score <= 2) return { score, label: "Weak", color: "bg-destructive" };
+  if (score <= 4) return { score, label: "Medium", color: "bg-yellow-500" };
+  return { score, label: "Strong", color: "bg-green-500" };
+};
+
 const Auth = () => {
+  const [searchParams] = useSearchParams();
+  const isPasswordReset = searchParams.get("reset") === "true";
+  
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState<"task_giver" | "task_doer">("task_doer");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
-  
-  // OTP verification state
-  const [showOTPVerification, setShowOTPVerification] = useState(false);
-  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [showNewPassword, setShowNewPassword] = useState(isPasswordReset);
+  const [newPassword, setNewPassword] = useState("");
   
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const passwordStrength = getPasswordStrength(password);
+
   useEffect(() => {
-    // Check if user is already logged in
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        // Check if profile needs onboarding
+        setTimeout(async () => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("profile_completion")
+            .eq("id", session.user.id)
+            .single();
+          
+          if (!profile || (profile.profile_completion ?? 0) < 80) {
+            navigate("/onboarding");
+          } else {
+            navigate("/dashboard");
+          }
+        }, 0);
+      }
+      
+      if (event === "PASSWORD_RECOVERY") {
+        setShowNewPassword(true);
+      }
+    });
+
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+      if (session && !isPasswordReset) {
         navigate("/dashboard");
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Only auto-redirect if we're not in OTP verification mode
-      if (event === "SIGNED_IN" && session && !showOTPVerification) {
-        // Check if profile needs onboarding
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("profile_completion")
-          .eq("id", session.user.id)
-          .single();
-        
-        if (!profile || profile.profile_completion < 80) {
-          navigate("/onboarding");
-        } else {
-          navigate("/dashboard");
-        }
-      }
-    });
-
     return () => subscription.unsubscribe();
-  }, [navigate, showOTPVerification]);
+  }, [navigate, isPasswordReset]);
+
+  const clearErrors = () => {
+    setFormErrors({});
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
     setIsLoading(true);
 
     try {
-      // Validate input
+      // Check password confirmation
+      if (password !== confirmPassword) {
+        setFormErrors({ confirmPassword: "Passwords do not match" });
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate all inputs
       const validation = signUpSchema.safeParse({
         fullName,
         email,
-        phone,
+        phone: phone || undefined,
         password,
         role,
       });
 
       if (!validation.success) {
-        const firstError = validation.error.errors[0];
-        throw new Error(firstError.message);
+        const errors: Record<string, string> = {};
+        validation.error.errors.forEach((err) => {
+          const field = err.path[0] as string;
+          errors[field] = err.message;
+        });
+        setFormErrors(errors);
+        setIsLoading(false);
+        return;
       }
 
       const { data, error } = await supabase.auth.signUp({
@@ -113,28 +167,29 @@ const Auth = () => {
       });
 
       if (error) {
-        // Handle specific error cases
-        if (error.message.includes("already registered")) {
-          throw new Error("This email is already registered. Please sign in instead.");
+        if (error.message.toLowerCase().includes("already registered")) {
+          setFormErrors({ email: "This email is already registered. Please sign in instead." });
+          return;
         }
         throw error;
       }
 
-      toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account before signing in.",
-      });
-
-      // Auto switch to sign in tab after 1.5 seconds
-      setTimeout(() => {
-        const signinTab = document.querySelector('[value="signin"]') as HTMLElement;
-        signinTab?.click();
-      }, 1500);
+      // Check if email confirmation is required
+      if (data.user && !data.session) {
+        toast({
+          title: "Check your email",
+          description: "We've sent you a verification link. Please check your email to complete registration.",
+        });
+      } else if (data.session) {
+        toast({
+          title: "Account created!",
+          description: "Welcome to SaskTask. Redirecting...",
+        });
+      }
 
     } catch (error: any) {
-      console.error("Signup error:", error);
       toast({
-        title: "Signup Failed",
+        title: "Sign up failed",
         description: error.message || "Unable to create account. Please try again.",
         variant: "destructive",
       });
@@ -145,15 +200,21 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
     setIsLoading(true);
 
     try {
-      // Validate input
       const validation = signInSchema.safeParse({ email, password });
 
       if (!validation.success) {
-        const firstError = validation.error.errors[0];
-        throw new Error(firstError.message);
+        const errors: Record<string, string> = {};
+        validation.error.errors.forEach((err) => {
+          const field = err.path[0] as string;
+          errors[field] = err.message;
+        });
+        setFormErrors(errors);
+        setIsLoading(false);
+        return;
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -162,34 +223,25 @@ const Auth = () => {
       });
 
       if (error) {
-        // Handle specific error cases
         if (error.message.includes("Invalid login credentials")) {
-          throw new Error("Invalid email or password. Please check your credentials.");
+          setFormErrors({ password: "Invalid email or password" });
+          return;
         }
         if (error.message.includes("Email not confirmed")) {
-          throw new Error("Please check your email to confirm your account first.");
+          setFormErrors({ email: "Please verify your email before signing in" });
+          return;
         }
         throw error;
       }
 
-      if (data.user) {
-        // Don't redirect yet - require OTP verification
-        setPendingUserId(data.user.id);
-        setPendingEmail(data.user.email || validation.data.email);
-        setShowOTPVerification(true);
-        
-        // Sign out immediately - we'll sign back in after OTP verification
-        await supabase.auth.signOut();
-        
-        toast({
-          title: "Verification Required",
-          description: "A verification code has been sent to your email.",
-        });
-      }
-    } catch (error: any) {
-      console.error("Login error:", error);
       toast({
-        title: "Login Failed",
+        title: "Welcome back!",
+        description: "Signing you in...",
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Sign in failed",
         description: error.message || "Unable to sign in. Please try again.",
         variant: "destructive",
       });
@@ -198,58 +250,17 @@ const Auth = () => {
     }
   };
 
-  const handleOTPVerified = async () => {
-    // Re-authenticate the user after OTP verification
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: pendingEmail!,
-        password: password,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Welcome back!",
-        description: "Login successful. Redirecting...",
-      });
-
-      // Navigate after successful verification
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("profile_completion")
-        .eq("id", data.user.id)
-        .single();
-
-      if (!profile || profile.profile_completion < 80) {
-        navigate("/onboarding");
-      } else {
-        navigate("/dashboard");
-      }
-    } catch (error: any) {
-      console.error("Re-authentication error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to complete login. Please try again.",
-        variant: "destructive",
-      });
-      setShowOTPVerification(false);
-    }
-  };
-
-  const handleBackFromOTP = () => {
-    setShowOTPVerification(false);
-    setPendingUserId(null);
-    setPendingEmail(null);
-    setPassword("");
-  };
-
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
     setIsLoading(true);
 
     try {
-      if (!resetEmail || !z.string().email().safeParse(resetEmail).success) {
-        throw new Error("Please enter a valid email address");
+      const emailValidation = emailSchema.safeParse(resetEmail);
+      if (!emailValidation.success) {
+        setFormErrors({ resetEmail: emailValidation.error.errors[0].message });
+        setIsLoading(false);
+        return;
       }
 
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
@@ -259,7 +270,7 @@ const Auth = () => {
       if (error) throw error;
 
       toast({
-        title: "Reset Email Sent",
+        title: "Reset link sent",
         description: "Check your email for a password reset link.",
       });
       setShowForgotPassword(false);
@@ -267,7 +278,7 @@ const Auth = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to send reset email",
+        description: error.message || "Failed to send reset email. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -275,25 +286,105 @@ const Auth = () => {
     }
   };
 
-  // OTP Verification View
-  if (showOTPVerification && pendingUserId && pendingEmail) {
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearErrors();
+    setIsLoading(true);
+
+    try {
+      const passwordValidation = signUpSchema.shape.password.safeParse(newPassword);
+      if (!passwordValidation.success) {
+        setFormErrors({ newPassword: passwordValidation.error.errors[0].message });
+        setIsLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully updated.",
+      });
+      
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update password. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Password Reset View
+  if (showNewPassword) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
         <SEOHead 
-          title="Verify Login - SaskTask"
-          description="Enter your verification code to complete login"
+          title="Set New Password - SaskTask"
+          description="Set a new password for your SaskTask account"
           url="/auth"
         />
         <Navbar />
         
         <div className="container mx-auto px-4 pt-32 pb-20">
           <div className="max-w-md mx-auto">
-            <OTPVerification
-              email={pendingEmail}
-              userId={pendingUserId}
-              onVerified={handleOTPVerified}
-              onBack={handleBackFromOTP}
-            />
+            <Card className="shadow-2xl border-border">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Shield className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">Set New Password</CardTitle>
+                <CardDescription>Enter your new password below</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">New Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="new-password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter new password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className={formErrors.newPassword ? "border-destructive" : ""}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    {formErrors.newPassword && (
+                      <p className="text-sm text-destructive">{formErrors.newPassword}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Must be 8+ characters with uppercase, lowercase, number, and special character
+                    </p>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading} variant="hero">
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      "Update Password"
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
@@ -313,13 +404,16 @@ const Auth = () => {
         
         <div className="container mx-auto px-4 pt-32 pb-20">
           <div className="max-w-md mx-auto">
-            <Card className="shadow-2xl border-border glass">
+            <Card className="shadow-2xl border-border">
               <CardHeader>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="w-fit mb-2"
-                  onClick={() => setShowForgotPassword(false)}
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    clearErrors();
+                  }}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Login
@@ -338,14 +432,27 @@ const Auth = () => {
                         type="email"
                         placeholder="you@example.com"
                         value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        className="pl-10"
+                        onChange={(e) => {
+                          setResetEmail(e.target.value);
+                          if (formErrors.resetEmail) clearErrors();
+                        }}
+                        className={`pl-10 ${formErrors.resetEmail ? "border-destructive" : ""}`}
                         required
                       />
                     </div>
+                    {formErrors.resetEmail && (
+                      <p className="text-sm text-destructive">{formErrors.resetEmail}</p>
+                    )}
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading} variant="hero">
-                    {isLoading ? "Sending..." : "Send Reset Link"}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      "Send Reset Link"
+                    )}
                   </Button>
                 </form>
               </CardContent>
@@ -369,10 +476,10 @@ const Auth = () => {
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8 animate-fade-in">
             <h1 className="text-4xl font-bold mb-2 text-gradient">Welcome to SaskTask</h1>
-            <p className="text-muted-foreground">Create your account and start connecting</p>
+            <p className="text-muted-foreground">Your local task marketplace</p>
           </div>
 
-          <Card className="shadow-2xl border-border glass">
+          <Card className="shadow-2xl border-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-primary" />
@@ -380,16 +487,13 @@ const Auth = () => {
               </div>
               <CardDescription>
                 Sign in or create your free account
-                <span className="block text-xs text-primary mt-1">
-                  Protected with 2-Factor Authentication
-                </span>
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="signin" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="signin">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                  <TabsTrigger value="signin" onClick={clearErrors}>Sign In</TabsTrigger>
+                  <TabsTrigger value="signup" onClick={clearErrors}>Sign Up</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="signin">
@@ -401,9 +505,17 @@ const Auth = () => {
                         type="email"
                         placeholder="you@example.com"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (formErrors.email) clearErrors();
+                        }}
+                        className={formErrors.email ? "border-destructive" : ""}
                         required
+                        autoComplete="email"
                       />
+                      {formErrors.email && (
+                        <p className="text-sm text-destructive">{formErrors.email}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signin-password">Password</Label>
@@ -413,8 +525,13 @@ const Auth = () => {
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
                           value={password}
-                          onChange={(e) => setPassword(e.target.value)}
+                          onChange={(e) => {
+                            setPassword(e.target.value);
+                            if (formErrors.password) clearErrors();
+                          }}
+                          className={formErrors.password ? "border-destructive" : ""}
                           required
+                          autoComplete="current-password"
                         />
                         <Button
                           type="button"
@@ -422,10 +539,14 @@ const Auth = () => {
                           size="icon"
                           className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                           onClick={() => setShowPassword(!showPassword)}
+                          tabIndex={-1}
                         >
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
+                      {formErrors.password && (
+                        <p className="text-sm text-destructive">{formErrors.password}</p>
+                      )}
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
@@ -446,7 +567,14 @@ const Auth = () => {
                       </Button>
                     </div>
                     <Button type="submit" className="w-full" disabled={isLoading} variant="hero">
-                      {isLoading ? "Signing in..." : "Sign In"}
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Signing in...
+                        </>
+                      ) : (
+                        "Sign In"
+                      )}
                     </Button>
                   </form>
                 </TabsContent>
@@ -460,9 +588,17 @@ const Auth = () => {
                         type="text"
                         placeholder="John Doe"
                         value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
+                        onChange={(e) => {
+                          setFullName(e.target.value);
+                          if (formErrors.fullName) clearErrors();
+                        }}
+                        className={formErrors.fullName ? "border-destructive" : ""}
                         required
+                        autoComplete="name"
                       />
+                      {formErrors.fullName && (
+                        <p className="text-sm text-destructive">{formErrors.fullName}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">Email</Label>
@@ -471,36 +607,145 @@ const Auth = () => {
                         type="email"
                         placeholder="you@example.com"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (formErrors.email) clearErrors();
+                        }}
+                        className={formErrors.email ? "border-destructive" : ""}
                         required
+                        autoComplete="email"
                       />
+                      {formErrors.email && (
+                        <p className="text-sm text-destructive">{formErrors.email}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-phone">Phone Number</Label>
+                      <Label htmlFor="signup-phone">Phone Number (Optional)</Label>
                       <Input
                         id="signup-phone"
                         type="tel"
-                        placeholder="+1 (555) 000-0000"
+                        placeholder="+1234567890"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          if (formErrors.phone) clearErrors();
+                        }}
+                        className={formErrors.phone ? "border-destructive" : ""}
+                        autoComplete="tel"
                       />
+                      {formErrors.phone && (
+                        <p className="text-sm text-destructive">{formErrors.phone}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-password">Password</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        placeholder="Min 8 chars, 1 uppercase, 1 number"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={8}
-                      />
-                      <p className="text-xs text-muted-foreground">Must contain uppercase letter and number</p>
+                      <div className="relative">
+                        <Input
+                          id="signup-password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Create a strong password"
+                          value={password}
+                          onChange={(e) => {
+                            setPassword(e.target.value);
+                            if (formErrors.password) clearErrors();
+                          }}
+                          className={formErrors.password ? "border-destructive" : ""}
+                          required
+                          autoComplete="new-password"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      {password && (
+                        <div className="space-y-1">
+                          <div className="flex gap-1">
+                            {[...Array(6)].map((_, i) => (
+                              <div
+                                key={i}
+                                className={`h-1 flex-1 rounded ${
+                                  i < passwordStrength.score ? passwordStrength.color : "bg-muted"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Password strength: <span className={passwordStrength.score >= 5 ? "text-green-600" : passwordStrength.score >= 3 ? "text-yellow-600" : "text-destructive"}>{passwordStrength.label}</span>
+                          </p>
+                        </div>
+                      )}
+                      {formErrors.password && (
+                        <p className="text-sm text-destructive">{formErrors.password}</p>
+                      )}
+                      <ul className="text-xs text-muted-foreground space-y-1 mt-2">
+                        <li className={`flex items-center gap-1 ${password.length >= 8 ? "text-green-600" : ""}`}>
+                          {password.length >= 8 ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                          At least 8 characters
+                        </li>
+                        <li className={`flex items-center gap-1 ${/[A-Z]/.test(password) ? "text-green-600" : ""}`}>
+                          {/[A-Z]/.test(password) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                          One uppercase letter
+                        </li>
+                        <li className={`flex items-center gap-1 ${/[a-z]/.test(password) ? "text-green-600" : ""}`}>
+                          {/[a-z]/.test(password) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                          One lowercase letter
+                        </li>
+                        <li className={`flex items-center gap-1 ${/[0-9]/.test(password) ? "text-green-600" : ""}`}>
+                          {/[0-9]/.test(password) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                          One number
+                        </li>
+                        <li className={`flex items-center gap-1 ${/[^A-Za-z0-9]/.test(password) ? "text-green-600" : ""}`}>
+                          {/[^A-Za-z0-9]/.test(password) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                          One special character
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="signup-confirm-password"
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm your password"
+                          value={confirmPassword}
+                          onChange={(e) => {
+                            setConfirmPassword(e.target.value);
+                            if (formErrors.confirmPassword) clearErrors();
+                          }}
+                          className={formErrors.confirmPassword ? "border-destructive" : ""}
+                          required
+                          autoComplete="new-password"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          tabIndex={-1}
+                        >
+                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      {formErrors.confirmPassword && (
+                        <p className="text-sm text-destructive">{formErrors.confirmPassword}</p>
+                      )}
+                      {confirmPassword && password === confirmPassword && (
+                        <p className="text-sm text-green-600 flex items-center gap-1">
+                          <Check className="h-3 w-3" /> Passwords match
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label>I want to:</Label>
-                      <RadioGroup value={role} onValueChange={(value: any) => setRole(value)}>
+                      <RadioGroup value={role} onValueChange={(value: "task_giver" | "task_doer") => setRole(value)}>
                         <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer">
                           <RadioGroupItem value="task_doer" id="task_doer" />
                           <Label htmlFor="task_doer" className="cursor-pointer flex-1">
@@ -517,8 +762,23 @@ const Auth = () => {
                         </div>
                       </RadioGroup>
                     </div>
+                    
+                    <Alert>
+                      <Shield className="h-4 w-4" />
+                      <AlertDescription className="text-xs">
+                        By signing up, you agree to our Terms of Service and Privacy Policy. Your data is encrypted and secure.
+                      </AlertDescription>
+                    </Alert>
+
                     <Button type="submit" className="w-full" disabled={isLoading} variant="hero">
-                      {isLoading ? "Creating account..." : "Create Account"}
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Creating account...
+                        </>
+                      ) : (
+                        "Create Account"
+                      )}
                     </Button>
                   </form>
                 </TabsContent>
