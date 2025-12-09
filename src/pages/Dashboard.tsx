@@ -6,9 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { SEOHead } from "@/components/SEOHead";
 import { RecommendedTasks } from "@/components/RecommendedTasks";
-import { DashboardQuickFooter } from "@/components/DashboardQuickFooter";
+import { PaymentHistory } from "@/components/PaymentHistory";
+import { DashboardSidebar } from "@/components/DashboardSidebar";
+import { QuickStatsBar } from "@/components/QuickStatsBar";
 import { TrustScoreCard } from "@/components/TrustScoreCard";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
@@ -20,14 +23,17 @@ import {
   Search,
   User,
   MapPin,
+  MessageSquare,
   CheckCircle,
+  Clock,
+  Trophy,
   ShieldCheck,
+  TrendingUp,
+  Bell,
   ArrowRight,
   Sparkles,
   Award,
-  Loader2,
-  Wallet,
-  Trophy
+  Loader2
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -227,279 +233,298 @@ const Dashboard = () => {
       />
       <Navbar />
       
-      <main className="pt-16 pb-20 lg:pb-8 min-h-screen">
-        <div className="container mx-auto px-4 py-6">
-          {/* Welcome Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl md:text-3xl font-bold">
-                  Welcome, {profile?.full_name?.split(' ')[0] || 'there'}!
-                </h1>
-                {isVerified && (
-                  <Badge variant="default" className="gap-1">
-                    <ShieldCheck className="h-3 w-3" />
-                    Verified
-                  </Badge>
-                )}
+      <div className="flex pt-16">
+        {/* Sidebar - Hidden on mobile */}
+        <DashboardSidebar
+          userRole={userRole}
+          unreadMessages={stats.unreadMessages}
+          pendingBookings={stats.pendingBookings}
+          isVerified={isVerified}
+          className="hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)]"
+        />
+
+        {/* Main Content */}
+        <main className="flex-1 lg:ml-64 min-h-[calc(100vh-4rem)]">
+          <div className="container mx-auto px-4 py-8">
+            {/* Welcome Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-3xl font-bold">
+                    Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}!
+                  </h1>
+                  {isVerified && (
+                    <Badge variant="default" className="gap-1">
+                      <ShieldCheck className="h-3 w-3" />
+                      Verified
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-muted-foreground flex items-center gap-2">
+                  {userRole === "task_giver" ? (
+                    <>
+                      <Briefcase className="h-4 w-4" />
+                      Task Giver Dashboard
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Task Doer Dashboard • Reputation Score: {Math.round(profile?.reputation_score || 0)}
+                    </>
+                  )}
+                </p>
               </div>
-              <p className="text-muted-foreground text-sm flex items-center gap-2">
+              <div className="flex gap-3">
                 {userRole === "task_giver" ? (
-                  <>
-                    <Briefcase className="h-4 w-4" />
-                    Task Giver
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Task Doer • Score: {Math.round(profile?.reputation_score || 0)}
-                  </>
-                )}
-              </p>
-            </div>
-            <div className="hidden md:flex gap-2">
-              {userRole === "task_giver" ? (
-                <Link to="/post-task">
-                  <Button variant="default" size="sm" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Post Task
-                  </Button>
-                </Link>
-              ) : (
-                <Link to="/browse">
-                  <Button variant="default" size="sm" className="gap-2">
-                    <Search className="h-4 w-4" />
-                    Find Tasks
-                  </Button>
-                </Link>
-              )}
-            </div>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <Card className="border-border">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Star className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{profile?.rating?.toFixed(1) || "0.0"}</p>
-                    <p className="text-xs text-muted-foreground">Rating</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats.completedTasks}</p>
-                    <p className="text-xs text-muted-foreground">Completed</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-blue-500/10 flex items-center justify-center">
-                    <DollarSign className="h-4 w-4 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">${stats.totalEarnings}</p>
-                    <p className="text-xs text-muted-foreground">Earnings</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-yellow-500/10 flex items-center justify-center">
-                    <Award className="h-4 w-4 text-yellow-500" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{badgeCount}</p>
-                    <p className="text-xs text-muted-foreground">Badges</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Verification Prompt */}
-          {userRole === "task_doer" && !isVerified && (
-            <Card className="mb-6 border-primary/50 bg-primary/5">
-              <CardContent className="py-3">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <ShieldCheck className="h-5 w-5 text-primary" />
-                    <p className="text-sm font-medium">Get verified to boost visibility</p>
-                  </div>
-                  <Link to="/verification">
-                    <Button variant="default" size="sm">
-                      Verify <ArrowRight className="h-3 w-3 ml-1" />
+                  <Link to="/post-task">
+                    <Button variant="default" className="gap-2">
+                      <Plus className="h-4 w-4" />
+                      Post New Task
                     </Button>
                   </Link>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                ) : (
+                  <Link to="/browse">
+                    <Button variant="default" className="gap-2">
+                      <Search className="h-4 w-4" />
+                      Find Tasks
+                    </Button>
+                  </Link>
+                )}
+                <Link to="/profile">
+                  <Button variant="outline" className="gap-2">
+                    <User className="h-4 w-4" />
+                    Profile
+                  </Button>
+                </Link>
+              </div>
+            </div>
 
-          {/* Quick Links - Desktop Only */}
-          <div className="hidden lg:grid grid-cols-5 gap-3 mb-6">
-            <Link to="/my-tasks">
-              <Card className="cursor-pointer hover:shadow-md transition-all h-full">
-                <CardContent className="p-3 text-center">
-                  <Briefcase className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="text-xs font-medium">My Tasks</p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link to="/payments">
-              <Card className="cursor-pointer hover:shadow-md transition-all h-full">
-                <CardContent className="p-3 text-center">
-                  <Wallet className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="text-xs font-medium">Payments</p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link to="/leaderboard">
-              <Card className="cursor-pointer hover:shadow-md transition-all h-full">
-                <CardContent className="p-3 text-center">
-                  <Trophy className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="text-xs font-medium">Leaderboard</p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link to="/find-taskers">
-              <Card className="cursor-pointer hover:shadow-md transition-all h-full">
-                <CardContent className="p-3 text-center">
-                  <User className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="text-xs font-medium">Find Taskers</p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link to="/account">
-              <Card className="cursor-pointer hover:shadow-md transition-all h-full">
-                <CardContent className="p-3 text-center">
-                  <User className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="text-xs font-medium">Account</p>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
+            {/* Quick Stats Bar */}
+            <div className="mb-6">
+              <QuickStatsBar profile={profile} stats={stats} badgeCount={badgeCount} />
+            </div>
 
-          {/* Main Grid */}
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Left Column */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* AI Recommendations */}
-              {userRole === "task_doer" && user?.id && (
-                <RecommendedTasks userId={user.id} />
-              )}
-
-              {/* Recent Tasks */}
-              <Card className="border-border">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">
-                      {userRole === "task_giver" ? "Your Tasks" : "Available Tasks"}
-                    </CardTitle>
-                    <Link to={userRole === "task_giver" ? "/my-tasks" : "/browse"}>
-                      <Button variant="ghost" size="sm" className="gap-1 text-xs">
-                        View All <ArrowRight className="h-3 w-3" />
+            {/* Verification Prompt for Task Doers */}
+            {userRole === "task_doer" && !isVerified && (
+              <Card className="mb-6 border-primary/50 bg-primary/5">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <ShieldCheck className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">Get Verified to Boost Your Visibility</p>
+                        <p className="text-sm text-muted-foreground">
+                          Verified taskers appear at the top and get 3x more work suggestions
+                        </p>
+                      </div>
+                    </div>
+                    <Link to="/verification">
+                      <Button variant="default" className="gap-2">
+                        Get Verified <ArrowRight className="h-4 w-4" />
                       </Button>
                     </Link>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {tasks.length === 0 ? (
-                    <div className="text-center py-6 text-muted-foreground">
-                      <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                      <p className="text-sm">No tasks yet</p>
-                      {userRole === "task_giver" && (
-                        <Link to="/post-task">
-                          <Button variant="default" size="sm" className="mt-3">
-                            Post Task
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {tasks.slice(0, 4).map((task) => (
-                        <div 
-                          key={task.id} 
-                          className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
-                          onClick={() => navigate(`/task/${task.id}`)}
-                        >
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{task.title}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="secondary" className="text-xs">{task.category}</Badge>
-                              <span className="text-xs text-green-600 font-medium">${task.pay_amount}</span>
-                            </div>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </CardContent>
               </Card>
-            </div>
+            )}
 
-            {/* Right Column */}
-            <div className="space-y-6">
-              {/* Trust Score */}
-              {userRole === "task_doer" && (
-                <TrustScoreCard
-                  trustScore={profile?.trust_score || 50}
-                  verificationLevel={verification?.verification_status}
-                  idVerified={verification?.id_verified}
-                  backgroundCheck={verification?.background_check_status}
-                  hasInsurance={verification?.has_insurance}
-                  rating={profile?.rating}
-                  responseRate={profile?.response_rate}
-                  onTimeRate={profile?.on_time_rate}
-                  completedTasks={profile?.completed_tasks}
-                />
-              )}
+            {/* Main Grid */}
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Left Column - Tasks and Recommendations */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Quick Actions */}
+                <div className="grid sm:grid-cols-4 gap-4">
+                  <Link to={userRole === "task_giver" ? "/post-task" : "/browse"}>
+                    <Card className="cursor-pointer hover:shadow-lg transition-all border-primary/30 hover:border-primary h-full">
+                      <CardContent className="p-4 text-center">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                          {userRole === "task_giver" ? <Plus className="h-5 w-5 text-primary" /> : <Search className="h-5 w-5 text-primary" />}
+                        </div>
+                        <h3 className="font-semibold text-sm">{userRole === "task_giver" ? "Post Task" : "Find Tasks"}</h3>
+                      </CardContent>
+                    </Card>
+                  </Link>
 
-              {/* Badges */}
-              {user?.id && badgeCount > 0 && (
+                  <Link to="/bookings">
+                    <Card className="cursor-pointer hover:shadow-lg transition-all border-secondary/30 hover:border-secondary h-full">
+                      <CardContent className="p-4 text-center">
+                        <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-2">
+                          <Briefcase className="h-5 w-5 text-secondary" />
+                        </div>
+                        <h3 className="font-semibold text-sm">Bookings</h3>
+                        {stats.pendingBookings > 0 && (
+                          <Badge variant="secondary" className="mt-1 text-xs">{stats.pendingBookings} pending</Badge>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Link>
+
+                  <Link to="/messages">
+                    <Card className="cursor-pointer hover:shadow-lg transition-all border-blue-500/30 hover:border-blue-500 h-full">
+                      <CardContent className="p-4 text-center">
+                        <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-2">
+                          <MessageSquare className="h-5 w-5 text-blue-500" />
+                        </div>
+                        <h3 className="font-semibold text-sm">Messages</h3>
+                        {stats.unreadMessages > 0 && (
+                          <Badge variant="destructive" className="mt-1 text-xs">{stats.unreadMessages} new</Badge>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Link>
+
+                  <Link to="/leaderboard">
+                    <Card className="cursor-pointer hover:shadow-lg transition-all border-yellow-500/30 hover:border-yellow-500 h-full">
+                      <CardContent className="p-4 text-center">
+                        <div className="h-10 w-10 rounded-full bg-yellow-500/10 flex items-center justify-center mx-auto mb-2">
+                          <Trophy className="h-5 w-5 text-yellow-500" />
+                        </div>
+                        <h3 className="font-semibold text-sm">Leaderboard</h3>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </div>
+
+                {/* AI-Powered Recommendations for Task Doers */}
+                {userRole === "task_doer" && user?.id && (
+                  <RecommendedTasks userId={user.id} />
+                )}
+
+                {/* Recent Tasks */}
                 <Card className="border-border">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Award className="h-4 w-4 text-primary" />
-                      Badges
-                    </CardTitle>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        {userRole === "task_giver" ? "Your Recent Tasks" : "Available Tasks"}
+                      </CardTitle>
+                      <Link to={userRole === "task_giver" ? "/my-tasks" : "/browse"}>
+                        <Button variant="ghost" size="sm" className="gap-1">
+                          View All <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                    <CardDescription>
+                      {userRole === "task_giver" 
+                        ? "Manage your posted tasks" 
+                        : "Accept tasks instantly to start earning"}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <BadgeDisplay userId={user.id} size="sm" />
+                    {tasks.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No tasks available yet</p>
+                        {userRole === "task_giver" && (
+                          <Link to="/post-task">
+                            <Button variant="default" className="mt-4">
+                              Post Your First Task
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {tasks.map((task) => (
+                          <Card key={task.id} className="border-border hover:shadow-md transition-shadow">
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-start gap-4">
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold mb-1 truncate">{task.title}</h4>
+                                  <p className="text-muted-foreground text-sm mb-2 line-clamp-1">{task.description}</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    <Badge variant="secondary" className="text-xs">
+                                      {task.category}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs text-green-600 border-green-600/50">
+                                      ${task.pay_amount}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs gap-1">
+                                      <MapPin className="h-3 w-3" />
+                                      {task.location}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <Button 
+                                  variant={userRole === "task_doer" ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => navigate(`/task/${task.id}`)}
+                                  className="shrink-0"
+                                >
+                                  {userRole === "task_doer" ? "Accept" : "View"}
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              )}
+              </div>
+
+              {/* Right Column - Stats and Info */}
+              <div className="space-y-6">
+                {/* Trust Score Card */}
+                {userRole === "task_doer" && (
+                  <TrustScoreCard
+                    trustScore={profile?.trust_score || 50}
+                    verificationLevel={verification?.verification_status}
+                    idVerified={verification?.id_verified}
+                    backgroundCheck={verification?.background_check_status}
+                    hasInsurance={verification?.has_insurance}
+                    rating={profile?.rating}
+                    responseRate={profile?.response_rate}
+                    onTimeRate={profile?.on_time_rate}
+                    completedTasks={profile?.completed_tasks}
+                  />
+                )}
+
+                {/* Badges Section */}
+                {user?.id && badgeCount > 0 && (
+                  <Card className="border-border">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Award className="h-5 w-5 text-primary" />
+                        Your Badges
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <BadgeDisplay userId={user.id} size="md" />
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Payment History */}
+                {user?.id && (
+                  <PaymentHistory userId={user.id} limit={5} />
+                )}
+
+                {/* Find Taskers - For Task Givers */}
+                {userRole === "task_giver" && (
+                  <Card className="border-border">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">Find Top Taskers</CardTitle>
+                      <CardDescription>Browse verified professionals</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Link to="/find-taskers">
+                        <Button variant="outline" className="w-full gap-2">
+                          <Search className="h-4 w-4" />
+                          Browse Taskers
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </main>
-
-      {/* Mobile Quick Footer */}
-      <DashboardQuickFooter 
-        userRole={userRole}
-        unreadMessages={stats.unreadMessages}
-        pendingBookings={stats.pendingBookings}
-      />
+          
+          <Footer />
+        </main>
+      </div>
     </div>
   );
 };
