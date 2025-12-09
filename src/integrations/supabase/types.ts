@@ -2149,7 +2149,7 @@ export type Database = {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
-      calculate_trust_score: { Args: { user_id: string }; Returns: number }
+      calculate_trust_score: { Args: { p_user_id: string }; Returns: number }
       cleanup_expired_otp_codes: { Args: never; Returns: undefined }
       create_notification: {
         Args: {
