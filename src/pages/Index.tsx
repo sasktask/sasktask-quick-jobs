@@ -21,7 +21,25 @@ const Index = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setIsCheckingAuth(false);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   const categories = [{
     name: "Snow Removal",
     icon: "❄️",
@@ -134,7 +152,7 @@ const Index = () => {
       />
       <Navbar />
       
-      {/* Hero Section - Redesigned with Infographic */}
+      {/* Hero Section - Different for logged in vs logged out */}
       <section className="pt-32 pb-20 px-4 relative overflow-hidden">
         {/* Background with subtle gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5 -z-10" />
@@ -145,71 +163,144 @@ const Index = () => {
             <div className="space-y-6 animate-fade-up">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm font-medium text-primary">
                 <Sparkles className="h-4 w-4" />
-                Saskatchewan's #1 Task Platform
+                {user ? "Welcome Back!" : "Saskatchewan's #1 Task Platform"}
               </div>
               
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
-                Get Things Done
-                <span className="block bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
-                  The Easy Way
-                </span>
+                {user ? (
+                  <>
+                    Your Dashboard
+                    <span className="block bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
+                      Awaits
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Get Things Done
+                    <span className="block bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
+                      The Easy Way
+                    </span>
+                  </>
+                )}
               </h1>
               
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Connect with verified local professionals for any task. From snow removal to home repairs, find trusted help in your Saskatchewan community.
+                {user 
+                  ? "Access your professional dashboard to manage tasks, view bookings, track earnings, and connect with clients or find work opportunities."
+                  : "Connect with verified local professionals for any task. From snow removal to home repairs, find trusted help in your Saskatchewan community."
+                }
               </p>
 
-              {/* CTA Buttons */}
+              {/* CTA Buttons - Different for logged in users */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Link to="/browse">
-                  <Button size="lg" variant="hero" className="w-full sm:w-auto text-lg h-14 px-8">
-                    <Search className="mr-2 h-5 w-5" />
-                    Browse Tasks
-                  </Button>
-                </Link>
-                <Link to="/post-task">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-2">
-                    <FileEdit className="mr-2 h-5 w-5" />
-                    Post a Task
-                  </Button>
-                </Link>
-                <InstallAppButton 
-                  variant="outline" 
-                  size="lg" 
-                  className="w-full sm:w-auto text-lg h-14 px-8 border-2 border-primary/50 hover:bg-primary/10"
-                  showOnDesktop={true}
-                />
+                {user ? (
+                  <>
+                    <Link to="/dashboard">
+                      <Button size="lg" variant="hero" className="w-full sm:w-auto text-lg h-14 px-8">
+                        <Briefcase className="mr-2 h-5 w-5" />
+                        Go to Dashboard
+                      </Button>
+                    </Link>
+                    <Link to="/browse">
+                      <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-2">
+                        <Search className="mr-2 h-5 w-5" />
+                        Browse Tasks
+                      </Button>
+                    </Link>
+                    <Link to="/find-taskers">
+                      <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-2">
+                        <Users className="mr-2 h-5 w-5" />
+                        Find Taskers
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/browse">
+                      <Button size="lg" variant="hero" className="w-full sm:w-auto text-lg h-14 px-8">
+                        <Search className="mr-2 h-5 w-5" />
+                        Browse Tasks
+                      </Button>
+                    </Link>
+                    <Link to="/post-task">
+                      <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-2">
+                        <FileEdit className="mr-2 h-5 w-5" />
+                        Post a Task
+                      </Button>
+                    </Link>
+                    <InstallAppButton 
+                      variant="outline" 
+                      size="lg" 
+                      className="w-full sm:w-auto text-lg h-14 px-8 border-2 border-primary/50 hover:bg-primary/10"
+                      showOnDesktop={true}
+                    />
+                  </>
+                )}
               </div>
 
-              {/* Trust Indicators */}
+              {/* Trust Indicators - Different for logged in */}
               <div className="flex flex-wrap gap-6 pt-6 border-t border-border">
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Shield className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-foreground">Verified</p>
-                    <p className="text-sm text-muted-foreground">Taskers</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Lock className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-foreground">Secure</p>
-                    <p className="text-sm text-muted-foreground">Payments</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Star className="h-5 w-5 text-primary fill-primary" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-foreground">Top Rated</p>
-                    <p className="text-sm text-muted-foreground">Service</p>
-                  </div>
-                </div>
+                {user ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Briefcase className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-foreground">Quick Access</p>
+                        <p className="text-sm text-muted-foreground">Dashboard</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <MessageSquare className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-foreground">Messages</p>
+                        <p className="text-sm text-muted-foreground">Stay Connected</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-foreground">Earnings</p>
+                        <p className="text-sm text-muted-foreground">Track Progress</p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Shield className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-foreground">Verified</p>
+                        <p className="text-sm text-muted-foreground">Taskers</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Lock className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-foreground">Secure</p>
+                        <p className="text-sm text-muted-foreground">Payments</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Star className="h-5 w-5 text-primary fill-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-foreground">Top Rated</p>
+                        <p className="text-sm text-muted-foreground">Service</p>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
