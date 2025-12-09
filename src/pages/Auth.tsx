@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import { z } from "zod";
-import { Eye, EyeOff, Mail, ArrowLeft, Shield, Loader2, Check, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Mail, ArrowLeft, Shield, Loader2, Check, AlertCircle, Lock, User } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Email validation schema
-const emailSchema = z.string().trim().email("Please enter a valid email address").max(255, "Email is too long");
+const emailSchema = z.string().trim().toLowerCase().email("Please enter a valid email address").max(255, "Email is too long");
 
 // Sign in validation
 const signInSchema = z.object({
@@ -56,6 +56,47 @@ const getPasswordStrength = (password: string): { score: number; label: string; 
   return { score, label: "Strong", color: "bg-green-500" };
 };
 
+// Rate limiting helper
+const RATE_LIMIT_KEY = "auth_attempts";
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
+
+const checkRateLimit = (): { allowed: boolean; remainingTime: number } => {
+  const stored = localStorage.getItem(RATE_LIMIT_KEY);
+  if (!stored) return { allowed: true, remainingTime: 0 };
+  
+  const { attempts, lockoutUntil } = JSON.parse(stored);
+  
+  if (lockoutUntil && Date.now() < lockoutUntil) {
+    return { allowed: false, remainingTime: Math.ceil((lockoutUntil - Date.now()) / 1000 / 60) };
+  }
+  
+  if (lockoutUntil && Date.now() >= lockoutUntil) {
+    localStorage.removeItem(RATE_LIMIT_KEY);
+    return { allowed: true, remainingTime: 0 };
+  }
+  
+  return { allowed: attempts < MAX_ATTEMPTS, remainingTime: 0 };
+};
+
+const recordAttempt = (success: boolean) => {
+  if (success) {
+    localStorage.removeItem(RATE_LIMIT_KEY);
+    return;
+  }
+  
+  const stored = localStorage.getItem(RATE_LIMIT_KEY);
+  const data = stored ? JSON.parse(stored) : { attempts: 0, lockoutUntil: null };
+  
+  data.attempts += 1;
+  
+  if (data.attempts >= MAX_ATTEMPTS) {
+    data.lockoutUntil = Date.now() + LOCKOUT_DURATION;
+  }
+  
+  localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(data));
+};
+
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const isPasswordReset = searchParams.get("reset") === "true";
@@ -75,6 +116,7 @@ const Auth = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [showNewPassword, setShowNewPassword] = useState(isPasswordReset);
   const [newPassword, setNewPassword] = useState("");
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -83,19 +125,23 @@ const Auth = () => {
 
   useEffect(() => {
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
-        // Check if profile needs onboarding
+        // Defer navigation to avoid deadlock
         setTimeout(async () => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("profile_completion")
-            .eq("id", session.user.id)
-            .single();
-          
-          if (!profile || (profile.profile_completion ?? 0) < 80) {
-            navigate("/onboarding");
-          } else {
+          try {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("profile_completion")
+              .eq("id", session.user.id)
+              .single();
+            
+            if (!profile || (profile.profile_completion ?? 0) < 80) {
+              navigate("/onboarding");
+            } else {
+              navigate("/dashboard");
+            }
+          } catch {
             navigate("/dashboard");
           }
         }, 0);
@@ -187,10 +233,11 @@ const Auth = () => {
         });
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Unable to create account. Please try again.";
       toast({
         title: "Sign up failed",
-        description: error.message || "Unable to create account. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -201,6 +248,15 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     clearErrors();
+    setRateLimitError(null);
+    
+    // Check rate limiting
+    const { allowed, remainingTime } = checkRateLimit();
+    if (!allowed) {
+      setRateLimitError(`Too many failed attempts. Please try again in ${remainingTime} minutes.`);
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -217,32 +273,36 @@ const Auth = () => {
         return;
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: validation.data.email,
         password: validation.data.password,
       });
 
       if (error) {
+        recordAttempt(false);
+        
         if (error.message.includes("Invalid login credentials")) {
-          setFormErrors({ password: "Invalid email or password" });
+          setFormErrors({ password: "Invalid email or password. Please check your credentials." });
           return;
         }
         if (error.message.includes("Email not confirmed")) {
-          setFormErrors({ email: "Please verify your email before signing in" });
+          setFormErrors({ email: "Please verify your email before signing in. Check your inbox." });
           return;
         }
         throw error;
       }
 
+      recordAttempt(true);
       toast({
         title: "Welcome back!",
         description: "Signing you in...",
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Unable to sign in. Please try again.";
       toast({
         title: "Sign in failed",
-        description: error.message || "Unable to sign in. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -498,28 +558,43 @@ const Auth = () => {
 
                 <TabsContent value="signin">
                   <form onSubmit={handleSignIn} className="space-y-4">
+                    {rateLimitError && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{rateLimitError}</AlertDescription>
+                      </Alert>
+                    )}
+                    
                     <div className="space-y-2">
                       <Label htmlFor="signin-email">Email</Label>
-                      <Input
-                        id="signin-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value);
-                          if (formErrors.email) clearErrors();
-                        }}
-                        className={formErrors.email ? "border-destructive" : ""}
-                        required
-                        autoComplete="email"
-                      />
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signin-email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => {
+                            setEmail(e.target.value.toLowerCase().trim());
+                            if (formErrors.email) clearErrors();
+                          }}
+                          className={`pl-10 ${formErrors.email ? "border-destructive" : ""}`}
+                          required
+                          autoComplete="email"
+                          disabled={!!rateLimitError}
+                        />
+                      </div>
                       {formErrors.email && (
-                        <p className="text-sm text-destructive">{formErrors.email}</p>
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {formErrors.email}
+                        </p>
                       )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signin-password">Password</Label>
                       <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signin-password"
                           type={showPassword ? "text" : "password"}
@@ -529,9 +604,10 @@ const Auth = () => {
                             setPassword(e.target.value);
                             if (formErrors.password) clearErrors();
                           }}
-                          className={formErrors.password ? "border-destructive" : ""}
+                          className={`pl-10 pr-10 ${formErrors.password ? "border-destructive" : ""}`}
                           required
                           autoComplete="current-password"
+                          disabled={!!rateLimitError}
                         />
                         <Button
                           type="button"
@@ -545,7 +621,10 @@ const Auth = () => {
                         </Button>
                       </div>
                       {formErrors.password && (
-                        <p className="text-sm text-destructive">{formErrors.password}</p>
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {formErrors.password}
+                        </p>
                       )}
                     </div>
                     <div className="flex items-center justify-between">
@@ -566,14 +645,17 @@ const Auth = () => {
                         Forgot password?
                       </Button>
                     </div>
-                    <Button type="submit" className="w-full" disabled={isLoading} variant="hero">
+                    <Button type="submit" className="w-full" disabled={isLoading || !!rateLimitError} variant="hero">
                       {isLoading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                           Signing in...
                         </>
                       ) : (
-                        "Sign In"
+                        <>
+                          <Lock className="h-4 w-4 mr-2" />
+                          Sign In Securely
+                        </>
                       )}
                     </Button>
                   </form>
@@ -583,40 +665,52 @@ const Auth = () => {
                   <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="signup-name">Full Name</Label>
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="John Doe"
-                        value={fullName}
-                        onChange={(e) => {
-                          setFullName(e.target.value);
-                          if (formErrors.fullName) clearErrors();
-                        }}
-                        className={formErrors.fullName ? "border-destructive" : ""}
-                        required
-                        autoComplete="name"
-                      />
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-name"
+                          type="text"
+                          placeholder="John Doe"
+                          value={fullName}
+                          onChange={(e) => {
+                            setFullName(e.target.value);
+                            if (formErrors.fullName) clearErrors();
+                          }}
+                          className={`pl-10 ${formErrors.fullName ? "border-destructive" : ""}`}
+                          required
+                          autoComplete="name"
+                        />
+                      </div>
                       {formErrors.fullName && (
-                        <p className="text-sm text-destructive">{formErrors.fullName}</p>
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {formErrors.fullName}
+                        </p>
                       )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value);
-                          if (formErrors.email) clearErrors();
-                        }}
-                        className={formErrors.email ? "border-destructive" : ""}
-                        required
-                        autoComplete="email"
-                      />
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => {
+                            setEmail(e.target.value.toLowerCase().trim());
+                            if (formErrors.email) clearErrors();
+                          }}
+                          className={`pl-10 ${formErrors.email ? "border-destructive" : ""}`}
+                          required
+                          autoComplete="email"
+                        />
+                      </div>
                       {formErrors.email && (
-                        <p className="text-sm text-destructive">{formErrors.email}</p>
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {formErrors.email}
+                        </p>
                       )}
                     </div>
                     <div className="space-y-2">
