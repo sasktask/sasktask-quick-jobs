@@ -308,22 +308,10 @@ export const ChatInterface = ({
         ? [messageToDelete]
         : Array.from(selectedMessages);
 
-      // Delete attachments from storage first
-      for (const messageId of messagesToDelete) {
-        const attachments = messageAttachments[messageId];
-        if (attachments) {
-          for (const attachment of attachments) {
-            await supabase.storage
-              .from('message-attachments')
-              .remove([attachment.storage_path]);
-          }
-        }
-      }
-
-      // Delete messages (cascades to message_attachments)
+      // Soft delete messages (set deleted_at timestamp instead of hard delete)
       const { error } = await supabase
         .from("messages")
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .in("id", messagesToDelete);
 
       if (error) throw error;
