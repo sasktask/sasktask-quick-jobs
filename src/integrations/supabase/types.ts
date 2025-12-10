@@ -587,6 +587,7 @@ export type Database = {
         Row: {
           booking_id: string
           created_at: string
+          deleted_at: string | null
           edited_at: string | null
           id: string
           message: string
@@ -599,6 +600,7 @@ export type Database = {
         Insert: {
           booking_id: string
           created_at?: string
+          deleted_at?: string | null
           edited_at?: string | null
           id?: string
           message: string
@@ -611,6 +613,7 @@ export type Database = {
         Update: {
           booking_id?: string
           created_at?: string
+          deleted_at?: string | null
           edited_at?: string | null
           id?: string
           message?: string

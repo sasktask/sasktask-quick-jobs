@@ -14,6 +14,7 @@ interface Message {
   status: string;
   reply_to_id?: string | null;
   edited_at?: string | null;
+  deleted_at?: string | null;
 }
 
 interface UseRealtimeChatProps {
@@ -223,9 +224,14 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
         (payload) => {
           console.log("Message updated:", payload);
           const updatedMessage = payload.new as Message;
-          setMessages((prev) =>
-            prev.map((msg) => (msg.id === updatedMessage.id ? updatedMessage : msg))
-          );
+          // If message was soft-deleted, remove it from the list
+          if (updatedMessage.deleted_at) {
+            setMessages((prev) => prev.filter((msg) => msg.id !== updatedMessage.id));
+          } else {
+            setMessages((prev) =>
+              prev.map((msg) => (msg.id === updatedMessage.id ? updatedMessage : msg))
+            );
+          }
         }
       )
       .on(
