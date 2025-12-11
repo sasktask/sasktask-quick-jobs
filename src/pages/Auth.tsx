@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import { z } from "zod";
-import { Eye, EyeOff, Mail, ArrowLeft, Shield, Loader2, Check, AlertCircle, Lock, User, Phone } from "lucide-react";
+import { Eye, EyeOff, Mail, ArrowLeft, Shield, Loader2, Check, AlertCircle, Lock, User, Phone, Briefcase, Wrench, Users } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 
@@ -43,7 +43,8 @@ const signUpSchema = z.object({
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[0-9]/, "Password must contain at least one number")
     .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
-  role: z.enum(["task_giver", "task_doer"]),
+  role: z.enum(["task_giver", "task_doer", "both"]),
+  termsAccepted: z.literal(true, { errorMap: () => ({ message: "You must accept the terms and conditions" }) }),
 });
 
 // Password strength checker
@@ -116,7 +117,8 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [role, setRole] = useState<"task_giver" | "task_doer">("task_doer");
+  const [role, setRole] = useState<"task_giver" | "task_doer" | "both">("task_doer");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -223,6 +225,7 @@ const Auth = () => {
         phone: phone || undefined,
         password,
         role,
+        termsAccepted,
       });
 
       if (!validation.success) {
@@ -1198,24 +1201,94 @@ const Auth = () => {
                           </p>
                         )}
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <Label>I want to:</Label>
-                        <RadioGroup value={role} onValueChange={(value: "task_giver" | "task_doer") => setRole(value)}>
-                          <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer">
+                        <RadioGroup value={role} onValueChange={(value: "task_giver" | "task_doer" | "both") => setRole(value)} className="space-y-3">
+                          <div 
+                            className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                              role === "task_doer" 
+                                ? "border-primary bg-primary/5" 
+                                : "border-border hover:border-primary/50 hover:bg-muted/50"
+                            }`}
+                            onClick={() => setRole("task_doer")}
+                          >
                             <RadioGroupItem value="task_doer" id="task_doer" />
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Wrench className="h-5 w-5 text-primary" />
+                            </div>
                             <Label htmlFor="task_doer" className="cursor-pointer flex-1">
-                              <div className="font-medium">Find Tasks to Do</div>
-                              <div className="text-sm text-muted-foreground">Earn money by completing tasks</div>
+                              <div className="font-semibold">Find Tasks & Earn Money</div>
+                              <div className="text-sm text-muted-foreground">Browse and complete tasks posted by others</div>
                             </Label>
                           </div>
-                          <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer">
+                          <div 
+                            className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                              role === "task_giver" 
+                                ? "border-primary bg-primary/5" 
+                                : "border-border hover:border-primary/50 hover:bg-muted/50"
+                            }`}
+                            onClick={() => setRole("task_giver")}
+                          >
                             <RadioGroupItem value="task_giver" id="task_giver" />
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Briefcase className="h-5 w-5 text-primary" />
+                            </div>
                             <Label htmlFor="task_giver" className="cursor-pointer flex-1">
-                              <div className="font-medium">Post Tasks</div>
-                              <div className="text-sm text-muted-foreground">Get help with your tasks</div>
+                              <div className="font-semibold">Post Tasks & Get Help</div>
+                              <div className="text-sm text-muted-foreground">Hire local taskers to help with your needs</div>
+                            </Label>
+                          </div>
+                          <div 
+                            className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                              role === "both" 
+                                ? "border-primary bg-primary/5" 
+                                : "border-border hover:border-primary/50 hover:bg-muted/50"
+                            }`}
+                            onClick={() => setRole("both")}
+                          >
+                            <RadioGroupItem value="both" id="both" />
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                              <Users className="h-5 w-5 text-primary" />
+                            </div>
+                            <Label htmlFor="both" className="cursor-pointer flex-1">
+                              <div className="font-semibold">Both - Do & Post Tasks</div>
+                              <div className="text-sm text-muted-foreground">Earn money and hire help whenever you need</div>
                             </Label>
                           </div>
                         </RadioGroup>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className={`flex items-start space-x-3 p-4 rounded-lg border ${
+                          formErrors.termsAccepted ? "border-destructive bg-destructive/5" : "border-border"
+                        }`}>
+                          <Checkbox 
+                            id="terms-accept"
+                            checked={termsAccepted}
+                            onCheckedChange={(checked) => {
+                              setTermsAccepted(checked as boolean);
+                              if (formErrors.termsAccepted) clearErrors();
+                            }}
+                            className="mt-1"
+                          />
+                          <Label htmlFor="terms-accept" className="cursor-pointer text-sm leading-relaxed">
+                            I agree to the{" "}
+                            <a href="/terms" className="text-primary hover:underline font-medium" target="_blank">
+                              Terms of Service
+                            </a>{" "}
+                            and{" "}
+                            <a href="/privacy" className="text-primary hover:underline font-medium" target="_blank">
+                              Privacy Policy
+                            </a>
+                            . I understand that SaskTask requires identity verification for safety.
+                          </Label>
+                        </div>
+                        {formErrors.termsAccepted && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {formErrors.termsAccepted}
+                          </p>
+                        )}
                       </div>
                       <Button type="submit" className="w-full" disabled={isLoading} variant="hero">
                         {isLoading ? (
@@ -1230,16 +1303,6 @@ const Auth = () => {
                           </>
                         )}
                       </Button>
-                      <p className="text-xs text-center text-muted-foreground">
-                        By signing up, you agree to our{" "}
-                        <a href="/terms" className="text-primary hover:underline">
-                          Terms of Service
-                        </a>{" "}
-                        and{" "}
-                        <a href="/privacy" className="text-primary hover:underline">
-                          Privacy Policy
-                        </a>
-                      </p>
                     </form>
                   )}
                 </TabsContent>
