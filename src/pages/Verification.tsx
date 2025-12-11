@@ -90,8 +90,9 @@ export default function Verification() {
     
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}_${type}_${Date.now()}.${fileExt}`;
-      const filePath = `${type}-documents/${fileName}`;
+      const fileName = `${type}_${Date.now()}.${fileExt}`;
+      // Use userId as the folder name to match storage RLS policy
+      const filePath = `${userId}/${fileName}`;
 
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
@@ -106,14 +107,12 @@ export default function Verification() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('verification-documents')
-        .getPublicUrl(filePath);
-
+      // Store the file path (not public URL) since bucket is private
+      // Admins will use signed URLs to view documents
       if (type === 'id') {
-        setIdDocumentUrl(publicUrl);
+        setIdDocumentUrl(filePath);
       } else {
-        setInsuranceDocumentUrl(publicUrl);
+        setInsuranceDocumentUrl(filePath);
       }
 
       toast({
