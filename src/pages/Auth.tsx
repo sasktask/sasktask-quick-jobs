@@ -283,31 +283,22 @@ const Auth = () => {
       }
 
       if (data.user) {
-        // Store user ID for OTP verification
-        setPendingUserId(data.user.id);
+        toast({
+          title: "Account created!",
+          description: "Welcome to SaskTask. Please sign in with your credentials.",
+        });
         
-        // Send OTP to email for verification
-        const { error: otpError } = await supabase.functions.invoke('send-otp', {
-          body: { email: validation.data.email, userId: data.user.id }
+        // Auto sign-in after signup
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: validation.data.email,
+          password: validation.data.password,
         });
 
-        if (otpError) {
-          console.error("Failed to send OTP:", otpError);
-          toast({
-            title: "Account created",
-            description: "But we couldn't send the verification code. Please try resending.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Verification code sent!",
-            description: "Please check your email for a 6-digit code.",
-          });
+        if (signInError) {
+          console.error("Auto sign-in failed:", signInError);
+          // User can manually sign in
         }
-        
-        // Move to OTP verification step
-        setSignupStep("verify");
-        setSignupOtpCountdown(60);
+        // User will be redirected by the onAuthStateChange listener
       }
 
     } catch (error: unknown) {
@@ -468,8 +459,8 @@ const Auth = () => {
         return;
       }
 
-      // First, verify the credentials without completing sign-in
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      // Direct sign-in with email and password
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email: validation.data.email,
         password: validation.data.password,
       });
@@ -488,35 +479,13 @@ const Auth = () => {
         throw authError;
       }
 
-      // Sign out immediately - we need OTP verification first
-      await supabase.auth.signOut();
-
-      // Store credentials for after OTP verification
-      setPendingSigninIdentifier(validation.data.email);
-      setPendingSigninPassword(validation.data.password);
-
-      // Send OTP to email
-      const { error: otpError } = await supabase.functions.invoke('send-otp', {
-        body: { email: validation.data.email, userId: authData.user?.id }
-      });
-
-      if (otpError) {
-        console.error("Failed to send OTP:", otpError);
-        toast({
-          title: "Verification required",
-          description: "Couldn't send verification code. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
+      recordAttempt(true);
       toast({
-        title: "Verification code sent!",
-        description: "Please check your email for a 6-digit code.",
+        title: "Welcome back!",
+        description: "Signing you in...",
       });
-
-      setSigninStep("otp");
-      setSigninOtpCountdown(60);
+      
+      // User will be redirected by the onAuthStateChange listener
 
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Unable to sign in. Please try again.";
