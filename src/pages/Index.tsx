@@ -10,6 +10,8 @@ import { SEOHead } from "@/components/SEOHead";
 import { FeaturedCategories } from "@/components/FeaturedCategories";
 import { PopularThisWeek } from "@/components/PopularThisWeek";
 import { SeasonalRecommendations } from "@/components/SeasonalRecommendations";
+import { PopularTaskers } from "@/components/PopularTaskers";
+import { FAQSection } from "@/components/FAQSection";
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Snowflake, Sparkles, Truck, Star, Shield, Clock, DollarSign, Users, Wrench, Package, Monitor, Trees, Home, PaintBucket, MoreHorizontal, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock, Plus } from "lucide-react";
@@ -607,6 +609,12 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Popular Taskers Section */}
+      <PopularTaskers />
+
+      {/* FAQ Section */}
+      <FAQSection />
 
       {/* Testimonials Section */}
       <TestimonialsSection />
