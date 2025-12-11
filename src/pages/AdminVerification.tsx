@@ -129,9 +129,23 @@ const AdminVerification = () => {
     setShowDialog(true);
   };
 
-  const viewDocument = (url: string) => {
-    setCurrentDocument(url);
-    setShowDocumentDialog(true);
+  const viewDocument = async (filePath: string) => {
+    try {
+      // Get signed URL for private bucket
+      const { data, error } = await supabase.storage
+        .from('verification-documents')
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
+      
+      if (error) throw error;
+      setCurrentDocument(data.signedUrl);
+      setShowDocumentDialog(true);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to load document.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleApproveVerification = async () => {
