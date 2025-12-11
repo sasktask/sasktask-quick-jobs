@@ -105,8 +105,6 @@ const recordAttempt = (success: boolean) => {
   localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(data));
 };
 
-type LoginMethod = "email" | "phone";
-type PhoneStep = "enter" | "verify";
 type SignupStep = "form" | "verify";
 type SigninStep = "credentials" | "otp";
 
@@ -134,11 +132,8 @@ const Auth = () => {
   const [newPassword, setNewPassword] = useState("");
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   
-  // New states for simplified login
-  const [loginMethod, setLoginMethod] = useState<LoginMethod>("email");
-  const [phoneStep, setPhoneStep] = useState<PhoneStep>("enter");
-  const [phoneOtp, setPhoneOtp] = useState("");
-  const [otpCountdown, setOtpCountdown] = useState(0);
+  // Unified identifier (email or phone)
+  const [identifier, setIdentifier] = useState("");
   
   // Signup OTP verification states
   const [signupStep, setSignupStep] = useState<SignupStep>("form");
@@ -150,8 +145,9 @@ const Auth = () => {
   const [signinStep, setSigninStep] = useState<SigninStep>("credentials");
   const [signinOtp, setSigninOtp] = useState("");
   const [signinOtpCountdown, setSigninOtpCountdown] = useState(0);
-  const [pendingSigninEmail, setPendingSigninEmail] = useState("");
+  const [pendingSigninIdentifier, setPendingSigninIdentifier] = useState("");
   const [pendingSigninPassword, setPendingSigninPassword] = useState("");
+  const [identifierType, setIdentifierType] = useState<"email" | "phone">("email");
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -197,13 +193,9 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate, isPasswordReset]);
 
-  // OTP countdown timer
-  useEffect(() => {
-    if (otpCountdown > 0) {
-      const timer = setTimeout(() => setOtpCountdown(otpCountdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [otpCountdown]);
+  // Helper to detect if input is email or phone
+  const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const isPhone = (value: string) => /^\+?[1-9]\d{6,14}$/.test(value);
 
   // Signup OTP countdown timer
   useEffect(() => {
@@ -435,20 +427,23 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      if (loginMethod === "phone") {
-        // Phone OTP login
-        const validation = phoneSchema.safeParse(phone);
-        if (!validation.success) {
-          setFormErrors({ phone: validation.error.errors[0].message });
-          setIsLoading(false);
-          return;
-        }
+      // Detect if identifier is email or phone
+      const trimmedIdentifier = identifier.trim();
+      const detectedType = isEmail(trimmedIdentifier) ? "email" : isPhone(trimmedIdentifier) ? "phone" : null;
+      
+      if (!detectedType) {
+        setFormErrors({ identifier: "Please enter a valid email address or phone number" });
+        setIsLoading(false);
+        return;
+      }
 
-        // For phone login, we'd need Twilio integration
-        // For now, we'll show a message about email login
+      setIdentifierType(detectedType);
+
+      if (detectedType === "phone") {
+        // Phone login not yet supported
         toast({
           title: "Phone login coming soon",
-          description: "Please use email login for now.",
+          description: "Please use your email address for now.",
           variant: "destructive",
         });
         setIsLoading(false);
@@ -456,13 +451,17 @@ const Auth = () => {
       }
 
       // Email + Password login
-      const validation = signInSchema.safeParse({ email, password });
+      const validation = signInSchema.safeParse({ email: trimmedIdentifier, password });
 
       if (!validation.success) {
         const errors: Record<string, string> = {};
         validation.error.errors.forEach((err) => {
           const field = err.path[0] as string;
-          errors[field] = err.message;
+          if (field === "email") {
+            errors["identifier"] = err.message;
+          } else {
+            errors[field] = err.message;
+          }
         });
         setFormErrors(errors);
         setIsLoading(false);
@@ -470,7 +469,6 @@ const Auth = () => {
       }
 
       // First, verify the credentials without completing sign-in
-      // We'll use a test sign-in to validate credentials
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: validation.data.email,
         password: validation.data.password,
@@ -484,7 +482,7 @@ const Auth = () => {
           return;
         }
         if (authError.message.includes("Email not confirmed")) {
-          setFormErrors({ email: "Please verify your email before signing in. Check your inbox." });
+          setFormErrors({ identifier: "Please verify your email before signing in. Check your inbox." });
           return;
         }
         throw authError;
@@ -494,7 +492,7 @@ const Auth = () => {
       await supabase.auth.signOut();
 
       // Store credentials for after OTP verification
-      setPendingSigninEmail(validation.data.email);
+      setPendingSigninIdentifier(validation.data.email);
       setPendingSigninPassword(validation.data.password);
 
       // Send OTP to email
@@ -546,7 +544,7 @@ const Auth = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('verify-otp', {
-        body: { email: pendingSigninEmail, code: signinOtp }
+        body: { email: pendingSigninIdentifier, code: signinOtp }
       });
 
       if (error || data?.error) {
@@ -561,7 +559,7 @@ const Auth = () => {
 
       // OTP verified, now complete sign-in
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: pendingSigninEmail,
+        email: pendingSigninIdentifier,
         password: pendingSigninPassword,
       });
 
@@ -582,7 +580,7 @@ const Auth = () => {
       });
 
       // Clear stored credentials
-      setPendingSigninEmail("");
+      setPendingSigninIdentifier("");
       setPendingSigninPassword("");
 
     } catch (error: unknown) {
@@ -599,7 +597,7 @@ const Auth = () => {
   };
 
   const handleResendSigninOtp = async () => {
-    if (signinOtpCountdown > 0 || !pendingSigninEmail) return;
+    if (signinOtpCountdown > 0 || !pendingSigninIdentifier) return;
     
     setIsLoading(true);
     try {
@@ -607,11 +605,11 @@ const Auth = () => {
       const { data: userData } = await supabase
         .from('profiles')
         .select('id')
-        .eq('email', pendingSigninEmail)
+        .eq('email', pendingSigninIdentifier)
         .single();
 
       const { error } = await supabase.functions.invoke('send-otp', {
-        body: { email: pendingSigninEmail, userId: userData?.id }
+        body: { email: pendingSigninIdentifier, userId: userData?.id }
       });
 
       if (error) throw error;
@@ -632,127 +630,6 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-
-  const handlePhoneLogin = async () => {
-    clearErrors();
-    setRateLimitError(null);
-    
-    const { allowed, remainingTime } = checkRateLimit();
-    if (!allowed) {
-      setRateLimitError(`Too many failed attempts. Please try again in ${remainingTime} minutes.`);
-      return;
-    }
-
-    // Validate phone
-    const validation = phoneSchema.safeParse(phone);
-    if (!validation.success) {
-      setFormErrors({ phone: validation.error.errors[0].message });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: validation.data,
-      });
-
-      if (error) {
-        if (error.message.includes("not found") || error.message.includes("not registered")) {
-          setFormErrors({ phone: "This phone number is not registered. Please sign up first." });
-          return;
-        }
-        throw error;
-      }
-
-      toast({
-        title: "Code sent!",
-        description: "Enter the 6-digit code sent to your phone.",
-      });
-      setPhoneStep("verify");
-      setOtpCountdown(60);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to send code. Please try again.";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyPhoneOtp = async () => {
-    if (phoneOtp.length !== 6) {
-      toast({
-        title: "Invalid code",
-        description: "Please enter the 6-digit code",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        phone,
-        token: phoneOtp,
-        type: "sms",
-      });
-
-      if (error) {
-        recordAttempt(false);
-        throw error;
-      }
-
-      recordAttempt(true);
-      toast({
-        title: "Welcome back!",
-        description: "Signing you in...",
-      });
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Invalid or expired code";
-      toast({
-        title: "Verification failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      setPhoneOtp("");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResendOtp = async () => {
-    if (otpCountdown > 0) return;
-    
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Code resent",
-        description: "A new code has been sent to your phone.",
-      });
-      setOtpCountdown(60);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to resend code";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     clearErrors();
@@ -1020,7 +897,7 @@ const Auth = () => {
                         <p className="text-sm text-muted-foreground">
                           We've sent a 6-digit verification code to
                         </p>
-                        <p className="font-medium text-primary">{pendingSigninEmail}</p>
+                        <p className="font-medium text-primary">{pendingSigninIdentifier}</p>
                       </div>
 
                       <div className="space-y-4">
@@ -1083,7 +960,7 @@ const Auth = () => {
                           onClick={() => {
                             setSigninStep("credentials");
                             setSigninOtp("");
-                            setPendingSigninEmail("");
+                            setPendingSigninIdentifier("");
                             setPendingSigninPassword("");
                           }}
                           className="w-full"
@@ -1103,125 +980,69 @@ const Auth = () => {
                   ) : (
                     // Credentials Form
                     <div className="space-y-4">
-                      {/* Login Method Selector */}
-                      <div className="flex gap-2 p-1 bg-muted rounded-lg">
-                        <Button
-                          type="button"
-                          variant={loginMethod === "email" ? "default" : "ghost"}
-                          className={`flex-1 ${loginMethod === "email" ? "" : "hover:bg-background"}`}
-                          onClick={() => setLoginMethod("email")}
-                        >
-                          <Mail className="h-4 w-4 mr-2" />
-                          Email
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={loginMethod === "phone" ? "default" : "ghost"}
-                          className={`flex-1 ${loginMethod === "phone" ? "" : "hover:bg-background"}`}
-                          onClick={() => setLoginMethod("phone")}
-                        >
-                          <Phone className="h-4 w-4 mr-2" />
-                          Phone
-                        </Button>
-                      </div>
-
                       <form onSubmit={handleSignIn} className="space-y-4">
-                        {loginMethod === "email" ? (
-                          <>
-                            <div className="space-y-2">
-                              <Label htmlFor="signin-email">Email</Label>
-                              <div className="relative">
-                                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                  id="signin-email"
-                                  type="email"
-                                  placeholder="you@example.com"
-                                  value={email}
-                                  onChange={(e) => {
-                                    setEmail(e.target.value.toLowerCase().trim());
-                                    if (formErrors.email) clearErrors();
-                                  }}
-                                  className={`pl-10 ${formErrors.email ? "border-destructive" : ""}`}
-                                  required
-                                  autoComplete="email"
-                                  disabled={!!rateLimitError}
-                                />
-                              </div>
-                              {formErrors.email && (
-                                <p className="text-sm text-destructive flex items-center gap-1">
-                                  <AlertCircle className="h-3 w-3" />
-                                  {formErrors.email}
-                                </p>
-                              )}
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="signin-password">Password</Label>
-                              <div className="relative">
-                                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                  id="signin-password"
-                                  type={showPassword ? "text" : "password"}
-                                  placeholder="••••••••"
-                                  value={password}
-                                  onChange={(e) => {
-                                    setPassword(e.target.value);
-                                    if (formErrors.password) clearErrors();
-                                  }}
-                                  className={`pl-10 pr-10 ${formErrors.password ? "border-destructive" : ""}`}
-                                  required
-                                  autoComplete="current-password"
-                                  disabled={!!rateLimitError}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                                  onClick={() => setShowPassword(!showPassword)}
-                                  tabIndex={-1}
-                                >
-                                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </Button>
-                              </div>
-                              {formErrors.password && (
-                                <p className="text-sm text-destructive flex items-center gap-1">
-                                  <AlertCircle className="h-3 w-3" />
-                                  {formErrors.password}
-                                </p>
-                              )}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="space-y-2">
-                            <Label htmlFor="signin-phone">Phone Number</Label>
-                            <div className="relative">
-                              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                id="signin-phone"
-                                type="tel"
-                                placeholder="+1234567890"
-                                value={phone}
-                                onChange={(e) => {
-                                  setPhone(e.target.value);
-                                  if (formErrors.phone) clearErrors();
-                                }}
-                                className={`pl-10 ${formErrors.phone ? "border-destructive" : ""}`}
-                                required
-                                autoComplete="tel"
-                                disabled={!!rateLimitError}
-                              />
-                            </div>
-                            {formErrors.phone && (
-                              <p className="text-sm text-destructive flex items-center gap-1">
-                                <AlertCircle className="h-3 w-3" />
-                                {formErrors.phone}
-                              </p>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                              We'll send you a one-time code to verify your phone number.
-                            </p>
+                        <div className="space-y-2">
+                          <Label htmlFor="signin-identifier">Email or Phone</Label>
+                          <div className="relative">
+                            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="signin-identifier"
+                              type="text"
+                              placeholder="you@example.com or +1234567890"
+                              value={identifier}
+                              onChange={(e) => {
+                                setIdentifier(e.target.value.trim());
+                                if (formErrors.identifier) clearErrors();
+                              }}
+                              className={`pl-10 ${formErrors.identifier ? "border-destructive" : ""}`}
+                              required
+                              autoComplete="email tel"
+                              disabled={!!rateLimitError}
+                            />
                           </div>
-                        )}
+                          {formErrors.identifier && (
+                            <p className="text-sm text-destructive flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              {formErrors.identifier}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="signin-password">Password</Label>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="signin-password"
+                              type={showPassword ? "text" : "password"}
+                              placeholder="••••••••"
+                              value={password}
+                              onChange={(e) => {
+                                setPassword(e.target.value);
+                                if (formErrors.password) clearErrors();
+                              }}
+                              className={`pl-10 pr-10 ${formErrors.password ? "border-destructive" : ""}`}
+                              required
+                              autoComplete="current-password"
+                              disabled={!!rateLimitError}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                              onClick={() => setShowPassword(!showPassword)}
+                              tabIndex={-1}
+                            >
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                          {formErrors.password && (
+                            <p className="text-sm text-destructive flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              {formErrors.password}
+                            </p>
+                          )}
+                        </div>
 
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
@@ -1232,27 +1053,25 @@ const Auth = () => {
                             />
                             <Label htmlFor="remember" className="text-sm cursor-pointer">Remember me</Label>
                           </div>
-                          {loginMethod === "email" && (
-                            <Button 
-                              type="button" 
-                              variant="link" 
-                              className="p-0 h-auto text-sm"
-                              onClick={() => setShowForgotPassword(true)}
-                            >
-                              Forgot password?
-                            </Button>
-                          )}
+                          <Button 
+                            type="button" 
+                            variant="link" 
+                            className="p-0 h-auto text-sm"
+                            onClick={() => setShowForgotPassword(true)}
+                          >
+                            Forgot password?
+                          </Button>
                         </div>
                         <Button type="submit" className="w-full" disabled={isLoading || !!rateLimitError} variant="hero">
                           {isLoading ? (
                             <>
                               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              {loginMethod === "email" ? "Verifying..." : "Sending code..."}
+                              Verifying...
                             </>
                           ) : (
                             <>
                               <Shield className="h-4 w-4 mr-2" />
-                              {loginMethod === "email" ? "Continue" : "Send Code"}
+                              Continue
                             </>
                           )}
                         </Button>
@@ -1260,7 +1079,7 @@ const Auth = () => {
 
                       <div className="text-center">
                         <p className="text-xs text-muted-foreground">
-                          🔒 Secure sign-in with email verification
+                          🔒 Secure sign-in with OTP verification
                         </p>
                       </div>
                     </div>
