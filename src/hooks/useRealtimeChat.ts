@@ -17,40 +17,111 @@ interface Message {
   deleted_at?: string | null;
 }
 
+interface Attachment {
+  id: string;
+  message_id: string;
+  file_name: string;
+  file_size: number;
+  file_type: string;
+  storage_path: string;
+  attachment_type: string;
+  duration?: number;
+}
+
 interface UseRealtimeChatProps {
   bookingId: string;
   currentUserId: string;
   otherUserId: string;
+  pageSize?: number;
 }
 
-export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRealtimeChatProps) => {
+export const useRealtimeChat = ({ 
+  bookingId, 
+  currentUserId, 
+  otherUserId,
+  pageSize = 50 
+}: UseRealtimeChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [attachments, setAttachments] = useState<Record<string, Attachment[]>>({});
   const [isTyping, setIsTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load initial messages (don't mark as read immediately)
-  const loadMessages = useCallback(async () => {
+  // Load messages with pagination
+  const loadMessages = useCallback(async (loadMore = false) => {
     try {
-      setIsLoading(true);
-      const { data, error } = await supabase
+      if (!loadMore) setIsLoading(true);
+      
+      const offset = loadMore ? (page + 1) * pageSize : 0;
+      
+      const { data, error, count } = await supabase
         .from("messages")
-        .select("*")
+        .select("*", { count: "exact" })
         .eq("booking_id", bookingId)
-        .order("created_at", { ascending: true });
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + pageSize - 1);
 
       if (error) throw error;
 
-      setMessages(data || []);
+      const messagesData = (data || []).reverse();
+      
+      if (loadMore) {
+        setMessages((prev) => [...messagesData, ...prev]);
+        setPage((p) => p + 1);
+      } else {
+        setMessages(messagesData);
+      }
+
+      setHasMore((count || 0) > offset + pageSize);
+
+      // Batch load attachments for all messages
+      if (messagesData.length > 0) {
+        const messageIds = messagesData.map((m) => m.id);
+        await loadAttachmentsBatch(messageIds);
+      }
     } catch (error) {
       console.error("Error loading messages:", error);
       toast.error("Failed to load messages");
     } finally {
       setIsLoading(false);
     }
-  }, [bookingId]);
+  }, [bookingId, page, pageSize]);
+
+  // Batch load attachments for multiple messages
+  const loadAttachmentsBatch = async (messageIds: string[]) => {
+    try {
+      const { data, error } = await supabase
+        .from("message_attachments")
+        .select("*")
+        .in("message_id", messageIds);
+
+      if (error) throw error;
+
+      const attachmentMap: Record<string, Attachment[]> = {};
+      (data || []).forEach((att) => {
+        if (!attachmentMap[att.message_id]) {
+          attachmentMap[att.message_id] = [];
+        }
+        attachmentMap[att.message_id].push(att);
+      });
+
+      setAttachments((prev) => ({ ...prev, ...attachmentMap }));
+    } catch (error) {
+      console.error("Error loading attachments:", error);
+    }
+  };
+
+  // Load more messages (pagination)
+  const loadMore = useCallback(() => {
+    if (hasMore && !isLoading) {
+      loadMessages(true);
+    }
+  }, [hasMore, isLoading, loadMessages]);
 
   // Mark messages as read
   const markMessagesAsRead = async () => {
@@ -69,7 +140,7 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
   };
 
   // Send message with optimistic update
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (content: string, replyToId?: string) => {
     if (!content.trim()) {
       toast.error("Message cannot be empty");
       return;
@@ -84,41 +155,43 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
       created_at: new Date().toISOString(),
       read_at: null,
       status: "sending",
+      reply_to_id: replyToId,
     };
 
-    // Optimistic update
     setMessages((prev) => [...prev, optimisticMessage]);
     setIsSending(true);
 
     try {
+      const insertData: any = {
+        booking_id: bookingId,
+        sender_id: currentUserId,
+        receiver_id: otherUserId,
+        message: content,
+      };
+      
+      if (replyToId) {
+        insertData.reply_to_id = replyToId;
+      }
+
       const { data, error } = await supabase
         .from("messages")
-        .insert({
-          booking_id: bookingId,
-          sender_id: currentUserId,
-          receiver_id: otherUserId,
-          message: content,
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (error) throw error;
 
-      // Replace optimistic message with real one
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === optimisticMessage.id ? { ...data, status: "sent" } : msg
         )
       );
 
-      // Stop typing indicator
       updateTypingStatus(false);
-
       return data;
     } catch (error: any) {
       console.error("Error sending message:", error);
       
-      // Mark message as failed
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === optimisticMessage.id ? { ...msg, status: "failed" } : msg
@@ -137,18 +210,14 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
     const failedMessage = messages.find((msg) => msg.id === messageId);
     if (!failedMessage) return;
 
-    // Remove failed message
     setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
-
-    // Resend
-    await sendMessage(failedMessage.message);
+    await sendMessage(failedMessage.message, failedMessage.reply_to_id || undefined);
   };
 
   // Update typing status
   const updateTypingStatus = async (typing: boolean) => {
     try {
       if (typing) {
-        // Upsert typing indicator
         await supabase.from("typing_indicators").upsert({
           booking_id: bookingId,
           user_id: currentUserId,
@@ -156,7 +225,6 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
           last_typed_at: new Date().toISOString(),
         });
       } else {
-        // Remove typing indicator
         await supabase
           .from("typing_indicators")
           .update({ is_typing: false })
@@ -168,29 +236,25 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
     }
   };
 
-  // Handle user typing
-  const handleTyping = () => {
+  // Handle user typing with debounce
+  const handleTyping = useCallback(() => {
     updateTypingStatus(true);
 
-    // Clear existing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Set new timeout to stop typing after 3 seconds
     typingTimeoutRef.current = setTimeout(() => {
       updateTypingStatus(false);
     }, 3000);
-  };
+  }, [bookingId, currentUserId]);
 
   // Set up realtime subscriptions
   useEffect(() => {
     loadMessages();
 
-    // Create channel for this booking
     const channel = supabase.channel(`chat:${bookingId}`);
 
-    // Subscribe to new messages
     channel
       .on(
         "postgres_changes",
@@ -201,14 +265,17 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
           filter: `booking_id=eq.${bookingId}`,
         },
         (payload) => {
-          console.log("New message received:", payload);
           const newMessage = payload.new as Message;
           
-          // Only add if not from current user (avoid duplicates from optimistic update)
           if (newMessage.sender_id !== currentUserId) {
-            setMessages((prev) => [...prev, { ...newMessage, status: "sent" }]);
+            setMessages((prev) => {
+              // Avoid duplicates
+              if (prev.some((m) => m.id === newMessage.id)) return prev;
+              return [...prev, { ...newMessage, status: "sent" }];
+            });
             
-            // Mark as read if chat is open
+            // Load attachments for new message
+            loadAttachmentsBatch([newMessage.id]);
             markMessagesAsRead();
           }
         }
@@ -222,9 +289,8 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
           filter: `booking_id=eq.${bookingId}`,
         },
         (payload) => {
-          console.log("Message updated:", payload);
           const updatedMessage = payload.new as Message;
-          // If message was soft-deleted, remove it from the list
+          
           if (updatedMessage.deleted_at) {
             setMessages((prev) => prev.filter((msg) => msg.id !== updatedMessage.id));
           } else {
@@ -243,10 +309,8 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
           filter: `booking_id=eq.${bookingId}`,
         },
         (payload) => {
-          console.log("Typing indicator updated:", payload);
           const indicator = payload.new as any;
           
-          // Only show typing for other user
           if (indicator.user_id !== currentUserId) {
             setIsTyping(indicator.is_typing);
           }
@@ -256,7 +320,6 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
 
     channelRef.current = channel;
 
-    // Cleanup
     return () => {
       updateTypingStatus(false);
       if (channelRef.current) {
@@ -270,12 +333,15 @@ export const useRealtimeChat = ({ bookingId, currentUserId, otherUserId }: UseRe
 
   return {
     messages,
+    attachments,
     isTyping,
     isLoading,
     isSending,
+    hasMore,
     sendMessage,
     retryMessage,
     handleTyping,
     markMessagesAsRead,
+    loadMore,
   };
 };

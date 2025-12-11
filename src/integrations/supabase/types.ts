@@ -963,6 +963,7 @@ export type Database = {
           full_name: string | null
           hourly_rate: number | null
           id: string
+          is_online: boolean | null
           joined_date: string | null
           last_active: string | null
           last_seen: string | null
@@ -1008,6 +1009,7 @@ export type Database = {
           full_name?: string | null
           hourly_rate?: number | null
           id: string
+          is_online?: boolean | null
           joined_date?: string | null
           last_active?: string | null
           last_seen?: string | null
@@ -1053,6 +1055,7 @@ export type Database = {
           full_name?: string | null
           hourly_rate?: number | null
           id?: string
+          is_online?: boolean | null
           joined_date?: string | null
           last_active?: string | null
           last_seen?: string | null

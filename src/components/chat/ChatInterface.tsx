@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Send, Loader2, AlertCircle, RefreshCw, User, Trash2, X, Search, Reply, Paperclip, Image as ImageIcon } from "lucide-react";
+import { Send, Loader2, AlertCircle, RefreshCw, User, Trash2, X, Search, Reply, Paperclip, Image as ImageIcon, ChevronUp } from "lucide-react";
 import { useRealtimeChat } from "@/hooks/useRealtimeChat";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ import { EditHistoryDialog } from "./EditHistoryDialog";
 import { MessageReactions } from "./MessageReactions";
 import { FilePreview } from "./FilePreview";
 import { PinnedMessages } from "./PinnedMessages";
+import { compressImage } from "@/lib/imageCompression";
 
 interface ChatInterfaceProps {
   bookingId: string;
@@ -64,13 +65,16 @@ export const ChatInterface = ({
 
   const {
     messages,
+    attachments: messageAttachments,
     isTyping,
     isLoading,
     isSending,
+    hasMore,
     sendMessage,
     retryMessage,
     handleTyping,
     markMessagesAsRead,
+    loadMore,
   } = useRealtimeChat({
     bookingId,
     currentUserId,
@@ -144,10 +148,20 @@ export const ChatInterface = ({
     }
   };
 
-  // Handle media upload
+  // Handle media upload with compression
   const handleMediaUpload = async (file: File, type: 'image' | 'file') => {
     try {
       setUploadingMedia(true);
+
+      // Compress images before upload
+      let fileToUpload: File = file;
+      if (type === 'image' && file.type.startsWith('image/')) {
+        try {
+          fileToUpload = await compressImage(file, { maxWidth: 1920, maxHeight: 1080, quality: 0.8 });
+        } catch (e) {
+          console.warn('Image compression failed, using original:', e);
+        }
+      }
 
       // Create message first
       const { data: messageData, error: messageError } = await supabase
@@ -164,7 +178,7 @@ export const ChatInterface = ({
       if (messageError) throw messageError;
 
       // Upload attachment
-      await uploadAttachment(file, file.name, type, messageData.id);
+      await uploadAttachment(fileToUpload, file.name, type, messageData.id);
 
       toast.success(`${type === 'image' ? 'Image' : 'File'} sent successfully`);
     } catch (error) {
@@ -174,6 +188,14 @@ export const ChatInterface = ({
       setUploadingMedia(false);
     }
   };
+
+  // Infinite scroll handler
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    if (target.scrollTop === 0 && hasMore && !isLoading) {
+      loadMore();
+    }
+  }, [hasMore, isLoading, loadMore]);
 
   // Handle voice recording
   const handleVoiceSend = async (audioBlob: Blob, duration: number) => {
@@ -207,46 +229,37 @@ export const ChatInterface = ({
     }
   };
 
-  // Load attachments and replied-to messages
-  const [messageAttachments, setMessageAttachments] = useState<Record<string, any[]>>({});
+  // Load replied-to messages only (attachments come from hook)
   const [repliedMessages, setRepliedMessages] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    const loadMessageData = async () => {
-      const attachmentsMap: Record<string, any[]> = {};
+    const loadRepliedMessages = async () => {
       const repliesMap: Record<string, any> = {};
+      const messagesWithReplies = messages.filter((m) => m.reply_to_id);
       
-      for (const message of messages) {
-        // Load attachments
-        const { data: attachments } = await (supabase as any)
-          .from('message_attachments')
-          .select('*')
-          .eq('message_id', message.id);
+      if (messagesWithReplies.length === 0) return;
 
-        if (attachments && attachments.length > 0) {
-          attachmentsMap[message.id] = attachments;
-        }
+      // Batch load replied messages
+      const replyIds = messagesWithReplies.map((m) => m.reply_to_id).filter(Boolean) as string[];
+      const { data: repliedMsgs } = await supabase
+        .from('messages')
+        .select('*')
+        .in('id', replyIds);
 
-        // Load replied-to message if exists
-        if (message.reply_to_id) {
-          const { data: repliedMsg } = await supabase
-            .from('messages')
-            .select('*, profiles!messages_sender_id_fkey(full_name)')
-            .eq('id', message.reply_to_id)
-            .single();
-
+      if (repliedMsgs) {
+        messagesWithReplies.forEach((message) => {
+          const repliedMsg = repliedMsgs.find((r) => r.id === message.reply_to_id);
           if (repliedMsg) {
             repliesMap[message.id] = repliedMsg;
           }
-        }
+        });
       }
 
-      setMessageAttachments(attachmentsMap);
       setRepliedMessages(repliesMap);
     };
 
     if (messages.length > 0) {
-      loadMessageData();
+      loadRepliedMessages();
     }
   }, [messages]);
 
@@ -658,8 +671,28 @@ export const ChatInterface = ({
       />
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 p-4" ref={scrollRef} onScrollCapture={handleScroll}>
         <div className="space-y-4">
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="flex justify-center pb-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={loadMore}
+                disabled={isLoading}
+                className="text-muted-foreground"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <ChevronUp className="h-4 w-4 mr-2" />
+                )}
+                Load earlier messages
+              </Button>
+            </div>
+          )}
+          
           {filteredMessages.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
