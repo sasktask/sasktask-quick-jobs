@@ -108,6 +108,7 @@ const recordAttempt = (success: boolean) => {
 type LoginMethod = "email" | "phone";
 type PhoneStep = "enter" | "verify";
 type SignupStep = "form" | "verify";
+type SigninStep = "credentials" | "otp";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -144,6 +145,13 @@ const Auth = () => {
   const [signupOtp, setSignupOtp] = useState("");
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [signupOtpCountdown, setSignupOtpCountdown] = useState(0);
+  
+  // Signin OTP verification states
+  const [signinStep, setSigninStep] = useState<SigninStep>("credentials");
+  const [signinOtp, setSigninOtp] = useState("");
+  const [signinOtpCountdown, setSigninOtpCountdown] = useState(0);
+  const [pendingSigninEmail, setPendingSigninEmail] = useState("");
+  const [pendingSigninPassword, setPendingSigninPassword] = useState("");
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -204,6 +212,14 @@ const Auth = () => {
       return () => clearTimeout(timer);
     }
   }, [signupOtpCountdown]);
+
+  // Signin OTP countdown timer
+  useEffect(() => {
+    if (signinOtpCountdown > 0) {
+      const timer = setTimeout(() => setSigninOtpCountdown(signinOtpCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [signinOtpCountdown]);
 
   const clearErrors = () => {
     setFormErrors({});
@@ -419,6 +435,27 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
+      if (loginMethod === "phone") {
+        // Phone OTP login
+        const validation = phoneSchema.safeParse(phone);
+        if (!validation.success) {
+          setFormErrors({ phone: validation.error.errors[0].message });
+          setIsLoading(false);
+          return;
+        }
+
+        // For phone login, we'd need Twilio integration
+        // For now, we'll show a message about email login
+        toast({
+          title: "Phone login coming soon",
+          description: "Please use email login for now.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Email + Password login
       const validation = signInSchema.safeParse({ email, password });
 
       if (!validation.success) {
@@ -432,35 +469,162 @@ const Auth = () => {
         return;
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
+      // First, verify the credentials without completing sign-in
+      // We'll use a test sign-in to validate credentials
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: validation.data.email,
         password: validation.data.password,
       });
 
-      if (error) {
+      if (authError) {
         recordAttempt(false);
         
-        if (error.message.includes("Invalid login credentials")) {
+        if (authError.message.includes("Invalid login credentials")) {
           setFormErrors({ password: "Invalid email or password. Please check your credentials." });
           return;
         }
-        if (error.message.includes("Email not confirmed")) {
+        if (authError.message.includes("Email not confirmed")) {
           setFormErrors({ email: "Please verify your email before signing in. Check your inbox." });
           return;
         }
-        throw error;
+        throw authError;
       }
 
-      recordAttempt(true);
-      toast({
-        title: "Welcome back!",
-        description: "Signing you in...",
+      // Sign out immediately - we need OTP verification first
+      await supabase.auth.signOut();
+
+      // Store credentials for after OTP verification
+      setPendingSigninEmail(validation.data.email);
+      setPendingSigninPassword(validation.data.password);
+
+      // Send OTP to email
+      const { error: otpError } = await supabase.functions.invoke('send-otp', {
+        body: { email: validation.data.email, userId: authData.user?.id }
       });
+
+      if (otpError) {
+        console.error("Failed to send OTP:", otpError);
+        toast({
+          title: "Verification required",
+          description: "Couldn't send verification code. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Verification code sent!",
+        description: "Please check your email for a 6-digit code.",
+      });
+
+      setSigninStep("otp");
+      setSigninOtpCountdown(60);
 
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Unable to sign in. Please try again.";
       toast({
         title: "Sign in failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifySigninOtp = async () => {
+    if (signinOtp.length !== 6) {
+      toast({
+        title: "Invalid code",
+        description: "Please enter the 6-digit verification code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-otp', {
+        body: { email: pendingSigninEmail, code: signinOtp }
+      });
+
+      if (error || data?.error) {
+        toast({
+          title: "Verification failed",
+          description: data?.error || error?.message || "Invalid or expired code",
+          variant: "destructive",
+        });
+        setSigninOtp("");
+        return;
+      }
+
+      // OTP verified, now complete sign-in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: pendingSigninEmail,
+        password: pendingSigninPassword,
+      });
+
+      if (signInError) {
+        toast({
+          title: "Sign in failed",
+          description: "Please try signing in again.",
+          variant: "destructive",
+        });
+        setSigninStep("credentials");
+        return;
+      }
+
+      recordAttempt(true);
+      toast({
+        title: "Welcome back!",
+        description: "Signing you in securely...",
+      });
+
+      // Clear stored credentials
+      setPendingSigninEmail("");
+      setPendingSigninPassword("");
+
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Verification failed";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      setSigninOtp("");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendSigninOtp = async () => {
+    if (signinOtpCountdown > 0 || !pendingSigninEmail) return;
+    
+    setIsLoading(true);
+    try {
+      // Get user ID
+      const { data: userData } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', pendingSigninEmail)
+        .single();
+
+      const { error } = await supabase.functions.invoke('send-otp', {
+        body: { email: pendingSigninEmail, userId: userData?.id }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Code resent",
+        description: "A new verification code has been sent to your email.",
+      });
+      setSigninOtpCountdown(60);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to resend code";
+      toast({
+        title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -845,101 +1009,262 @@ const Auth = () => {
                     </Alert>
                   )}
 
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signin-email"
-                          type="email"
-                          placeholder="you@example.com"
-                          value={email}
-                          onChange={(e) => {
-                            setEmail(e.target.value.toLowerCase().trim());
-                            if (formErrors.email) clearErrors();
-                          }}
-                          className={`pl-10 ${formErrors.email ? "border-destructive" : ""}`}
-                          required
-                          autoComplete="email"
-                          disabled={!!rateLimitError}
-                        />
-                      </div>
-                      {formErrors.email && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {formErrors.email}
+                  {signinStep === "otp" ? (
+                    // OTP Verification Step for Sign In
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                          <Shield className="h-8 w-8 text-primary" />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">Verify It's You</h3>
+                        <p className="text-sm text-muted-foreground">
+                          We've sent a 6-digit verification code to
                         </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signin-password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => {
-                            setPassword(e.target.value);
-                            if (formErrors.password) clearErrors();
-                          }}
-                          className={`pl-10 pr-10 ${formErrors.password ? "border-destructive" : ""}`}
-                          required
-                          autoComplete="current-password"
-                          disabled={!!rateLimitError}
-                        />
+                        <p className="font-medium text-primary">{pendingSigninEmail}</p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="signin-otp">Verification Code</Label>
+                          <Input
+                            id="signin-otp"
+                            type="text"
+                            placeholder="Enter 6-digit code"
+                            value={signinOtp}
+                            onChange={(e) => setSigninOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            className="text-center text-2xl tracking-[0.5em] font-mono"
+                            maxLength={6}
+                            autoFocus
+                          />
+                        </div>
+
+                        <Button 
+                          onClick={handleVerifySigninOtp}
+                          className="w-full" 
+                          disabled={isLoading || signinOtp.length !== 6}
+                          variant="hero"
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Verifying...
+                            </>
+                          ) : (
+                            <>
+                              <Shield className="h-4 w-4 mr-2" />
+                              Verify & Sign In
+                            </>
+                          )}
+                        </Button>
+
+                        <div className="text-center">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Didn't receive the code?
+                          </p>
+                          <Button
+                            type="button"
+                            variant="link"
+                            onClick={handleResendSigninOtp}
+                            disabled={signinOtpCountdown > 0 || isLoading}
+                            className="p-0 h-auto"
+                          >
+                            {signinOtpCountdown > 0 
+                              ? `Resend code in ${signinOtpCountdown}s` 
+                              : "Resend code"
+                            }
+                          </Button>
+                        </div>
+
+                        <Separator />
+
                         <Button
                           type="button"
                           variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                          tabIndex={-1}
+                          onClick={() => {
+                            setSigninStep("credentials");
+                            setSigninOtp("");
+                            setPendingSigninEmail("");
+                            setPendingSigninPassword("");
+                          }}
+                          className="w-full"
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          <ArrowLeft className="h-4 w-4 mr-2" />
+                          Back to Sign In
                         </Button>
                       </div>
-                      {formErrors.password && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {formErrors.password}
-                        </p>
-                      )}
+
+                      <Alert>
+                        <Shield className="h-4 w-4" />
+                        <AlertDescription>
+                          <strong>Security:</strong> We verify your identity each time you sign in to protect your account.
+                        </AlertDescription>
+                      </Alert>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="remember" 
-                          checked={rememberMe}
-                          onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                        />
-                        <Label htmlFor="remember" className="text-sm cursor-pointer">Remember me</Label>
+                  ) : (
+                    // Credentials Form
+                    <div className="space-y-4">
+                      {/* Login Method Selector */}
+                      <div className="flex gap-2 p-1 bg-muted rounded-lg">
+                        <Button
+                          type="button"
+                          variant={loginMethod === "email" ? "default" : "ghost"}
+                          className={`flex-1 ${loginMethod === "email" ? "" : "hover:bg-background"}`}
+                          onClick={() => setLoginMethod("email")}
+                        >
+                          <Mail className="h-4 w-4 mr-2" />
+                          Email
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={loginMethod === "phone" ? "default" : "ghost"}
+                          className={`flex-1 ${loginMethod === "phone" ? "" : "hover:bg-background"}`}
+                          onClick={() => setLoginMethod("phone")}
+                        >
+                          <Phone className="h-4 w-4 mr-2" />
+                          Phone
+                        </Button>
                       </div>
-                      <Button 
-                        type="button" 
-                        variant="link" 
-                        className="p-0 h-auto text-sm"
-                        onClick={() => setShowForgotPassword(true)}
-                      >
-                        Forgot password?
-                      </Button>
+
+                      <form onSubmit={handleSignIn} className="space-y-4">
+                        {loginMethod === "email" ? (
+                          <>
+                            <div className="space-y-2">
+                              <Label htmlFor="signin-email">Email</Label>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  id="signin-email"
+                                  type="email"
+                                  placeholder="you@example.com"
+                                  value={email}
+                                  onChange={(e) => {
+                                    setEmail(e.target.value.toLowerCase().trim());
+                                    if (formErrors.email) clearErrors();
+                                  }}
+                                  className={`pl-10 ${formErrors.email ? "border-destructive" : ""}`}
+                                  required
+                                  autoComplete="email"
+                                  disabled={!!rateLimitError}
+                                />
+                              </div>
+                              {formErrors.email && (
+                                <p className="text-sm text-destructive flex items-center gap-1">
+                                  <AlertCircle className="h-3 w-3" />
+                                  {formErrors.email}
+                                </p>
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="signin-password">Password</Label>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  id="signin-password"
+                                  type={showPassword ? "text" : "password"}
+                                  placeholder="••••••••"
+                                  value={password}
+                                  onChange={(e) => {
+                                    setPassword(e.target.value);
+                                    if (formErrors.password) clearErrors();
+                                  }}
+                                  className={`pl-10 pr-10 ${formErrors.password ? "border-destructive" : ""}`}
+                                  required
+                                  autoComplete="current-password"
+                                  disabled={!!rateLimitError}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  tabIndex={-1}
+                                >
+                                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </Button>
+                              </div>
+                              {formErrors.password && (
+                                <p className="text-sm text-destructive flex items-center gap-1">
+                                  <AlertCircle className="h-3 w-3" />
+                                  {formErrors.password}
+                                </p>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="space-y-2">
+                            <Label htmlFor="signin-phone">Phone Number</Label>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                id="signin-phone"
+                                type="tel"
+                                placeholder="+1234567890"
+                                value={phone}
+                                onChange={(e) => {
+                                  setPhone(e.target.value);
+                                  if (formErrors.phone) clearErrors();
+                                }}
+                                className={`pl-10 ${formErrors.phone ? "border-destructive" : ""}`}
+                                required
+                                autoComplete="tel"
+                                disabled={!!rateLimitError}
+                              />
+                            </div>
+                            {formErrors.phone && (
+                              <p className="text-sm text-destructive flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                {formErrors.phone}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              We'll send you a one-time code to verify your phone number.
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="remember" 
+                              checked={rememberMe}
+                              onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                            />
+                            <Label htmlFor="remember" className="text-sm cursor-pointer">Remember me</Label>
+                          </div>
+                          {loginMethod === "email" && (
+                            <Button 
+                              type="button" 
+                              variant="link" 
+                              className="p-0 h-auto text-sm"
+                              onClick={() => setShowForgotPassword(true)}
+                            >
+                              Forgot password?
+                            </Button>
+                          )}
+                        </div>
+                        <Button type="submit" className="w-full" disabled={isLoading || !!rateLimitError} variant="hero">
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              {loginMethod === "email" ? "Verifying..." : "Sending code..."}
+                            </>
+                          ) : (
+                            <>
+                              <Shield className="h-4 w-4 mr-2" />
+                              {loginMethod === "email" ? "Continue" : "Send Code"}
+                            </>
+                          )}
+                        </Button>
+                      </form>
+
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground">
+                          🔒 Secure sign-in with email verification
+                        </p>
+                      </div>
                     </div>
-                    <Button type="submit" className="w-full" disabled={isLoading || !!rateLimitError} variant="hero">
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Signing in...
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="h-4 w-4 mr-2" />
-                          Sign In
-                        </>
-                      )}
-                    </Button>
-                  </form>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="signup">
