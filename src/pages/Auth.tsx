@@ -31,7 +31,9 @@ const signInSchema = z.object({
 
 // Sign up validation with strong password requirements
 const signUpSchema = z.object({
-  fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name is too long"),
+  firstName: z.string().trim().min(2, "First name must be at least 2 characters").max(50, "First name is too long"),
+  middleName: z.string().trim().max(50, "Middle name is too long").optional().or(z.literal("")),
+  lastName: z.string().trim().min(2, "Last name must be at least 2 characters").max(50, "Last name is too long"),
   email: emailSchema,
   phone: z.string()
     .regex(/^\+?[1-9]\d{6,14}$/, "Please enter a valid phone number (e.g., +1234567890)")
@@ -115,7 +117,9 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState<"task_giver" | "task_doer" | "both">("task_doer");
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -220,7 +224,9 @@ const Auth = () => {
 
       // Validate all inputs
       const validation = signUpSchema.safeParse({
-        fullName,
+        firstName,
+        middleName: middleName || undefined,
+        lastName,
         email,
         phone: phone || undefined,
         password,
@@ -239,12 +245,20 @@ const Auth = () => {
         return;
       }
 
+      // Construct full name from parts
+      const fullName = [validation.data.firstName, validation.data.middleName, validation.data.lastName]
+        .filter(Boolean)
+        .join(' ');
+
       const { data, error } = await supabase.auth.signUp({
         email: validation.data.email,
         password: validation.data.password,
         options: {
           data: {
-            full_name: validation.data.fullName,
+            full_name: fullName,
+            first_name: validation.data.firstName,
+            middle_name: validation.data.middleName || null,
+            last_name: validation.data.lastName,
             phone: validation.data.phone || null,
             role: validation.data.role,
           },
@@ -1023,32 +1037,81 @@ const Auth = () => {
                     // Signup Form
                     <form onSubmit={handleSignUp} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="signup-name">Full Name</Label>
+                        <Label htmlFor="signup-firstname">First Name <span className="text-destructive">*</span></Label>
                         <div className="relative">
                           <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
-                            id="signup-name"
+                            id="signup-firstname"
                             type="text"
-                            placeholder="John Doe"
-                            value={fullName}
+                            placeholder="John"
+                            value={firstName}
                             onChange={(e) => {
-                              setFullName(e.target.value);
-                              if (formErrors.fullName) clearErrors();
+                              setFirstName(e.target.value);
+                              if (formErrors.firstName) clearErrors();
                             }}
-                            className={`pl-10 ${formErrors.fullName ? "border-destructive" : ""}`}
+                            className={`pl-10 ${formErrors.firstName ? "border-destructive" : ""}`}
                             required
-                            autoComplete="name"
+                            autoComplete="given-name"
                           />
                         </div>
-                        {formErrors.fullName && (
+                        {formErrors.firstName && (
                           <p className="text-sm text-destructive flex items-center gap-1">
                             <AlertCircle className="h-3 w-3" />
-                            {formErrors.fullName}
+                            {formErrors.firstName}
                           </p>
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="signup-email">Email</Label>
+                        <Label htmlFor="signup-middlename">Middle Name <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="signup-middlename"
+                            type="text"
+                            placeholder="Robert"
+                            value={middleName}
+                            onChange={(e) => {
+                              setMiddleName(e.target.value);
+                              if (formErrors.middleName) clearErrors();
+                            }}
+                            className={`pl-10 ${formErrors.middleName ? "border-destructive" : ""}`}
+                            autoComplete="additional-name"
+                          />
+                        </div>
+                        {formErrors.middleName && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {formErrors.middleName}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-lastname">Last Name <span className="text-destructive">*</span></Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="signup-lastname"
+                            type="text"
+                            placeholder="Doe"
+                            value={lastName}
+                            onChange={(e) => {
+                              setLastName(e.target.value);
+                              if (formErrors.lastName) clearErrors();
+                            }}
+                            className={`pl-10 ${formErrors.lastName ? "border-destructive" : ""}`}
+                            required
+                            autoComplete="family-name"
+                          />
+                        </div>
+                        {formErrors.lastName && (
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {formErrors.lastName}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-email">Email <span className="text-destructive">*</span></Label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
