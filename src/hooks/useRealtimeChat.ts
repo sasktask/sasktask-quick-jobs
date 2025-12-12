@@ -187,6 +187,21 @@ export const useRealtimeChat = ({
         )
       );
 
+      // Trigger push notification for offline users
+      try {
+        await supabase.functions.invoke("notify-offline-message", {
+          body: {
+            messageId: data.id,
+            receiverId: otherUserId,
+            senderName: "You have a new message",
+            messagePreview: content,
+            bookingId: bookingId,
+          },
+        });
+      } catch (pushError) {
+        console.log("Push notification skipped:", pushError);
+      }
+
       updateTypingStatus(false);
       return data;
     } catch (error: any) {
