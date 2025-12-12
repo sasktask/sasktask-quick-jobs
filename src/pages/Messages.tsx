@@ -82,6 +82,7 @@ const Messages = () => {
           task_id,
           task_doer_id,
           status,
+          created_at,
           tasks (
             id,
             title,
@@ -101,6 +102,7 @@ const Messages = () => {
           task_id,
           task_doer_id,
           status,
+          created_at,
           tasks!inner (
             id,
             title,
@@ -258,7 +260,9 @@ const Messages = () => {
                               {conversation.other_user_name}
                             </h4>
                             <span className="text-xs text-muted-foreground whitespace-nowrap">
-                              {format(new Date(conversation.last_message_time), "MMM d, HH:mm")}
+                              {conversation.last_message_time 
+                                ? format(new Date(conversation.last_message_time), "MMM d, HH:mm")
+                                : ""}
                             </span>
                           </div>
                           
