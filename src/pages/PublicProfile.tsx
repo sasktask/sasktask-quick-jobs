@@ -15,20 +15,8 @@ import { PortfolioManager } from "@/components/PortfolioManager";
 import { SkillsShowcase } from "@/components/SkillsShowcase";
 import { VerificationBadges } from "@/components/VerificationBadges";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
+import { ReviewSection } from "@/components/ReviewSection";
 
-interface Review {
-  id: string;
-  rating: number;
-  comment: string;
-  created_at: string;
-  reviewer: {
-    full_name: string;
-    avatar_url?: string;
-  };
-  task: {
-    title: string;
-  };
-}
 
 export default function PublicProfile() {
   const { id } = useParams();
@@ -36,7 +24,6 @@ export default function PublicProfile() {
   const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [verification, setVerification] = useState<any>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
@@ -86,29 +73,6 @@ export default function PublicProfile() {
         .maybeSingle();
 
       setVerification(verificationData);
-
-      // Fetch reviews
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from("reviews")
-        .select(`
-          id,
-          rating,
-          comment,
-          created_at,
-          reviewer:profiles!reviews_reviewer_id_fkey (
-            full_name,
-            avatar_url
-          ),
-          task:tasks (
-            title
-          )
-        `)
-        .eq("reviewee_id", id)
-        .order("created_at", { ascending: false });
-
-      if (reviewsError) throw reviewsError;
-
-      setReviews(reviewsData || []);
     } catch (error: any) {
       console.error("Error fetching profile:", error);
       toast({
@@ -372,72 +336,13 @@ export default function PublicProfile() {
           </div>
 
           {/* Reviews Section */}
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Star className="h-5 w-5" />
-                Reviews ({reviews.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {reviews.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Star className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No reviews yet</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {reviews.map((review) => (
-                    <div key={review.id} className="border-b border-border last:border-0 pb-6 last:pb-0">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="h-12 w-12 border-2 border-border">
-                          <AvatarImage 
-                            src={review.reviewer.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${review.reviewer.full_name}`}
-                            alt={review.reviewer.full_name}
-                          />
-                          <AvatarFallback>{review.reviewer.full_name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-semibold">{review.reviewer.full_name}</h4>
-                            <div className="flex items-center gap-1">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-4 w-4 ${
-                                    i < review.rating
-                                      ? "fill-yellow-400 text-yellow-400"
-                                      : "text-gray-300"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-
-                          <p className="text-sm text-muted-foreground mb-2">
-                            Task: {review.task.title}
-                          </p>
-
-                          {review.comment && (
-                            <p className="text-foreground">{review.comment}</p>
-                          )}
-
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {new Date(review.created_at).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {id && (
+            <ReviewSection
+              profileUserId={id}
+              currentUserId={currentUserId}
+              isOwnProfile={currentUserId === id}
+            />
+          )}
         </div>
       </div>
 
