@@ -1,30 +1,53 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 // Notification sound - simple beep using Web Audio API
 const playNotificationSound = () => {
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-  
-  oscillator.frequency.value = 800;
-  oscillator.type = "sine";
-  
-  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-  
-  oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + 0.3);
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = "sine";
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+  } catch (error) {
+    console.log("Could not play notification sound:", error);
+  }
 };
 
 export const useRealtimeChatNotifications = (userId: string) => {
   const { toast } = useToast();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const stored = localStorage.getItem("notification-sound-enabled");
+    return stored !== null ? stored === "true" : true;
+  });
+  const isAppVisible = useRef(!document.hidden);
+
+  // Track visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isAppVisible.current = !document.hidden;
+    };
+    
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  // Persist sound preference
+  useEffect(() => {
+    localStorage.setItem("notification-sound-enabled", String(soundEnabled));
+  }, [soundEnabled]);
 
   useEffect(() => {
     if (!userId) return;
@@ -63,27 +86,30 @@ export const useRealtimeChatNotifications = (userId: string) => {
             .eq("id", payload.new.sender_id)
             .single();
 
-          // Show toast notification
-          toast({
-            title: `💬 New message from ${sender?.full_name || "Someone"}`,
-            description: payload.new.message.substring(0, 100) + (payload.new.message.length > 100 ? "..." : ""),
-            duration: 5000,
-          });
+          // Update unread count
+          setUnreadCount(prev => prev + 1);
 
-          // Play sound if enabled
+          // Play sound if enabled (especially when app is in background)
           if (soundEnabled) {
             playNotificationSound();
           }
 
-          // Update unread count
-          setUnreadCount(prev => prev + 1);
+          // Show toast notification only when app is visible
+          if (isAppVisible.current) {
+            toast({
+              title: `💬 New message from ${sender?.full_name || "Someone"}`,
+              description: payload.new.message.substring(0, 100) + (payload.new.message.length > 100 ? "..." : ""),
+              duration: 5000,
+            });
+          }
 
-          // Show browser notification if permitted
+          // Show browser notification if permitted (especially when app is in background)
           if ("Notification" in window && Notification.permission === "granted") {
             new Notification(`New message from ${sender?.full_name || "Someone"}`, {
               body: payload.new.message.substring(0, 100),
               icon: sender?.avatar_url || "/pwa-icon-192.png",
-              tag: "new-message",
+              tag: `new-message-${payload.new.id}`,
+              requireInteraction: !isAppVisible.current,
             });
           }
         }

@@ -24,6 +24,7 @@ import { MessageReactions } from "./MessageReactions";
 import { FilePreview } from "./FilePreview";
 import { PinnedMessages } from "./PinnedMessages";
 import { compressImage } from "@/lib/imageCompression";
+import { ReadReceipts } from "@/components/ReadReceipts";
 
 interface ChatInterfaceProps {
   bookingId: string;
@@ -793,6 +794,13 @@ export const ChatInterface = ({
                           )}>
                             {format(new Date(message.created_at), "HH:mm")}
                           </span>
+                          {isOwn && !isFailed && (
+                            <ReadReceipts
+                              status={message.read_at ? 'read' : (message.status === 'delivered' ? 'delivered' : 'sent')}
+                              readAt={message.read_at}
+                              isSender={isOwn}
+                            />
+                          )}
                           {isFailed && (
                             <Button
                               size="sm"

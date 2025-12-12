@@ -279,14 +279,14 @@ export const useRealtimeChat = ({
           table: "messages",
           filter: `booking_id=eq.${bookingId}`,
         },
-        (payload) => {
+        async (payload) => {
           const newMessage = payload.new as Message;
           
           if (newMessage.sender_id !== currentUserId) {
             setMessages((prev) => {
               // Avoid duplicates
               if (prev.some((m) => m.id === newMessage.id)) return prev;
-              return [...prev, { ...newMessage, status: "sent" }];
+              return [...prev, { ...newMessage, status: "delivered" }];
             });
             
             // Load attachments for new message
