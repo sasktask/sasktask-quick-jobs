@@ -195,10 +195,15 @@ const Messages = () => {
             .from("public_profiles")
             .select("id, full_name, avatar_url")
             .eq("id", otherId)
-            .single();
+            .maybeSingle();
 
           if (profileError) {
             console.log("Error fetching profile for user:", otherId, profileError);
+          }
+
+          // Skip if no messages and no valid profile (empty conversation)
+          if (!lastMessage && !otherUser) {
+            return null;
           }
 
           return {
