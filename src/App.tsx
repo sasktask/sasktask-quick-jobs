@@ -30,6 +30,12 @@ import AdminVerification from "./pages/AdminVerification";
 import AdminBlog from "./pages/AdminBlog";
 import AdminDisputes from "./pages/AdminDisputes";
 import AdminFraud from "./pages/AdminFraud";
+import AdminUsers from "./pages/AdminUsers";
+import AdminPayments from "./pages/AdminPayments";
+import AdminTasks from "./pages/AdminTasks";
+import AdminSettings from "./pages/AdminSettings";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminMessages from "./pages/AdminMessages";
 import Analytics from "./pages/Analytics";
 import ReferralProgram from "./pages/ReferralProgram";
 import Blog from "./pages/Blog";
@@ -91,8 +97,14 @@ const App = () => (
             <Route path="/admin/verify-users" element={<AdminVerification />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/disputes" element={<AdminDisputes />} />
-          <Route path="/admin/fraud" element={<AdminFraud />} />
+            <Route path="/admin/disputes" element={<AdminDisputes />} />
+            <Route path="/admin/fraud" element={<AdminFraud />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/payments" element={<AdminPayments />} />
+            <Route path="/admin/tasks" element={<AdminTasks />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="/admin/messages" element={<AdminMessages />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/referrals" element={<ReferralProgram />} />
