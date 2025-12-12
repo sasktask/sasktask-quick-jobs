@@ -860,6 +860,18 @@ export const ChatInterface = ({
 
       {/* Input Area */}
       <div className="p-4 border-t bg-muted/30">
+        {/* Typing Indicator */}
+        {isTyping && (
+          <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+            <div className="flex gap-1">
+              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+            </div>
+            <span>{otherUserName} is typing...</span>
+          </div>
+        )}
+        
         {isRecordingVoice ? (
           <VoiceRecorder
             onSend={handleVoiceSend}
