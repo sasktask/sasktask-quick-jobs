@@ -35,6 +35,43 @@ const Messages = () => {
     checkUser();
   }, []);
 
+  // Set up real-time subscription for new messages
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('messages-list-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          // Reload conversations when new message arrives
+          loadConversations(user.id);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          // Reload to update read status
+          loadConversations(user.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   useEffect(() => {
     if (searchQuery) {
       const filtered = conversations.filter(
