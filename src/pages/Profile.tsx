@@ -17,7 +17,15 @@ import { PayoutAccountSetup } from "@/components/PayoutAccountSetup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { BadgeShowcase } from "@/components/BadgeShowcase";
-import { Loader2, Star, Briefcase, Award, Upload, Shield, TrendingUp, Clock, Settings, CreditCard, Wallet, Lock, User, Trophy } from "lucide-react";
+import { Loader2, Star, Briefcase, Award, Upload, Shield, TrendingUp, Clock, Settings, CreditCard, Wallet, Lock, User, Trophy, BadgeCheck, ShieldCheck } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+interface VerificationStatus {
+  id_verified: boolean;
+  verification_status: string | null;
+  background_check_status: string | null;
+  has_insurance: boolean;
+}
 
 const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -36,6 +44,7 @@ const Profile = () => {
   });
   const [uploading, setUploading] = useState(false);
   const [trustScore, setTrustScore] = useState<number>(50);
+  const [verification, setVerification] = useState<VerificationStatus | null>(null);
 
   useEffect(() => {
     checkUserAndLoadProfile();
@@ -71,6 +80,17 @@ const Profile = () => {
         .single();
       
       setUserRole(roleData?.role || null);
+
+      // Fetch verification status
+      const { data: verificationData } = await supabase
+        .from("verifications")
+        .select("id_verified, verification_status, background_check_status, has_insurance")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      
+      if (verificationData) {
+        setVerification(verificationData);
+      }
 
       setFormData({
         full_name: profileData.full_name || "",
@@ -193,6 +213,21 @@ const Profile = () => {
                       {profile?.full_name?.charAt(0) || profile?.email?.charAt(0) || "?"}
                     </AvatarFallback>
                   </Avatar>
+                  {/* Verified Badge */}
+                  {verification?.verification_status === 'verified' && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="absolute top-0 right-0 bg-blue-500 text-white p-1.5 rounded-full shadow-lg">
+                            <BadgeCheck className="h-5 w-5" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Verified Profile</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   <label className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-2 rounded-full cursor-pointer hover:bg-primary/90 transition-colors">
                     <Upload className="h-4 w-4" />
                     <input 
@@ -204,11 +239,30 @@ const Profile = () => {
                     />
                   </label>
                 </div>
-                <h3 className="font-bold text-xl mb-1">{profile?.full_name || "No Name"}</h3>
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <h3 className="font-bold text-xl">{profile?.full_name || "No Name"}</h3>
+                  {verification?.verification_status === 'verified' && (
+                    <BadgeCheck className="h-5 w-5 text-blue-500" />
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground mb-2">{profile?.email}</p>
-                <Badge variant="outline" className="capitalize">
-                  {userRole?.replace("_", " ") || "N/A"}
-                </Badge>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Badge variant="outline" className="capitalize">
+                    {userRole?.replace("_", " ") || "N/A"}
+                  </Badge>
+                  {verification?.id_verified && (
+                    <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+                      <ShieldCheck className="h-3 w-3 mr-1" />
+                      ID Verified
+                    </Badge>
+                  )}
+                  {verification?.background_check_status === 'verified' && (
+                    <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">
+                      <Shield className="h-3 w-3 mr-1" />
+                      Background Check
+                    </Badge>
+                  )}
+                </div>
               </div>
 
               <Separator className="my-4" />
