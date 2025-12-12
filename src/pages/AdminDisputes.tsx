@@ -5,13 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
-import { AlertTriangle, CheckCircle, Clock, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, XCircle, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OWNER_USER_ID } from "@/lib/constants";
+import { AdminLayout } from "@/components/admin/AdminLayout";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Dispute {
   id: string;
@@ -28,11 +37,12 @@ interface Dispute {
 
 export default function AdminDisputes() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
   const [resolution, setResolution] = useState("");
   const [isResolving, setIsResolving] = useState(false);
+  const [deleteDisputeId, setDeleteDisputeId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     checkOwnerAndFetch();
@@ -45,10 +55,11 @@ export default function AdminDisputes() {
       return;
     }
     if (user.id !== OWNER_USER_ID) {
-      toast({ title: "Access denied", description: "Owner only", variant: "destructive" });
+      toast.error("Access denied: Owner only");
       navigate("/dashboard");
       return;
     }
+    setIsAdmin(true);
     fetchDisputes();
   };
 
@@ -59,23 +70,27 @@ export default function AdminDisputes() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load disputes",
-        variant: "destructive",
-      });
+      toast.error("Failed to load disputes");
     } else {
       setDisputes(data || []);
     }
   };
 
+  const handleDelete = async (disputeId: string) => {
+    try {
+      const { error } = await supabase.from("disputes").delete().eq("id", disputeId);
+      if (error) throw error;
+      toast.success("Dispute deleted");
+      setDeleteDisputeId(null);
+      fetchDisputes();
+    } catch (error) {
+      toast.error("Failed to delete dispute");
+    }
+  };
+
   const handleResolve = async (disputeId: string, newStatus: string) => {
     if (newStatus === "resolved" && !resolution) {
-      toast({
-        title: "Resolution Required",
-        description: "Please provide a resolution before marking as resolved",
-        variant: "destructive",
-      });
+      toast.error("Please provide a resolution before marking as resolved");
       return;
     }
 
@@ -95,20 +110,13 @@ export default function AdminDisputes() {
 
       if (error) throw error;
 
-      toast({
-        title: "Dispute Updated",
-        description: `Dispute has been ${newStatus}`,
-      });
+      toast.success(`Dispute ${newStatus}`);
 
       setSelectedDispute(null);
       setResolution("");
       fetchDisputes();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     } finally {
       setIsResolving(false);
     }
@@ -136,118 +144,141 @@ export default function AdminDisputes() {
     return disputes.filter((d) => d.status === status);
   };
 
+  if (!isAdmin) return null;
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Dispute Management</h1>
-          <p className="text-muted-foreground">Review and resolve user disputes</p>
-        </div>
+    <AdminLayout title="Dispute Management" description="Review and resolve user disputes">
+      <Tabs defaultValue="all" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="all">All ({disputes.length})</TabsTrigger>
+          <TabsTrigger value="open">Open ({filterDisputes("open").length})</TabsTrigger>
+          <TabsTrigger value="under_review">Under Review ({filterDisputes("under_review").length})</TabsTrigger>
+          <TabsTrigger value="resolved">Resolved ({filterDisputes("resolved").length})</TabsTrigger>
+        </TabsList>
 
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="all">All ({disputes.length})</TabsTrigger>
-            <TabsTrigger value="open">Open ({filterDisputes("open").length})</TabsTrigger>
-            <TabsTrigger value="under_review">Under Review ({filterDisputes("under_review").length})</TabsTrigger>
-            <TabsTrigger value="resolved">Resolved ({filterDisputes("resolved").length})</TabsTrigger>
-          </TabsList>
-
-          {["all", "open", "under_review", "resolved"].map((tab) => (
-            <TabsContent key={tab} value={tab} className="space-y-4">
-              {filterDisputes(tab).map((dispute) => (
-                <Card key={dispute.id}>
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="capitalize">{dispute.dispute_reason.replace(/_/g, " ")}</CardTitle>
-                        <CardDescription>
-                          Submitted: {new Date(dispute.created_at).toLocaleString()}
-                        </CardDescription>
-                      </div>
-                      {getStatusBadge(dispute.status)}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+        {["all", "open", "under_review", "resolved"].map((tab) => (
+          <TabsContent key={tab} value={tab} className="space-y-4">
+            {filterDisputes(tab).map((dispute) => (
+              <Card key={dispute.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
                     <div>
-                      <Label>Details</Label>
-                      <p className="text-sm text-muted-foreground mt-1">{dispute.dispute_details}</p>
+                      <CardTitle className="capitalize">{dispute.dispute_reason.replace(/_/g, " ")}</CardTitle>
+                      <CardDescription>
+                        Submitted: {new Date(dispute.created_at).toLocaleString()}
+                      </CardDescription>
                     </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(dispute.status)}
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setDeleteDisputeId(dispute.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Details</Label>
+                    <p className="text-sm text-muted-foreground mt-1">{dispute.dispute_details}</p>
+                  </div>
 
-                    {dispute.resolution && (
-                      <div>
-                        <Label>Resolution</Label>
-                        <p className="text-sm text-muted-foreground mt-1">{dispute.resolution}</p>
-                      </div>
-                    )}
+                  {dispute.resolution && (
+                    <div>
+                      <Label>Resolution</Label>
+                      <p className="text-sm text-muted-foreground mt-1">{dispute.resolution}</p>
+                    </div>
+                  )}
 
-                    {dispute.status !== "resolved" && dispute.status !== "closed" && (
-                      <div className="space-y-4">
-                        {selectedDispute?.id === dispute.id ? (
-                          <>
-                            <div className="space-y-2">
-                              <Label>Resolution Details</Label>
-                              <Textarea
-                                placeholder="Provide a detailed resolution..."
-                                value={resolution}
-                                onChange={(e) => setResolution(e.target.value)}
-                                rows={4}
-                              />
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => handleResolve(dispute.id, "resolved")}
-                                disabled={isResolving}
-                              >
-                                {isResolving ? "Resolving..." : "Mark as Resolved"}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedDispute(null);
-                                  setResolution("");
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
+                  {dispute.status !== "resolved" && dispute.status !== "closed" && (
+                    <div className="space-y-4">
+                      {selectedDispute?.id === dispute.id ? (
+                        <>
+                          <div className="space-y-2">
+                            <Label>Resolution Details</Label>
+                            <Textarea
+                              placeholder="Provide a detailed resolution..."
+                              value={resolution}
+                              onChange={(e) => setResolution(e.target.value)}
+                              rows={4}
+                            />
+                          </div>
                           <div className="flex gap-2">
-                            <Button onClick={() => setSelectedDispute(dispute)}>
-                              Resolve Dispute
+                            <Button
+                              onClick={() => handleResolve(dispute.id, "resolved")}
+                              disabled={isResolving}
+                            >
+                              {isResolving ? "Resolving..." : "Mark as Resolved"}
                             </Button>
                             <Button
                               variant="outline"
-                              onClick={() => handleResolve(dispute.id, "under_review")}
+                              onClick={() => {
+                                setSelectedDispute(null);
+                                setResolution("");
+                              }}
                             >
-                              Mark Under Review
-                            </Button>
-                            <Button
-                              variant="secondary"
-                              onClick={() => handleResolve(dispute.id, "closed")}
-                            >
-                              Close
+                              Cancel
                             </Button>
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-              {filterDisputes(tab).length === 0 && (
-                <Card>
-                  <CardContent className="py-12 text-center text-muted-foreground">
-                    No disputes in this category
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
-      </main>
-      <Footer />
-    </div>
+                        </>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Button onClick={() => setSelectedDispute(dispute)}>
+                            Resolve Dispute
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => handleResolve(dispute.id, "under_review")}
+                          >
+                            Mark Under Review
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            onClick={() => handleResolve(dispute.id, "closed")}
+                          >
+                            Close
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+            {filterDisputes(tab).length === 0 && (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  No disputes in this category
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        ))}
+      </Tabs>
+
+      {/* Delete Dialog */}
+      <AlertDialog open={!!deleteDisputeId} onOpenChange={() => setDeleteDisputeId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Dispute?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this dispute record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteDisputeId && handleDelete(deleteDisputeId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </AdminLayout>
   );
 }

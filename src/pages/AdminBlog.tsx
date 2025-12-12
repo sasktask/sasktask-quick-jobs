@@ -1,14 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { BlogEditor } from "@/components/BlogEditor";
-import { Plus, Search, Edit, Trash2, Calendar, Eye } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Calendar, Eye, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -22,39 +20,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
-import { OWNER_USER_ID } from "@/lib/constants";
+import { AdminLayout } from "@/components/admin/AdminLayout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AdminBlog = () => {
-  const [isAdmin, setIsAdmin] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [search, setSearch] = useState("");
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    checkAdminStatus();
-  }, []);
-
-  const checkAdminStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
-    if (user.id !== OWNER_USER_ID) {
-      toast.error("Access denied. Owner only.");
-      navigate("/");
-      return;
-    }
-
-    setIsAdmin(true);
-  };
-
   const { data: posts, isLoading } = useQuery({
-    queryKey: ["admin-blog-posts", search],
+    queryKey: ["admin-blog-posts", search, statusFilter],
     queryFn: async () => {
       let query = supabase
         .from("blog_posts")
@@ -65,11 +44,14 @@ const AdminBlog = () => {
         query = query.or(`title.ilike.%${search}%,slug.ilike.%${search}%`);
       }
 
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
-    enabled: isAdmin,
   });
 
   const handleDelete = async (postId: string) => {
@@ -87,62 +69,96 @@ const AdminBlog = () => {
     }
   };
 
+  const handlePublish = async (postId: string) => {
+    try {
+      const { error } = await supabase
+        .from("blog_posts")
+        .update({ status: "published", published_at: new Date().toISOString() })
+        .eq("id", postId);
+
+      if (error) throw error;
+      toast.success("Post published");
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
+    } catch (error) {
+      toast.error("Failed to publish post");
+    }
+  };
+
+  const handleUnpublish = async (postId: string) => {
+    try {
+      const { error } = await supabase
+        .from("blog_posts")
+        .update({ status: "draft", published_at: null })
+        .eq("id", postId);
+
+      if (error) throw error;
+      toast.success("Post unpublished");
+      queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
+    } catch (error) {
+      toast.error("Failed to unpublish post");
+    }
+  };
+
   const handleSuccess = () => {
     setIsCreating(false);
     setEditingPostId(null);
     queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
   };
 
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
-        <main className="flex-1 container mx-auto px-4 py-12 text-center">
-          <p className="text-muted-foreground">Checking permissions...</p>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  const draftPosts = posts?.filter(p => p.status === "draft") || [];
+  const publishedPosts = posts?.filter(p => p.status === "published") || [];
 
   if (isCreating || editingPostId) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
-        <main className="flex-1 container max-w-5xl mx-auto px-4 py-12">
-          <BlogEditor
-            postId={editingPostId || undefined}
-            onSuccess={handleSuccess}
-            onCancel={() => {
-              setIsCreating(false);
-              setEditingPostId(null);
-            }}
-          />
-        </main>
-        <Footer />
-      </div>
+      <AdminLayout title="Blog Editor" description="Create or edit blog posts">
+        <BlogEditor
+          postId={editingPostId || undefined}
+          onSuccess={handleSuccess}
+          onCancel={() => {
+            setIsCreating(false);
+            setEditingPostId(null);
+          }}
+        />
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
-      
-      <main className="flex-1 container mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-heading font-bold mb-2">Blog Management</h1>
-            <p className="text-muted-foreground">Create and manage blog posts</p>
-          </div>
-          <Button onClick={() => setIsCreating(true)} size="lg">
-            <Plus className="mr-2 h-4 w-4" />
-            New Post
-          </Button>
-        </div>
+    <AdminLayout title="Blog Management" description="Create, edit, and manage blog posts">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{posts?.length || 0}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Published</CardTitle>
+            <Eye className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{publishedPosts.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Drafts</CardTitle>
+            <Edit className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">{draftPosts.length}</div>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Search */}
-        <div className="relative max-w-md mb-8">
+      {/* Actions */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div className="relative w-full md:max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
@@ -152,98 +168,124 @@ const AdminBlog = () => {
             className="pl-10"
           />
         </div>
+        <Button onClick={() => setIsCreating(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          New Post
+        </Button>
+      </div>
 
-        {/* Posts List */}
-        {isLoading ? (
-          <div className="grid md:grid-cols-2 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-6 bg-muted rounded w-3/4 mb-2" />
-                  <div className="h-4 bg-muted rounded w-1/2" />
-                </CardHeader>
-                <CardContent>
-                  <div className="h-4 bg-muted rounded w-full mb-2" />
-                  <div className="h-4 bg-muted rounded w-2/3" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : posts?.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <p className="text-muted-foreground">
-                {search ? "No posts found matching your search." : "No posts yet. Create your first post!"}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-6">
-            {posts?.map((post) => (
-              <Card key={post.id} className="group">
-                {post.cover_image_url && (
-                  <div className="relative h-48 overflow-hidden rounded-t-xl">
-                    <img
-                      src={post.cover_image_url}
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                )}
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="line-clamp-2">{post.title}</CardTitle>
-                    <Badge variant={post.status === "published" ? "default" : "secondary"}>
-                      {post.status}
-                    </Badge>
-                  </div>
-                  <CardDescription className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    {post.published_at
-                      ? format(new Date(post.published_at), "MMM dd, yyyy")
-                      : "Not scheduled"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {post.excerpt && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                      {post.excerpt}
-                    </p>
+      {/* Posts Tabs */}
+      <Tabs defaultValue="all" onValueChange={setStatusFilter}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="all">All ({posts?.length || 0})</TabsTrigger>
+          <TabsTrigger value="published">Published ({publishedPosts.length})</TabsTrigger>
+          <TabsTrigger value="draft">Drafts ({draftPosts.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={statusFilter} className="space-y-4">
+          {isLoading ? (
+            <div className="grid md:grid-cols-2 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader>
+                    <div className="h-6 bg-muted rounded w-3/4 mb-2" />
+                    <div className="h-4 bg-muted rounded w-1/2" />
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          ) : posts?.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">
+                  {search ? "No posts found matching your search." : "No posts yet. Create your first post!"}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-6">
+              {posts?.map((post) => (
+                <Card key={post.id} className="group">
+                  {post.cover_image_url && (
+                    <div className="relative h-48 overflow-hidden rounded-t-xl">
+                      <img
+                        src={post.cover_image_url}
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
                   )}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/blog/${post.slug}`)}
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      View
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingPostId(post.id)}
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setDeletePostId(post.id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </main>
-
-      <Footer />
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="line-clamp-2">{post.title}</CardTitle>
+                      <Badge variant={post.status === "published" ? "default" : "secondary"}>
+                        {post.status}
+                      </Badge>
+                    </div>
+                    <CardDescription className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      {post.published_at
+                        ? format(new Date(post.published_at), "MMM dd, yyyy")
+                        : "Not published"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {post.excerpt && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                        {post.excerpt}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/blog/${post.slug}`)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        View
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingPostId(post.id)}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </Button>
+                      {post.status === "draft" ? (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handlePublish(post.id)}
+                        >
+                          Publish
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleUnpublish(post.id)}
+                        >
+                          Unpublish
+                        </Button>
+                      )}
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setDeletePostId(post.id)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletePostId} onOpenChange={() => setDeletePostId(null)}>
@@ -265,7 +307,7 @@ const AdminBlog = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AdminLayout>
   );
 };
 

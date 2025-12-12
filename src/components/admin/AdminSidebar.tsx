@@ -12,6 +12,8 @@ import {
   MessageSquare,
   BarChart3,
   Flag,
+  Calendar,
+  Star,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -32,9 +34,19 @@ const navItems = [
     icon: Briefcase,
   },
   {
+    title: "Bookings",
+    href: "/admin/bookings",
+    icon: Calendar,
+  },
+  {
     title: "Payments",
     href: "/admin/payments",
     icon: CreditCard,
+  },
+  {
+    title: "Reviews",
+    href: "/admin/reviews",
+    icon: Star,
   },
   {
     title: "Disputes",
