@@ -25,6 +25,11 @@ import { FilePreview } from "./FilePreview";
 import { PinnedMessages } from "./PinnedMessages";
 import { compressImage } from "@/lib/imageCompression";
 import { ReadReceipts } from "@/components/ReadReceipts";
+import { MessageTemplates } from "./MessageTemplates";
+import { LinkPreview, extractUrls, hasUrls } from "./LinkPreview";
+import { QuickActions } from "./QuickActions";
+import { OnlineIndicator } from "@/components/OnlineIndicator";
+import { useOnlinePresence } from "@/hooks/useOnlinePresence";
 
 interface ChatInterfaceProps {
   bookingId: string;
@@ -59,10 +64,16 @@ export const ChatInterface = ({
   const [editHistoryDialog, setEditHistoryDialog] = useState<{ open: boolean; messageId: string; content: string }>({ open: false, messageId: "", content: "" });
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [pinnedMessageIds, setPinnedMessageIds] = useState<Set<string>>(new Set());
+  const [bookingStatus, setBookingStatus] = useState<string>("pending");
+  const [taskId, setTaskId] = useState<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const firstUnreadRef = useRef<HTMLDivElement>(null);
   const hasScrolledToUnread = useRef(false);
+
+  // Online presence
+  const { isUserOnline } = useOnlinePresence(currentUserId);
+  const isOtherUserOnline = isUserOnline(otherUserId);
 
   const {
     messages,
@@ -117,6 +128,44 @@ export const ChatInterface = ({
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Fetch booking status for quick actions
+  useEffect(() => {
+    const fetchBookingStatus = async () => {
+      const { data } = await supabase
+        .from("bookings")
+        .select("status, task_id")
+        .eq("id", bookingId)
+        .single();
+      
+      if (data) {
+        setBookingStatus(data.status || "pending");
+        setTaskId(data.task_id);
+      }
+    };
+    fetchBookingStatus();
+
+    // Subscribe to booking status changes
+    const channel = supabase
+      .channel(`booking-status-${bookingId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "bookings",
+          filter: `id=eq.${bookingId}`,
+        },
+        (payload) => {
+          setBookingStatus((payload.new as any).status || "pending");
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [bookingId]);
 
   // Upload attachment helper
   const uploadAttachment = async (file: Blob, fileName: string, type: 'image' | 'file' | 'voice', messageId: string, duration?: number) => {
@@ -617,14 +666,24 @@ export const ChatInterface = ({
           </>
         ) : (
           <>
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={otherUserAvatar} />
-              <AvatarFallback>
-                <User className="h-5 w-5" />
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={otherUserAvatar} />
+                <AvatarFallback>
+                  <User className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-0.5 -right-0.5">
+                <OnlineIndicator isOnline={isOtherUserOnline} size="sm" />
+              </div>
+            </div>
             <div className="flex-1">
-              <h3 className="font-semibold">{otherUserName}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold">{otherUserName}</h3>
+                {isOtherUserOnline && (
+                  <span className="text-xs text-green-600">Online</span>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">{otherUserRole}</p>
             </div>
             {unreadCount > 0 && (
@@ -776,6 +835,14 @@ export const ChatInterface = ({
                         <p className="text-sm whitespace-pre-wrap break-words">
                           {message.message}
                         </p>
+                        {/* Link Previews */}
+                        {hasUrls(message.message) && (
+                          <div className="mt-2">
+                            {extractUrls(message.message).slice(0, 2).map((url, i) => (
+                              <LinkPreview key={i} url={url} />
+                            ))}
+                          </div>
+                        )}
                         {message.edited_at && (
                           <span className="text-xs text-muted-foreground italic mt-1 block">
                             (edited)
@@ -922,11 +989,25 @@ export const ChatInterface = ({
               />
             )}
             
+            {/* Quick Actions */}
+            <QuickActions
+              bookingId={bookingId}
+              bookingStatus={bookingStatus}
+              isTaskGiver={otherUserRole === "Task Doer"}
+              taskId={taskId}
+            />
+            
             {!previewFile && (
               <div className="flex gap-2">
                 <MediaUpload
                   onFileSelect={(file, type) => setPreviewFile(file)}
                   onVoiceRecord={() => setIsRecordingVoice(true)}
+                />
+                <MessageTemplates 
+                  onSelectTemplate={(msg) => {
+                    setInputValue(msg);
+                    inputRef.current?.focus();
+                  }} 
                 />
                 <Input
                   ref={inputRef}
