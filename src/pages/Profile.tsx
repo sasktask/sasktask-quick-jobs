@@ -277,26 +277,28 @@ const Profile = () => {
           {/* Main Content with Tabs */}
           <div className="lg:col-span-3">
             <Tabs defaultValue="basic" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="basic">
-                  <User className="h-4 w-4 mr-2" />
-                  Basic Info
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto gap-1">
+                <TabsTrigger value="basic" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+                  <User className="h-4 w-4 shrink-0" />
+                  <span className="hidden sm:inline">Basic Info</span>
+                  <span className="sm:hidden">Info</span>
                 </TabsTrigger>
-                <TabsTrigger value="badges">
-                  <Trophy className="h-4 w-4 mr-2" />
-                  Badges
+                <TabsTrigger value="badges" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+                  <Trophy className="h-4 w-4 shrink-0" />
+                  <span>Badges</span>
                 </TabsTrigger>
-                <TabsTrigger value="settings">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
+                <TabsTrigger value="settings" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+                  <Settings className="h-4 w-4 shrink-0" />
+                  <span>Settings</span>
                 </TabsTrigger>
-                <TabsTrigger value="payments">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  {userRole === "task_giver" ? "Payment" : "Payout"}
+                <TabsTrigger value="payments" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+                  <CreditCard className="h-4 w-4 shrink-0" />
+                  <span className="hidden sm:inline">{userRole === "task_giver" ? "Payment" : "Payout"}</span>
+                  <span className="sm:hidden">Pay</span>
                 </TabsTrigger>
-                <TabsTrigger value="security">
-                  <Lock className="h-4 w-4 mr-2" />
-                  Security
+                <TabsTrigger value="security" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm col-span-2 sm:col-span-1">
+                  <Lock className="h-4 w-4 shrink-0" />
+                  <span>Security</span>
                 </TabsTrigger>
               </TabsList>
 

@@ -159,7 +159,8 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
       setUploading(true);
 
       const fileExt = "jpg";
-      const filePath = `${user.id}-${Date.now()}.${fileExt}`;
+      // Use folder structure: userId/filename to match RLS policy
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
