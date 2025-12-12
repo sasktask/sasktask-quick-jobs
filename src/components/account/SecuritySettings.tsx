@@ -101,8 +101,12 @@ export const SecuritySettings = ({ user }: SecuritySettingsProps) => {
 
       if (error) {
         // Handle specific error cases
-        if (error.message.includes("same as old")) {
+        if (error.message.includes("same") || error.message.includes("different from the old")) {
           toast.error("New password must be different from your current password");
+          return;
+        }
+        if (error.message.includes("weak") || error.message.includes("short")) {
+          toast.error("Password is too weak. Please choose a stronger password.");
           return;
         }
         throw error;
