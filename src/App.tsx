@@ -36,6 +36,8 @@ import AdminTasks from "./pages/AdminTasks";
 import AdminSettings from "./pages/AdminSettings";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminMessages from "./pages/AdminMessages";
+import AdminReviews from "./pages/AdminReviews";
+import AdminBookings from "./pages/AdminBookings";
 import Analytics from "./pages/Analytics";
 import ReferralProgram from "./pages/ReferralProgram";
 import Blog from "./pages/Blog";
@@ -105,6 +107,8 @@ const App = () => (
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
             <Route path="/admin/messages" element={<AdminMessages />} />
+            <Route path="/admin/reviews" element={<AdminReviews />} />
+            <Route path="/admin/bookings" element={<AdminBookings />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/referrals" element={<ReferralProgram />} />
