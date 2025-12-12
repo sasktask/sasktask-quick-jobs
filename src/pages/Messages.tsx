@@ -71,6 +71,9 @@ const Messages = () => {
     try {
       setLoading(true);
 
+      // Valid statuses for chat (accepted, in_progress, completed, pending - not cancelled/rejected)
+      const validStatuses: ("accepted" | "in_progress" | "completed" | "pending")[] = ['accepted', 'in_progress', 'completed', 'pending'];
+
       // Get bookings where user is task_doer
       const { data: doerBookings, error: doerError } = await supabase
         .from("bookings")
@@ -78,6 +81,7 @@ const Messages = () => {
           id,
           task_id,
           task_doer_id,
+          status,
           tasks (
             id,
             title,
@@ -85,7 +89,7 @@ const Messages = () => {
           )
         `)
         .eq("task_doer_id", userId)
-        .eq("status", "accepted");
+        .in("status", validStatuses);
 
       if (doerError) throw doerError;
 
@@ -96,6 +100,7 @@ const Messages = () => {
           id,
           task_id,
           task_doer_id,
+          status,
           tasks!inner (
             id,
             title,
@@ -103,7 +108,7 @@ const Messages = () => {
           )
         `)
         .eq("tasks.task_giver_id", userId)
-        .eq("status", "accepted");
+        .in("status", validStatuses);
 
       if (giverError) throw giverError;
 
