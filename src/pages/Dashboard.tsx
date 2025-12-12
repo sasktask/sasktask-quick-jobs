@@ -240,6 +240,7 @@ const Dashboard = () => {
           unreadMessages={stats.unreadMessages}
           pendingBookings={stats.pendingBookings}
           isVerified={isVerified}
+          userId={user?.id}
           className="hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)]"
         />
 

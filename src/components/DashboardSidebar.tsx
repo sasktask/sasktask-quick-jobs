@@ -19,11 +19,13 @@ import {
   ChevronRight,
   TrendingUp,
   Award,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { OWNER_USER_ID } from "@/lib/constants";
 
 interface DashboardSidebarProps {
   userRole: string | null;
@@ -31,6 +33,7 @@ interface DashboardSidebarProps {
   pendingBookings: number;
   isVerified?: boolean;
   className?: string;
+  userId?: string;
 }
 
 export function DashboardSidebar({
@@ -39,9 +42,11 @@ export function DashboardSidebar({
   pendingBookings,
   isVerified,
   className,
+  userId,
 }: DashboardSidebarProps) {
   const location = useLocation();
   const currentPath = location.pathname;
+  const isOwner = userId === OWNER_USER_ID;
 
   const isActive = (path: string) => currentPath === path;
 
@@ -229,6 +234,31 @@ export function DashboardSidebar({
             <NavItem key={item.href} item={item} />
           ))}
         </div>
+
+        {/* Admin Section - Only for Owner */}
+        {isOwner && (
+          <>
+            <Separator className="my-4" />
+            <div className="space-y-1">
+              <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Admin
+              </p>
+              <Link
+                to="/admin/dashboard"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                  currentPath.startsWith("/admin")
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground border border-primary/30 bg-primary/5"
+                )}
+              >
+                <Shield className="h-4 w-4 shrink-0" />
+                <span className="flex-1">Admin Panel</span>
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </>
+        )}
       </ScrollArea>
     </aside>
   );
