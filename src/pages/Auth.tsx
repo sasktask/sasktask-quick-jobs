@@ -105,8 +105,7 @@ const recordAttempt = (success: boolean) => {
   localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(data));
 };
 
-type SignupStep = "form" | "verify";
-type SigninStep = "credentials" | "otp";
+// OTP temporarily disabled - using password-only auth
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -134,20 +133,6 @@ const Auth = () => {
   
   // Unified identifier (email or phone)
   const [identifier, setIdentifier] = useState("");
-  
-  // Signup OTP verification states
-  const [signupStep, setSignupStep] = useState<SignupStep>("form");
-  const [signupOtp, setSignupOtp] = useState("");
-  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
-  const [signupOtpCountdown, setSignupOtpCountdown] = useState(0);
-  
-  // Signin OTP verification states
-  const [signinStep, setSigninStep] = useState<SigninStep>("credentials");
-  const [signinOtp, setSigninOtp] = useState("");
-  const [signinOtpCountdown, setSigninOtpCountdown] = useState(0);
-  const [pendingSigninIdentifier, setPendingSigninIdentifier] = useState("");
-  const [pendingSigninPassword, setPendingSigninPassword] = useState("");
-  const [identifierType, setIdentifierType] = useState<"email" | "phone">("email");
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -196,22 +181,6 @@ const Auth = () => {
   // Helper to detect if input is email or phone
   const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   const isPhone = (value: string) => /^\+?[1-9]\d{6,14}$/.test(value);
-
-  // Signup OTP countdown timer
-  useEffect(() => {
-    if (signupOtpCountdown > 0) {
-      const timer = setTimeout(() => setSignupOtpCountdown(signupOtpCountdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [signupOtpCountdown]);
-
-  // Signin OTP countdown timer
-  useEffect(() => {
-    if (signinOtpCountdown > 0) {
-      const timer = setTimeout(() => setSigninOtpCountdown(signinOtpCountdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [signinOtpCountdown]);
 
   const clearErrors = () => {
     setFormErrors({});
@@ -313,95 +282,7 @@ const Auth = () => {
     }
   };
 
-  const handleVerifySignupOtp = async () => {
-    if (signupOtp.length !== 6) {
-      toast({
-        title: "Invalid code",
-        description: "Please enter the 6-digit verification code",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('verify-otp', {
-        body: { email, code: signupOtp }
-      });
-
-      if (error || data?.error) {
-        toast({
-          title: "Verification failed",
-          description: data?.error || error?.message || "Invalid or expired code",
-          variant: "destructive",
-        });
-        setSignupOtp("");
-        return;
-      }
-
-      toast({
-        title: "Email verified!",
-        description: "Welcome to SaskTask. Setting up your account...",
-      });
-
-      // Sign in the user after verification
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        toast({
-          title: "Please sign in",
-          description: "Your account is verified. Please sign in with your credentials.",
-        });
-        setSignupStep("form");
-        setSignupOtp("");
-        return;
-      }
-
-      // User will be redirected by the onAuthStateChange listener
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Verification failed";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      setSignupOtp("");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResendSignupOtp = async () => {
-    if (signupOtpCountdown > 0 || !pendingUserId) return;
-    
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.functions.invoke('send-otp', {
-        body: { email, userId: pendingUserId }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Code resent",
-        description: "A new verification code has been sent to your email.",
-      });
-      setSignupOtpCountdown(60);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to resend code";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // OTP verification handlers removed - using password-only auth
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -428,7 +309,7 @@ const Auth = () => {
         return;
       }
 
-      setIdentifierType(detectedType);
+      // Detected email vs phone (phone not yet supported)
 
       if (detectedType === "phone") {
         // Phone login not yet supported
@@ -499,97 +380,33 @@ const Auth = () => {
     }
   };
 
-  const handleVerifySigninOtp = async () => {
-    if (signinOtp.length !== 6) {
-      toast({
-        title: "Invalid code",
-        description: "Please enter the 6-digit verification code",
-        variant: "destructive",
-      });
-      return;
-    }
+  // OTP signin verification handlers removed - using password-only auth
 
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearErrors();
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('verify-otp', {
-        body: { email: pendingSigninIdentifier, code: signinOtp }
-      });
-
-      if (error || data?.error) {
-        toast({
-          title: "Verification failed",
-          description: data?.error || error?.message || "Invalid or expired code",
-          variant: "destructive",
-        });
-        setSigninOtp("");
+      const passwordValidation = signUpSchema.shape.password.safeParse(newPassword);
+      if (!passwordValidation.success) {
+        setFormErrors({ newPassword: passwordValidation.error.errors[0].message });
+        setIsLoading(false);
         return;
       }
 
-      // OTP verified, now complete sign-in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: pendingSigninIdentifier,
-        password: pendingSigninPassword,
-      });
-
-      if (signInError) {
-        toast({
-          title: "Sign in failed",
-          description: "Please try signing in again.",
-          variant: "destructive",
-        });
-        setSigninStep("credentials");
-        return;
-      }
-
-      recordAttempt(true);
-      toast({
-        title: "Welcome back!",
-        description: "Signing you in securely...",
-      });
-
-      // Clear stored credentials
-      setPendingSigninIdentifier("");
-      setPendingSigninPassword("");
-
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Verification failed";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      setSigninOtp("");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResendSigninOtp = async () => {
-    if (signinOtpCountdown > 0 || !pendingSigninIdentifier) return;
-    
-    setIsLoading(true);
-    try {
-      // Get user ID
-      const { data: userData } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', pendingSigninIdentifier)
-        .single();
-
-      const { error } = await supabase.functions.invoke('send-otp', {
-        body: { email: pendingSigninIdentifier, userId: userData?.id }
-      });
-
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
 
       toast({
-        title: "Code resent",
-        description: "A new verification code has been sent to your email.",
+        title: "Password updated!",
+        description: "Your password has been successfully changed.",
       });
-      setSigninOtpCountdown(60);
+
+      setShowNewPassword(false);
+      navigate("/dashboard");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to resend code";
+      const errorMessage = error instanceof Error ? error.message : "Failed to update password";
       toast({
         title: "Error",
         description: errorMessage,
@@ -599,6 +416,7 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     clearErrors();
@@ -619,48 +437,13 @@ const Auth = () => {
       if (error) throw error;
 
       toast({
-        title: "Reset link sent",
-        description: "Check your email for a password reset link.",
+        title: "Check your email",
+        description: "We've sent you a password reset link.",
       });
+
       setShowForgotPassword(false);
-      setResetEmail("");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to send reset email. Please try again.";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handlePasswordUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearErrors();
-    setIsLoading(true);
-
-    try {
-      const passwordValidation = signUpSchema.shape.password.safeParse(newPassword);
-      if (!passwordValidation.success) {
-        setFormErrors({ newPassword: passwordValidation.error.errors[0].message });
-        setIsLoading(false);
-        return;
-      }
-
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-
-      if (error) throw error;
-
-      toast({
-        title: "Password updated",
-        description: "Your password has been successfully updated.",
-      });
-      
-      navigate("/dashboard");
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to update password. Please try again.";
+      const errorMessage = error instanceof Error ? error.message : "Failed to send reset email";
       toast({
         title: "Error",
         description: errorMessage,
@@ -855,99 +638,7 @@ const Auth = () => {
                     </Alert>
                   )}
 
-                  {signinStep === "otp" ? (
-                    // OTP Verification Step for Sign In
-                    <div className="space-y-6">
-                      <div className="text-center">
-                        <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                          <Shield className="h-8 w-8 text-primary" />
-                        </div>
-                        <h3 className="text-lg font-semibold mb-2">Verify It's You</h3>
-                        <p className="text-sm text-muted-foreground">
-                          We've sent a 6-digit verification code to
-                        </p>
-                        <p className="font-medium text-primary">{pendingSigninIdentifier}</p>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="signin-otp">Verification Code</Label>
-                          <Input
-                            id="signin-otp"
-                            type="text"
-                            placeholder="Enter 6-digit code"
-                            value={signinOtp}
-                            onChange={(e) => setSigninOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                            className="text-center text-2xl tracking-[0.5em] font-mono"
-                            maxLength={6}
-                            autoFocus
-                          />
-                        </div>
-
-                        <Button 
-                          onClick={handleVerifySigninOtp}
-                          className="w-full" 
-                          disabled={isLoading || signinOtp.length !== 6}
-                          variant="hero"
-                        >
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Verifying...
-                            </>
-                          ) : (
-                            <>
-                              <Shield className="h-4 w-4 mr-2" />
-                              Verify & Sign In
-                            </>
-                          )}
-                        </Button>
-
-                        <div className="text-center">
-                          <p className="text-sm text-muted-foreground mb-2">
-                            Didn't receive the code?
-                          </p>
-                          <Button
-                            type="button"
-                            variant="link"
-                            onClick={handleResendSigninOtp}
-                            disabled={signinOtpCountdown > 0 || isLoading}
-                            className="p-0 h-auto"
-                          >
-                            {signinOtpCountdown > 0 
-                              ? `Resend code in ${signinOtpCountdown}s` 
-                              : "Resend code"
-                            }
-                          </Button>
-                        </div>
-
-                        <Separator />
-
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => {
-                            setSigninStep("credentials");
-                            setSigninOtp("");
-                            setPendingSigninIdentifier("");
-                            setPendingSigninPassword("");
-                          }}
-                          className="w-full"
-                        >
-                          <ArrowLeft className="h-4 w-4 mr-2" />
-                          Back to Sign In
-                        </Button>
-                      </div>
-
-                      <Alert>
-                        <Shield className="h-4 w-4" />
-                        <AlertDescription>
-                          <strong>Security:</strong> We verify your identity each time you sign in to protect your account.
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-                  ) : (
-                    // Credentials Form
+                  {/* Credentials Form */}
                     <div className="space-y-4">
                       <form onSubmit={handleSignIn} className="space-y-4">
                         <div className="space-y-2">
@@ -976,14 +667,25 @@ const Auth = () => {
                             </p>
                           )}
                         </div>
+
                         <div className="space-y-2">
-                          <Label htmlFor="signin-password">Password</Label>
+                          <div className="flex justify-between items-center">
+                            <Label htmlFor="signin-password">Password</Label>
+                            <Button 
+                              type="button" 
+                              variant="link" 
+                              className="p-0 h-auto text-xs"
+                              onClick={() => setShowForgotPassword(true)}
+                            >
+                              Forgot password?
+                            </Button>
+                          </div>
                           <div className="relative">
                             <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
                               id="signin-password"
                               type={showPassword ? "text" : "password"}
-                              placeholder="••••••••"
+                              placeholder="Enter your password"
                               value={password}
                               onChange={(e) => {
                                 setPassword(e.target.value);
@@ -1000,7 +702,6 @@ const Auth = () => {
                               size="icon"
                               className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                               onClick={() => setShowPassword(!showPassword)}
-                              tabIndex={-1}
                             >
                               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </Button>
@@ -1013,141 +714,33 @@ const Auth = () => {
                           )}
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id="remember" 
-                              checked={rememberMe}
-                              onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                            />
-                            <Label htmlFor="remember" className="text-sm cursor-pointer">Remember me</Label>
-                          </div>
-                          <Button 
-                            type="button" 
-                            variant="link" 
-                            className="p-0 h-auto text-sm"
-                            onClick={() => setShowForgotPassword(true)}
-                          >
-                            Forgot password?
-                          </Button>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="remember-me" 
+                            checked={rememberMe}
+                            onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                          />
+                          <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
+                            Remember me for 30 days
+                          </Label>
                         </div>
+
                         <Button type="submit" className="w-full" disabled={isLoading || !!rateLimitError} variant="hero">
                           {isLoading ? (
                             <>
                               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Verifying...
+                              Signing in...
                             </>
                           ) : (
-                            <>
-                              <Shield className="h-4 w-4 mr-2" />
-                              Continue
-                            </>
+                            "Sign In"
                           )}
                         </Button>
                       </form>
-
-                      <div className="text-center">
-                        <p className="text-xs text-muted-foreground">
-                          🔒 Secure sign-in with OTP verification
-                        </p>
-                      </div>
                     </div>
-                  )}
                 </TabsContent>
 
                 <TabsContent value="signup">
-                  {signupStep === "verify" ? (
-                    // OTP Verification Step
-                    <div className="space-y-6">
-                      <div className="text-center">
-                        <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                          <Mail className="h-8 w-8 text-primary" />
-                        </div>
-                        <h3 className="text-lg font-semibold mb-2">Verify Your Email</h3>
-                        <p className="text-sm text-muted-foreground">
-                          We've sent a 6-digit verification code to
-                        </p>
-                        <p className="font-medium text-primary">{email}</p>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-otp">Verification Code</Label>
-                          <Input
-                            id="signup-otp"
-                            type="text"
-                            placeholder="Enter 6-digit code"
-                            value={signupOtp}
-                            onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                            className="text-center text-2xl tracking-[0.5em] font-mono"
-                            maxLength={6}
-                            autoFocus
-                          />
-                        </div>
-
-                        <Button 
-                          onClick={handleVerifySignupOtp}
-                          className="w-full" 
-                          disabled={isLoading || signupOtp.length !== 6}
-                          variant="hero"
-                        >
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Verifying...
-                            </>
-                          ) : (
-                            <>
-                              <Shield className="h-4 w-4 mr-2" />
-                              Verify & Continue
-                            </>
-                          )}
-                        </Button>
-
-                        <div className="text-center">
-                          <p className="text-sm text-muted-foreground mb-2">
-                            Didn't receive the code?
-                          </p>
-                          <Button
-                            type="button"
-                            variant="link"
-                            onClick={handleResendSignupOtp}
-                            disabled={signupOtpCountdown > 0 || isLoading}
-                            className="p-0 h-auto"
-                          >
-                            {signupOtpCountdown > 0 
-                              ? `Resend code in ${signupOtpCountdown}s` 
-                              : "Resend code"
-                            }
-                          </Button>
-                        </div>
-
-                        <Separator />
-
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => {
-                            setSignupStep("form");
-                            setSignupOtp("");
-                          }}
-                          className="w-full"
-                        >
-                          <ArrowLeft className="h-4 w-4 mr-2" />
-                          Back to Sign Up
-                        </Button>
-                      </div>
-
-                      <Alert>
-                        <Shield className="h-4 w-4" />
-                        <AlertDescription>
-                          <strong>Security tip:</strong> Never share your verification code with anyone. 
-                          SaskTask will never ask for this code via phone or message.
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-                  ) : (
-                    // Signup Form
+                  {/* Signup Form */}
                     <form onSubmit={handleSignUp} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="signup-firstname">First Name <span className="text-destructive">*</span></Label>
@@ -1480,7 +1073,6 @@ const Auth = () => {
                         )}
                       </Button>
                     </form>
-                  )}
                 </TabsContent>
               </Tabs>
             </CardContent>
