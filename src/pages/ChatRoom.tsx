@@ -82,13 +82,18 @@ const ChatRoom = () => {
 
       // Get other user details
       const otherId = isTaskGiver ? bookingData.task_doer_id : bookingData.tasks.task_giver_id;
-      const { data: otherUserData } = await supabase
-        .from("profiles")
+      const { data: otherUserData, error: profileError } = await supabase
+        .from("public_profiles")
         .select("id, full_name, avatar_url")
         .eq("id", otherId)
-        .single();
+        .maybeSingle();
 
-      setOtherUser(otherUserData);
+      if (profileError) {
+        console.log("Error fetching other user profile:", profileError);
+      }
+
+      // Set a fallback user if profile not found
+      setOtherUser(otherUserData || { id: otherId, full_name: "User", avatar_url: null });
     } catch (error) {
       console.error("Error checking access:", error);
       toast.error("Failed to load chat");
