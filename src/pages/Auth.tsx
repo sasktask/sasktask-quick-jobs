@@ -396,7 +396,16 @@ const Auth = () => {
       }
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) throw error;
+      
+      if (error) {
+        // Handle specific error cases
+        if (error.message.includes("same") || error.message.includes("different from the old")) {
+          setFormErrors({ newPassword: "New password must be different from your current password" });
+          setIsLoading(false);
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "Password updated!",
@@ -404,6 +413,7 @@ const Auth = () => {
       });
 
       setShowNewPassword(false);
+      setNewPassword("");
       navigate("/dashboard");
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Failed to update password";
