@@ -124,10 +124,17 @@ const Messages = () => {
       // For each booking, get last message and unread count
       const conversationsData = await Promise.all(
         uniqueBookings.map(async (booking: any) => {
-          const otherId =
-            booking.task_doer_id === userId
-              ? booking.tasks.task_giver_id
-              : booking.task_doer_id;
+          // Determine the other user ID based on current user's role
+          const isTaskDoer = booking.task_doer_id === userId;
+          const otherId = isTaskDoer
+            ? booking.tasks?.task_giver_id
+            : booking.task_doer_id;
+
+          // Skip if no valid other user ID
+          if (!otherId) {
+            console.log("Skipping booking - no valid other user ID:", booking.id);
+            return null;
+          }
 
           // Get last message
           const { data: lastMessage } = await supabase
@@ -146,35 +153,42 @@ const Messages = () => {
             .eq("receiver_id", userId)
             .is("read_at", null);
 
-          // Get other user profile
-          const { data: otherUser } = await supabase
-            .from("profiles")
-            .select("full_name, avatar_url")
+          // Get other user profile using public_profiles view (accessible to all)
+          const { data: otherUser, error: profileError } = await supabase
+            .from("public_profiles")
+            .select("id, full_name, avatar_url")
             .eq("id", otherId)
             .single();
+
+          if (profileError) {
+            console.log("Error fetching profile for user:", otherId, profileError);
+          }
 
           return {
             booking_id: booking.id,
             other_user_id: otherId,
-            other_user_name: otherUser?.full_name || "Unknown User",
-            other_user_avatar: otherUser?.avatar_url,
+            other_user_name: otherUser?.full_name || "User",
+            other_user_avatar: otherUser?.avatar_url || null,
             last_message: lastMessage?.message || "No messages yet",
             last_message_time: lastMessage?.created_at || booking.created_at,
             unread_count: unreadCount || 0,
-            task_title: booking.tasks.title,
+            task_title: booking.tasks?.title || "Task",
           };
         })
       );
 
+      // Filter out null entries
+      const validConversations = conversationsData.filter((conv): conv is Conversation => conv !== null);
+
       // Sort by last message time
-      conversationsData.sort(
+      validConversations.sort(
         (a, b) =>
           new Date(b.last_message_time).getTime() -
           new Date(a.last_message_time).getTime()
       );
 
-      setConversations(conversationsData);
-      setFilteredConversations(conversationsData);
+      setConversations(validConversations);
+      setFilteredConversations(validConversations);
     } catch (error) {
       console.error("Error loading conversations:", error);
       toast.error("Failed to load conversations");
