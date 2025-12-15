@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { PaymentHistory } from '@/components/PaymentHistory';
+import { WalletCard } from '@/components/WalletCard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,7 +18,6 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Wallet,
-  CreditCard,
   Settings
 } from 'lucide-react';
 import { SEOHead } from '@/components/SEOHead';
@@ -134,8 +134,14 @@ export default function Payments() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        {/* Wallet Card */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="md:col-span-1">
+            <WalletCard />
+          </div>
+          
+          {/* Stats Cards */}
+          <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -191,20 +197,7 @@ export default function Payments() {
               </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Completed</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.completedPayments}</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         </div>
 
         {/* Tabs */}
