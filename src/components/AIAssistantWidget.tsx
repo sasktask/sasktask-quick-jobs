@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Bot, 
   X, 
@@ -15,13 +16,23 @@ import {
   HelpCircle,
   Loader2,
   Minimize2,
-  Maximize2
+  Maximize2,
+  Copy,
+  Check,
+  RotateCcw,
+  Trash2,
+  FileText,
+  Users,
+  Shield,
+  Wrench
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Message {
+  id: string;
   role: "user" | "assistant";
   content: string;
+  timestamp: Date;
 }
 
 interface AIAssistantWidgetProps {
@@ -32,9 +43,12 @@ interface AIAssistantWidgetProps {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
 
 const quickPrompts = [
-  { icon: Lightbulb, label: "Help me write a task", prompt: "Help me write a clear task description for hiring someone to help me." },
-  { icon: DollarSign, label: "Pricing advice", prompt: "What's a fair price range for common tasks in Saskatchewan?" },
-  { icon: HelpCircle, label: "How it works", prompt: "How does SaskTask work? Walk me through the process." },
+  { icon: Lightbulb, label: "Write a task description", prompt: "Help me write a detailed and clear task description that will attract quality taskers. Ask me what I need done.", color: "text-yellow-500" },
+  { icon: DollarSign, label: "Pricing guide", prompt: "What are fair price ranges for different types of tasks in Saskatchewan? Give me a comprehensive pricing guide.", color: "text-green-500" },
+  { icon: HelpCircle, label: "How SaskTask works", prompt: "Explain how SaskTask works step by step - from posting a task to completion and payment.", color: "text-blue-500" },
+  { icon: Users, label: "Finding taskers", prompt: "What should I look for when choosing a tasker? Give me tips on evaluating profiles and reviews.", color: "text-purple-500" },
+  { icon: Shield, label: "Safety tips", prompt: "What safety guidelines should I follow as a user of SaskTask? Both as a task giver and task doer.", color: "text-red-500" },
+  { icon: Wrench, label: "Task categories", prompt: "What types of tasks can I post or find on SaskTask? Give me examples for each category.", color: "text-orange-500" },
 ];
 
 export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps) {
@@ -43,12 +57,15 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -58,15 +75,23 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
     }
   }, [isOpen, isMinimized]);
 
+  const generateId = () => Math.random().toString(36).substr(2, 9);
+
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim() || isLoading) return;
 
-    const userMsg: Message = { role: "user", content: messageText };
+    const userMsg: Message = { 
+      id: generateId(), 
+      role: "user", 
+      content: messageText,
+      timestamp: new Date()
+    };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
 
     let assistantContent = "";
+    const assistantId = generateId();
 
     try {
       const response = await fetch(CHAT_URL, {
@@ -76,13 +101,14 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
           "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          messages: [...messages, userMsg],
+          messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content })),
           context: { userRole, userName }
         }),
       });
 
       if (!response.ok || !response.body) {
-        throw new Error("Failed to get response");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to get response");
       }
 
       const reader = response.body.getReader();
@@ -90,7 +116,12 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
       let buffer = "";
 
       // Add empty assistant message
-      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+      setMessages(prev => [...prev, { 
+        id: assistantId, 
+        role: "assistant", 
+        content: "",
+        timestamp: new Date()
+      }]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -115,14 +146,14 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               assistantContent += content;
-              setMessages(prev => {
-                const updated = [...prev];
-                updated[updated.length - 1] = { role: "assistant", content: assistantContent };
-                return updated;
-              });
+              setMessages(prev => 
+                prev.map(m => m.id === assistantId 
+                  ? { ...m, content: assistantContent } 
+                  : m
+                )
+              );
             }
           } catch {
-            // Incomplete JSON, put it back
             buffer = line + "\n" + buffer;
             break;
           }
@@ -130,9 +161,22 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
       }
     } catch (error) {
       console.error("AI Assistant error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      
+      toast({
+        title: "AI Assistant Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+
       setMessages(prev => [
-        ...prev,
-        { role: "assistant", content: "Sorry, I'm having trouble responding right now. Please try again in a moment." }
+        ...prev.filter(m => m.id !== assistantId),
+        { 
+          id: assistantId, 
+          role: "assistant", 
+          content: `I apologize, but I encountered an error: ${errorMessage}. Please try again.`,
+          timestamp: new Date()
+        }
       ]);
     } finally {
       setIsLoading(false);
@@ -148,6 +192,24 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
     sendMessage(prompt);
   };
 
+  const copyToClipboard = async (text: string, id: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const clearChat = () => {
+    setMessages([]);
+  };
+
+  const retryLastMessage = () => {
+    const lastUserMessage = [...messages].reverse().find(m => m.role === "user");
+    if (lastUserMessage) {
+      setMessages(prev => prev.filter(m => m.id !== messages[messages.length - 1]?.id));
+      sendMessage(lastUserMessage.content);
+    }
+  };
+
   if (!isOpen) {
     return (
       <motion.button
@@ -156,10 +218,11 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 left-4 lg:bottom-6 lg:left-6 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-xl flex items-center justify-center"
+        className="fixed bottom-20 left-4 lg:bottom-6 lg:left-6 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-xl flex items-center justify-center group"
       >
-        <Bot className="h-6 w-6" />
-        <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-background" />
+        <Bot className="h-6 w-6 group-hover:scale-110 transition-transform" />
+        <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-background animate-pulse" />
+        <span className="absolute inset-0 rounded-full bg-violet-400/30 animate-ping" />
       </motion.button>
     );
   }
@@ -170,26 +233,43 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
       className={cn(
-        "fixed z-50 bg-background border border-border rounded-2xl shadow-2xl overflow-hidden",
+        "fixed z-50 bg-background border border-border rounded-2xl shadow-2xl flex flex-col",
         isMinimized 
-          ? "bottom-20 left-4 lg:bottom-6 lg:left-6 w-72 h-14"
-          : "bottom-20 left-4 lg:bottom-6 lg:left-6 w-[360px] h-[500px] max-h-[80vh]"
+          ? "bottom-20 left-4 lg:bottom-6 lg:left-6 w-80 h-14"
+          : "bottom-20 left-4 lg:bottom-6 lg:left-6 w-[380px] h-[550px] max-h-[85vh]"
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border">
+      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-violet-600/10 to-indigo-600/10 border-b border-border rounded-t-2xl flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-            <Bot className="h-4 w-4 text-primary-foreground" />
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg">
+            <Bot className="h-5 w-5 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-sm">AI Assistant</p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-sm">SaskTask AI</p>
+              <Badge variant="secondary" className="text-[10px] h-4 px-1.5 bg-gradient-to-r from-violet-600/20 to-indigo-600/20">
+                <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                Pro
+              </Badge>
+            </div>
             {!isMinimized && (
-              <p className="text-xs text-muted-foreground">Powered by AI</p>
+              <p className="text-xs text-muted-foreground">Ask me anything about tasks</p>
             )}
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {messages.length > 0 && !isMinimized && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              onClick={clearChat}
+              title="Clear chat"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -212,48 +292,57 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
       <AnimatePresence>
         {!isMinimized && (
           <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: "auto" }}
-            exit={{ height: 0 }}
-            className="flex flex-col flex-1"
-            style={{ height: "calc(100% - 52px)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col flex-1 min-h-0"
           >
-            {/* Messages */}
-            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+            {/* Messages - using regular div with overflow for better scroll control */}
+            <div 
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto p-4 space-y-4"
+            >
               {messages.length === 0 ? (
                 <div className="space-y-4">
                   <div className="text-center py-4">
-                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mx-auto mb-3">
-                      <Sparkles className="h-8 w-8 text-primary" />
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-violet-600/20 to-indigo-600/20 flex items-center justify-center mx-auto mb-3 animate-pulse">
+                      <Sparkles className="h-8 w-8 text-violet-600" />
                     </div>
-                    <h3 className="font-semibold">Hi{userName ? `, ${userName}` : ""}! 👋</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      I'm here to help you with tasks, pricing, and more.
+                    <h3 className="font-semibold text-lg">Hi{userName ? `, ${userName}` : ""}! 👋</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-[280px] mx-auto">
+                      I'm your AI assistant. I can help with task descriptions, pricing, platform questions, and more!
                     </p>
                   </div>
                   
-                  {/* Quick prompts */}
+                  {/* Quick prompts - scrollable grid */}
                   <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground font-medium">Quick actions</p>
-                    {quickPrompts.map((prompt) => (
-                      <button
-                        key={prompt.label}
-                        onClick={() => handleQuickPrompt(prompt.prompt)}
-                        className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors text-left"
-                      >
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <prompt.icon className="h-4 w-4 text-primary" />
-                        </div>
-                        <span className="text-sm">{prompt.label}</span>
-                      </button>
-                    ))}
+                    <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                      <FileText className="h-3 w-3" />
+                      Quick actions
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {quickPrompts.map((prompt) => (
+                        <button
+                          key={prompt.label}
+                          onClick={() => handleQuickPrompt(prompt.prompt)}
+                          className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-muted/50 hover:border-primary/30 transition-all text-left group"
+                        >
+                          <div className={cn(
+                            "h-7 w-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform",
+                          )}>
+                            <prompt.icon className={cn("h-3.5 w-3.5", prompt.color)} />
+                          </div>
+                          <span className="text-xs font-medium leading-tight">{prompt.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {messages.map((msg, idx) => (
+                  {messages.map((msg) => (
                     <div
-                      key={idx}
+                      key={msg.id}
                       className={cn(
                         "flex gap-2",
                         msg.role === "user" ? "justify-end" : "justify-start"
@@ -261,59 +350,119 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
                     >
                       {msg.role === "assistant" && (
                         <Avatar className="h-7 w-7 flex-shrink-0">
-                          <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          <AvatarFallback className="bg-gradient-to-br from-violet-600 to-indigo-600 text-white text-xs">
                             <Bot className="h-4 w-4" />
                           </AvatarFallback>
                         </Avatar>
                       )}
                       <div
                         className={cn(
-                          "max-w-[80%] rounded-2xl px-4 py-2 text-sm",
+                          "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm relative group",
                           msg.role === "user"
                             ? "bg-primary text-primary-foreground rounded-br-md"
                             : "bg-muted rounded-bl-md"
                         )}
                       >
-                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                        {msg.role === "assistant" ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
+                                ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
+                                li: ({ children }) => <li className="mb-1">{children}</li>,
+                                strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                                code: ({ children }) => (
+                                  <code className="bg-background/50 px-1 py-0.5 rounded text-xs">{children}</code>
+                                ),
+                              }}
+                            >
+                              {msg.content}
+                            </ReactMarkdown>
+                          </div>
+                        ) : (
+                          <p className="whitespace-pre-wrap">{msg.content}</p>
+                        )}
+                        
+                        {/* Copy button for assistant messages */}
+                        {msg.role === "assistant" && msg.content && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute -bottom-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border shadow-sm"
+                            onClick={() => copyToClipboard(msg.content, msg.id)}
+                          >
+                            {copiedId === msg.id ? (
+                              <Check className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
-                  {isLoading && messages[messages.length - 1]?.role === "user" && (
+                  
+                  {/* Loading indicator */}
+                  {isLoading && (
                     <div className="flex gap-2 justify-start">
                       <Avatar className="h-7 w-7 flex-shrink-0">
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        <AvatarFallback className="bg-gradient-to-br from-violet-600 to-indigo-600 text-white text-xs">
                           <Bot className="h-4 w-4" />
                         </AvatarFallback>
                       </Avatar>
-                      <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                      <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-violet-600 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <div className="w-2 h-2 bg-violet-600 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <div className="w-2 h-2 bg-violet-600 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
               )}
-            </ScrollArea>
+            </div>
 
             {/* Input */}
-            <form onSubmit={handleSubmit} className="p-3 border-t border-border">
-              <div className="flex gap-2">
+            <div className="p-3 border-t border-border flex-shrink-0">
+              {/* Retry button */}
+              {messages.length > 0 && messages[messages.length - 1]?.role === "assistant" && !isLoading && (
+                <div className="flex justify-center mb-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-muted-foreground gap-1"
+                    onClick={retryLastMessage}
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Regenerate response
+                  </Button>
+                </div>
+              )}
+              
+              <form onSubmit={handleSubmit} className="flex gap-2">
                 <Input
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask me anything..."
                   disabled={isLoading}
-                  className="flex-1"
+                  className="flex-1 bg-muted/50"
                 />
                 <Button 
                   type="submit" 
                   size="icon" 
                   disabled={!input.trim() || isLoading}
+                  className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
-              </div>
-            </form>
+              </form>
+              <p className="text-[10px] text-muted-foreground text-center mt-2">
+                AI can make mistakes. Verify important information.
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
