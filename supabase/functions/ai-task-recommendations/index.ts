@@ -27,15 +27,20 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch user profile including reputation_score
+    // Fetch user profile including reputation_score - use maybeSingle to handle missing profiles
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*, reputation_score, trust_score')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (profileError) {
       console.error('Error fetching profile:', profileError);
+    }
+
+    // If no profile exists, create a basic one
+    if (!profile) {
+      console.log('No profile found for user, using defaults');
     }
 
     // Get user's badge count for reputation calculation

@@ -67,19 +67,50 @@ const Profile = () => {
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
-      setProfile(profileData);
-      setTrustScore(profileData.trust_score || 50);
+      // If no profile exists, create one
+      if (!profileData) {
+        const { data: newProfile, error: createError } = await supabase
+          .from("profiles")
+          .upsert({
+            id: session.user.id,
+            email: session.user.email || '',
+            full_name: session.user.user_metadata?.full_name || '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (createError) throw createError;
+        setProfile(newProfile);
+        setTrustScore(newProfile?.trust_score || 50);
+        setFormData({
+          full_name: newProfile?.full_name || "",
+          phone: newProfile?.phone || "",
+          bio: newProfile?.bio || "",
+          avatar_url: newProfile?.avatar_url || ""
+        });
+      } else {
+        setProfile(profileData);
+        setTrustScore(profileData.trust_score || 50);
+        setFormData({
+          full_name: profileData.full_name || "",
+          phone: profileData.phone || "",
+          bio: profileData.bio || "",
+          avatar_url: profileData.avatar_url || ""
+        });
+      }
 
       // Fetch user role
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
       
       setUserRole(roleData?.role || null);
 
@@ -93,13 +124,6 @@ const Profile = () => {
       if (verificationData) {
         setVerification(verificationData);
       }
-
-      setFormData({
-        full_name: profileData.full_name || "",
-        phone: profileData.phone || "",
-        bio: profileData.bio || "",
-        avatar_url: profileData.avatar_url || ""
-      });
     } catch (error: any) {
       toast({
         title: "Error",
