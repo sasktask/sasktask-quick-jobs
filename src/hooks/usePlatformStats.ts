@@ -57,25 +57,25 @@ export const usePlatformStats = (): PlatformStats => {
 
         const avgRating = avgRatingData?.length 
           ? avgRatingData.reduce((acc, p) => acc + (p.rating || 0), 0) / avgRatingData.length 
-          : 4.8;
+          : 0;
 
         setStats({
           totalUsers: usersCount || 0,
           totalTasksCompleted: completedTasksCount || 0,
           totalTasksPostedToday: tasksToday || 0,
           totalActiveTaskers: activeTaskers || 0,
-          averageRating: Math.round(avgRating * 10) / 10,
+          averageRating: avgRating > 0 ? Math.round(avgRating * 10) / 10 : 0,
           isLoading: false,
         });
       } catch (error) {
         console.error("Error fetching platform stats:", error);
-        // Set fallback values
+        // Set real values - 0 if no data
         setStats({
-          totalUsers: 500,
-          totalTasksCompleted: 250,
-          totalTasksPostedToday: 12,
-          totalActiveTaskers: 100,
-          averageRating: 4.8,
+          totalUsers: 0,
+          totalTasksCompleted: 0,
+          totalTasksPostedToday: 0,
+          totalActiveTaskers: 0,
+          averageRating: 0,
           isLoading: false,
         });
       }
