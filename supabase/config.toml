@@ -68,3 +68,12 @@ verify_jwt = true
 
 [functions.refund-deposit]
 verify_jwt = true
+
+[functions.add-wallet-funds]
+verify_jwt = true
+
+[functions.confirm-wallet-deposit]
+verify_jwt = true
+
+[functions.handle-cancellation]
+verify_jwt = true

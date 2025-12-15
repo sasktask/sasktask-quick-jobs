@@ -1024,6 +1024,7 @@ export type Database = {
           latitude: number | null
           linkedin: string | null
           longitude: number | null
+          minimum_balance_met: boolean | null
           on_time_rate: number | null
           phone: string | null
           preferred_categories: string[] | null
@@ -1044,6 +1045,7 @@ export type Database = {
           verified_at: string | null
           verified_by: string | null
           verified_by_admin: boolean | null
+          wallet_balance: number | null
           website: string | null
         }
         Insert: {
@@ -1070,6 +1072,7 @@ export type Database = {
           latitude?: number | null
           linkedin?: string | null
           longitude?: number | null
+          minimum_balance_met?: boolean | null
           on_time_rate?: number | null
           phone?: string | null
           preferred_categories?: string[] | null
@@ -1090,6 +1093,7 @@ export type Database = {
           verified_at?: string | null
           verified_by?: string | null
           verified_by_admin?: boolean | null
+          wallet_balance?: number | null
           website?: string | null
         }
         Update: {
@@ -1116,6 +1120,7 @@ export type Database = {
           latitude?: number | null
           linkedin?: string | null
           longitude?: number | null
+          minimum_balance_met?: boolean | null
           on_time_rate?: number | null
           phone?: string | null
           preferred_categories?: string[] | null
@@ -1136,6 +1141,7 @@ export type Database = {
           verified_at?: string | null
           verified_by?: string | null
           verified_by_admin?: boolean | null
+          wallet_balance?: number | null
           website?: string | null
         }
         Relationships: []
@@ -2175,6 +2181,71 @@ export type Database = {
           },
           {
             foreignKeyName: "verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string | null
+          description: string | null
+          id: string
+          related_booking_id: string | null
+          related_task_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          related_booking_id?: string | null
+          related_task_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          related_booking_id?: string | null
+          related_task_id?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_related_booking_id_fkey"
+            columns: ["related_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_related_task_id_fkey"
+            columns: ["related_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"

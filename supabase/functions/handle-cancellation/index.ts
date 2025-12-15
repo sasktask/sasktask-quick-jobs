@@ -7,25 +7,30 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Cancellation fee structure (like Uber)
-const calculateCancellationFee = (
-  timeUntilTask: number,
+const MINIMUM_BALANCE = 50;
+const CANCELLATION_PENALTY_RATE = 0.25; // 25% of task price
+
+// Calculate penalty based on booking status and timing
+const calculateCancellationPenalty = (
   taskAmount: number,
-  cancelledBy: "task_giver" | "task_doer"
-) => {
-  const hoursUntilTask = timeUntilTask / (1000 * 60 * 60);
-  
-  if (cancelledBy === "task_giver") {
-    // Task giver cancellation fees
-    if (hoursUntilTask < 1) return taskAmount * 0.5; // 50% fee if < 1 hour
-    if (hoursUntilTask < 24) return taskAmount * 0.25; // 25% fee if < 24 hours
-    return 5; // $5 flat fee otherwise
-  } else {
-    // Task doer cancellation fees
-    if (hoursUntilTask < 2) return taskAmount * 0.3; // 30% penalty if < 2 hours
-    if (hoursUntilTask < 24) return taskAmount * 0.15; // 15% penalty if < 24 hours
-    return 0; // No fee if > 24 hours
+  bookingStatus: string,
+  hoursUntilTask: number
+): { penaltyAmount: number; affectsTrustScore: boolean } => {
+  // After acceptance, 25% penalty always applies unless 24h+ notice
+  if (bookingStatus === "accepted" || bookingStatus === "in_progress") {
+    if (hoursUntilTask >= 24) {
+      // Full refund if 24h+ notice - no penalty
+      return { penaltyAmount: 0, affectsTrustScore: false };
+    }
+    // 25% penalty for late cancellation
+    return { 
+      penaltyAmount: taskAmount * CANCELLATION_PENALTY_RATE, 
+      affectsTrustScore: true 
+    };
   }
+  
+  // Before acceptance - no penalty
+  return { penaltyAmount: 0, affectsTrustScore: false };
 };
 
 serve(async (req) => {
@@ -80,8 +85,32 @@ serve(async (req) => {
       throw new Error("Not authorized to cancel this booking");
     }
 
-    // Use the penalty provided by the frontend (already calculated based on booking status and timing)
-    const finalCancellationFee = cancellationFee || 0;
+    // Calculate penalty based on task amount and timing
+    const taskAmount = booking.tasks.pay_amount;
+    const scheduledDate = booking.tasks.scheduled_date ? new Date(booking.tasks.scheduled_date) : null;
+    const hoursUntilTask = scheduledDate 
+      ? (scheduledDate.getTime() - Date.now()) / (1000 * 60 * 60) 
+      : 999;
+    
+    const { penaltyAmount, affectsTrustScore } = calculateCancellationPenalty(
+      taskAmount,
+      booking.status,
+      hoursUntilTask
+    );
+
+    // Get user's wallet balance
+    const { data: userProfile } = await supabaseClient
+      .from("profiles")
+      .select("wallet_balance")
+      .eq("id", user.id)
+      .single();
+
+    const walletBalance = userProfile?.wallet_balance || 0;
+
+    // Check if user has enough balance to cover penalty
+    if (penaltyAmount > 0 && walletBalance < penaltyAmount) {
+      throw new Error(`Insufficient wallet balance. You need at least $${penaltyAmount.toFixed(2)} to cover the cancellation penalty. Current balance: $${walletBalance.toFixed(2)}`);
+    }
 
     let refundAmount = 0;
     let stripeRefundId = null;
@@ -93,58 +122,41 @@ serve(async (req) => {
       .eq("booking_id", bookingId)
       .maybeSingle();
 
-    if (payment && payment.status === "completed") {
-      if (isTaskGiver) {
-        // Task giver cancels - refund minus cancellation fee
-        refundAmount = payment.amount - finalCancellationFee;
-        
-        if (refundAmount > 0 && payment.payment_intent_id) {
-          const refund = await stripe.refunds.create({
-            payment_intent: payment.payment_intent_id,
-            amount: Math.round(refundAmount * 100),
-            reason: "requested_by_customer",
-          });
-          stripeRefundId = refund.id;
-        }
+    // Deduct penalty from wallet if applicable
+    if (penaltyAmount > 0) {
+      const newBalance = walletBalance - penaltyAmount;
+      
+      // Update wallet balance
+      await supabaseClient
+        .from("profiles")
+        .update({
+          wallet_balance: newBalance,
+          minimum_balance_met: newBalance >= MINIMUM_BALANCE,
+        })
+        .eq("id", user.id);
 
-        // Charge cancellation fee if needed (transfer to task doer as compensation)
-        if (finalCancellationFee > 0) {
-          await supabaseClient.from("payments").insert({
-            booking_id: bookingId,
-            task_id: taskId,
-            payer_id: user.id,
-            payee_id: booking.task_doer_id,
-            amount: finalCancellationFee,
-            status: "completed",
-            platform_fee: 0,
-            payout_amount: finalCancellationFee,
-            escrow_status: "released",
-          });
-        }
-      } else {
-        // Task doer cancels - full refund to task giver, penalty deducted from future earnings
-        if (payment.payment_intent_id) {
-          const refund = await stripe.refunds.create({
-            payment_intent: payment.payment_intent_id,
-            amount: Math.round(payment.amount * 100),
-          });
-          stripeRefundId = refund.id;
-        }
-        
-        // Record penalty debt for task doer
-        if (finalCancellationFee > 0) {
-          await supabaseClient.from("payments").insert({
-            booking_id: bookingId,
-            task_id: taskId,
-            payer_id: user.id,
-            payee_id: booking.tasks.task_giver_id,
-            amount: finalCancellationFee,
-            status: "pending",
-            platform_fee: 0,
-            payout_amount: finalCancellationFee,
-            escrow_status: "debt",
-          });
-        }
+      // Record penalty transaction
+      await supabaseClient.from("wallet_transactions").insert({
+        user_id: user.id,
+        amount: -penaltyAmount,
+        transaction_type: "penalty",
+        description: `Cancellation penalty (25% of $${taskAmount})`,
+        related_booking_id: bookingId,
+        related_task_id: taskId,
+        balance_after: newBalance,
+      });
+    }
+
+    if (payment && payment.status === "completed") {
+      // Full refund to the payer since penalty is from wallet
+      if (payment.payment_intent_id) {
+        const refund = await stripe.refunds.create({
+          payment_intent: payment.payment_intent_id,
+          amount: Math.round(payment.amount * 100),
+          reason: "requested_by_customer",
+        });
+        stripeRefundId = refund.id;
+        refundAmount = payment.amount;
       }
     }
 
@@ -154,7 +166,7 @@ serve(async (req) => {
       task_id: taskId,
       cancelled_by: user.id,
       cancellation_reason: reason,
-      cancellation_fee: finalCancellationFee,
+      cancellation_fee: penaltyAmount,
       stripe_refund_id: stripeRefundId,
     });
 
@@ -164,17 +176,29 @@ serve(async (req) => {
       .update({ status: "cancelled" })
       .eq("id", bookingId);
 
-    // Update profile cancellation stats
+    // Update profile cancellation stats and trust score if penalty applies
     const { data: profile } = await supabaseClient
       .from("profiles")
-      .select("cancellation_count, completed_tasks, reliability_score")
+      .select("cancellation_count, completed_tasks, reliability_score, trust_score")
       .eq("id", user.id)
       .single();
 
     const newCancellationCount = (profile?.cancellation_count || 0) + 1;
     const totalTasks = (profile?.completed_tasks || 0) + newCancellationCount;
     const cancellationRate = (newCancellationCount / totalTasks) * 100;
-    const newReliabilityScore = Math.max(0, 100 - (cancellationRate * 2)); // Reduce reliability by 2x cancellation rate
+    
+    // More severe impact on trust and reliability for penalty cancellations
+    let newReliabilityScore = profile?.reliability_score || 100;
+    let newTrustScore = profile?.trust_score || 100;
+    
+    if (affectsTrustScore) {
+      // Significant penalty impact - reduce by 10 points for each penalty cancellation
+      newReliabilityScore = Math.max(0, newReliabilityScore - 10);
+      newTrustScore = Math.max(0, newTrustScore - 5);
+    } else {
+      // Minor impact for free cancellations (24h+ notice)
+      newReliabilityScore = Math.max(0, 100 - (cancellationRate * 1.5));
+    }
 
     await supabaseClient
       .from("profiles")
@@ -182,17 +206,23 @@ serve(async (req) => {
         cancellation_count: newCancellationCount,
         cancellation_rate: cancellationRate,
         reliability_score: newReliabilityScore,
+        trust_score: newTrustScore,
       })
       .eq("id", user.id);
 
     return new Response(
       JSON.stringify({
         success: true,
-        cancellationFee: finalCancellationFee,
+        penaltyAmount,
         refundAmount,
+        affectedTrustScore: affectsTrustScore,
         message: `Booking cancelled. ${
-          finalCancellationFee > 0
-            ? `Cancellation penalty: $${finalCancellationFee.toFixed(2)}.`
+          penaltyAmount > 0
+            ? `$${penaltyAmount.toFixed(2)} penalty deducted from your wallet.`
+            : ""
+        } ${
+          affectsTrustScore
+            ? "Your trust score has been impacted."
             : ""
         } ${
           refundAmount > 0
