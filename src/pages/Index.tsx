@@ -1,7 +1,6 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { InstallAppButton } from "@/components/InstallAppButton";
@@ -12,22 +11,20 @@ import { PopularThisWeek } from "@/components/PopularThisWeek";
 import { SeasonalRecommendations } from "@/components/SeasonalRecommendations";
 import { PopularTaskers } from "@/components/PopularTaskers";
 import { FAQSection } from "@/components/FAQSection";
-import React, { useEffect, useState, useRef } from "react";
+import { HeroSearch } from "@/components/HeroSearch";
+import { UrgencyBanner } from "@/components/UrgencyBanner";
+import { StatsCounter } from "@/components/StatsCounter";
+import { usePlatformStats } from "@/hooks/usePlatformStats";
+import { Skeleton } from "@/components/ui/skeleton";
+import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Snowflake, Sparkles, Truck, Star, Shield, Clock, DollarSign, Users, Wrench, Package, Monitor, Trees, Home, PaintBucket, MoreHorizontal, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock, Plus } from "lucide-react";
-import heroImage from "@/assets/hero-image.jpg";
+import { Sparkles, Star, Shield, Clock, DollarSign, Users, Wrench, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock } from "lucide-react";
 import heroInfographic from "@/assets/hero-infographic.jpg";
-import logo from "@/assets/sasktask-logo.png";
 
 const Index = () => {
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const stats = usePlatformStats();
 
   // Check if user is logged in
   useEffect(() => {
@@ -44,111 +41,9 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, []);
-  const categories = [{
-    name: "Snow Removal",
-    icon: "❄️",
-    path: "/browse?category=Snow Removal"
-  }, {
-    name: "Cleaning",
-    icon: "🧹",
-    path: "/browse?category=Cleaning"
-  }, {
-    name: "Moving",
-    icon: "📦",
-    path: "/browse?category=Moving"
-  }, {
-    name: "Delivery",
-    icon: "🚚",
-    path: "/browse?category=Delivery"
-  }, {
-    name: "Handyman",
-    icon: "🔧",
-    path: "/browse?category=Handyman"
-  }, {
-    name: "Gardening",
-    icon: "🌱",
-    path: "/browse?category=Gardening"
-  }, {
-    name: "Pet Care",
-    icon: "🐾",
-    path: "/browse?category=Pet Care"
-  }, {
-    name: "Painting",
-    icon: "🎨",
-    path: "/browse?category=Painting"
-  }];
-  const popularSearches = ["Snow Removal", "Cleaning", "Moving Help", "Assembly"];
 
-  // Close search results when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setShowResults(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Search functionality
-  useEffect(() => {
-    const searchTasks = async () => {
-      if (searchQuery.trim().length < 2) {
-        setSearchResults([]);
-        setShowResults(false);
-        return;
-      }
-      setIsSearching(true);
-      setShowResults(true);
-      try {
-        // Search in tasks
-        const {
-          data: tasks,
-          error
-        } = await supabase.from("tasks").select("*").or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%`).eq("status", "open").limit(5);
-        if (error) throw error;
-
-        // Combine with category matches
-        const categoryMatches = categories.filter(cat => cat.name.toLowerCase().includes(searchQuery.toLowerCase()));
-        const results = [...categoryMatches.map(cat => ({
-          type: "category",
-          ...cat
-        })), ...(tasks || []).map(task => ({
-          type: "task",
-          ...task
-        }))];
-        setSearchResults(results);
-      } catch (error) {
-        console.error("Search error:", error);
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    };
-    const debounce = setTimeout(searchTasks, 300);
-    return () => clearTimeout(debounce);
-  }, [searchQuery]);
-  const handleSearchClick = () => {
-    if (searchQuery.trim()) {
-      navigate(`/browse?search=${encodeURIComponent(searchQuery)}`);
-      setShowResults(false);
-    }
-  };
-  const handlePopularSearchClick = (term: string) => {
-    setSearchQuery(term);
-    navigate(`/browse?category=${encodeURIComponent(term)}`);
-  };
-  const handleResultClick = (result: any) => {
-    if (result.type === "category") {
-      navigate(result.path);
-    } else {
-      navigate(`/task/${result.id}`);
-    }
-    setShowResults(false);
-    setSearchQuery("");
-  };
-
-  return <div className="min-h-screen bg-background">
+  return (
+    <div className="min-h-screen bg-background">
       <SEOHead 
         title="SaskTask - Find Local Help or Earn Money in Saskatchewan"
         description="SaskTask connects you with verified local professionals for any task. From snow removal to home repairs, find trusted help in your Saskatchewan community or earn money completing tasks."
@@ -156,21 +51,31 @@ const Index = () => {
       />
       <Navbar />
       
-      {/* Hero Section - Different for logged in vs logged out */}
-      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
-        {/* Background with subtle gradient */}
+      {/* Urgency Banner */}
+      <UrgencyBanner />
+      
+      {/* Hero Section */}
+      <section className="pt-16 pb-20 px-4 relative overflow-hidden">
+        {/* Background with animated gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5 -z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent -z-10" />
         
         <div className="container mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
             {/* Left: Text Content */}
-            <div className="space-y-6 animate-fade-up">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm font-medium text-primary">
+            <div className="space-y-6">
+              <div 
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm font-medium text-primary animate-fade-in"
+                style={{ animationDelay: '0.1s' }}
+              >
                 <Sparkles className="h-4 w-4" />
                 {user ? "Welcome Back!" : "Saskatchewan's #1 Task Platform"}
               </div>
               
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
+              <h1 
+                className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight animate-fade-up"
+                style={{ animationDelay: '0.2s' }}
+              >
                 {user ? (
                   <>
                     Your Dashboard
@@ -188,62 +93,55 @@ const Index = () => {
                 )}
               </h1>
               
-              <p className="text-xl text-muted-foreground leading-relaxed">
+              <p 
+                className="text-xl text-muted-foreground leading-relaxed animate-fade-up"
+                style={{ animationDelay: '0.3s' }}
+              >
                 {user 
                   ? "Access your professional dashboard to manage tasks, view bookings, track earnings, and connect with clients or find work opportunities."
                   : "Connect with verified local professionals for any task. From snow removal to home repairs, find trusted help in your Saskatchewan community."
                 }
               </p>
 
-              {/* CTA Buttons - Different for logged in users */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                {user ? (
-                  <>
-                    <Link to="/dashboard">
-                      <Button size="lg" variant="hero" className="w-full sm:w-auto text-lg h-14 px-8">
-                        <Briefcase className="mr-2 h-5 w-5" />
-                        Go to Dashboard
-                      </Button>
-                    </Link>
-                    <Link to="/browse">
-                      <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-2">
-                        <Search className="mr-2 h-5 w-5" />
-                        Browse Tasks
-                      </Button>
-                    </Link>
-                    <Link to="/find-taskers">
-                      <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-2">
-                        <Users className="mr-2 h-5 w-5" />
-                        Find Taskers
-                      </Button>
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/browse">
-                      <Button size="lg" variant="hero" className="w-full sm:w-auto text-lg h-14 px-8">
-                        <Search className="mr-2 h-5 w-5" />
-                        Browse Tasks
-                      </Button>
-                    </Link>
-                    <Link to="/post-task">
-                      <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-2">
-                        <FileEdit className="mr-2 h-5 w-5" />
-                        Post a Task
-                      </Button>
-                    </Link>
-                    <InstallAppButton 
-                      variant="outline" 
-                      size="lg" 
-                      className="w-full sm:w-auto text-lg h-14 px-8 border-2 border-primary/50 hover:bg-primary/10"
-                      showOnDesktop={true}
-                    />
-                  </>
-                )}
-              </div>
+              {/* Hero Search - Only for non-logged in users */}
+              {!user && (
+                <div className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
+                  <HeroSearch />
+                </div>
+              )}
 
-              {/* Trust Indicators - Different for logged in */}
-              <div className="flex flex-wrap gap-6 pt-6 border-t border-border">
+              {/* CTA Buttons - For logged in users */}
+              {user && (
+                <div 
+                  className="flex flex-col sm:flex-row gap-4 pt-4 animate-fade-up"
+                  style={{ animationDelay: '0.4s' }}
+                >
+                  <Link to="/dashboard">
+                    <Button size="lg" variant="hero" className="w-full sm:w-auto text-lg h-14 px-8">
+                      <Briefcase className="mr-2 h-5 w-5" />
+                      Go to Dashboard
+                    </Button>
+                  </Link>
+                  <Link to="/browse">
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-2">
+                      <Search className="mr-2 h-5 w-5" />
+                      Browse Tasks
+                    </Button>
+                  </Link>
+                  <Link to="/find-taskers">
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-2">
+                      <Users className="mr-2 h-5 w-5" />
+                      Find Taskers
+                    </Button>
+                  </Link>
+                </div>
+              )}
+
+              {/* Trust Indicators */}
+              <div 
+                className="flex flex-wrap gap-6 pt-6 border-t border-border animate-fade-up"
+                style={{ animationDelay: '0.5s' }}
+              >
                 {user ? (
                   <>
                     <div className="flex items-center gap-2">
@@ -308,10 +206,10 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Right: Infographic */}
-            <div className="relative animate-fade-in">
+            {/* Right: Infographic with Dynamic Stats */}
+            <div className="relative animate-scale-in" style={{ animationDelay: '0.3s' }}>
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl blur-3xl -z-10" />
-              <div className="relative bg-card/50 backdrop-blur-sm rounded-3xl p-4 border border-border shadow-2xl">
+              <div className="relative bg-card/50 backdrop-blur-sm rounded-3xl p-4 border border-border shadow-2xl hover-lift">
                 <img 
                   src={heroInfographic} 
                   alt="SaskTask workflow: Post task, connect with verified professionals, get it done" 
@@ -319,28 +217,58 @@ const Index = () => {
                 />
               </div>
 
-              {/* Floating stats cards */}
-              <div className="absolute -bottom-4 -left-4 bg-card border border-border rounded-2xl p-4 shadow-xl animate-bounce-slow">
+              {/* Floating stats cards with real data */}
+              <div className="absolute -bottom-4 -left-4 bg-card border border-border rounded-2xl p-4 shadow-xl animate-float">
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <Users className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">1000+</p>
-                    <p className="text-sm text-muted-foreground">Active Users</p>
+                    {stats.isLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-16 mb-1" />
+                        <Skeleton className="h-4 w-20" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold text-foreground">
+                          <StatsCounter end={stats.totalUsers} suffix="+" />
+                        </p>
+                        <p className="text-sm text-muted-foreground">Active Users</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="absolute -top-4 -right-4 bg-card border border-border rounded-2xl p-4 shadow-xl animate-bounce-slow" style={{animationDelay: '0.5s'}}>
+              <div className="absolute -top-4 -right-4 bg-card border border-border rounded-2xl p-4 shadow-xl animate-float" style={{animationDelay: '0.5s'}}>
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <CheckCircle2 className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">500+</p>
-                    <p className="text-sm text-muted-foreground">Tasks Completed</p>
+                    {stats.isLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-16 mb-1" />
+                        <Skeleton className="h-4 w-24" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold text-foreground">
+                          <StatsCounter end={stats.totalTasksCompleted} suffix="+" />
+                        </p>
+                        <p className="text-sm text-muted-foreground">Tasks Completed</p>
+                      </>
+                    )}
                   </div>
+                </div>
+              </div>
+
+              {/* New floating card for average rating */}
+              <div className="absolute top-1/2 -right-6 bg-card border border-border rounded-2xl p-3 shadow-xl animate-float hidden lg:block" style={{animationDelay: '1s'}}>
+                <div className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                  <span className="font-bold text-foreground">{stats.averageRating}</span>
                 </div>
               </div>
             </div>
@@ -377,26 +305,27 @@ const Index = () => {
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[{
-              icon: FileEdit,
-              title: "Post Your Task",
-              desc: "Describe what you need done, set your budget, location, and timeline",
-              color: "from-blue-500 to-cyan-500"
-            }, {
-              icon: Users,
-              title: "Browse Proposals",
-              desc: "Receive offers from verified task doers with ratings, reviews, and profiles",
-              color: "from-purple-500 to-pink-500"
-            }, {
-              icon: CheckCircle2,
-              title: "Select & Connect",
-              desc: "Choose the best match, discuss details via secure messaging, and confirm booking",
-              color: "from-green-500 to-emerald-500"
-            }, {
-              icon: Star,
-              title: "Pay & Review",
-              desc: "Complete payment securely after task completion and leave feedback",
-              color: "from-yellow-500 to-orange-500"
-            }].map((item, i) => <Card key={i} className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50">
+                icon: FileEdit,
+                title: "Post Your Task",
+                desc: "Describe what you need done, set your budget, location, and timeline",
+                color: "from-blue-500 to-cyan-500"
+              }, {
+                icon: Users,
+                title: "Browse Proposals",
+                desc: "Receive offers from verified task doers with ratings, reviews, and profiles",
+                color: "from-purple-500 to-pink-500"
+              }, {
+                icon: CheckCircle2,
+                title: "Select & Connect",
+                desc: "Choose the best match, discuss details via secure messaging, and confirm booking",
+                color: "from-green-500 to-emerald-500"
+              }, {
+                icon: Star,
+                title: "Pay & Review",
+                desc: "Complete payment securely after task completion and leave feedback",
+                color: "from-yellow-500 to-orange-500"
+              }].map((item, i) => (
+                <Card key={i} className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50 hover-lift">
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${item.color}`}></div>
                   <CardContent className="p-6 space-y-4">
                     <div className="relative">
@@ -410,7 +339,8 @@ const Index = () => {
                     <h4 className="text-lg font-bold">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.desc}</p>
                   </CardContent>
-                </Card>)}
+                </Card>
+              ))}
             </div>
           </div>
 
@@ -426,26 +356,27 @@ const Index = () => {
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[{
-              icon: Search,
-              title: "Browse Tasks",
-              desc: "Explore available tasks by category, location, budget, and schedule",
-              color: "from-indigo-500 to-blue-500"
-            }, {
-              icon: MessageSquare,
-              title: "Submit Proposals",
-              desc: "Send offers with your rates, availability, and showcase your verified credentials",
-              color: "from-violet-500 to-purple-500"
-            }, {
-              icon: Briefcase,
-              title: "Get Hired",
-              desc: "Get selected by task givers, confirm details, and schedule the work",
-              color: "from-cyan-500 to-teal-500"
-            }, {
-              icon: TrendingUp,
-              title: "Build Reputation",
-              desc: "Complete tasks, receive payments instantly, and earn 5-star reviews",
-              color: "from-amber-500 to-orange-500"
-            }].map((item, i) => <Card key={i} className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border-2 hover:border-secondary/50">
+                icon: Search,
+                title: "Browse Tasks",
+                desc: "Explore available tasks by category, location, budget, and schedule",
+                color: "from-indigo-500 to-blue-500"
+              }, {
+                icon: MessageSquare,
+                title: "Submit Proposals",
+                desc: "Send offers with your rates, availability, and showcase your verified credentials",
+                color: "from-violet-500 to-purple-500"
+              }, {
+                icon: Briefcase,
+                title: "Get Hired",
+                desc: "Get selected by task givers, confirm details, and schedule the work",
+                color: "from-cyan-500 to-teal-500"
+              }, {
+                icon: TrendingUp,
+                title: "Build Reputation",
+                desc: "Complete tasks, receive payments instantly, and earn 5-star reviews",
+                color: "from-amber-500 to-orange-500"
+              }].map((item, i) => (
+                <Card key={i} className="relative overflow-hidden group hover:shadow-2xl transition-all duration-300 border-2 hover:border-secondary/50 hover-lift">
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${item.color}`}></div>
                   <CardContent className="p-6 space-y-4">
                     <div className="relative">
@@ -459,7 +390,8 @@ const Index = () => {
                     <h4 className="text-lg font-bold">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.desc}</p>
                   </CardContent>
-                </Card>)}
+                </Card>
+              ))}
             </div>
           </div>
 
@@ -472,30 +404,31 @@ const Index = () => {
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[{
-              icon: MessageSquare,
-              title: "Real-Time Messaging",
-              desc: "Chat instantly with task givers and doers through our secure platform"
-            }, {
-              icon: DollarSign,
-              title: "Secure Payments",
-              desc: "Escrow protection ensures payment only after successful completion"
-            }, {
-              icon: Calendar,
-              title: "Smart Scheduling",
-              desc: "Built-in calendar to manage multiple tasks and bookings effortlessly"
-            }, {
-              icon: MapPin,
-              title: "Location Tracking",
-              desc: "GPS-based task matching connects you with nearby opportunities"
-            }, {
-              icon: Bell,
-              title: "Instant Notifications",
-              desc: "Get real-time alerts for new offers, messages, and booking updates"
-            }, {
-              icon: Award,
-              title: "Achievement Badges",
-              desc: "Earn recognition badges as you complete more tasks and build expertise"
-            }].map((item, i) => <Card key={i} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border hover:border-primary/50">
+                icon: MessageSquare,
+                title: "Real-Time Messaging",
+                desc: "Chat instantly with task givers and doers through our secure platform"
+              }, {
+                icon: DollarSign,
+                title: "Secure Payments",
+                desc: "Escrow protection ensures payment only after successful completion"
+              }, {
+                icon: Calendar,
+                title: "Smart Scheduling",
+                desc: "Built-in calendar to manage multiple tasks and bookings effortlessly"
+              }, {
+                icon: MapPin,
+                title: "Location Tracking",
+                desc: "GPS-based task matching connects you with nearby opportunities"
+              }, {
+                icon: Bell,
+                title: "Instant Notifications",
+                desc: "Get real-time alerts for new offers, messages, and booking updates"
+              }, {
+                icon: Award,
+                title: "Achievement Badges",
+                desc: "Earn recognition badges as you complete more tasks and build expertise"
+              }].map((item, i) => (
+                <Card key={i} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border hover:border-primary/50">
                   <CardContent className="p-6 space-y-3">
                     <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                       <item.icon className="h-6 w-6 text-primary" />
@@ -503,7 +436,8 @@ const Index = () => {
                     <h4 className="font-bold text-lg">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.desc}</p>
                   </CardContent>
-                </Card>)}
+                </Card>
+              ))}
             </div>
           </div>
 
@@ -519,26 +453,27 @@ const Index = () => {
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[{
-              icon: ShieldCheck,
-              title: "ID Verification",
-              desc: "All users undergo mandatory identity verification with government-issued documents",
-              badge: "Required"
-            }, {
-              icon: Shield,
-              title: "Background Checks",
-              desc: "Optional enhanced background screening for task doers in sensitive categories",
-              badge: "Optional"
-            }, {
-              icon: Lock,
-              title: "Secure Payments",
-              desc: "Bank-level encryption and escrow protection for all financial transactions",
-              badge: "Protected"
-            }, {
-              icon: Star,
-              title: "Rating System",
-              desc: "Transparent reviews and ratings help you make informed decisions every time",
-              badge: "Verified"
-            }].map((item, i) => <Card key={i} className="group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50 bg-background">
+                icon: ShieldCheck,
+                title: "ID Verification",
+                desc: "All users undergo mandatory identity verification with government-issued documents",
+                badge: "Required"
+              }, {
+                icon: Shield,
+                title: "Background Checks",
+                desc: "Optional enhanced background screening for task doers in sensitive categories",
+                badge: "Optional"
+              }, {
+                icon: Lock,
+                title: "Secure Payments",
+                desc: "Bank-level encryption and escrow protection for all financial transactions",
+                badge: "Protected"
+              }, {
+                icon: Star,
+                title: "Rating System",
+                desc: "Transparent reviews and ratings help you make informed decisions every time",
+                badge: "Verified"
+              }].map((item, i) => (
+                <Card key={i} className="group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50 bg-background hover-lift">
                   <CardContent className="p-6 space-y-4 relative">
                     <div className="absolute top-4 right-4">
                       <span className="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary">
@@ -551,7 +486,8 @@ const Index = () => {
                     <h4 className="font-bold text-lg pr-16">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.desc}</p>
                   </CardContent>
-                </Card>)}
+                </Card>
+              ))}
             </div>
 
             <div className="mt-10 text-center">
@@ -574,30 +510,31 @@ const Index = () => {
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[{
-            icon: Shield,
-            title: "Verified Users",
-            desc: "All users are verified with ratings and reviews"
-          }, {
-            icon: Clock,
-            title: "Quick Matching",
-            desc: "Find the right person for your task in minutes"
-          }, {
-            icon: DollarSign,
-            title: "Fair Pricing",
-            desc: "Set your own rates with transparent commission"
-          }, {
-            icon: Star,
-            title: "Rating System",
-            desc: "Build your reputation with verified reviews"
-          }, {
-            icon: Users,
-            title: "Large Network",
-            desc: "Thousands of task givers and doers"
-          }, {
-            icon: Shield,
-            title: "Secure Payments",
-            desc: "Protected payment processing"
-          }].map((feature, i) => <Card key={i} className="border-border hover:shadow-lg transition-shadow">
+              icon: Shield,
+              title: "Verified Users",
+              desc: "All users are verified with ratings and reviews"
+            }, {
+              icon: Clock,
+              title: "Quick Matching",
+              desc: "Find the right person for your task in minutes"
+            }, {
+              icon: DollarSign,
+              title: "Fair Pricing",
+              desc: "Set your own rates with transparent commission"
+            }, {
+              icon: Star,
+              title: "Rating System",
+              desc: "Build your reputation with verified reviews"
+            }, {
+              icon: Users,
+              title: "Large Network",
+              desc: "Thousands of task givers and doers"
+            }, {
+              icon: Shield,
+              title: "Secure Payments",
+              desc: "Protected payment processing"
+            }].map((feature, i) => (
+              <Card key={i} className="border-border hover:shadow-lg transition-shadow hover-lift">
                 <CardContent className="p-6 space-y-3">
                   <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                     <feature.icon className="h-6 w-6 text-primary" />
@@ -605,7 +542,8 @@ const Index = () => {
                   <h3 className="text-lg font-semibold">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.desc}</p>
                 </CardContent>
-              </Card>)}
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -632,12 +570,12 @@ const Index = () => {
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <Link to="/auth">
-                  <Button variant="accent" size="lg" className="shadow-xl">
+                  <Button variant="accent" size="lg" className="shadow-xl bg-white text-primary hover:bg-white/90">
                     Sign Up Now
                   </Button>
                 </Link>
                 <Link to="/browse">
-                  <Button variant="outline" size="lg" className="bg-white hover:bg-white/90 border-0 shadow-xl">
+                  <Button variant="outline" size="lg" className="bg-white/10 hover:bg-white/20 border-white/30 text-white shadow-xl">
                     Explore Tasks
                   </Button>
                 </Link>
@@ -648,6 +586,8 @@ const Index = () => {
       </section>
 
       <Footer />
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
