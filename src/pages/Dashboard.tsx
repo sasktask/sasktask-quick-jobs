@@ -22,6 +22,9 @@ import { DailyGoals } from "@/components/DailyGoals";
 import { LiveEarningsTicker } from "@/components/LiveEarningsTicker";
 import { ProgressRing } from "@/components/ProgressRing";
 import { EnhancedActivityFeed } from "@/components/EnhancedActivityFeed";
+import { QuickActionsFAB } from "@/components/QuickActionsFAB";
+import { UpcomingTasksCalendar } from "@/components/UpcomingTasksCalendar";
+import { QuickRebook } from "@/components/QuickRebook";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
   Briefcase, 
@@ -439,6 +442,16 @@ const Dashboard = () => {
                   </Link>
                 </div>
 
+                {/* Quick Rebook for Task Givers */}
+                {userRole === "task_giver" && user?.id && (
+                  <QuickRebook userId={user.id} />
+                )}
+
+                {/* Upcoming Tasks Calendar */}
+                {user?.id && (
+                  <UpcomingTasksCalendar userId={user.id} userRole={userRole} />
+                )}
+
                 {/* AI-Powered Recommendations for Task Doers */}
                 {userRole === "task_doer" && user?.id && (
                   <RecommendedTasks userId={user.id} />
@@ -614,6 +627,9 @@ const Dashboard = () => {
           <Footer />
         </main>
       </div>
+      
+      {/* Quick Actions FAB */}
+      <QuickActionsFAB userRole={userRole} />
     </div>
   );
 };
