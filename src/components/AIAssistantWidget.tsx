@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Bot, 
   X, 
@@ -24,7 +25,13 @@ import {
   FileText,
   Users,
   Shield,
-  Wrench
+  Wrench,
+  Calendar,
+  TrendingUp,
+  Clock,
+  MapPin,
+  Star,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +46,16 @@ interface Message {
 interface AIAssistantWidgetProps {
   userRole?: string | null;
   userName?: string;
+}
+
+interface UserContext {
+  name: string;
+  hasPostedTasks: boolean;
+  hasCompletedTasks: boolean;
+  taskCount: number;
+  isTasker: boolean;
+  recentActivity: string[];
+  city?: string;
 }
 
 // Extract follow-up questions from AI response
@@ -69,6 +86,44 @@ const extractFollowUpQuestions = (content: string): { cleanContent: string; ques
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
 
+const getTimeBasedGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+};
+
+const getPersonalizedRecommendations = (context: UserContext | null) => {
+  if (!context) {
+    return [
+      { icon: Lightbulb, label: "Get started", prompt: "I'm new to SaskTask. What should I do first to get started?", color: "text-yellow-500" },
+      { icon: HelpCircle, label: "How it works", prompt: "Explain how SaskTask works step by step - from posting a task to completion and payment.", color: "text-blue-500" },
+    ];
+  }
+
+  const recommendations = [];
+
+  if (!context.hasPostedTasks && !context.isTasker) {
+    recommendations.push(
+      { icon: Zap, label: "Post your first task", prompt: "Help me create my first task on SaskTask. What information do I need?", color: "text-yellow-500" }
+    );
+  }
+
+  if (context.isTasker && context.taskCount === 0) {
+    recommendations.push(
+      { icon: TrendingUp, label: "Get more bookings", prompt: "How can I improve my profile to get more task bookings?", color: "text-green-500" }
+    );
+  }
+
+  if (context.hasPostedTasks) {
+    recommendations.push(
+      { icon: Users, label: "Find perfect tasker", prompt: "What should I look for when choosing a tasker for my task?", color: "text-purple-500" }
+    );
+  }
+
+  return recommendations;
+};
+
 const quickPrompts = [
   { icon: Lightbulb, label: "Write a task description", prompt: "Help me write a detailed and clear task description that will attract quality taskers. Ask me what I need done.", color: "text-yellow-500" },
   { icon: DollarSign, label: "Pricing guide", prompt: "What are fair price ranges for different types of tasks in Saskatchewan? Give me a comprehensive pricing guide.", color: "text-green-500" },
@@ -85,9 +140,47 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [userContext, setUserContext] = useState<UserContext | null>(null);
+  const [hasShownWelcome, setHasShownWelcome] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Fetch user context for personalized recommendations
+  useEffect(() => {
+    const fetchUserContext = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      try {
+        const [profileResult, tasksResult, bookingsResult] = await Promise.all([
+          supabase.from('profiles').select('full_name, city, skills').eq('id', user.id).maybeSingle(),
+          supabase.from('tasks').select('id, status').eq('task_giver_id', user.id),
+          supabase.from('bookings').select('id, status').eq('task_doer_id', user.id)
+        ]);
+
+        const profile = profileResult.data;
+        const tasks = tasksResult.data || [];
+        const bookings = bookingsResult.data || [];
+
+        setUserContext({
+          name: profile?.full_name || userName || '',
+          hasPostedTasks: tasks.length > 0,
+          hasCompletedTasks: tasks.some(t => t.status === 'completed'),
+          taskCount: tasks.length,
+          isTasker: bookings.length > 0 || (profile?.skills && profile.skills.length > 0),
+          recentActivity: [],
+          city: profile?.city || undefined
+        });
+      } catch (error) {
+        console.error('Error fetching user context:', error);
+      }
+    };
+
+    if (isOpen) {
+      fetchUserContext();
+    }
+  }, [isOpen, userName]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -129,7 +222,13 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
         },
         body: JSON.stringify({
           messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content })),
-          context: { userRole, userName }
+          context: { 
+            userRole, 
+            userName: userContext?.name || userName,
+            isTasker: userContext?.isTasker,
+            hasPostedTasks: userContext?.hasPostedTasks,
+            city: userContext?.city
+          }
         }),
       });
 
@@ -332,15 +431,60 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
             >
               {messages.length === 0 ? (
                 <div className="space-y-4">
+                  {/* Personalized Welcome */}
                   <div className="text-center py-4">
-                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-violet-600/20 to-indigo-600/20 flex items-center justify-center mx-auto mb-3 animate-pulse">
-                      <Sparkles className="h-8 w-8 text-violet-600" />
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-violet-600/20 to-indigo-600/20 flex items-center justify-center mx-auto mb-3">
+                      <motion.div
+                        animate={{ rotate: [0, 10, -10, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                      >
+                        <Sparkles className="h-8 w-8 text-violet-600" />
+                      </motion.div>
                     </div>
-                    <h3 className="font-semibold text-lg">Hi{userName ? `, ${userName}` : ""}! 👋</h3>
+                    <h3 className="font-semibold text-lg">
+                      {getTimeBasedGreeting()}{userContext?.name ? `, ${userContext.name.split(' ')[0]}` : userName ? `, ${userName}` : ""}! 👋
+                    </h3>
                     <p className="text-sm text-muted-foreground mt-1 max-w-[280px] mx-auto">
-                      I'm your AI assistant. I can help with task descriptions, pricing, platform questions, and more!
+                      {userContext?.isTasker 
+                        ? "Ready to find more tasks? I can help you succeed!"
+                        : userContext?.hasPostedTasks 
+                          ? "Need help with your tasks? I'm here for you!"
+                          : "I'm your AI assistant. Ask me anything about SaskTask!"}
                     </p>
+                    {userContext?.city && (
+                      <div className="flex items-center justify-center gap-1 mt-2 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        <span>Helping you in {userContext.city}</span>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Personalized Recommendations */}
+                  {userContext && getPersonalizedRecommendations(userContext).length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                        <Star className="h-3 w-3 text-yellow-500" />
+                        Recommended for you
+                      </p>
+                      <div className="space-y-1.5">
+                        {getPersonalizedRecommendations(userContext).map((rec) => (
+                          <button
+                            key={rec.label}
+                            onClick={() => handleQuickPrompt(rec.prompt)}
+                            className="w-full flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-violet-600/5 to-indigo-600/5 border border-violet-500/20 hover:border-violet-500/40 transition-all text-left group"
+                          >
+                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-violet-600/20 to-indigo-600/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                              <rec.icon className={cn("h-4 w-4", rec.color)} />
+                            </div>
+                            <div>
+                              <span className="text-sm font-medium">{rec.label}</span>
+                              <span className="text-[10px] text-muted-foreground block">Tap to get started →</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Quick prompts - scrollable grid */}
                   <div className="space-y-2">
