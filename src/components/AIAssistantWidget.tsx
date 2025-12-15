@@ -33,12 +33,39 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  followUpQuestions?: string[];
 }
 
 interface AIAssistantWidgetProps {
   userRole?: string | null;
   userName?: string;
 }
+
+// Extract follow-up questions from AI response
+const extractFollowUpQuestions = (content: string): { cleanContent: string; questions: string[] } => {
+  // Look for the pattern "**You might also want to know:**" or similar
+  const patterns = [
+    /\*\*You might also want to know:\*\*\s*(.+?)$/i,
+    /\*\*Related questions:\*\*\s*(.+?)$/i,
+    /\*\*You might also ask:\*\*\s*(.+?)$/i,
+    /🔗\s*\*\*Related\*\*:?\s*(.+?)$/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = content.match(pattern);
+    if (match) {
+      const questionsPart = match[1];
+      const cleanContent = content.replace(match[0], '').trim();
+      const questions = questionsPart
+        .split(/\s*\|\s*/)
+        .map(q => q.replace(/^\[|\]$/g, '').trim())
+        .filter(q => q.length > 0);
+      return { cleanContent, questions };
+    }
+  }
+
+  return { cleanContent: content, questions: [] };
+};
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
 
@@ -146,9 +173,10 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               assistantContent += content;
+              const { cleanContent, questions } = extractFollowUpQuestions(assistantContent);
               setMessages(prev => 
                 prev.map(m => m.id === assistantId 
-                  ? { ...m, content: assistantContent } 
+                  ? { ...m, content: cleanContent, followUpQuestions: questions } 
                   : m
                 )
               );
@@ -400,6 +428,22 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
                           </Button>
                         )}
                       </div>
+                      
+                      {/* Follow-up questions */}
+                      {msg.role === "assistant" && msg.followUpQuestions && msg.followUpQuestions.length > 0 && !isLoading && (
+                        <div className="mt-2 ml-9 flex flex-wrap gap-1.5">
+                          {msg.followUpQuestions.map((question, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => sendMessage(question)}
+                              className="text-xs px-2.5 py-1.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 hover:bg-violet-200 dark:hover:bg-violet-800/40 transition-colors border border-violet-200 dark:border-violet-700/50 flex items-center gap-1"
+                            >
+                              <Sparkles className="h-3 w-3" />
+                              {question.length > 40 ? question.substring(0, 40) + '...' : question}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                   
