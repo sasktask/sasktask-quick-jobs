@@ -121,6 +121,18 @@ const getPersonalizedRecommendations = (context: UserContext | null) => {
     );
   }
 
+  // Add seasonal/contextual recommendations
+  const currentMonth = new Date().getMonth();
+  if (currentMonth >= 10 || currentMonth <= 2) {
+    recommendations.push(
+      { icon: Wrench, label: "Winter tasks", prompt: "What winter-related tasks are popular on SaskTask? Snow removal, holiday help, etc.", color: "text-blue-400" }
+    );
+  } else if (currentMonth >= 3 && currentMonth <= 5) {
+    recommendations.push(
+      { icon: Wrench, label: "Spring cleaning", prompt: "What spring cleaning and yard work tasks can I post or find on SaskTask?", color: "text-green-400" }
+    );
+  }
+
   return recommendations;
 };
 
@@ -133,18 +145,74 @@ const quickPrompts = [
   { icon: Wrench, label: "Task categories", prompt: "What types of tasks can I post or find on SaskTask? Give me examples for each category.", color: "text-orange-500" },
 ];
 
+const STORAGE_KEY = 'sasktask_ai_chat_history';
+
 export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    // Load chat history from localStorage
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Only restore if less than 24 hours old
+        if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+          return parsed.messages.map((m: any) => ({
+            ...m,
+            timestamp: new Date(m.timestamp)
+          }));
+        }
+      }
+    } catch (e) {
+      console.error('Error loading chat history:', e);
+    }
+    return [];
+  });
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [userContext, setUserContext] = useState<UserContext | null>(null);
   const [hasShownWelcome, setHasShownWelcome] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Save chat history to localStorage
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          messages,
+          timestamp: Date.now()
+        }));
+      } catch (e) {
+        console.error('Error saving chat history:', e);
+      }
+    }
+  }, [messages]);
+
+  // Smart input suggestions based on context
+  const getInputSuggestions = useCallback(() => {
+    const lowercaseInput = input.toLowerCase();
+    const suggestions = [];
+    
+    if (lowercaseInput.includes('price') || lowercaseInput.includes('cost') || lowercaseInput.includes('how much')) {
+      suggestions.push('What is a fair price for cleaning?', 'How much should I pay for moving help?');
+    }
+    if (lowercaseInput.includes('find') || lowercaseInput.includes('search')) {
+      suggestions.push('How do I find reliable taskers?', 'What should I look for in reviews?');
+    }
+    if (lowercaseInput.includes('post') || lowercaseInput.includes('create')) {
+      suggestions.push('How do I create an effective task?', 'What details should I include?');
+    }
+    if (lowercaseInput.includes('safe') || lowercaseInput.includes('trust')) {
+      suggestions.push('How does SaskTask protect my payment?', 'What safety features are available?');
+    }
+    
+    return suggestions.slice(0, 3);
+  }, [input]);
 
   // Fetch user context for personalized recommendations
   useEffect(() => {
@@ -327,6 +395,7 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
 
   const clearChat = () => {
     setMessages([]);
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   const retryLastMessage = () => {
@@ -636,23 +705,51 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
                 </div>
               )}
               
-              <form onSubmit={handleSubmit} className="flex gap-2">
-                <Input
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask me anything..."
-                  disabled={isLoading}
-                  className="flex-1 bg-muted/50"
-                />
-                <Button 
-                  type="submit" 
-                  size="icon" 
-                  disabled={!input.trim() || isLoading}
-                  className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+              <form onSubmit={handleSubmit} className="relative">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      ref={inputRef}
+                      value={input}
+                      onChange={(e) => {
+                        setInput(e.target.value);
+                        setShowSuggestions(e.target.value.length > 3);
+                      }}
+                      onFocus={() => setShowSuggestions(input.length > 3)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      placeholder="Ask me anything..."
+                      disabled={isLoading}
+                      className="w-full bg-muted/50 pr-2"
+                    />
+                    {/* Smart suggestions dropdown */}
+                    {showSuggestions && getInputSuggestions().length > 0 && (
+                      <div className="absolute bottom-full left-0 right-0 mb-1 bg-background border border-border rounded-lg shadow-lg z-10 overflow-hidden">
+                        {getInputSuggestions().map((suggestion, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setInput(suggestion);
+                              setShowSuggestions(false);
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors flex items-center gap-2"
+                          >
+                            <Lightbulb className="h-3 w-3 text-yellow-500" />
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <Button 
+                    type="submit" 
+                    size="icon" 
+                    disabled={!input.trim() || isLoading}
+                    className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
               </form>
               <p className="text-[10px] text-muted-foreground text-center mt-2">
                 AI can make mistakes. Verify important information.
