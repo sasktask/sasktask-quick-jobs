@@ -102,31 +102,37 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-3xl max-h-[90vh] p-0 overflow-hidden" onPointerDownOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="p-6 pb-0 flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-2xl">
-            <FileText className="w-6 h-6 text-primary flex-shrink-0" />
-            <span className="break-words">Terms of Service Agreement</span>
+      <DialogContent 
+        className="max-w-3xl w-[95vw] max-h-[95vh] p-0 flex flex-col overflow-hidden" 
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
+        {/* Header - Fixed */}
+        <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-4 flex-shrink-0 border-b">
+          <DialogTitle className="flex items-center gap-2 text-xl sm:text-2xl">
+            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
+            <span>Terms of Service Agreement</span>
           </DialogTitle>
-          <DialogDescription className="break-words">
-            Please read and accept the following terms to continue using SaskTask
+          <DialogDescription>
+            Please read and accept the following terms to continue
           </DialogDescription>
         </DialogHeader>
 
+        {/* Scrollable Content */}
         <div 
-          className="h-[350px] overflow-y-auto px-6 scroll-smooth" 
+          className="flex-1 overflow-y-auto px-4 sm:px-6 min-h-0" 
           onScroll={handleScroll}
           ref={scrollRef}
         >
-          <div className="space-y-6 py-4 pr-2">
+          <div className="space-y-4 py-4">
             {/* Introduction */}
             <section>
-              <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
-                <Scale className="w-5 h-5 text-primary flex-shrink-0" />
+              <h3 className="font-semibold text-base sm:text-lg flex items-center gap-2 mb-2">
+                <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
                 <span>Legal Agreement</span>
               </h3>
-              <p className="text-sm text-muted-foreground break-words">
-                This is a legally binding agreement between you and SaskTask. By accepting these terms, you agree to be bound by the Terms of Service, Privacy Policy, and all applicable laws and regulations of Canada, specifically the Province of Saskatchewan.
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                This is a legally binding agreement between you and SaskTask. By accepting these terms, you agree to be bound by the Terms of Service, Privacy Policy, and all applicable laws and regulations of Canada.
               </p>
             </section>
 
@@ -134,27 +140,27 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
 
             {/* Key Terms Summary */}
             <section>
-              <h3 className="font-semibold text-lg mb-2">Key Terms Summary</h3>
-              <ul className="text-sm text-muted-foreground space-y-2">
+              <h3 className="font-semibold text-base sm:text-lg mb-2">Key Terms Summary</h3>
+              <ul className="text-xs sm:text-sm text-muted-foreground space-y-1.5">
                 <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="break-words"><strong>Eligibility:</strong> You must be at least 18 years old and have legal capacity to enter into contracts.</span>
+                  <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span><strong>Eligibility:</strong> You must be at least 18 years old.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="break-words"><strong>Account:</strong> You are responsible for maintaining account security and all activities under your account.</span>
+                  <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span><strong>Account:</strong> You are responsible for account security.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="break-words"><strong>Payments:</strong> All payments are processed through Stripe and held in escrow until task completion.</span>
+                  <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span><strong>Payments:</strong> Processed through Stripe with escrow protection.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="break-words"><strong>Taxes:</strong> You are solely responsible for all applicable taxes on your earnings.</span>
+                  <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span><strong>Taxes:</strong> You are responsible for your taxes.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="break-words"><strong>Disputes:</strong> Disputes are resolved through platform mediation and binding arbitration in Saskatchewan.</span>
+                  <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span><strong>Disputes:</strong> Resolved through binding arbitration.</span>
                 </li>
               </ul>
             </section>
@@ -163,15 +169,15 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
 
             {/* User Conduct */}
             <section>
-              <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
-                <Shield className="w-5 h-5 text-primary flex-shrink-0" />
-                <span>User Conduct Requirements</span>
+              <h3 className="font-semibold text-base sm:text-lg flex items-center gap-2 mb-2">
+                <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+                <span>User Conduct</span>
               </h3>
-              <p className="text-sm text-muted-foreground mb-2 break-words">
-                As a Task Giver, you agree to: provide accurate task descriptions; pay agreed amounts upon task completion; provide a safe environment for in-person tasks; and treat Task Doers with respect.
+              <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+                You agree to provide accurate information, pay agreed amounts, and treat others with respect.
               </p>
               {roleSpecificTerms && (
-                <p className="text-sm text-muted-foreground break-words">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {roleSpecificTerms}
                 </p>
               )}
@@ -181,12 +187,12 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
 
             {/* Prohibited Activities */}
             <section>
-              <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+              <h3 className="font-semibold text-base sm:text-lg flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 flex-shrink-0" />
                 <span>Prohibited Activities</span>
               </h3>
-              <p className="text-sm text-muted-foreground break-words">
-                You agree NOT to: post or accept illegal tasks; circumvent the payment system; harass or discriminate against other users; post false or fraudulent information; create multiple accounts; use automated systems to access the platform; or engage in any activity that violates these terms or applicable law.
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                No illegal tasks, payment circumvention, harassment, fraud, or multiple accounts.
               </p>
             </section>
 
@@ -194,134 +200,125 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
 
             {/* Liability */}
             <section>
-              <h3 className="font-semibold text-lg mb-2">Limitation of Liability</h3>
-              <p className="text-sm text-muted-foreground break-words">
-                SaskTask is a platform connecting Task Givers and Task Doers. We do not employ or control Task Doers, and we do not guarantee the quality, safety, or legality of tasks. The platform is provided "as is" without warranties. To the maximum extent permitted by law, SaskTask shall not be liable for indirect, incidental, special, consequential, or punitive damages.
-              </p>
-            </section>
-
-            <Separator />
-
-            {/* Privacy */}
-            <section>
-              <h3 className="font-semibold text-lg mb-2">Privacy & Data Protection</h3>
-              <p className="text-sm text-muted-foreground break-words">
-                We comply with the Personal Information Protection and Electronic Documents Act (PIPEDA) and applicable provincial privacy legislation. Your personal information is collected, used, and protected in accordance with our Privacy Policy. By using the platform, you consent to our data collection and use practices as described in the Privacy Policy.
+              <h3 className="font-semibold text-base sm:text-lg mb-2">Limitation of Liability</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                SaskTask connects users but does not guarantee task quality or safety. The platform is provided "as is."
               </p>
             </section>
 
             <Separator />
 
             {/* Arbitration */}
-            <section className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-              <h3 className="font-semibold text-lg mb-2 text-amber-800 dark:text-amber-200">
+            <section className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 sm:p-4">
+              <h3 className="font-semibold text-sm sm:text-base mb-1 text-amber-800 dark:text-amber-200">
                 Arbitration Agreement
               </h3>
-              <p className="text-sm text-amber-700 dark:text-amber-300 break-words">
-                <strong>IMPORTANT:</strong> By accepting these terms, you agree that any disputes arising from your use of the Platform will be resolved through binding arbitration in accordance with the Arbitration Act of Saskatchewan, rather than in court. You waive your right to participate in class action lawsuits.
+              <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-300">
+                <strong>IMPORTANT:</strong> Disputes will be resolved through binding arbitration in Saskatchewan. You waive class action rights.
               </p>
             </section>
 
-            <Separator />
-
             {/* Full Terms Link */}
-            <section className="text-center">
+            <section className="text-center py-2">
               <a 
                 href="/terms" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-primary hover:underline text-sm"
+                className="text-primary hover:underline text-xs sm:text-sm"
               >
-                Read the complete Terms of Service →
+                Read Full Terms →
               </a>
               <span className="mx-2 text-muted-foreground">|</span>
               <a 
                 href="/privacy" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-primary hover:underline text-sm"
+                className="text-primary hover:underline text-xs sm:text-sm"
               >
-                Read the Privacy Policy →
+                Privacy Policy →
               </a>
             </section>
 
             {!hasScrolledToBottom && (
-              <p className="text-center text-sm text-muted-foreground animate-pulse">
-                ↓ Please scroll to read all terms ↓
+              <p className="text-center text-xs sm:text-sm text-muted-foreground animate-pulse pb-2">
+                ↓ Scroll down to continue ↓
               </p>
             )}
           </div>
         </div>
 
-        <Separator />
-
-        {/* Acceptance Checkboxes */}
-        <div className="p-6 space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3">
+        {/* Footer - Fixed with checkboxes and button */}
+        <div className="flex-shrink-0 border-t bg-background p-4 sm:p-6 space-y-3 sm:space-y-4">
+          <div className="space-y-2 sm:space-y-3 max-h-[180px] overflow-y-auto">
+            <div className="flex items-start space-x-2 sm:space-x-3">
               <Checkbox 
                 id="terms" 
                 checked={termsAccepted}
                 onCheckedChange={(checked) => setTermsAccepted(checked === true)}
                 disabled={!hasScrolledToBottom}
+                className="mt-0.5"
               />
-              <label htmlFor="terms" className="text-sm leading-tight cursor-pointer">
-                I have read and agree to the <strong>Terms of Service</strong>
+              <label htmlFor="terms" className="text-xs sm:text-sm leading-tight cursor-pointer">
+                I agree to the <strong>Terms of Service</strong>
               </label>
             </div>
 
-            <div className="flex items-start space-x-3">
+            <div className="flex items-start space-x-2 sm:space-x-3">
               <Checkbox 
                 id="privacy" 
                 checked={privacyAccepted}
                 onCheckedChange={(checked) => setPrivacyAccepted(checked === true)}
                 disabled={!hasScrolledToBottom}
+                className="mt-0.5"
               />
-              <label htmlFor="privacy" className="text-sm leading-tight cursor-pointer">
-                I have read and agree to the <strong>Privacy Policy</strong> and consent to the collection and use of my personal information
+              <label htmlFor="privacy" className="text-xs sm:text-sm leading-tight cursor-pointer">
+                I agree to the <strong>Privacy Policy</strong>
               </label>
             </div>
 
-            <div className="flex items-start space-x-3">
+            <div className="flex items-start space-x-2 sm:space-x-3">
               <Checkbox 
                 id="age" 
                 checked={ageVerified}
                 onCheckedChange={(checked) => setAgeVerified(checked === true)}
                 disabled={!hasScrolledToBottom}
+                className="mt-0.5"
               />
-              <label htmlFor="age" className="text-sm leading-tight cursor-pointer">
-                I confirm that I am <strong>at least 18 years of age</strong> and have the legal capacity to enter into this agreement
+              <label htmlFor="age" className="text-xs sm:text-sm leading-tight cursor-pointer">
+                I am <strong>at least 18 years old</strong>
               </label>
             </div>
 
-            <div className="flex items-start space-x-3">
+            <div className="flex items-start space-x-2 sm:space-x-3">
               <Checkbox 
                 id="conduct" 
                 checked={conductAccepted}
                 onCheckedChange={(checked) => setConductAccepted(checked === true)}
                 disabled={!hasScrolledToBottom}
+                className="mt-0.5"
               />
-              <label htmlFor="conduct" className="text-sm leading-tight cursor-pointer">
-                I agree to abide by the <strong>User Conduct Requirements</strong> and will not engage in any prohibited activities
+              <label htmlFor="conduct" className="text-xs sm:text-sm leading-tight cursor-pointer">
+                I agree to the <strong>User Conduct Rules</strong>
               </label>
             </div>
 
-            <div className="flex items-start space-x-3">
+            <div className="flex items-start space-x-2 sm:space-x-3">
               <Checkbox 
                 id="liability" 
                 checked={liabilityAccepted}
                 onCheckedChange={(checked) => setLiabilityAccepted(checked === true)}
                 disabled={!hasScrolledToBottom}
+                className="mt-0.5"
               />
-              <label htmlFor="liability" className="text-sm leading-tight cursor-pointer">
-                I understand and accept the <strong>Limitation of Liability</strong> and <strong>Arbitration Agreement</strong>
+              <label htmlFor="liability" className="text-xs sm:text-sm leading-tight cursor-pointer">
+                I accept the <strong>Liability & Arbitration</strong> terms
               </label>
             </div>
           </div>
 
           {!hasScrolledToBottom && (
-            <p className="text-sm text-amber-600 dark:text-amber-400">
-              Please scroll through and read all terms before accepting
+            <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+              Please scroll through all terms to enable acceptance
             </p>
           )}
 
@@ -339,14 +336,13 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
             ) : (
               <>
                 <Check className="w-4 h-4 mr-2" />
-                I Accept All Terms and Conditions
+                Accept & Continue
               </>
             )}
           </Button>
 
-          <p className="text-xs text-center text-muted-foreground">
-            By clicking "I Accept", you are electronically signing this agreement. 
-            This constitutes a legal signature under the Electronic Transactions Act of Saskatchewan.
+          <p className="text-[10px] sm:text-xs text-center text-muted-foreground">
+            This constitutes a legal electronic signature under Canadian law.
           </p>
         </div>
       </DialogContent>
