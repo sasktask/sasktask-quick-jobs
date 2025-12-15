@@ -50,10 +50,22 @@ export default function MapView() {
 
   const fetchMapboxToken = async () => {
     try {
-      // Try to get from edge function
       const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+      
+      if (error) {
+        console.error("Error invoking get-mapbox-token:", error);
+        return;
+      }
+      
       if (data?.token) {
         setMapboxToken(data.token);
+      } else if (data?.error) {
+        console.error("Mapbox token error:", data.error);
+        toast({
+          title: "Map Configuration",
+          description: "Map is not fully configured. Please contact support.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error fetching mapbox token:", error);
