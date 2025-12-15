@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, activityType } = await req.json();
+    const { userId, activityType, metadata = {} } = await req.json();
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -20,16 +20,26 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
+
     // Log user activity
-    await supabase.from('user_activity_logs').insert({
+    const { error: logError } = await supabase.from('user_activity_logs').insert({
       user_id: userId,
       activity_type: activityType,
-      ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
-      user_agent: req.headers.get('user-agent'),
-      metadata: { timestamp: new Date().toISOString() }
+      ip_address: ipAddress,
+      user_agent: userAgent,
+      metadata: { 
+        timestamp: new Date().toISOString(),
+        ...metadata
+      }
     });
 
-    // Get user's recent activity
+    if (logError) {
+      console.error('Error logging activity:', logError);
+    }
+
+    // Get user's recent activity for analysis
     const { data: recentActivity } = await supabase
       .from('user_activity_logs')
       .select('*')
@@ -49,94 +59,173 @@ serve(async (req) => {
       .select('*')
       .eq('raised_by', userId);
 
-    // Use AI to analyze fraud patterns
-    if (lovableApiKey) {
-      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a fraud detection AI. Analyze user activity and identify suspicious patterns. Return a JSON object with: risk_level (low/medium/high), confidence (0-1), reasons (array), and recommended_action.'
-            },
-            {
-              role: 'user',
-              content: `Analyze this user activity:
-- Recent activities: ${JSON.stringify(recentActivity?.slice(0, 10))}
-- Cancellations (last 30 days): ${cancellations?.length || 0}
-- Total disputes: ${disputes?.length || 0}
-- Current action: ${activityType}`
-            }
-          ],
-          tools: [{
-            type: 'function',
-            name: 'report_fraud_analysis',
-            description: 'Report fraud detection analysis results',
-            parameters: {
-              type: 'object',
-              properties: {
-                risk_level: { type: 'string', enum: ['low', 'medium', 'high'] },
-                confidence: { type: 'number' },
-                reasons: { type: 'array', items: { type: 'string' } },
-                recommended_action: { type: 'string' }
+    // Get user's login history for pattern detection
+    const { data: loginHistory } = await supabase
+      .from('login_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('login_at', { ascending: false })
+      .limit(20);
+
+    // Calculate basic risk indicators
+    const cancellationCount = cancellations?.length || 0;
+    const disputeCount = disputes?.length || 0;
+    const failedLogins = loginHistory?.filter(l => !l.success).length || 0;
+    const uniqueIPs = new Set(loginHistory?.map(l => l.ip_address).filter(Boolean)).size;
+
+    // Quick risk assessment without AI
+    let riskLevel = 'low';
+    const reasons: string[] = [];
+    let confidence = 0.5;
+
+    // Check for rapid activity
+    const recentActivityCount = recentActivity?.filter(a => 
+      new Date(a.created_at) > new Date(Date.now() - 60 * 60 * 1000)
+    ).length || 0;
+
+    if (recentActivityCount > 50) {
+      riskLevel = 'medium';
+      reasons.push('High volume of activity in the last hour');
+      confidence = 0.7;
+    }
+
+    if (cancellationCount > 3) {
+      riskLevel = 'medium';
+      reasons.push('Multiple recent cancellations');
+      confidence = Math.max(confidence, 0.7);
+    }
+
+    if (disputeCount > 2) {
+      riskLevel = 'high';
+      reasons.push('Multiple disputes filed');
+      confidence = 0.85;
+    }
+
+    if (failedLogins > 5) {
+      riskLevel = 'medium';
+      reasons.push('Multiple failed login attempts');
+      confidence = Math.max(confidence, 0.75);
+    }
+
+    if (uniqueIPs > 5) {
+      reasons.push('Login from multiple IP addresses');
+    }
+
+    // Use AI for more sophisticated analysis if available
+    if (lovableApiKey && (riskLevel === 'medium' || activityType === 'high_value_transaction')) {
+      try {
+        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${lovableApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a fraud detection AI for a task marketplace. Analyze user activity patterns and identify suspicious behavior. Be conservative - only flag genuinely suspicious patterns. Return a JSON object with: risk_level (low/medium/high), confidence (0-1), reasons (array of specific concerns), and recommended_action (what to do next).'
               },
-              required: ['risk_level', 'confidence', 'reasons', 'recommended_action'],
-              additionalProperties: false
-            }
-          }],
-          tool_choice: { type: 'function', function: { name: 'report_fraud_analysis' } }
-        }),
-      });
-
-      if (!aiResponse.ok) {
-        if (aiResponse.status === 429) {
-          return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
-            status: 429,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        throw new Error(`AI request failed: ${aiResponse.status}`);
-      }
-
-      const aiData = await aiResponse.json();
-      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-      
-      if (toolCall) {
-        const analysis = JSON.parse(toolCall.function.arguments);
-        
-        // Create fraud alert if risk is medium or high
-        if (analysis.risk_level !== 'low') {
-          await supabase.from('fraud_alerts').insert({
-            user_id: userId,
-            alert_type: 'ai_detected_suspicious_activity',
-            severity: analysis.risk_level,
-            description: analysis.reasons.join('. '),
-            metadata: {
-              confidence: analysis.confidence,
-              recommended_action: analysis.recommended_action,
-              activity_type: activityType
-            }
-          });
-        }
-
-        return new Response(JSON.stringify({ 
-          success: true, 
-          analysis,
-          alert_created: analysis.risk_level !== 'low'
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              {
+                role: 'user',
+                content: `Analyze this user activity for potential fraud:
+- Recent activities count (last hour): ${recentActivityCount}
+- Recent activities (last 10): ${JSON.stringify(recentActivity?.slice(0, 10))}
+- Cancellations (last 30 days): ${cancellationCount}
+- Total disputes: ${disputeCount}
+- Failed login attempts (last 20 logins): ${failedLogins}
+- Unique IP addresses: ${uniqueIPs}
+- Current action: ${activityType}
+- Additional context: ${JSON.stringify(metadata)}`
+              }
+            ],
+            tools: [{
+              type: 'function',
+              function: {
+                name: 'report_fraud_analysis',
+                description: 'Report fraud detection analysis results',
+                parameters: {
+                  type: 'object',
+                  properties: {
+                    risk_level: { type: 'string', enum: ['low', 'medium', 'high'] },
+                    confidence: { type: 'number' },
+                    reasons: { type: 'array', items: { type: 'string' } },
+                    recommended_action: { type: 'string' }
+                  },
+                  required: ['risk_level', 'confidence', 'reasons', 'recommended_action'],
+                  additionalProperties: false
+                }
+              }
+            }],
+            tool_choice: { type: 'function', function: { name: 'report_fraud_analysis' } }
+          }),
         });
+
+        if (aiResponse.ok) {
+          const aiData = await aiResponse.json();
+          const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+          
+          if (toolCall) {
+            const analysis = JSON.parse(toolCall.function.arguments);
+            riskLevel = analysis.risk_level;
+            confidence = analysis.confidence;
+            reasons.length = 0;
+            reasons.push(...analysis.reasons);
+            
+            // Create fraud alert if risk is medium or high
+            if (analysis.risk_level !== 'low') {
+              await supabase.from('fraud_alerts').insert({
+                user_id: userId,
+                alert_type: 'ai_detected_suspicious_activity',
+                severity: analysis.risk_level,
+                description: analysis.reasons.join('. '),
+                metadata: {
+                  confidence: analysis.confidence,
+                  recommended_action: analysis.recommended_action,
+                  activity_type: activityType,
+                  ip_address: ipAddress,
+                  user_agent: userAgent
+                }
+              });
+            }
+          }
+        } else if (aiResponse.status === 429) {
+          console.log('AI rate limited, using rule-based detection');
+        }
+      } catch (aiError) {
+        console.error('AI analysis failed, using rule-based detection:', aiError);
       }
     }
 
+    // Create alert for non-AI detected high risk
+    if (riskLevel !== 'low' && !lovableApiKey) {
+      await supabase.from('fraud_alerts').insert({
+        user_id: userId,
+        alert_type: 'rule_based_suspicious_activity',
+        severity: riskLevel,
+        description: reasons.join('. ') || 'Suspicious activity pattern detected',
+        metadata: {
+          confidence,
+          activity_type: activityType,
+          ip_address: ipAddress,
+          cancellation_count: cancellationCount,
+          dispute_count: disputeCount,
+          failed_logins: failedLogins
+        }
+      });
+    }
+
     return new Response(JSON.stringify({ 
-      success: true,
-      message: 'Activity logged'
+      success: true, 
+      analysis: {
+        risk_level: riskLevel,
+        confidence,
+        reasons,
+        recommended_action: riskLevel === 'high' ? 'Review account immediately' : 
+                           riskLevel === 'medium' ? 'Monitor activity' : 'No action needed'
+      },
+      alert_created: riskLevel !== 'low'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
