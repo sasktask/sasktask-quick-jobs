@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Loader2, Save, CheckCircle, Clock, AlertTriangle, MapPin } from "lucide-react";
+import { Loader2, Save, CheckCircle, Clock, AlertTriangle, MapPin, Shield, BadgePercent } from "lucide-react";
 import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
 import { DurationSelector } from "@/components/DurationSelector";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
@@ -315,7 +315,11 @@ const [formData, setFormData] = useState({
         throw new Error(firstError.message);
       }
 
-      const { error } = await supabase
+      // Check if this is a future task requiring deposit
+      const isFutureTask = validation.data.scheduled_date && new Date(validation.data.scheduled_date) > new Date();
+      const depositAmount = isFutureTask ? validation.data.pay_amount * 0.25 : 0;
+
+      const { data: insertedTask, error } = await supabase
         .from("tasks")
         .insert({
           task_giver_id: userId,
@@ -333,17 +337,29 @@ const [formData, setFormData] = useState({
           tools_description: validation.data.tools_description || null,
           expires_at: formData.expires_at || null,
           priority: formData.priority,
-          status: "open"
-        });
+          status: "open",
+          requires_deposit: isFutureTask,
+          deposit_amount: depositAmount,
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
 
-      toast({
-        title: "Success!",
-        description: "Your task has been posted successfully",
-      });
-
-      navigate("/my-tasks");
+      // If it's a future task, redirect to task detail to pay deposit
+      if (isFutureTask && insertedTask?.id) {
+        toast({
+          title: "Task Posted!",
+          description: "Please pay the 25% deposit to secure your booking.",
+        });
+        navigate(`/task/${insertedTask.id}`);
+      } else {
+        toast({
+          title: "Success!",
+          description: "Your task has been posted successfully",
+        });
+        navigate("/my-tasks");
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -588,8 +604,55 @@ const [formData, setFormData] = useState({
                   type="datetime-local"
                   value={formData.scheduled_date}
                   onChange={(e) => handleFormChange({ scheduled_date: e.target.value })}
+                  min={new Date().toISOString().slice(0, 16)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Schedule for tomorrow or later to book in advance
+                </p>
               </div>
+
+              {/* Deposit Info - Show when future date is selected */}
+              {formData.scheduled_date && new Date(formData.scheduled_date) > new Date() && formData.pay_amount && (
+                <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+                      <BadgePercent className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-amber-900 dark:text-amber-100">25% Advance Deposit Required</h4>
+                      </div>
+                      <p className="text-sm text-amber-700 dark:text-amber-300">
+                        For future tasks, a 25% deposit is required to show commitment and build trust with taskers.
+                      </p>
+                      <div className="flex flex-wrap gap-4 text-sm mt-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-amber-600">Deposit:</span>
+                          <span className="font-bold text-amber-900 dark:text-amber-100">
+                            ${(parseFloat(formData.pay_amount) * 0.25).toFixed(2)} CAD
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-amber-600">Remaining:</span>
+                          <span className="font-medium text-amber-900 dark:text-amber-100">
+                            ${(parseFloat(formData.pay_amount) * 0.75).toFixed(2)} CAD (after accepting tasker)
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 mt-2 text-xs text-amber-600 dark:text-amber-400">
+                        <span className="flex items-center gap-1">
+                          <Shield className="h-3.5 w-3.5" />
+                          Full refund if cancelled 24h+ before
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          Builds trust with taskers
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Priority Selection */}
               <div className="space-y-4 p-4 bg-muted/50 border border-border rounded-lg">

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -18,11 +19,14 @@ import {
   Loader2,
   ArrowLeft,
   User,
-  Gavel
+  Gavel,
+  Shield,
+  CheckCircle2
 } from "lucide-react";
 import { z } from "zod";
 import { TaskPriorityBadge, type TaskPriority } from "@/components/TaskPriorityBadge";
 import { TaskBidding } from "@/components/TaskBidding";
+import { DepositPaymentCard } from "@/components/DepositPaymentCard";
 
 const bookingMessageSchema = z.object({
   message: z.string().max(1000, "Message too long (max 1000 characters)").optional(),
@@ -30,6 +34,7 @@ const bookingMessageSchema = z.object({
 
 const TaskDetail = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const [task, setTask] = useState<any>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -42,6 +47,38 @@ const TaskDetail = () => {
   useEffect(() => {
     checkUserAndFetchTask();
   }, [id]);
+
+  // Handle deposit payment confirmation
+  useEffect(() => {
+    const depositStatus = searchParams.get('deposit');
+    if (depositStatus === 'success' && id) {
+      confirmDeposit();
+    } else if (depositStatus === 'cancelled') {
+      toast({
+        title: "Payment Cancelled",
+        description: "Deposit payment was cancelled.",
+        variant: "destructive",
+      });
+    }
+  }, [searchParams, id]);
+
+  const confirmDeposit = async () => {
+    try {
+      const { error } = await supabase.functions.invoke('confirm-deposit', {
+        body: { taskId: id }
+      });
+      
+      if (!error) {
+        toast({
+          title: "Deposit Confirmed!",
+          description: "Your 25% deposit has been paid. Your task is now secured.",
+        });
+        checkUserAndFetchTask(); // Refresh task data
+      }
+    } catch (error) {
+      console.error('Error confirming deposit:', error);
+    }
+  };
 
   const checkUserAndFetchTask = async () => {
     try {
@@ -283,6 +320,36 @@ const TaskDetail = () => {
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Tools Information</h3>
                   <p className="text-muted-foreground">{task.tools_description}</p>
+                </div>
+              )}
+
+              {/* Deposit Payment Section - Show for future tasks */}
+              {task.scheduled_date && new Date(task.scheduled_date) > new Date() && (
+                <div className="pt-6 border-t">
+                  <DepositPaymentCard
+                    taskId={task.id}
+                    taskTitle={task.title}
+                    totalAmount={task.pay_amount}
+                    depositPaid={task.deposit_paid}
+                    depositAmount={task.deposit_amount}
+                    scheduledDate={task.scheduled_date}
+                    isTaskOwner={userId === task.task_giver_id}
+                    onDepositPaid={checkUserAndFetchTask}
+                  />
+                </div>
+              )}
+
+              {/* Show deposit status badge for all tasks with deposit */}
+              {task.deposit_paid && (
+                <div className="flex items-center gap-2 p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                  <Shield className="h-5 w-5 text-green-600" />
+                  <span className="text-green-700 dark:text-green-400 font-medium">
+                    Task secured with 25% deposit (${task.deposit_amount?.toFixed(2)})
+                  </span>
+                  <Badge className="ml-auto bg-green-600">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Verified
+                  </Badge>
                 </div>
               )}
 
