@@ -481,6 +481,42 @@ export type Database = {
           },
         ]
       }
+      login_history: {
+        Row: {
+          failure_reason: string | null
+          id: string
+          ip_address: string | null
+          location_info: Json | null
+          login_at: string
+          login_method: string | null
+          success: boolean
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          location_info?: Json | null
+          login_at?: string
+          login_method?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          location_info?: Json | null
+          login_at?: string
+          login_method?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       message_attachments: {
         Row: {
           attachment_type: string
@@ -1001,6 +1037,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_locked_until: string | null
           address: string | null
           availability_status: string | null
           avatar_url: string | null
@@ -1014,12 +1051,14 @@ export type Database = {
           email: string
           experience_years: number | null
           facebook: string | null
+          failed_login_attempts: number | null
           full_name: string | null
           hourly_rate: number | null
           id: string
           is_online: boolean | null
           joined_date: string | null
           last_active: string | null
+          last_password_change: string | null
           last_seen: string | null
           latitude: number | null
           linkedin: string | null
@@ -1033,12 +1072,15 @@ export type Database = {
           reliability_score: number | null
           reputation_score: number | null
           response_rate: number | null
+          security_notifications_enabled: boolean | null
+          security_questions_set: boolean | null
           skills: string[] | null
           stripe_customer_id: string | null
           stripe_payment_method_id: string | null
           total_reviews: number | null
           trust_score: number | null
           twitter: string | null
+          two_factor_enabled: boolean | null
           updated_at: string | null
           verification_level: string | null
           verification_notes: string | null
@@ -1049,6 +1091,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          account_locked_until?: string | null
           address?: string | null
           availability_status?: string | null
           avatar_url?: string | null
@@ -1062,12 +1105,14 @@ export type Database = {
           email: string
           experience_years?: number | null
           facebook?: string | null
+          failed_login_attempts?: number | null
           full_name?: string | null
           hourly_rate?: number | null
           id: string
           is_online?: boolean | null
           joined_date?: string | null
           last_active?: string | null
+          last_password_change?: string | null
           last_seen?: string | null
           latitude?: number | null
           linkedin?: string | null
@@ -1081,12 +1126,15 @@ export type Database = {
           reliability_score?: number | null
           reputation_score?: number | null
           response_rate?: number | null
+          security_notifications_enabled?: boolean | null
+          security_questions_set?: boolean | null
           skills?: string[] | null
           stripe_customer_id?: string | null
           stripe_payment_method_id?: string | null
           total_reviews?: number | null
           trust_score?: number | null
           twitter?: string | null
+          two_factor_enabled?: boolean | null
           updated_at?: string | null
           verification_level?: string | null
           verification_notes?: string | null
@@ -1097,6 +1145,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          account_locked_until?: string | null
           address?: string | null
           availability_status?: string | null
           avatar_url?: string | null
@@ -1110,12 +1159,14 @@ export type Database = {
           email?: string
           experience_years?: number | null
           facebook?: string | null
+          failed_login_attempts?: number | null
           full_name?: string | null
           hourly_rate?: number | null
           id?: string
           is_online?: boolean | null
           joined_date?: string | null
           last_active?: string | null
+          last_password_change?: string | null
           last_seen?: string | null
           latitude?: number | null
           linkedin?: string | null
@@ -1129,12 +1180,15 @@ export type Database = {
           reliability_score?: number | null
           reputation_score?: number | null
           response_rate?: number | null
+          security_notifications_enabled?: boolean | null
+          security_questions_set?: boolean | null
           skills?: string[] | null
           stripe_customer_id?: string | null
           stripe_payment_method_id?: string | null
           total_reviews?: number | null
           trust_score?: number | null
           twitter?: string | null
+          two_factor_enabled?: boolean | null
           updated_at?: string | null
           verification_level?: string | null
           verification_notes?: string | null
@@ -1996,6 +2050,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          created_at: string
+          device_info: Json | null
+          expires_at: string
+          id: string
+          ip_address: string | null
+          is_active: boolean
+          last_activity_at: string
+          session_token: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: Json | null
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_activity_at?: string
+          session_token: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: Json | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_activity_at?: string
+          session_token?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_task_templates: {
         Row: {
           budget_type: string | null
@@ -2303,7 +2396,12 @@ export type Database = {
         Returns: number
       }
       calculate_trust_score: { Args: { p_user_id: string }; Returns: number }
+      check_suspicious_login: {
+        Args: { p_ip_address: string; p_user_id: string }
+        Returns: boolean
+      }
       cleanup_expired_otp_codes: { Args: never; Returns: undefined }
+      cleanup_expired_sessions: { Args: never; Returns: undefined }
       create_notification: {
         Args: {
           p_link?: string

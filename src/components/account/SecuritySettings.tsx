@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,9 +22,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Trash2, Key, Eye, EyeOff, Check, X } from "lucide-react";
+import { Loader2, Trash2, Key, Eye, EyeOff, Check, X, Bell, Shield } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-
+import { SecurityOverview } from "./SecurityOverview";
+import { LoginHistory } from "./LoginHistory";
 // Strong password schema matching signup requirements
 const passwordSchema = z.object({
   newPassword: z.string()
@@ -66,7 +69,8 @@ export const SecuritySettings = ({ user }: SecuritySettingsProps) => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordValue, setPasswordValue] = useState("");
-
+  const [securityNotifications, setSecurityNotifications] = useState(true);
+  const [updatingNotifications, setUpdatingNotifications] = useState(false);
   const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
   });
@@ -143,8 +147,78 @@ export const SecuritySettings = ({ user }: SecuritySettingsProps) => {
     }
   };
 
+  const handleToggleSecurityNotifications = async (enabled: boolean) => {
+    setUpdatingNotifications(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ security_notifications_enabled: enabled })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setSecurityNotifications(enabled);
+      toast.success(enabled ? 'Security notifications enabled' : 'Security notifications disabled');
+    } catch (error) {
+      console.error('Error updating security notifications:', error);
+      toast.error('Failed to update notification settings');
+    } finally {
+      setUpdatingNotifications(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Security Overview */}
+      <SecurityOverview userId={user.id} />
+
+      {/* Login History */}
+      <LoginHistory userId={user.id} />
+
+      {/* Security Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Security Notifications
+          </CardTitle>
+          <CardDescription>
+            Get notified about important security events
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="security-alerts">Security Alerts</Label>
+              <p className="text-sm text-muted-foreground">
+                Receive alerts for suspicious login attempts and unusual activity
+              </p>
+            </div>
+            <Switch
+              id="security-alerts"
+              checked={securityNotifications}
+              onCheckedChange={handleToggleSecurityNotifications}
+              disabled={updatingNotifications}
+            />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="new-device">New Device Logins</Label>
+              <p className="text-sm text-muted-foreground">
+                Get notified when your account is accessed from a new device
+              </p>
+            </div>
+            <Switch
+              id="new-device"
+              checked={securityNotifications}
+              onCheckedChange={handleToggleSecurityNotifications}
+              disabled={updatingNotifications}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Change Password */}
       <Card>
         <CardHeader>
