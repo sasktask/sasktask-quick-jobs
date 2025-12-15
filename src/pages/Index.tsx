@@ -14,11 +14,12 @@ import { FAQSection } from "@/components/FAQSection";
 import { HeroSearch } from "@/components/HeroSearch";
 import { UrgencyBanner } from "@/components/UrgencyBanner";
 import { StatsCounter } from "@/components/StatsCounter";
+import { SocialProofBar } from "@/components/SocialProofBar";
 import { usePlatformStats } from "@/hooks/usePlatformStats";
 import { Skeleton } from "@/components/ui/skeleton";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Star, Shield, Clock, DollarSign, Users, Wrench, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock } from "lucide-react";
+import { Sparkles, Star, Shield, Clock, DollarSign, Users, Wrench, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock, ArrowRight, Zap } from "lucide-react";
 import heroInfographic from "@/assets/hero-infographic.jpg";
 
 const Index = () => {
@@ -261,6 +262,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Social Proof Bar */}
+      {!user && <SocialProofBar />}
 
       {/* Featured Categories Section */}
       <FeaturedCategories />
@@ -543,28 +547,57 @@ const Index = () => {
       {/* Testimonials Section */}
       <TestimonialsSection />
 
-      {/* CTA Section */}
-      <section className="py-20 px-4">
+      {/* CTA Section - Enhanced */}
+      <section className="py-16 md:py-24 px-4">
         <div className="container mx-auto">
           <Card className="bg-gradient-to-br from-primary via-primary/90 to-secondary border-0 overflow-hidden relative">
-            <CardContent className="p-12 text-center relative z-10">
-              <h2 className="text-4xl font-bold text-white mb-4">
-                Ready to Get Started?
-              </h2>
-              <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-                Join thousands of task givers and doers who trust SaskTask for their short-term job needs
-              </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                <Link to="/auth">
-                  <Button variant="accent" size="lg" className="shadow-xl bg-white text-primary hover:bg-white/90">
-                    Sign Up Now
-                  </Button>
-                </Link>
-                <Link to="/browse">
-                  <Button variant="outline" size="lg" className="bg-white/10 hover:bg-white/20 border-white/30 text-white shadow-xl">
-                    Explore Tasks
-                  </Button>
-                </Link>
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+            
+            <CardContent className="p-8 md:p-16 relative z-10">
+              <div className="max-w-3xl mx-auto text-center">
+                <div className="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full mb-6">
+                  <Zap className="h-4 w-4 text-yellow-300" />
+                  <span className="text-white/90 text-sm font-medium">Join 5,000+ Saskatchewan users</span>
+                </div>
+                
+                <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+                  Ready to Get Things Done?
+                </h2>
+                <p className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl mx-auto">
+                  Whether you need help with tasks or want to earn money, SaskTask connects you with your community
+                </p>
+                
+                <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
+                  <Link to="/auth">
+                    <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 shadow-xl text-lg h-14 px-8 gap-2">
+                      Get Started Free
+                      <ArrowRight className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <Link to="/browse">
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white/10 hover:bg-white/20 border-white/30 text-white shadow-xl text-lg h-14 px-8">
+                      Explore Tasks
+                    </Button>
+                  </Link>
+                </div>
+
+                {/* Trust indicators */}
+                <div className="flex flex-wrap justify-center gap-6 text-white/70 text-sm">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                    <span>Free to sign up</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-blue-300" />
+                    <span>Secure payments</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-yellow-300" />
+                    <span>4.9 average rating</span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
