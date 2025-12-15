@@ -16,22 +16,22 @@ export function SocialProofBar({ className, variant = "default" }: SocialProofBa
     {
       icon: Users,
       value: stats.totalUsers,
-      suffix: "+",
-      label: "Active Users",
+      suffix: "",
+      label: "Users",
       color: "text-blue-500",
       bgColor: "bg-blue-500/10"
     },
     {
       icon: CheckCircle,
       value: stats.totalTasksCompleted,
-      suffix: "+",
+      suffix: "",
       label: "Tasks Done",
       color: "text-emerald-500",
       bgColor: "bg-emerald-500/10"
     },
     {
       icon: Star,
-      value: stats.averageRating,
+      value: stats.averageRating > 0 ? stats.averageRating : "N/A",
       suffix: "",
       label: "Avg Rating",
       color: "text-yellow-500",
@@ -40,9 +40,9 @@ export function SocialProofBar({ className, variant = "default" }: SocialProofBa
     },
     {
       icon: Shield,
-      value: 100,
-      suffix: "%",
-      label: "Secure",
+      value: stats.totalActiveTaskers,
+      suffix: "",
+      label: "Active Taskers",
       color: "text-primary",
       bgColor: "bg-primary/10"
     }
@@ -63,8 +63,10 @@ export function SocialProofBar({ className, variant = "default" }: SocialProofBa
                 <Skeleton className="h-4 w-8 inline-block" />
               ) : item.isRating ? (
                 item.value
-              ) : (
+              ) : typeof item.value === 'number' ? (
                 <StatsCounter end={item.value} suffix={item.suffix} />
+              ) : (
+                item.value
               )}
             </span>
             <span className="text-sm text-muted-foreground">{item.label}</span>
@@ -107,8 +109,10 @@ export function SocialProofBar({ className, variant = "default" }: SocialProofBa
                         {item.value}
                         <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                       </span>
-                    ) : (
+                    ) : typeof item.value === 'number' ? (
                       <StatsCounter end={item.value} suffix={item.suffix} />
+                    ) : (
+                      item.value
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">{item.label}</p>

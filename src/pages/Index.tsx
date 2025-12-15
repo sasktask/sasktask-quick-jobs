@@ -224,9 +224,9 @@ const Index = () => {
                     ) : (
                       <>
                         <p className="text-xl sm:text-2xl font-bold text-foreground">
-                          <StatsCounter end={stats.totalUsers} suffix="+" />
+                          <StatsCounter end={stats.totalUsers} suffix={stats.totalUsers > 0 ? "" : ""} />
                         </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Active Users</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Users</p>
                       </>
                     )}
                   </div>
@@ -247,7 +247,7 @@ const Index = () => {
                     ) : (
                       <>
                         <p className="text-xl sm:text-2xl font-bold text-foreground">
-                          <StatsCounter end={stats.totalTasksCompleted} suffix="+" />
+                          <StatsCounter end={stats.totalTasksCompleted} suffix="" />
                         </p>
                         <p className="text-xs sm:text-sm text-muted-foreground">Tasks Done</p>
                       </>
@@ -256,11 +256,12 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Rating card - Hidden on smaller screens */}
               <div className="absolute top-1/2 -right-4 sm:-right-6 bg-card border border-border rounded-xl sm:rounded-2xl p-2 sm:p-3 shadow-xl animate-float hidden lg:block" style={{animationDelay: '1s'}}>
                 <div className="flex items-center gap-2">
                   <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 fill-yellow-500" />
-                  <span className="font-bold text-sm sm:text-base text-foreground">{stats.averageRating}</span>
+                  <span className="font-bold text-sm sm:text-base text-foreground">
+                    {stats.averageRating > 0 ? stats.averageRating : "N/A"}
+                  </span>
                 </div>
               </div>
             </div>

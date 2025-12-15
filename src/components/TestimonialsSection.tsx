@@ -1,90 +1,26 @@
 import { useState, useEffect } from "react";
-import { Star, Quote, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { Star, Quote, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { usePlatformStats } from "@/hooks/usePlatformStats";
+import { supabase } from "@/integrations/supabase/client";
 
-interface Testimonial {
-  id: number;
-  name: string;
-  role: string;
-  location: string;
-  avatar: string;
+interface Review {
+  id: string;
   rating: number;
-  comment: string;
-  taskType?: string;
-  savings?: string;
+  comment: string | null;
+  created_at: string;
+  reviewer: {
+    full_name: string | null;
+    avatar_url: string | null;
+    city: string | null;
+  } | null;
+  task: {
+    category: string;
+  } | null;
 }
-
-const testimonials: Testimonial[] = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    role: "Homeowner",
-    location: "Saskatoon",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-    rating: 5,
-    comment: "Found a reliable snow removal tasker within minutes. The platform made booking and paying so easy. Saved me hours of searching!",
-    taskType: "Snow Removal",
-    savings: "Saved $50"
-  },
-  {
-    id: 2,
-    name: "Michael Chen",
-    role: "Task Doer",
-    location: "Regina",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Michael",
-    rating: 5,
-    comment: "SaskTask helped me grow my handyman business significantly. The verification system builds trust and I get consistent work.",
-    taskType: "Handyman",
-    savings: "Earned $2,400/mo"
-  },
-  {
-    id: 3,
-    name: "Emily Rodriguez",
-    role: "Business Owner",
-    location: "Prince Albert",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
-    rating: 5,
-    comment: "We use SaskTask for all our office cleaning needs. The quality of taskers is exceptional and booking is streamlined.",
-    taskType: "Commercial Cleaning",
-    savings: "Saved 10hrs/week"
-  },
-  {
-    id: 4,
-    name: "David Thompson",
-    role: "Homeowner",
-    location: "Moose Jaw",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
-    rating: 5,
-    comment: "Needed help moving and found someone within an hour. Professional, punctual, and affordable. Highly recommend!",
-    taskType: "Moving Help",
-    savings: "Saved $200"
-  },
-  {
-    id: 5,
-    name: "Jessica Lee",
-    role: "Task Doer",
-    location: "Swift Current",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jessica",
-    rating: 5,
-    comment: "The verification process gave me credibility as a new tasker. Within weeks, I had steady clients and positive reviews!",
-    taskType: "Pet Care",
-    savings: "Earned $1,800/mo"
-  },
-  {
-    id: 6,
-    name: "Robert Martinez",
-    role: "Property Manager",
-    location: "Yorkton",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Robert",
-    rating: 5,
-    comment: "Managing multiple properties is easier with SaskTask. Quick, reliable help for maintenance and repairs whenever needed.",
-    taskType: "Property Maintenance",
-    savings: "Saved $500/mo"
-  }
-];
 
 const StarRating = ({ rating }: { rating: number }) => {
   return (
@@ -105,27 +41,79 @@ const StarRating = ({ rating }: { rating: number }) => {
 };
 
 export const TestimonialsSection = () => {
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const stats = usePlatformStats();
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("reviews")
+          .select(`
+            id,
+            rating,
+            comment,
+            created_at,
+            reviewer:profiles!reviews_reviewer_id_fkey(full_name, avatar_url, city),
+            task:tasks!reviews_task_id_fkey(category)
+          `)
+          .gte("rating", 4)
+          .not("comment", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(6);
+
+        if (error) throw error;
+        setReviews(data || []);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, []);
 
   // Auto-rotate testimonials
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (!isAutoPlaying || reviews.length === 0) return;
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % testimonials.length);
+      setActiveIndex((prev) => (prev + 1) % reviews.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, reviews.length]);
 
   const handlePrev = () => {
     setIsAutoPlaying(false);
-    setActiveIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    setActiveIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
   };
 
   const handleNext = () => {
     setIsAutoPlaying(false);
-    setActiveIndex((prev) => (prev + 1) % testimonials.length);
+    setActiveIndex((prev) => (prev + 1) % reviews.length);
   };
+
+  // Don't show section if no reviews
+  if (!loading && reviews.length === 0) {
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <section className="py-16 md:py-24 bg-gradient-to-b from-background via-muted/30 to-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Loading Reviews...</h2>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const currentReview = reviews[activeIndex];
 
   return (
     <section className="py-16 md:py-24 bg-gradient-to-b from-background via-muted/30 to-background overflow-hidden">
@@ -134,13 +122,13 @@ export const TestimonialsSection = () => {
         <div className="text-center mb-12 md:mb-16">
           <Badge variant="outline" className="mb-4 px-4 py-2 text-sm font-medium">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-2" />
-            Over 5,000+ Happy Users
+            {stats.totalUsers > 0 ? `${stats.totalUsers} Users` : "Real Reviews"}
           </Badge>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            Real Stories, Real Results
+            What Our Users Say
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            See why Saskatchewan trusts SaskTask for getting things done
+            Real feedback from real customers
           </p>
         </div>
 
@@ -156,8 +144,8 @@ export const TestimonialsSection = () => {
                 <div className="flex items-center gap-4 mb-6">
                   <div className="relative">
                     <img
-                      src={testimonials[activeIndex].avatar}
-                      alt={testimonials[activeIndex].name}
+                      src={currentReview.reviewer?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentReview.id}`}
+                      alt={currentReview.reviewer?.full_name || "User"}
                       className="h-16 w-16 md:h-20 md:w-20 rounded-full border-4 border-primary/20 bg-background"
                     />
                     <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-primary rounded-full flex items-center justify-center">
@@ -165,29 +153,24 @@ export const TestimonialsSection = () => {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-bold text-xl">{testimonials[activeIndex].name}</h4>
+                    <h4 className="font-bold text-xl">{currentReview.reviewer?.full_name || "Anonymous"}</h4>
                     <p className="text-muted-foreground">
-                      {testimonials[activeIndex].role} • {testimonials[activeIndex].location}
+                      {currentReview.reviewer?.city || "Saskatchewan"}
                     </p>
-                    <StarRating rating={testimonials[activeIndex].rating} />
+                    <StarRating rating={currentReview.rating} />
                   </div>
                 </div>
 
                 {/* Comment */}
                 <blockquote className="text-lg md:text-xl text-foreground leading-relaxed mb-6">
-                  "{testimonials[activeIndex].comment}"
+                  "{currentReview.comment}"
                 </blockquote>
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2">
-                  {testimonials[activeIndex].taskType && (
+                  {currentReview.task?.category && (
                     <Badge variant="secondary" className="text-sm">
-                      {testimonials[activeIndex].taskType}
-                    </Badge>
-                  )}
-                  {testimonials[activeIndex].savings && (
-                    <Badge variant="default" className="text-sm bg-emerald-500">
-                      {testimonials[activeIndex].savings}
+                      {currentReview.task.category}
                     </Badge>
                   )}
                 </div>
@@ -195,88 +178,94 @@ export const TestimonialsSection = () => {
             </CardContent>
 
             {/* Navigation */}
-            <div className="absolute bottom-4 right-4 flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handlePrev}
-                className="h-10 w-10 rounded-full"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleNext}
-                className="h-10 w-10 rounded-full"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
+            {reviews.length > 1 && (
+              <div className="absolute bottom-4 right-4 flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePrev}
+                  className="h-10 w-10 rounded-full"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleNext}
+                  className="h-10 w-10 rounded-full"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
+            )}
 
             {/* Progress dots */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setIsAutoPlaying(false);
-                    setActiveIndex(index);
-                  }}
-                  className={cn(
-                    "h-2 rounded-full transition-all duration-300",
-                    index === activeIndex
-                      ? "w-8 bg-primary"
-                      : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                  )}
-                />
-              ))}
-            </div>
+            {reviews.length > 1 && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                {reviews.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setIsAutoPlaying(false);
+                      setActiveIndex(index);
+                    }}
+                    className={cn(
+                      "h-2 rounded-full transition-all duration-300",
+                      index === activeIndex
+                        ? "w-8 bg-primary"
+                        : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
           </Card>
         </div>
 
         {/* Mini Testimonials Grid */}
-        <div className="grid md:grid-cols-3 gap-4 mb-12">
-          {testimonials.slice(0, 3).map((testimonial, index) => (
-            <Card
-              key={testimonial.id}
-              className={cn(
-                "relative overflow-hidden border hover:border-primary/50 transition-all duration-300 hover:shadow-lg cursor-pointer animate-fade-in",
-                index === activeIndex % 3 && "ring-2 ring-primary/50"
-              )}
-              style={{ animationDelay: `${index * 100}ms` }}
-              onClick={() => {
-                setIsAutoPlaying(false);
-                setActiveIndex(index);
-              }}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <img
-                    src={testimonial.avatar}
-                    alt={testimonial.name}
-                    className="h-10 w-10 rounded-full border-2 border-primary/20 bg-background"
-                  />
-                  <div>
-                    <h4 className="font-semibold text-sm">{testimonial.name}</h4>
-                    <StarRating rating={testimonial.rating} />
+        {reviews.length > 1 && (
+          <div className="grid md:grid-cols-3 gap-4 mb-12">
+            {reviews.slice(0, 3).map((review, index) => (
+              <Card
+                key={review.id}
+                className={cn(
+                  "relative overflow-hidden border hover:border-primary/50 transition-all duration-300 hover:shadow-lg cursor-pointer animate-fade-in",
+                  index === activeIndex % 3 && "ring-2 ring-primary/50"
+                )}
+                style={{ animationDelay: `${index * 100}ms` }}
+                onClick={() => {
+                  setIsAutoPlaying(false);
+                  setActiveIndex(index);
+                }}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <img
+                      src={review.reviewer?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${review.id}`}
+                      alt={review.reviewer?.full_name || "User"}
+                      className="h-10 w-10 rounded-full border-2 border-primary/20 bg-background"
+                    />
+                    <div>
+                      <h4 className="font-semibold text-sm">{review.reviewer?.full_name || "Anonymous"}</h4>
+                      <StarRating rating={review.rating} />
+                    </div>
                   </div>
-                </div>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  "{testimonial.comment}"
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    "{review.comment}"
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-        {/* Bottom Stats */}
+        {/* Bottom Stats - Real numbers only */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-muted/30 rounded-2xl p-6 md:p-8">
           {[
-            { value: "5,000+", label: "Happy Customers", color: "text-primary" },
-            { value: "2,500+", label: "Verified Taskers", color: "text-emerald-500" },
-            { value: "4.9/5", label: "Average Rating", color: "text-yellow-500" },
-            { value: "15,000+", label: "Tasks Completed", color: "text-blue-500" }
+            { value: stats.totalUsers, label: "Users", color: "text-primary" },
+            { value: stats.totalActiveTaskers, label: "Taskers", color: "text-emerald-500" },
+            { value: stats.averageRating > 0 ? `${stats.averageRating}/5` : "N/A", label: "Avg Rating", color: "text-yellow-500" },
+            { value: stats.totalTasksCompleted, label: "Tasks Done", color: "text-blue-500" }
           ].map((stat, index) => (
             <div 
               key={stat.label} 
@@ -284,7 +273,7 @@ export const TestimonialsSection = () => {
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className={cn("text-3xl md:text-4xl font-bold mb-1", stat.color)}>
-                {stat.value}
+                {typeof stat.value === 'number' ? stat.value : stat.value}
               </div>
               <div className="text-sm text-muted-foreground">{stat.label}</div>
             </div>
