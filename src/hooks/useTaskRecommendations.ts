@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
 
 interface TaskRecommendation {
   id: string;
@@ -21,11 +22,25 @@ interface TaskRecommendation {
   } | null;
   matchScore: number;
   reasons: string[];
+  distance: number | null;
+  tags: string[];
+}
+
+interface WeatherData {
+  condition: string;
+  temperature: number;
+  description: string;
+  icon: string;
+  tip: string | null;
 }
 
 interface RecommendationsResponse {
   recommendations: TaskRecommendation[];
+  nearbyTasks: TaskRecommendation[];
+  weatherBased: TaskRecommendation[];
   insight?: string;
+  weather?: WeatherData;
+  season?: string;
   userStats?: {
     completedTasks: number;
     topCategories: string[];
@@ -36,15 +51,40 @@ interface RecommendationsResponse {
 }
 
 export function useTaskRecommendations(userId: string | undefined) {
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Get user's current location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.log('Geolocation error:', error.message);
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+      );
+    }
+  }, []);
+
   return useQuery<RecommendationsResponse>({
-    queryKey: ['task-recommendations', userId],
+    queryKey: ['task-recommendations', userId, userLocation?.lat, userLocation?.lng],
     queryFn: async () => {
       if (!userId) {
         throw new Error('User ID is required');
       }
 
       const { data, error } = await supabase.functions.invoke('ai-task-recommendations', {
-        body: { userId }
+        body: { 
+          userId,
+          userLatitude: userLocation?.lat,
+          userLongitude: userLocation?.lng,
+          maxDistance: 50
+        }
       });
 
       if (error) {
