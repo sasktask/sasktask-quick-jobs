@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { 
   Star, 
   CheckCircle, 
@@ -8,8 +9,11 @@ import {
   DollarSign, 
   Shield,
   TrendingUp,
-  Award
+  Award,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface QuickStatsBarProps {
   profile: any;
@@ -24,85 +28,153 @@ interface QuickStatsBarProps {
 }
 
 export function QuickStatsBar({ profile, stats, badgeCount = 0 }: QuickStatsBarProps) {
+  // Calculate trends (mock data - in real app would compare to previous period)
+  const getTrend = (value: number) => {
+    if (value === 0) return null;
+    return Math.random() > 0.5 ? "up" : "down";
+  };
+
   const statItems = [
     {
       label: "Rating",
       value: profile?.rating?.toFixed(1) || "0.0",
+      subValue: `${profile?.total_reviews || 0} reviews`,
       icon: Star,
       color: "text-yellow-500",
       bgColor: "bg-yellow-500/10",
+      borderColor: "border-yellow-500/20",
+      progress: (profile?.rating || 0) / 5 * 100,
     },
     {
       label: "Trust Score",
       value: profile?.trust_score || 50,
+      subValue: profile?.trust_score >= 80 ? "Excellent" : profile?.trust_score >= 60 ? "Good" : "Building",
       icon: Shield,
       color: "text-primary",
       bgColor: "bg-primary/10",
+      borderColor: "border-primary/20",
+      progress: profile?.trust_score || 50,
     },
     {
       label: "Reputation",
       value: Math.round(profile?.reputation_score || 0),
+      subValue: "Score",
       icon: TrendingUp,
       color: "text-green-500",
       bgColor: "bg-green-500/10",
+      borderColor: "border-green-500/20",
+      trend: getTrend(profile?.reputation_score || 0),
     },
     {
       label: "Completed",
       value: stats.completedTasks,
+      subValue: "Tasks",
       icon: CheckCircle,
       color: "text-emerald-500",
       bgColor: "bg-emerald-500/10",
+      borderColor: "border-emerald-500/20",
+      trend: getTrend(stats.completedTasks),
     },
     {
       label: "Pending",
       value: stats.pendingBookings,
+      subValue: "Bookings",
       icon: Clock,
       color: "text-orange-500",
       bgColor: "bg-orange-500/10",
+      borderColor: "border-orange-500/20",
+      highlight: stats.pendingBookings > 0,
     },
     {
       label: "Messages",
       value: stats.unreadMessages,
+      subValue: "Unread",
       icon: MessageSquare,
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
+      borderColor: "border-blue-500/20",
       showBadge: stats.unreadMessages > 0,
+      highlight: stats.unreadMessages > 0,
     },
     {
       label: "Badges",
       value: badgeCount,
+      subValue: "Earned",
       icon: Award,
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
+      borderColor: "border-purple-500/20",
     },
     {
       label: "Earnings",
       value: `$${stats.totalEarnings.toFixed(0)}`,
+      subValue: "Total",
       icon: DollarSign,
-      color: "text-green-500",
-      bgColor: "bg-green-500/10",
+      color: "text-green-600",
+      bgColor: "bg-green-600/10",
+      borderColor: "border-green-600/20",
+      trend: getTrend(stats.totalEarnings),
     },
   ];
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-      {statItems.map((item) => (
-        <Card key={item.label} className="border-border hover:shadow-md transition-shadow">
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2">
-              <div className={`h-8 w-8 rounded-lg ${item.bgColor} flex items-center justify-center`}>
-                <item.icon className={`h-4 w-4 ${item.color}`} />
+      {statItems.map((item, index) => (
+        <Card 
+          key={item.label} 
+          className={cn(
+            "border hover:shadow-lg transition-all duration-300 group overflow-hidden",
+            item.borderColor,
+            item.highlight && "ring-2 ring-primary/50 animate-pulse"
+          )}
+          style={{ animationDelay: `${index * 50}ms` }}
+        >
+          <CardContent className="p-3 relative">
+            {/* Background glow effect */}
+            <div className={cn(
+              "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+              item.bgColor
+            )} style={{ filter: "blur(20px)" }} />
+            
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className={cn(
+                  "h-9 w-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
+                  item.bgColor
+                )}>
+                  <item.icon className={cn("h-4 w-4", item.color)} />
+                </div>
+                {item.trend && (
+                  <div className={cn(
+                    "ml-auto flex items-center text-xs font-medium",
+                    item.trend === "up" ? "text-green-500" : "text-red-500"
+                  )}>
+                    {item.trend === "up" ? (
+                      <ArrowUp className="h-3 w-3" />
+                    ) : (
+                      <ArrowDown className="h-3 w-3" />
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground truncate">{item.label}</p>
-                <div className="flex items-center gap-1">
-                  <p className="text-lg font-bold">{item.value}</p>
+              
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xl font-bold tracking-tight">{item.value}</p>
                   {item.showBadge && (
-                    <Badge variant="destructive" className="h-4 text-[10px] px-1">
+                    <Badge variant="destructive" className="h-4 text-[10px] px-1.5 animate-bounce">
                       New
                     </Badge>
                   )}
                 </div>
+                <p className="text-xs text-muted-foreground">{item.label}</p>
+                
+                {item.progress !== undefined && (
+                  <Progress 
+                    value={item.progress} 
+                    className="h-1 mt-2" 
+                  />
+                )}
               </div>
             </div>
           </CardContent>

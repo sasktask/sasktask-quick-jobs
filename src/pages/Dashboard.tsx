@@ -14,6 +14,7 @@ import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { QuickStatsBar } from "@/components/QuickStatsBar";
 import { TrustScoreCard } from "@/components/TrustScoreCard";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
+import { DashboardActivityFeed } from "@/components/DashboardActivityFeed";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
   Briefcase, 
@@ -33,7 +34,9 @@ import {
   ArrowRight,
   Sparkles,
   Award,
-  Loader2
+  Loader2,
+  Calendar,
+  Zap
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -246,46 +249,53 @@ const Dashboard = () => {
 
         {/* Main Content */}
         <main className="flex-1 lg:ml-64 min-h-[calc(100vh-4rem)]">
-          <div className="container mx-auto px-4 py-8">
-            {/* Welcome Header */}
+          <div className="container mx-auto px-4 py-6 md:py-8">
+            {/* Welcome Header - Enhanced */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-              <div>
+              <div className="animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-bold">
-                    Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}!
-                  </h1>
+                  <div className="relative">
+                    <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                      Welcome back, {profile?.full_name?.split(' ')[0] || 'there'}!
+                    </h1>
+                    <Sparkles className="absolute -top-2 -right-6 h-5 w-5 text-yellow-500 animate-pulse" />
+                  </div>
                   {isVerified && (
-                    <Badge variant="default" className="gap-1">
+                    <Badge variant="default" className="gap-1 animate-scale-in">
                       <ShieldCheck className="h-3 w-3" />
                       Verified
                     </Badge>
                   )}
                 </div>
-                <p className="text-muted-foreground flex items-center gap-2">
+                <div className="flex items-center gap-4 text-muted-foreground">
                   {userRole === "task_giver" ? (
-                    <>
+                    <span className="flex items-center gap-2">
                       <Briefcase className="h-4 w-4" />
                       Task Giver Dashboard
-                    </>
+                    </span>
                   ) : (
-                    <>
-                      <Sparkles className="h-4 w-4" />
-                      Task Doer Dashboard • Reputation Score: {Math.round(profile?.reputation_score || 0)}
-                    </>
+                    <span className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-primary" />
+                      Task Doer Dashboard
+                    </span>
                   )}
-                </p>
+                  <span className="hidden sm:flex items-center gap-1 text-sm">
+                    <Calendar className="h-3 w-3" />
+                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-3 animate-fade-in" style={{ animationDelay: "100ms" }}>
                 {userRole === "task_giver" ? (
                   <Link to="/post-task">
-                    <Button variant="default" className="gap-2">
+                    <Button variant="default" className="gap-2 shadow-lg hover:shadow-xl transition-shadow">
                       <Plus className="h-4 w-4" />
                       Post New Task
                     </Button>
                   </Link>
                 ) : (
                   <Link to="/browse">
-                    <Button variant="default" className="gap-2">
+                    <Button variant="default" className="gap-2 shadow-lg hover:shadow-xl transition-shadow">
                       <Search className="h-4 w-4" />
                       Find Tasks
                     </Button>
@@ -294,7 +304,7 @@ const Dashboard = () => {
                 <Link to="/profile">
                   <Button variant="outline" className="gap-2">
                     <User className="h-4 w-4" />
-                    Profile
+                    <span className="hidden sm:inline">Profile</span>
                   </Button>
                 </Link>
               </div>
@@ -467,6 +477,11 @@ const Dashboard = () => {
 
               {/* Right Column - Stats and Info */}
               <div className="space-y-6">
+                {/* Activity Feed - New Component */}
+                {user?.id && (
+                  <DashboardActivityFeed userId={user.id} userRole={userRole} />
+                )}
+
                 {/* Trust Score Card */}
                 {userRole === "task_doer" && (
                   <TrustScoreCard
@@ -504,14 +519,14 @@ const Dashboard = () => {
 
                 {/* Find Taskers - For Task Givers */}
                 {userRole === "task_giver" && (
-                  <Card className="border-border">
+                  <Card className="border-border bg-gradient-to-br from-primary/5 to-transparent">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-lg">Find Top Taskers</CardTitle>
                       <CardDescription>Browse verified professionals</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Link to="/find-taskers">
-                        <Button variant="outline" className="w-full gap-2">
+                        <Button variant="default" className="w-full gap-2">
                           <Search className="h-4 w-4" />
                           Browse Taskers
                         </Button>
