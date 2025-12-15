@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -7,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Sparkles, Users, Shield, Clock } from "lucide-react";
+import { CheckCircle2, Sparkles, Users, Shield, Clock, BadgeCheck } from "lucide-react";
 
 interface WelcomeDialogProps {
   open: boolean;
@@ -31,10 +32,16 @@ const features = [
     title: "Get Things Done",
     description: "From quick tasks to big projects, help is just a click away",
   },
+  {
+    icon: BadgeCheck,
+    title: "Complete Verification",
+    description: "Upload your ID and selfie to get fully verified and build trust",
+  },
 ];
 
 export function WelcomeDialog({ open, onClose, userName }: WelcomeDialogProps) {
   const [step, setStep] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (open) {
@@ -46,12 +53,18 @@ export function WelcomeDialog({ open, onClose, userName }: WelcomeDialogProps) {
     if (step < features.length - 1) {
       setStep(step + 1);
     } else {
+      // On last step, offer to go to verification
       onClose();
     }
   };
 
   const handleSkip = () => {
     onClose();
+  };
+
+  const handleVerify = () => {
+    onClose();
+    navigate("/verification");
   };
 
   return (
@@ -139,9 +152,16 @@ export function WelcomeDialog({ open, onClose, userName }: WelcomeDialogProps) {
           <Button variant="ghost" onClick={handleSkip} className="flex-1">
             Skip
           </Button>
-          <Button onClick={handleNext} className="flex-1" variant="hero">
-            {step === features.length - 1 ? "Get Started" : "Next"}
-          </Button>
+          {step === features.length - 1 ? (
+            <Button onClick={handleVerify} className="flex-1" variant="hero">
+              <BadgeCheck className="w-4 h-4 mr-2" />
+              Verify Now
+            </Button>
+          ) : (
+            <Button onClick={handleNext} className="flex-1" variant="hero">
+              Next
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

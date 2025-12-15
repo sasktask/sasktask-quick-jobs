@@ -857,7 +857,7 @@ const Auth = () => {
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="signup-phone">Phone Number (optional)</Label>
+                        <Label htmlFor="signup-phone">Phone Number <span className="text-destructive">*</span></Label>
                         <div className="relative">
                           <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
@@ -871,10 +871,15 @@ const Auth = () => {
                             }}
                             className={`pl-10 ${formErrors.phone ? "border-destructive" : ""}`}
                             autoComplete="tel"
+                            required
                           />
                         </div>
+                        <p className="text-xs text-muted-foreground">Include country code (e.g., +1 for Canada/US)</p>
                         {formErrors.phone && (
-                          <p className="text-sm text-destructive">{formErrors.phone}</p>
+                          <p className="text-sm text-destructive flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            {formErrors.phone}
+                          </p>
                         )}
                       </div>
                       <div className="space-y-2">

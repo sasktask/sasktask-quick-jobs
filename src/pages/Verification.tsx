@@ -23,6 +23,8 @@ export default function Verification() {
   const [userId, setUserId] = useState<string | null>(null);
   const [idDocument, setIdDocument] = useState<File | null>(null);
   const [idDocumentUrl, setIdDocumentUrl] = useState<string | null>(null);
+  const [selfieDocument, setSelfieDocument] = useState<File | null>(null);
+  const [selfieDocumentUrl, setSelfieDocumentUrl] = useState<string | null>(null);
   const [insuranceDocument, setInsuranceDocument] = useState<File | null>(null);
   const [insuranceDocumentUrl, setInsuranceDocumentUrl] = useState<string | null>(null);
   
@@ -82,7 +84,7 @@ export default function Verification() {
     }
   };
 
-  const handleFileUpload = async (file: File, type: 'id' | 'insurance') => {
+  const handleFileUpload = async (file: File, type: 'id' | 'insurance' | 'selfie') => {
     if (!userId) return;
     
     setUploading(true);
@@ -111,13 +113,15 @@ export default function Verification() {
       // Admins will use signed URLs to view documents
       if (type === 'id') {
         setIdDocumentUrl(filePath);
+      } else if (type === 'selfie') {
+        setSelfieDocumentUrl(filePath);
       } else {
         setInsuranceDocumentUrl(filePath);
       }
 
       toast({
         title: "Upload Successful",
-        description: `${type === 'id' ? 'ID' : 'Insurance'} document uploaded successfully.`,
+        description: `${type === 'id' ? 'ID' : type === 'selfie' ? 'Selfie' : 'Insurance'} document uploaded successfully.`,
       });
     } catch (error: any) {
       toast({
@@ -134,14 +138,24 @@ export default function Verification() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate ID document on step 2
-    if (currentStep === 2 && !idDocumentUrl) {
-      toast({
-        title: "ID Document Required",
-        description: "Please upload your government ID document to continue.",
-        variant: "destructive",
-      });
-      return;
+    // Validate ID document and selfie on step 2
+    if (currentStep === 2) {
+      if (!idDocumentUrl) {
+        toast({
+          title: "ID Document Required",
+          description: "Please upload your government ID document to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!selfieDocumentUrl) {
+        toast({
+          title: "Selfie Required",
+          description: "Please upload a selfie holding your ID for verification.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     if (currentStep < 4) {
@@ -368,6 +382,63 @@ export default function Verification() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Accepted formats: JPG, PNG, PDF (Max 5MB)
+                </p>
+              </div>
+
+              {/* Selfie Upload */}
+              <div className="space-y-3">
+                <Label>Upload Selfie with ID *</Label>
+                <p className="text-sm text-muted-foreground">
+                  Take a clear selfie holding your ID next to your face. This helps verify you are the ID owner.
+                </p>
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                  {selfieDocumentUrl ? (
+                    <div className="space-y-3">
+                      <FileText className="h-12 w-12 mx-auto text-primary" />
+                      <p className="text-sm text-muted-foreground">Selfie uploaded successfully</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelfieDocument(null);
+                          setSelfieDocumentUrl(null);
+                        }}
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Upload a selfie holding your ID next to your face
+                      </p>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setSelfieDocument(file);
+                            handleFileUpload(file, 'selfie');
+                          }
+                        }}
+                        disabled={uploading}
+                        className="max-w-xs mx-auto"
+                      />
+                      {uploading && (
+                        <div className="mt-4 space-y-2">
+                          <Progress value={uploadProgress} />
+                          <p className="text-xs text-muted-foreground">Uploading... {uploadProgress}%</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Accepted formats: JPG, PNG (Max 5MB)
                 </p>
               </div>
 
