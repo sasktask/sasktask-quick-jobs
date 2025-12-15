@@ -19,14 +19,22 @@ import { Separator } from "@/components/ui/separator";
 import { BadgeShowcase } from "@/components/BadgeShowcase";
 import { ProfileStrengthMeter } from "@/components/ProfileStrengthMeter";
 import { ProfileTips } from "@/components/ProfileTips";
-import { Loader2, Star, Briefcase, Award, Upload, Shield, TrendingUp, Clock, Settings, CreditCard, Wallet, Lock, User, Trophy, BadgeCheck, ShieldCheck } from "lucide-react";
+import { Loader2, Star, Briefcase, Award, Upload, Shield, TrendingUp, Clock, Settings, CreditCard, Wallet, Lock, User, Trophy, BadgeCheck, ShieldCheck, AlertCircle, Camera, FileCheck, CheckCircle2, XCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 interface VerificationStatus {
   id_verified: boolean;
   verification_status: string | null;
   background_check_status: string | null;
   has_insurance: boolean;
+  terms_accepted: boolean;
+  privacy_accepted: boolean;
+  age_verified: boolean;
+  id_document_url: string | null;
+  legal_name: string | null;
+  skills: string[] | null;
+  certifications: string[] | null;
 }
 
 const Profile = () => {
@@ -117,7 +125,7 @@ const Profile = () => {
       // Fetch verification status
       const { data: verificationData } = await supabase
         .from("verifications")
-        .select("id_verified, verification_status, background_check_status, has_insurance")
+        .select("id_verified, verification_status, background_check_status, has_insurance, terms_accepted, privacy_accepted, age_verified, id_document_url, legal_name, skills, certifications")
         .eq("user_id", session.user.id)
         .maybeSingle();
       
@@ -365,11 +373,16 @@ const Profile = () => {
           {/* Main Content with Tabs */}
           <div className="lg:col-span-3">
             <Tabs defaultValue="basic" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto gap-1">
+              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto gap-1">
                 <TabsTrigger value="basic" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
                   <User className="h-4 w-4 shrink-0" />
                   <span className="hidden sm:inline">Basic Info</span>
                   <span className="sm:hidden">Info</span>
+                </TabsTrigger>
+                <TabsTrigger value="verification" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
+                  <ShieldCheck className="h-4 w-4 shrink-0" />
+                  <span className="hidden sm:inline">Verification</span>
+                  <span className="sm:hidden">Verify</span>
                 </TabsTrigger>
                 <TabsTrigger value="badges" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
                   <Trophy className="h-4 w-4 shrink-0" />
@@ -384,7 +397,7 @@ const Profile = () => {
                   <span className="hidden sm:inline">{userRole === "task_giver" ? "Payment" : "Payout"}</span>
                   <span className="sm:hidden">Pay</span>
                 </TabsTrigger>
-                <TabsTrigger value="security" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm col-span-2 sm:col-span-1">
+                <TabsTrigger value="security" className="flex items-center gap-1 px-2 py-2 text-xs sm:text-sm">
                   <Lock className="h-4 w-4 shrink-0" />
                   <span>Security</span>
                 </TabsTrigger>
@@ -472,6 +485,190 @@ const Profile = () => {
                         </Button>
                       </div>
                     </form>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Verification Tab */}
+              <TabsContent value="verification">
+                <Card className="border-border">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-primary" />
+                      Identity Verification
+                    </CardTitle>
+                    <CardDescription>
+                      Complete verification to build trust and access all platform features
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Verification Progress */}
+                    {(() => {
+                      const steps = [
+                        { key: 'terms', label: 'Terms Accepted', done: verification?.terms_accepted },
+                        { key: 'id', label: 'Government ID', done: verification?.id_document_url },
+                        { key: 'verified', label: 'ID Verified', done: verification?.id_verified },
+                        { key: 'background', label: 'Background Check', done: verification?.background_check_status === 'verified' },
+                      ];
+                      const completedSteps = steps.filter(s => s.done).length;
+                      const progressPercent = (completedSteps / steps.length) * 100;
+                      
+                      return (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">Verification Progress</span>
+                            <span className="text-sm text-muted-foreground">{completedSteps}/{steps.length} completed</span>
+                          </div>
+                          <Progress value={progressPercent} className="h-2" />
+                        </div>
+                      );
+                    })()}
+
+                    {/* Status Banner */}
+                    {verification?.verification_status === 'verified' ? (
+                      <div className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                        <CheckCircle2 className="h-6 w-6 text-green-600" />
+                        <div>
+                          <h4 className="font-semibold text-green-700 dark:text-green-400">Fully Verified</h4>
+                          <p className="text-sm text-green-600 dark:text-green-500">Your identity has been verified. You have full access to all platform features.</p>
+                        </div>
+                      </div>
+                    ) : verification?.verification_status === 'pending' ? (
+                      <div className="flex items-center gap-3 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                        <Clock className="h-6 w-6 text-yellow-600" />
+                        <div>
+                          <h4 className="font-semibold text-yellow-700 dark:text-yellow-400">Verification Pending</h4>
+                          <p className="text-sm text-yellow-600 dark:text-yellow-500">Your documents are being reviewed. This usually takes 1-2 business days.</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                        <AlertCircle className="h-6 w-6 text-amber-600" />
+                        <div>
+                          <h4 className="font-semibold text-amber-700 dark:text-amber-400">Verification Required</h4>
+                          <p className="text-sm text-amber-600 dark:text-amber-500">Complete identity verification to unlock all features and build trust with users.</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Verification Checklist */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold">Verification Checklist</h4>
+                      
+                      <div className={`flex items-center justify-between p-4 border rounded-lg ${verification?.terms_accepted ? 'border-green-500/30 bg-green-500/5' : 'border-border'}`}>
+                        <div className="flex items-center gap-3">
+                          {verification?.terms_accepted ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-muted-foreground" />
+                          )}
+                          <div>
+                            <h5 className="font-medium">Terms & Privacy Policy</h5>
+                            <p className="text-sm text-muted-foreground">Accept our terms and privacy policy</p>
+                          </div>
+                        </div>
+                        {verification?.terms_accepted ? (
+                          <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Completed</Badge>
+                        ) : (
+                          <Button size="sm" onClick={() => navigate("/onboarding")}>Accept</Button>
+                        )}
+                      </div>
+
+                      <div className={`flex items-center justify-between p-4 border rounded-lg ${verification?.id_document_url ? 'border-green-500/30 bg-green-500/5' : 'border-border'}`}>
+                        <div className="flex items-center gap-3">
+                          {verification?.id_document_url ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          ) : (
+                            <FileCheck className="h-5 w-5 text-muted-foreground" />
+                          )}
+                          <div>
+                            <h5 className="font-medium">Government ID</h5>
+                            <p className="text-sm text-muted-foreground">Upload a valid government-issued photo ID</p>
+                          </div>
+                        </div>
+                        {verification?.id_document_url ? (
+                          <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Uploaded</Badge>
+                        ) : (
+                          <Button size="sm" onClick={() => navigate("/verification")}>Upload ID</Button>
+                        )}
+                      </div>
+
+                      <div className={`flex items-center justify-between p-4 border rounded-lg ${verification?.id_verified ? 'border-green-500/30 bg-green-500/5' : 'border-border'}`}>
+                        <div className="flex items-center gap-3">
+                          {verification?.id_verified ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          ) : (
+                            <Camera className="h-5 w-5 text-muted-foreground" />
+                          )}
+                          <div>
+                            <h5 className="font-medium">Selfie Verification</h5>
+                            <p className="text-sm text-muted-foreground">Upload a selfie holding your ID for verification</p>
+                          </div>
+                        </div>
+                        {verification?.id_verified ? (
+                          <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Verified</Badge>
+                        ) : verification?.id_document_url ? (
+                          <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">Pending Review</Badge>
+                        ) : (
+                          <Button size="sm" variant="outline" disabled>Upload ID First</Button>
+                        )}
+                      </div>
+
+                      <div className={`flex items-center justify-between p-4 border rounded-lg ${verification?.background_check_status === 'verified' ? 'border-green-500/30 bg-green-500/5' : 'border-border'}`}>
+                        <div className="flex items-center gap-3">
+                          {verification?.background_check_status === 'verified' ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          ) : (
+                            <Shield className="h-5 w-5 text-muted-foreground" />
+                          )}
+                          <div>
+                            <h5 className="font-medium">Background Check</h5>
+                            <p className="text-sm text-muted-foreground">Optional background verification for enhanced trust</p>
+                          </div>
+                        </div>
+                        {verification?.background_check_status === 'verified' ? (
+                          <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Verified</Badge>
+                        ) : verification?.background_check_status === 'pending' ? (
+                          <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">Pending</Badge>
+                        ) : (
+                          <Button size="sm" variant="outline" onClick={() => navigate("/verification")}>Request</Button>
+                        )}
+                      </div>
+
+                      {userRole === "task_doer" && (
+                        <div className={`flex items-center justify-between p-4 border rounded-lg ${verification?.has_insurance ? 'border-green-500/30 bg-green-500/5' : 'border-border'}`}>
+                          <div className="flex items-center gap-3">
+                            {verification?.has_insurance ? (
+                              <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            ) : (
+                              <FileCheck className="h-5 w-5 text-muted-foreground" />
+                            )}
+                            <div>
+                              <h5 className="font-medium">Insurance (Optional)</h5>
+                              <p className="text-sm text-muted-foreground">Upload proof of liability insurance</p>
+                            </div>
+                          </div>
+                          {verification?.has_insurance ? (
+                            <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Uploaded</Badge>
+                          ) : (
+                            <Button size="sm" variant="outline" onClick={() => navigate("/verification")}>Add</Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* CTA for incomplete verification */}
+                    {verification?.verification_status !== 'verified' && (
+                      <div className="pt-4 border-t">
+                        <Button className="w-full" size="lg" onClick={() => navigate("/verification")}>
+                          <ShieldCheck className="h-4 w-4 mr-2" />
+                          {verification ? 'Complete Verification' : 'Start Verification'}
+                        </Button>
+                        <p className="text-xs text-center text-muted-foreground mt-2">
+                          Verified profiles get more bookings and higher trust scores
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
