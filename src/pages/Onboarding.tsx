@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Briefcase, ClipboardCheck, Users } from "lucide-react";
+import { Loader2, Briefcase, ClipboardCheck, Users, Sparkles, MapPin, FileText, DollarSign, ArrowRight, ArrowLeft } from "lucide-react";
 import { z } from "zod";
+import { OnboardingProgress } from "@/components/OnboardingProgress";
+import { WelcomeDialog } from "@/components/WelcomeDialog";
+import { SEOHead } from "@/components/SEOHead";
 
 const onboardingSchema = z.object({
   city: z.string().trim().min(2, "City is required").max(100),
@@ -19,11 +21,19 @@ const onboardingSchema = z.object({
   hourlyRate: z.string().optional(),
 });
 
+const onboardingSteps = [
+  { title: "Role", description: "Choose how you'll use SaskTask" },
+  { title: "Profile", description: "Tell us about yourself" },
+  { title: "Complete", description: "You're ready to go!" },
+];
+
 const Onboarding = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [userName, setUserName] = useState("");
   const [roleSelection, setRoleSelection] = useState<string[]>([]);
+  const [showWelcome, setShowWelcome] = useState(false);
   
   // Form data
   const [city, setCity] = useState("");
@@ -47,6 +57,12 @@ const Onboarding = () => {
     }
 
     setUser(session.user);
+    
+    // Get user name from metadata
+    const fullName = session.user.user_metadata?.full_name || 
+                     session.user.user_metadata?.first_name || 
+                     "";
+    setUserName(fullName.split(" ")[0]);
 
     // Check if profile is already complete
     const { data: profile } = await supabase
@@ -146,12 +162,9 @@ const Onboarding = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Profile Complete! 🎉",
-        description: "Welcome to SaskTask! Let's get started.",
-      });
-
-      navigate("/dashboard");
+      // Show welcome dialog before navigating
+      setStep(3);
+      setShowWelcome(true);
     } catch (error: any) {
       console.error("Error completing onboarding:", error);
       toast({
@@ -164,131 +177,162 @@ const Onboarding = () => {
     }
   };
 
+  const handleWelcomeClose = () => {
+    setShowWelcome(false);
+    toast({
+      title: "Profile Complete! 🎉",
+      description: "Welcome to SaskTask! Let's get started.",
+    });
+    navigate("/dashboard");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center p-4">
+      <SEOHead 
+        title="Complete Your Profile - SaskTask"
+        description="Set up your SaskTask profile and start connecting with your community"
+        url="/onboarding"
+      />
+      
+      <WelcomeDialog 
+        open={showWelcome} 
+        onClose={handleWelcomeClose}
+        userName={userName}
+      />
+      
       <div className="max-w-2xl w-full">
-        <div className="text-center mb-8 animate-fade-in">
-          <h1 className="text-4xl font-bold mb-2 text-gradient">Welcome to SaskTask!</h1>
-          <p className="text-muted-foreground">Let's set up your profile</p>
+        {/* Header with animated icon */}
+        <div className="text-center mb-6 animate-fade-in">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary mb-4">
+            <Sparkles className="w-8 h-8 text-primary-foreground" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+            {step === 1 ? `Welcome${userName ? `, ${userName}` : ""}!` : "Almost There!"}
+          </h1>
+          <p className="text-muted-foreground">
+            {step === 1 ? "Let's set up your profile in just 2 steps" : "Complete your profile to get started"}
+          </p>
         </div>
 
+        {/* Progress indicator */}
+        <OnboardingProgress 
+          currentStep={step} 
+          totalSteps={onboardingSteps.length - 1}
+          steps={onboardingSteps}
+        />
+
         {step === 1 && (
-          <Card className="shadow-2xl border-border glass">
-            <CardHeader>
-              <CardTitle className="text-2xl">Choose Your Role</CardTitle>
+          <Card className="shadow-2xl border-border/50 bg-card/80 backdrop-blur-sm animate-fade-in">
+            <CardHeader className="text-center pb-2">
+              <CardTitle className="text-2xl">How will you use SaskTask?</CardTitle>
               <CardDescription>
-                Are you primarily a Task Giver, Task Doer, or Both?
+                Select one or more roles that fit your needs
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <Card 
-                  className={`cursor-pointer transition-all ${
+            <CardContent className="space-y-4 pt-4">
+              {/* Task Giver Card */}
+              <div 
+                className={`relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 ${
+                  roleSelection.includes("task_giver") 
+                    ? "ring-2 ring-primary shadow-lg shadow-primary/20" 
+                    : "hover:shadow-md border border-border"
+                }`}
+                onClick={() => handleRoleToggle("task_giver")}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 transition-opacity ${
+                  roleSelection.includes("task_giver") ? "opacity-100" : "opacity-0"
+                }`} />
+                <div className="relative p-5 flex items-center gap-4">
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all ${
                     roleSelection.includes("task_giver") 
-                      ? "border-primary bg-primary/5 ring-2 ring-primary" 
-                      : "border-border hover:border-primary/50"
-                  }`}
-                  onClick={() => handleRoleToggle("task_giver")}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <Checkbox 
-                        checked={roleSelection.includes("task_giver")}
-                        onCheckedChange={() => handleRoleToggle("task_giver")}
-                        className="mt-1"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Briefcase className="h-6 w-6 text-primary" />
-                          </div>
-                          <h3 className="text-xl font-semibold">Task Giver</h3>
-                        </div>
-                        <p className="text-muted-foreground">
-                          Post tasks and get help from skilled taskers in your area
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-primary/10 text-primary"
+                  }`}>
+                    <Briefcase className="h-7 w-7" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold">Task Giver</h3>
+                    <p className="text-sm text-muted-foreground">Post tasks and hire local help</p>
+                  </div>
+                  <Checkbox 
+                    checked={roleSelection.includes("task_giver")}
+                    className="h-5 w-5"
+                  />
+                </div>
+              </div>
 
-                <Card 
-                  className={`cursor-pointer transition-all ${
+              {/* Task Doer Card */}
+              <div 
+                className={`relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 ${
+                  roleSelection.includes("task_doer") 
+                    ? "ring-2 ring-secondary shadow-lg shadow-secondary/20" 
+                    : "hover:shadow-md border border-border"
+                }`}
+                onClick={() => handleRoleToggle("task_doer")}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-r from-secondary/10 to-secondary/5 transition-opacity ${
+                  roleSelection.includes("task_doer") ? "opacity-100" : "opacity-0"
+                }`} />
+                <div className="relative p-5 flex items-center gap-4">
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all ${
                     roleSelection.includes("task_doer") 
-                      ? "border-secondary bg-secondary/5 ring-2 ring-secondary" 
-                      : "border-border hover:border-secondary/50"
-                  }`}
-                  onClick={() => handleRoleToggle("task_doer")}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <Checkbox 
-                        checked={roleSelection.includes("task_doer")}
-                        onCheckedChange={() => handleRoleToggle("task_doer")}
-                        className="mt-1"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="h-12 w-12 rounded-full bg-secondary/10 flex items-center justify-center">
-                            <ClipboardCheck className="h-6 w-6 text-secondary" />
-                          </div>
-                          <h3 className="text-xl font-semibold">Task Doer</h3>
-                        </div>
-                        <p className="text-muted-foreground">
-                          Earn money by completing tasks and building your reputation
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      ? "bg-secondary text-secondary-foreground" 
+                      : "bg-secondary/10 text-secondary"
+                  }`}>
+                    <ClipboardCheck className="h-7 w-7" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold">Task Doer</h3>
+                    <p className="text-sm text-muted-foreground">Earn money completing tasks</p>
+                  </div>
+                  <Checkbox 
+                    checked={roleSelection.includes("task_doer")}
+                    className="h-5 w-5"
+                  />
+                </div>
+              </div>
 
-                <Card 
-                  className={`cursor-pointer transition-all ${
+              {/* Both Card */}
+              <div 
+                className={`relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 ${
+                  roleSelection.includes("task_giver") && roleSelection.includes("task_doer")
+                    ? "ring-2 ring-accent shadow-lg shadow-accent/20" 
+                    : "hover:shadow-md border border-border"
+                }`}
+                onClick={() => {
+                  if (roleSelection.includes("task_giver") && roleSelection.includes("task_doer")) {
+                    setRoleSelection([]);
+                  } else {
+                    setRoleSelection(["task_giver", "task_doer"]);
+                  }
+                }}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-r from-accent/10 to-accent/5 transition-opacity ${
+                  roleSelection.includes("task_giver") && roleSelection.includes("task_doer") ? "opacity-100" : "opacity-0"
+                }`} />
+                <div className="relative p-5 flex items-center gap-4">
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all ${
                     roleSelection.includes("task_giver") && roleSelection.includes("task_doer")
-                      ? "border-accent bg-accent/5 ring-2 ring-accent" 
-                      : "border-border hover:border-accent/50"
-                  }`}
-                  onClick={() => {
-                    if (roleSelection.includes("task_giver") && roleSelection.includes("task_doer")) {
-                      setRoleSelection([]);
-                    } else {
-                      setRoleSelection(["task_giver", "task_doer"]);
-                    }
-                  }}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <Checkbox 
-                        checked={roleSelection.includes("task_giver") && roleSelection.includes("task_doer")}
-                        onCheckedChange={() => {
-                          if (roleSelection.includes("task_giver") && roleSelection.includes("task_doer")) {
-                            setRoleSelection([]);
-                          } else {
-                            setRoleSelection(["task_giver", "task_doer"]);
-                          }
-                        }}
-                        className="mt-1"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
-                            <Users className="h-6 w-6 text-accent" />
-                          </div>
-                          <h3 className="text-xl font-semibold">Both</h3>
-                        </div>
-                        <p className="text-muted-foreground">
-                          Post tasks when you need help and complete tasks to earn money
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      ? "bg-accent text-accent-foreground" 
+                      : "bg-accent/10 text-accent"
+                  }`}>
+                    <Users className="h-7 w-7" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold">Both</h3>
+                    <p className="text-sm text-muted-foreground">Do it all - post and complete tasks</p>
+                  </div>
+                  <Checkbox 
+                    checked={roleSelection.includes("task_giver") && roleSelection.includes("task_doer")}
+                    className="h-5 w-5"
+                  />
+                </div>
               </div>
 
               <Button 
                 onClick={handleStep1Submit}
                 disabled={loading || roleSelection.length === 0}
-                className="w-full"
+                className="w-full mt-6 group"
                 variant="hero"
                 size="lg"
               >
@@ -298,7 +342,10 @@ const Onboarding = () => {
                     Saving...
                   </>
                 ) : (
-                  "Continue"
+                  <>
+                    Continue
+                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </>
                 )}
               </Button>
             </CardContent>
@@ -306,60 +353,80 @@ const Onboarding = () => {
         )}
 
         {step === 2 && (
-          <Card className="shadow-2xl border-border glass">
-            <CardHeader>
-              <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
+          <Card className="shadow-2xl border-border/50 bg-card/80 backdrop-blur-sm animate-fade-in">
+            <CardHeader className="text-center pb-2">
+              <CardTitle className="text-2xl">Tell us about yourself</CardTitle>
               <CardDescription>
-                Tell us a bit about yourself
+                This helps others find and connect with you
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleStep2Submit} className="space-y-6">
+            <CardContent className="pt-4">
+              <form onSubmit={handleStep2Submit} className="space-y-5">
+                {/* Location Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="city">City / Location *</Label>
+                  <Label htmlFor="city" className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    City / Location *
+                  </Label>
                   <Input
                     id="city"
                     placeholder="e.g., Saskatoon, SK"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     required
+                    className="h-12"
                   />
                 </div>
 
+                {/* Bio Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="bio">Short Bio *</Label>
+                  <Label htmlFor="bio" className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    Short Bio *
+                  </Label>
                   <Textarea
                     id="bio"
-                    placeholder="Tell us about yourself... (min 10 characters)"
+                    placeholder="Tell us about yourself, your experience, and what makes you great at what you do..."
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     required
                     minLength={10}
                     maxLength={500}
                     rows={4}
+                    className="resize-none"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    {bio.length}/500 characters
-                  </p>
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Min 10 characters</span>
+                    <span className={bio.length >= 10 ? "text-green-500" : ""}>{bio.length}/500</span>
+                  </div>
                 </div>
 
                 {roleSelection.includes("task_doer") && (
-                  <>
+                  <div className="space-y-5 p-4 rounded-xl bg-secondary/5 border border-secondary/20">
+                    <h4 className="font-medium text-secondary flex items-center gap-2">
+                      <ClipboardCheck className="h-4 w-4" />
+                      Task Doer Details
+                    </h4>
+                    
                     <div className="space-y-2">
-                      <Label htmlFor="skills">Your Skills (comma-separated)</Label>
+                      <Label htmlFor="skills">Your Skills</Label>
                       <Input
                         id="skills"
-                        placeholder="e.g., Plumbing, Electrical, Moving"
+                        placeholder="e.g., Plumbing, Electrical, Moving, Cleaning"
                         value={skills}
                         onChange={(e) => setSkills(e.target.value)}
+                        className="h-12"
                       />
                       <p className="text-xs text-muted-foreground">
-                        List your skills to help clients find you
+                        Separate skills with commas
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="hourlyRate">Hourly Rate (CAD)</Label>
+                      <Label htmlFor="hourlyRate" className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        Hourly Rate (CAD)
+                      </Label>
                       <Input
                         id="hourlyRate"
                         type="number"
@@ -368,27 +435,27 @@ const Onboarding = () => {
                         onChange={(e) => setHourlyRate(e.target.value)}
                         min="0"
                         step="0.01"
+                        className="h-12"
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Set your default hourly rate
-                      </p>
                     </div>
-                  </>
+                  </div>
                 )}
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 pt-2">
                   <Button 
                     type="button"
                     variant="outline"
                     onClick={() => setStep(1)}
                     disabled={loading}
+                    className="gap-2"
                   >
+                    <ArrowLeft className="h-4 w-4" />
                     Back
                   </Button>
                   <Button 
                     type="submit"
-                    disabled={loading}
-                    className="flex-1"
+                    disabled={loading || bio.length < 10 || !city.trim()}
+                    className="flex-1 group"
                     variant="hero"
                     size="lg"
                   >
@@ -398,7 +465,10 @@ const Onboarding = () => {
                         Completing...
                       </>
                     ) : (
-                      "Complete Profile"
+                      <>
+                        Complete Profile
+                        <Sparkles className="ml-2 h-4 w-4 group-hover:rotate-12 transition-transform" />
+                      </>
                     )}
                   </Button>
                 </div>
