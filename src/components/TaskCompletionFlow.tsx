@@ -5,14 +5,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, AlertCircle, Shield, Clock, DollarSign } from "lucide-react";
+import { CheckCircle, AlertCircle, Shield, Clock, DollarSign, Heart } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TipDialog } from "@/components/TipDialog";
 
 interface TaskCompletionFlowProps {
   bookingId: string;
   taskId: string;
+  taskTitle?: string;
   currentUserId: string;
   taskDoerId: string;
+  taskDoerName?: string;
+  taskDoerAvatar?: string;
   taskGiverId: string;
   bookingStatus: string;
   taskStatus: string;
@@ -23,8 +27,11 @@ interface TaskCompletionFlowProps {
 export const TaskCompletionFlow = ({
   bookingId,
   taskId,
+  taskTitle = "Task",
   currentUserId,
   taskDoerId,
+  taskDoerName = "Tasker",
+  taskDoerAvatar,
   taskGiverId,
   bookingStatus,
   taskStatus,
@@ -35,6 +42,9 @@ export const TaskCompletionFlow = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [completionNotes, setCompletionNotes] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<any>(null);
+  const [showTipDialog, setShowTipDialog] = useState(false);
+  const [tipAdded, setTipAdded] = useState(false);
+  const [tipAmount, setTipAmount] = useState(0);
   
   const isTaskDoer = currentUserId === taskDoerId;
   const isTaskGiver = currentUserId === taskGiverId;
@@ -151,42 +161,91 @@ export const TaskCompletionFlow = ({
     }
   };
 
+  const handleTipComplete = (amount: number) => {
+    setTipAmount(amount);
+    setTipAdded(true);
+  };
+
   // If task is already fully completed
   if (taskStatus === "completed" && paymentStatus?.escrow_status === "released") {
     return (
-      <Card className="border-green-500 bg-green-50/50 dark:bg-green-950/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-green-600 dark:text-green-400">
-            <CheckCircle className="h-6 w-6" />
-            Task Completed & Payment Released
-          </CardTitle>
-          <CardDescription>
-            This task has been successfully completed and payment has been released.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="p-4 bg-white/50 dark:bg-gray-900/50 rounded-lg border border-green-200 dark:border-green-800">
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Task Amount:</span>
-                <span className="font-semibold">${paymentAmount.toFixed(2)}</span>
+      <>
+        <Card className="border-green-500 bg-green-50/50 dark:bg-green-950/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-600 dark:text-green-400">
+              <CheckCircle className="h-6 w-6" />
+              Task Completed & Payment Released
+            </CardTitle>
+            <CardDescription>
+              This task has been successfully completed and payment has been released.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="p-4 bg-white/50 dark:bg-gray-900/50 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Task Amount:</span>
+                  <span className="font-semibold">${paymentAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Platform Fee (15%):</span>
+                  <span className="text-red-600">-${platformFee}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Tax (5% GST):</span>
+                  <span className="text-red-600">-${tax}</span>
+                </div>
+                {tipAdded && tipAmount > 0 && (
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <Heart className="h-3 w-3 text-pink-500" />
+                      Tip Added:
+                    </span>
+                    <span className="text-pink-500 font-semibold">+${tipAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-2 border-t border-green-200 dark:border-green-800">
+                  <span className="font-bold">Tasker Received:</span>
+                  <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                    ${(parseFloat(taskerPayout) + tipAmount).toFixed(2)}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Platform Fee (15%):</span>
-                <span className="text-red-600">-${platformFee}</span>
-              </div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Tax (5% GST):</span>
-                <span className="text-red-600">-${tax}</span>
-              </div>
-              <div className="flex justify-between pt-2 border-t border-green-200 dark:border-green-800">
-                <span className="font-bold">Tasker Received:</span>
-                <span className="text-lg font-bold text-green-600 dark:text-green-400">${taskerPayout}</span>
-              </div>
+
+              {/* Add Tip Button - Only for Task Giver */}
+              {isTaskGiver && !tipAdded && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowTipDialog(true)}
+                  className="w-full gap-2 border-pink-200 text-pink-600 hover:bg-pink-50 hover:text-pink-700 dark:border-pink-800 dark:hover:bg-pink-950"
+                >
+                  <Heart className="h-4 w-4" />
+                  Add a Tip
+                </Button>
+              )}
+
+              {tipAdded && (
+                <div className="text-center text-sm text-pink-600 dark:text-pink-400 flex items-center justify-center gap-1">
+                  <Heart className="h-4 w-4 fill-pink-500" />
+                  Thank you for your generosity!
+                </div>
+              )}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <TipDialog
+          open={showTipDialog}
+          onOpenChange={setShowTipDialog}
+          taskTitle={taskTitle}
+          taskerName={taskDoerName}
+          taskerAvatar={taskDoerAvatar}
+          taskAmount={paymentAmount}
+          bookingId={bookingId}
+          paymentId={paymentStatus?.id}
+          onTipComplete={handleTipComplete}
+        />
+      </>
     );
   }
 
