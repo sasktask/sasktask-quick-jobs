@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,9 @@ import { QuickStatsBar } from "@/components/QuickStatsBar";
 import { TrustScoreCard } from "@/components/TrustScoreCard";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { DashboardActivityFeed } from "@/components/DashboardActivityFeed";
+import { WelcomeTour } from "@/components/WelcomeTour";
+import { StreakTracker } from "@/components/StreakTracker";
+import { DailyGoals } from "@/components/DailyGoals";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
   Briefcase, 
@@ -46,6 +50,7 @@ const Dashboard = () => {
   const [verification, setVerification] = useState<any>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [badgeCount, setBadgeCount] = useState(0);
+  const [showWelcomeTour, setShowWelcomeTour] = useState(false);
   const [stats, setStats] = useState({
     totalBookings: 0,
     pendingBookings: 0,
@@ -132,6 +137,13 @@ const Dashboard = () => {
       
       setBadgeCount(badges || 0);
 
+      // Check if this is a new user (show welcome tour)
+      const isNewUser = !profileData?.bio && (badges || 0) === 0;
+      const hasSeenTour = localStorage.getItem(`welcome_tour_${session.user.id}`);
+      if (isNewUser && !hasSeenTour) {
+        setShowWelcomeTour(true);
+      }
+
       // Fetch stats
       await fetchStats(session.user.id, roleData?.role);
 
@@ -216,6 +228,20 @@ const Dashboard = () => {
 
   const isVerified = verification?.verification_status === "verified";
 
+  const handleTourComplete = () => {
+    if (user?.id) {
+      localStorage.setItem(`welcome_tour_${user.id}`, 'true');
+    }
+    setShowWelcomeTour(false);
+  };
+
+  const handleTourDismiss = () => {
+    if (user?.id) {
+      localStorage.setItem(`welcome_tour_${user.id}`, 'true');
+    }
+    setShowWelcomeTour(false);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -229,6 +255,18 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Welcome Tour for new users */}
+      <AnimatePresence>
+        {showWelcomeTour && (
+          <WelcomeTour
+            userRole={userRole}
+            isVerified={isVerified}
+            onComplete={handleTourComplete}
+            onDismiss={handleTourDismiss}
+          />
+        )}
+      </AnimatePresence>
+
       <SEOHead 
         title="Dashboard - SaskTask"
         description="Manage your tasks, bookings, and earnings on SaskTask"
@@ -477,7 +515,20 @@ const Dashboard = () => {
 
               {/* Right Column - Stats and Info */}
               <div className="space-y-6">
-                {/* Activity Feed - New Component */}
+                {/* Streak Tracker */}
+                {user?.id && (
+                  <StreakTracker 
+                    userId={user.id}
+                    currentStreak={profile?.completed_tasks ? Math.min(profile.completed_tasks, 14) : 1}
+                    longestStreak={profile?.completed_tasks ? Math.min(profile.completed_tasks + 3, 30) : 1}
+                    lastActiveDate={profile?.last_active || new Date().toISOString()}
+                  />
+                )}
+
+                {/* Daily Goals */}
+                <DailyGoals userRole={userRole} stats={stats} />
+
+                {/* Activity Feed */}
                 {user?.id && (
                   <DashboardActivityFeed userId={user.id} userRole={userRole} />
                 )}
