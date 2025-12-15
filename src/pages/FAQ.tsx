@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { SEOHead } from "@/components/SEOHead";
+import { SEOHead, FAQPageSchema, BreadcrumbSchema } from "@/components/SEOHead";
 import {
   Accordion,
   AccordionContent,
@@ -124,13 +124,22 @@ export default function FAQ() {
     }
   ];
 
+  // Flatten all FAQs for structured data
+  const allFaqs = faqCategories.flatMap(cat => cat.faqs);
+
   return (
     <>
       <SEOHead
-        title="FAQ - Frequently Asked Questions | SaskTask"
+        title="FAQ - Frequently Asked Questions"
         description="Find answers to common questions about SaskTask, Saskatchewan's local task marketplace. Learn about payments, safety, verification, and how the platform works."
         url="/faq"
+        keywords={["FAQ", "help", "questions", "SaskTask support", "how it works"]}
       />
+      <FAQPageSchema faqs={allFaqs} />
+      <BreadcrumbSchema items={[
+        { name: "Home", url: "https://sasktask.com" },
+        { name: "FAQ", url: "https://sasktask.com/faq" }
+      ]} />
       
       <div className="min-h-screen flex flex-col bg-gradient-surface">
         <Navbar />
