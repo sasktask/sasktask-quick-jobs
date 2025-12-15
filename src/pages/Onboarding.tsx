@@ -13,6 +13,7 @@ import { z } from "zod";
 import { OnboardingProgress } from "@/components/OnboardingProgress";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { SEOHead } from "@/components/SEOHead";
+import { TermsAcceptanceDialog } from "@/components/TermsAcceptanceDialog";
 
 const onboardingSchema = z.object({
   city: z.string().trim().min(2, "City is required").max(100),
@@ -22,18 +23,21 @@ const onboardingSchema = z.object({
 });
 
 const onboardingSteps = [
+  { title: "Terms", description: "Accept terms and conditions" },
   { title: "Role", description: "Choose how you'll use SaskTask" },
   { title: "Profile", description: "Tell us about yourself" },
   { title: "Complete", description: "You're ready to go!" },
 ];
 
 const Onboarding = () => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // Start at 0 for terms acceptance
   const [loading, setLoading] = useState(false);
+  const [checkingTerms, setCheckingTerms] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [userName, setUserName] = useState("");
   const [roleSelection, setRoleSelection] = useState<string[]>([]);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [showTermsDialog, setShowTermsDialog] = useState(false);
   
   // Form data
   const [city, setCity] = useState("");
@@ -73,7 +77,30 @@ const Onboarding = () => {
 
     if (profile?.profile_completion >= 80) {
       navigate("/dashboard");
+      return;
     }
+
+    // Check if terms have been accepted
+    const { data: verification } = await supabase
+      .from("verifications")
+      .select("terms_accepted, privacy_accepted, age_verified")
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (verification?.terms_accepted && verification?.privacy_accepted && verification?.age_verified) {
+      // Terms already accepted, go to role selection
+      setStep(1);
+    } else {
+      // Show terms dialog
+      setShowTermsDialog(true);
+    }
+    
+    setCheckingTerms(false);
+  };
+
+  const handleTermsAccepted = () => {
+    setShowTermsDialog(false);
+    setStep(1);
   };
 
   const handleRoleToggle = (role: string) => {
@@ -163,7 +190,7 @@ const Onboarding = () => {
       if (error) throw error;
 
       // Show welcome dialog before navigating
-      setStep(3);
+      setStep(4);
       setShowWelcome(true);
     } catch (error: any) {
       console.error("Error completing onboarding:", error);
@@ -186,12 +213,30 @@ const Onboarding = () => {
     navigate("/dashboard");
   };
 
+  if (checkingTerms) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center p-4">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center p-4">
       <SEOHead 
         title="Complete Your Profile - SaskTask"
         description="Set up your SaskTask profile and start connecting with your community"
         url="/onboarding"
+      />
+
+      {/* Terms Acceptance Dialog */}
+      <TermsAcceptanceDialog
+        open={showTermsDialog}
+        onAccepted={handleTermsAccepted}
+        userRole={roleSelection.includes("task_doer") ? "task_doer" : roleSelection.includes("task_giver") ? "task_giver" : "both"}
       />
       
       <WelcomeDialog 
