@@ -131,36 +131,36 @@ export const HeroSearch = () => {
   };
 
   return (
-    <div ref={searchRef} className="relative w-full max-w-2xl mx-auto">
+    <div ref={searchRef} className="relative w-full max-w-2xl mx-auto lg:mx-0">
       {/* Main Search Bar */}
       <div 
         className={cn(
-          "relative flex items-center bg-background/80 backdrop-blur-xl rounded-2xl border-2 transition-all duration-300 shadow-lg",
+          "relative flex flex-col sm:flex-row items-stretch sm:items-center bg-background/80 backdrop-blur-xl rounded-xl sm:rounded-2xl border-2 transition-all duration-300 shadow-lg",
           isFocused 
             ? "border-primary shadow-xl shadow-primary/20" 
             : "border-border hover:border-primary/50"
         )}
       >
-        <div className="flex items-center gap-2 pl-5 text-muted-foreground">
+        <div className="flex items-center gap-2 pl-4 sm:pl-5 pt-3 sm:pt-0 text-muted-foreground">
           <Search className="h-5 w-5" />
         </div>
         <Input
           type="text"
-          placeholder="Search for tasks, services, or categories..."
+          placeholder="What do you need done?"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          className="flex-1 border-0 bg-transparent text-lg h-14 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+          className="flex-1 border-0 bg-transparent text-base sm:text-lg h-12 sm:h-14 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
         />
         <Button 
           onClick={handleSearch} 
           variant="hero" 
           size="lg" 
-          className="m-1.5 rounded-xl"
+          className="m-2 sm:m-1.5 rounded-xl h-11 sm:h-auto"
         >
-          <Search className="h-5 w-5 mr-2" />
-          Search
+          <Search className="h-5 w-5 sm:mr-2" />
+          <span className="sm:inline">Search</span>
         </Button>
       </div>
 
@@ -226,17 +226,28 @@ export const HeroSearch = () => {
       )}
 
       {/* Popular Searches */}
-      <div className="mt-4 flex flex-wrap items-center gap-2 justify-center">
-        <span className="text-sm text-muted-foreground">Popular:</span>
-        {popularSearches.map((term) => (
+      <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 justify-center lg:justify-start">
+        <span className="text-xs sm:text-sm text-muted-foreground">Popular:</span>
+        {popularSearches.slice(0, 4).map((term) => (
           <button
             key={term}
             onClick={() => handlePopularSearchClick(term)}
-            className="px-3 py-1.5 text-sm bg-muted/50 hover:bg-primary/10 hover:text-primary rounded-full transition-colors border border-transparent hover:border-primary/30"
+            className="px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-muted/50 hover:bg-primary/10 hover:text-primary rounded-full transition-colors border border-transparent hover:border-primary/30 touch-manipulation"
           >
             {term}
           </button>
         ))}
+        <span className="hidden sm:inline-flex gap-2">
+          {popularSearches.slice(4).map((term) => (
+            <button
+              key={term}
+              onClick={() => handlePopularSearchClick(term)}
+              className="px-3 py-1.5 text-sm bg-muted/50 hover:bg-primary/10 hover:text-primary rounded-full transition-colors border border-transparent hover:border-primary/30"
+            >
+              {term}
+            </button>
+          ))}
+        </span>
       </div>
     </div>
   );

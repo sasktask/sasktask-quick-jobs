@@ -4,7 +4,7 @@ import { NewsletterSignup } from "./NewsletterSignup";
 
 export const Footer = () => {
   return (
-    <footer className="bg-card border-t border-border mt-20">
+    <footer className="bg-card border-t border-border mt-20 pb-20 lg:pb-0">
       <div className="container mx-auto px-4 py-12">
         {/* Main Footer Content */}
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">

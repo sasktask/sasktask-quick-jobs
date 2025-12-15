@@ -55,25 +55,25 @@ const Index = () => {
       <UrgencyBanner />
       
       {/* Hero Section */}
-      <section className="pt-16 pb-20 px-4 relative overflow-hidden">
+      <section className="pt-8 sm:pt-16 pb-12 sm:pb-20 px-4 relative overflow-hidden">
         {/* Background with animated gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5 -z-10" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent -z-10" />
         
         <div className="container mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center max-w-6xl mx-auto">
             {/* Left: Text Content */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6 text-center lg:text-left">
               <div 
-                className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm font-medium text-primary animate-fade-in"
+                className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary/10 border border-primary/20 rounded-full text-xs sm:text-sm font-medium text-primary animate-fade-in"
                 style={{ animationDelay: '0.1s' }}
               >
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
                 {user ? "Welcome Back!" : "Saskatchewan's #1 Task Platform"}
               </div>
               
               <h1 
-                className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight animate-fade-up"
+                className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight animate-fade-up"
                 style={{ animationDelay: '0.2s' }}
               >
                 {user ? (
@@ -94,12 +94,12 @@ const Index = () => {
               </h1>
               
               <p 
-                className="text-xl text-muted-foreground leading-relaxed animate-fade-up"
+                className="text-base sm:text-xl text-muted-foreground leading-relaxed animate-fade-up max-w-xl mx-auto lg:mx-0"
                 style={{ animationDelay: '0.3s' }}
               >
                 {user 
-                  ? "Access your professional dashboard to manage tasks, view bookings, track earnings, and connect with clients or find work opportunities."
-                  : "Connect with verified local professionals for any task. From snow removal to home repairs, find trusted help in your Saskatchewan community."
+                  ? "Access your dashboard to manage tasks, bookings, and connect with clients."
+                  : "Connect with verified local professionals for any task. Find trusted help in your Saskatchewan community."
                 }
               </p>
 
@@ -113,92 +113,77 @@ const Index = () => {
               {/* CTA Buttons - For logged in users */}
               {user && (
                 <div 
-                  className="flex flex-col sm:flex-row gap-4 pt-4 animate-fade-up"
+                  className="flex flex-col sm:flex-row gap-3 pt-4 animate-fade-up justify-center lg:justify-start"
                   style={{ animationDelay: '0.4s' }}
                 >
                   <Link to="/dashboard">
-                    <Button size="lg" variant="hero" className="w-full sm:w-auto text-lg h-14 px-8">
-                      <Briefcase className="mr-2 h-5 w-5" />
+                    <Button size="lg" variant="hero" className="w-full sm:w-auto text-base sm:text-lg h-12 sm:h-14 px-6 sm:px-8">
+                      <Briefcase className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                       Go to Dashboard
                     </Button>
                   </Link>
                   <Link to="/browse">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-2">
-                      <Search className="mr-2 h-5 w-5" />
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg h-12 sm:h-14 px-6 sm:px-8 border-2">
+                      <Search className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                       Browse Tasks
-                    </Button>
-                  </Link>
-                  <Link to="/find-taskers">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 border-2">
-                      <Users className="mr-2 h-5 w-5" />
-                      Find Taskers
                     </Button>
                   </Link>
                 </div>
               )}
 
-              {/* Trust Indicators */}
+              {/* Trust Indicators - Simplified for mobile */}
               <div 
-                className="flex flex-wrap gap-6 pt-6 border-t border-border animate-fade-up"
+                className="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 pt-4 sm:pt-6 border-t border-border animate-fade-up"
                 style={{ animationDelay: '0.5s' }}
               >
                 {user ? (
                   <>
                     <div className="flex items-center gap-2">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Briefcase className="h-5 w-5 text-primary" />
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
-                      <div>
-                        <p className="font-bold text-foreground">Quick Access</p>
-                        <p className="text-sm text-muted-foreground">Dashboard</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <MessageSquare className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-foreground">Messages</p>
-                        <p className="text-sm text-muted-foreground">Stay Connected</p>
+                      <div className="text-left">
+                        <p className="font-bold text-sm sm:text-base text-foreground">Dashboard</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Quick Access</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <TrendingUp className="h-5 w-5 text-primary" />
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
-                      <div>
-                        <p className="font-bold text-foreground">Earnings</p>
-                        <p className="text-sm text-muted-foreground">Track Progress</p>
+                      <div className="text-left">
+                        <p className="font-bold text-sm sm:text-base text-foreground">Messages</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Stay Connected</p>
                       </div>
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="flex items-center gap-2">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Shield className="h-5 w-5 text-primary" />
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
-                      <div>
-                        <p className="font-bold text-foreground">Verified</p>
-                        <p className="text-sm text-muted-foreground">Taskers</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Lock className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-foreground">Secure</p>
-                        <p className="text-sm text-muted-foreground">Payments</p>
+                      <div className="text-left">
+                        <p className="font-bold text-sm sm:text-base text-foreground">Verified</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Taskers</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Star className="h-5 w-5 text-primary fill-primary" />
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
-                      <div>
-                        <p className="font-bold text-foreground">Top Rated</p>
-                        <p className="text-sm text-muted-foreground">Service</p>
+                      <div className="text-left">
+                        <p className="font-bold text-sm sm:text-base text-foreground">Secure</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Payments</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Star className="h-4 w-4 sm:h-5 sm:w-5 text-primary fill-primary" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-bold text-sm sm:text-base text-foreground">Top Rated</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Service</p>
                       </div>
                     </div>
                   </>
@@ -206,69 +191,70 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Right: Infographic with Dynamic Stats */}
-            <div className="relative animate-scale-in" style={{ animationDelay: '0.3s' }}>
+            {/* Right: Infographic with Dynamic Stats - Hidden on small mobile */}
+            <div className="relative animate-scale-in hidden sm:block" style={{ animationDelay: '0.3s' }}>
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl blur-3xl -z-10" />
-              <div className="relative bg-card/50 backdrop-blur-sm rounded-3xl p-4 border border-border shadow-2xl hover-lift">
+              <div className="relative bg-card/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-border shadow-2xl hover-lift">
                 <img 
                   src={heroInfographic} 
                   alt="SaskTask workflow: Post task, connect with verified professionals, get it done" 
-                  className="w-full h-auto rounded-2xl"
+                  className="w-full h-auto rounded-xl sm:rounded-2xl"
+                  loading="lazy"
                 />
               </div>
 
-              {/* Floating stats cards with real data */}
-              <div className="absolute -bottom-4 -left-4 bg-card border border-border rounded-2xl p-4 shadow-xl animate-float">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Users className="h-6 w-6 text-primary" />
+              {/* Floating stats cards with real data - Adjusted for responsiveness */}
+              <div className="absolute -bottom-2 sm:-bottom-4 -left-2 sm:-left-4 bg-card border border-border rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-xl animate-float">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
                   <div>
                     {stats.isLoading ? (
                       <>
-                        <Skeleton className="h-7 w-16 mb-1" />
-                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-6 sm:h-7 w-14 sm:w-16 mb-1" />
+                        <Skeleton className="h-3 sm:h-4 w-16 sm:w-20" />
                       </>
                     ) : (
                       <>
-                        <p className="text-2xl font-bold text-foreground">
+                        <p className="text-xl sm:text-2xl font-bold text-foreground">
                           <StatsCounter end={stats.totalUsers} suffix="+" />
                         </p>
-                        <p className="text-sm text-muted-foreground">Active Users</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Active Users</p>
                       </>
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="absolute -top-4 -right-4 bg-card border border-border rounded-2xl p-4 shadow-xl animate-float" style={{animationDelay: '0.5s'}}>
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <CheckCircle2 className="h-6 w-6 text-primary" />
+              <div className="absolute -top-2 sm:-top-4 -right-2 sm:-right-4 bg-card border border-border rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-xl animate-float" style={{animationDelay: '0.5s'}}>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
                   <div>
                     {stats.isLoading ? (
                       <>
-                        <Skeleton className="h-7 w-16 mb-1" />
-                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-6 sm:h-7 w-14 sm:w-16 mb-1" />
+                        <Skeleton className="h-3 sm:h-4 w-20 sm:w-24" />
                       </>
                     ) : (
                       <>
-                        <p className="text-2xl font-bold text-foreground">
+                        <p className="text-xl sm:text-2xl font-bold text-foreground">
                           <StatsCounter end={stats.totalTasksCompleted} suffix="+" />
                         </p>
-                        <p className="text-sm text-muted-foreground">Tasks Completed</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Tasks Done</p>
                       </>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* New floating card for average rating */}
-              <div className="absolute top-1/2 -right-6 bg-card border border-border rounded-2xl p-3 shadow-xl animate-float hidden lg:block" style={{animationDelay: '1s'}}>
+              {/* Rating card - Hidden on smaller screens */}
+              <div className="absolute top-1/2 -right-4 sm:-right-6 bg-card border border-border rounded-xl sm:rounded-2xl p-2 sm:p-3 shadow-xl animate-float hidden lg:block" style={{animationDelay: '1s'}}>
                 <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                  <span className="font-bold text-foreground">{stats.averageRating}</span>
+                  <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 fill-yellow-500" />
+                  <span className="font-bold text-sm sm:text-base text-foreground">{stats.averageRating}</span>
                 </div>
               </div>
             </div>
