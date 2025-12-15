@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useTheme } from "next-themes";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount";
-import { NotificationBell } from "./NotificationBell";
+import { NotificationCenter } from "./NotificationCenter";
 import { MobileMenu } from "./MobileMenu";
 import { OWNER_USER_ID } from "@/lib/constants";
 
@@ -195,7 +195,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
 
             {/* Right side icons */}
             <div className="flex items-center gap-1">
-              {user && <NotificationBell userId={user.id} />}
+              {user && <NotificationCenter userId={user.id} />}
               
               {/* Theme Toggle */}
               <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="rounded-full">
