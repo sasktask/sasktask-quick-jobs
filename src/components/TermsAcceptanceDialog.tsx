@@ -27,7 +27,7 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
   const allAccepted = termsAccepted && privacyAccepted && ageVerified && conductAccepted && liabilityAccepted;
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLDivElement;
+    const target = e.currentTarget;
     const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
     if (isAtBottom) {
       setHasScrolledToBottom(true);
@@ -102,30 +102,30 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-3xl max-h-[90vh] p-0" onPointerDownOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="p-6 pb-0">
+      <DialogContent className="max-w-3xl max-h-[90vh] p-0 overflow-hidden" onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogHeader className="p-6 pb-0 flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-2xl">
-            <FileText className="w-6 h-6 text-primary" />
-            Terms of Service Agreement
+            <FileText className="w-6 h-6 text-primary flex-shrink-0" />
+            <span className="break-words">Terms of Service Agreement</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="break-words">
             Please read and accept the following terms to continue using SaskTask
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea 
-          className="h-[400px] px-6" 
-          onScrollCapture={handleScroll}
+        <div 
+          className="h-[350px] overflow-y-auto px-6 scroll-smooth" 
+          onScroll={handleScroll}
           ref={scrollRef}
         >
-          <div className="space-y-6 py-4">
+          <div className="space-y-6 py-4 pr-2">
             {/* Introduction */}
             <section>
               <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
-                <Scale className="w-5 h-5 text-primary" />
-                Legal Agreement
+                <Scale className="w-5 h-5 text-primary flex-shrink-0" />
+                <span>Legal Agreement</span>
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground break-words">
                 This is a legally binding agreement between you and SaskTask. By accepting these terms, you agree to be bound by the Terms of Service, Privacy Policy, and all applicable laws and regulations of Canada, specifically the Province of Saskatchewan.
               </p>
             </section>
@@ -138,23 +138,23 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
               <ul className="text-sm text-muted-foreground space-y-2">
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Eligibility:</strong> You must be at least 18 years old and have legal capacity to enter into contracts.</span>
+                  <span className="break-words"><strong>Eligibility:</strong> You must be at least 18 years old and have legal capacity to enter into contracts.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Account:</strong> You are responsible for maintaining account security and all activities under your account.</span>
+                  <span className="break-words"><strong>Account:</strong> You are responsible for maintaining account security and all activities under your account.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Payments:</strong> All payments are processed through Stripe and held in escrow until task completion.</span>
+                  <span className="break-words"><strong>Payments:</strong> All payments are processed through Stripe and held in escrow until task completion.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Taxes:</strong> You are solely responsible for all applicable taxes on your earnings.</span>
+                  <span className="break-words"><strong>Taxes:</strong> You are solely responsible for all applicable taxes on your earnings.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Disputes:</strong> Disputes are resolved through platform mediation and binding arbitration in Saskatchewan.</span>
+                  <span className="break-words"><strong>Disputes:</strong> Disputes are resolved through platform mediation and binding arbitration in Saskatchewan.</span>
                 </li>
               </ul>
             </section>
@@ -164,14 +164,14 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
             {/* User Conduct */}
             <section>
               <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
-                <Shield className="w-5 h-5 text-primary" />
-                User Conduct Requirements
+                <Shield className="w-5 h-5 text-primary flex-shrink-0" />
+                <span>User Conduct Requirements</span>
               </h3>
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-sm text-muted-foreground mb-2 break-words">
                 As a Task Giver, you agree to: provide accurate task descriptions; pay agreed amounts upon task completion; provide a safe environment for in-person tasks; and treat Task Doers with respect.
               </p>
               {roleSpecificTerms && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground break-words">
                   {roleSpecificTerms}
                 </p>
               )}
@@ -182,10 +182,10 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
             {/* Prohibited Activities */}
             <section>
               <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
-                Prohibited Activities
+                <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                <span>Prohibited Activities</span>
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground break-words">
                 You agree NOT to: post or accept illegal tasks; circumvent the payment system; harass or discriminate against other users; post false or fraudulent information; create multiple accounts; use automated systems to access the platform; or engage in any activity that violates these terms or applicable law.
               </p>
             </section>
@@ -195,7 +195,7 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
             {/* Liability */}
             <section>
               <h3 className="font-semibold text-lg mb-2">Limitation of Liability</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground break-words">
                 SaskTask is a platform connecting Task Givers and Task Doers. We do not employ or control Task Doers, and we do not guarantee the quality, safety, or legality of tasks. The platform is provided "as is" without warranties. To the maximum extent permitted by law, SaskTask shall not be liable for indirect, incidental, special, consequential, or punitive damages.
               </p>
             </section>
@@ -205,7 +205,7 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
             {/* Privacy */}
             <section>
               <h3 className="font-semibold text-lg mb-2">Privacy & Data Protection</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground break-words">
                 We comply with the Personal Information Protection and Electronic Documents Act (PIPEDA) and applicable provincial privacy legislation. Your personal information is collected, used, and protected in accordance with our Privacy Policy. By using the platform, you consent to our data collection and use practices as described in the Privacy Policy.
               </p>
             </section>
@@ -217,7 +217,7 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
               <h3 className="font-semibold text-lg mb-2 text-amber-800 dark:text-amber-200">
                 Arbitration Agreement
               </h3>
-              <p className="text-sm text-amber-700 dark:text-amber-300">
+              <p className="text-sm text-amber-700 dark:text-amber-300 break-words">
                 <strong>IMPORTANT:</strong> By accepting these terms, you agree that any disputes arising from your use of the Platform will be resolved through binding arbitration in accordance with the Arbitration Act of Saskatchewan, rather than in court. You waive your right to participate in class action lawsuits.
               </p>
             </section>
@@ -251,7 +251,7 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
               </p>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         <Separator />
 
