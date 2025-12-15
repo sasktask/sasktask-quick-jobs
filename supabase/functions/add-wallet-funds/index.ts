@@ -7,36 +7,77 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[ADD-WALLET-FUNDS] ${step}${detailsStr}`);
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-  );
-
   try {
-    const authHeader = req.headers.get("Authorization")!;
+    logStep("Function started");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing Supabase configuration");
+    }
+    if (!stripeKey) {
+      throw new Error("Missing Stripe configuration");
+    }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("No authorization header");
+    }
+
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated");
+    logStep("Authenticating user");
 
-    const { amount } = await req.json();
-    if (!amount || amount < 10) throw new Error("Minimum deposit is $10");
+    const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError) {
+      logStep("Auth error", { error: authError.message });
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const user = userData.user;
+    if (!user?.email) {
+      throw new Error("User not authenticated or email not available");
+    }
+    logStep("User authenticated", { userId: user.id, email: user.email });
+
+    const body = await req.json();
+    const amount = body.amount;
+    logStep("Request body", { amount });
+
+    if (!amount || amount < 10) {
+      throw new Error("Minimum deposit is $10");
+    }
+
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2025-08-27.basil",
     });
+    logStep("Stripe initialized");
 
     // Check for existing Stripe customer
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
+    let customerId: string | undefined;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
+      logStep("Found existing customer", { customerId });
+    } else {
+      logStep("No existing customer found");
     }
+
+    const origin = req.headers.get("origin") || "https://sasktask.lovable.app";
+    logStep("Creating checkout session", { origin, amount });
 
     // Create checkout session for wallet deposit
     const session = await stripe.checkout.sessions.create({
@@ -56,8 +97,8 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/payments?wallet_deposit=success&amount=${amount}`,
-      cancel_url: `${req.headers.get("origin")}/payments?wallet_deposit=cancelled`,
+      success_url: `${origin}/payments?wallet_deposit=success&amount=${amount}`,
+      cancel_url: `${origin}/payments?wallet_deposit=cancelled`,
       metadata: {
         user_id: user.id,
         type: "wallet_deposit",
@@ -65,13 +106,16 @@ serve(async (req) => {
       },
     });
 
+    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error("Add wallet funds error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    logStep("ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
