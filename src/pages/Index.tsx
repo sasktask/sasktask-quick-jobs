@@ -5,7 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
-import { SEOHead } from "@/components/SEOHead";
+import { SEOHead, HomePageSchema } from "@/components/SEOHead";
 import { FeaturedCategories } from "@/components/FeaturedCategories";
 import { PopularThisWeek } from "@/components/PopularThisWeek";
 import { SeasonalRecommendations } from "@/components/SeasonalRecommendations";
@@ -21,14 +21,17 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Star, Shield, Clock, DollarSign, Users, Wrench, Briefcase, FileEdit, CheckCircle2, Search, MessageSquare, TrendingUp, Calendar, MapPin, Bell, Award, ShieldCheck, Lock, ArrowRight, Zap } from "lucide-react";
 import heroInfographic from "@/assets/hero-infographic.jpg";
+import { initPerformanceOptimizations } from "@/lib/performance";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const stats = usePlatformStats();
 
-  // Check if user is logged in
+  // Check if user is logged in and init performance
   useEffect(() => {
+    initPerformanceOptimizations();
+    
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
@@ -46,10 +49,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead 
-        title="SaskTask - Find Local Help or Earn Money in Saskatchewan"
+        title="Find Local Help or Earn Money in Saskatchewan"
         description="SaskTask connects you with verified local professionals for any task. From snow removal to home repairs, find trusted help in your Saskatchewan community or earn money completing tasks."
         url="/"
+        keywords={["Saskatchewan tasks", "local help", "handyman", "cleaning services", "gig economy", "earn money", "hire help"]}
       />
+      <HomePageSchema />
       <Navbar />
       
       {/* Urgency Banner */}
