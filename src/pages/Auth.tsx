@@ -36,9 +36,8 @@ const signUpSchema = z.object({
   lastName: z.string().trim().min(2, "Last name must be at least 2 characters").max(50, "Last name is too long"),
   email: emailSchema,
   phone: z.string()
-    .regex(/^\+?[1-9]\d{6,14}$/, "Please enter a valid phone number (e.g., +1234567890)")
-    .optional()
-    .or(z.literal("")),
+    .regex(/^\+?[1-9]\d{6,14}$/, "Phone number is required (e.g., +1234567890)")
+    .min(1, "Phone number is required"),
   password: z.string()
     .min(8, "Password must be at least 8 characters")
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
@@ -205,7 +204,7 @@ const Auth = () => {
         middleName: middleName || undefined,
         lastName,
         email,
-        phone: phone || undefined,
+        phone,
         password,
         role,
         termsAccepted,
@@ -227,6 +226,11 @@ const Auth = () => {
         .filter(Boolean)
         .join(' ');
 
+      // Determine which roles to assign - if "both", we'll use task_giver as primary
+      // and handle both roles in the onboarding flow
+      const primaryRole = validation.data.role === "both" ? "task_giver" : validation.data.role;
+      const wantsBothRoles = validation.data.role === "both";
+
       const { data, error } = await supabase.auth.signUp({
         email: validation.data.email,
         password: validation.data.password,
@@ -236,8 +240,9 @@ const Auth = () => {
             first_name: validation.data.firstName,
             middle_name: validation.data.middleName || null,
             last_name: validation.data.lastName,
-            phone: validation.data.phone || null,
-            role: validation.data.role,
+            phone: validation.data.phone,
+            role: primaryRole,
+            wants_both_roles: wantsBothRoles,
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
