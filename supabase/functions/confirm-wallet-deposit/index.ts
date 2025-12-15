@@ -8,30 +8,55 @@ const corsHeaders = {
 
 const MINIMUM_BALANCE = 50;
 
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[CONFIRM-WALLET-DEPOSIT] ${step}${detailsStr}`);
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
-
   try {
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    
-    const anonClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
-    const { data: userData } = await anonClient.auth.getUser(token);
-    const user = userData.user;
-    if (!user) throw new Error("User not authenticated");
+    logStep("Function started");
 
-    const { amount } = await req.json();
-    if (!amount) throw new Error("Amount is required");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Missing Supabase configuration");
+    }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("No authorization header");
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    logStep("Authenticating user");
+
+    const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError) {
+      logStep("Auth error", { error: authError.message });
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+
+    const user = userData.user;
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+    logStep("User authenticated", { userId: user.id });
+
+    const body = await req.json();
+    const amount = body.amount;
+    logStep("Request body", { amount });
+
+    if (!amount || amount <= 0) {
+      throw new Error("Invalid amount");
+    }
 
     // Get current wallet balance
     const { data: profile, error: profileError } = await supabaseClient
@@ -40,10 +65,14 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      logStep("Profile fetch error", { error: profileError.message });
+      throw new Error(`Failed to fetch profile: ${profileError.message}`);
+    }
 
     const currentBalance = profile?.wallet_balance || 0;
     const newBalance = currentBalance + amount;
+    logStep("Balance calculation", { currentBalance, amount, newBalance });
 
     // Update wallet balance
     const { error: updateError } = await supabaseClient
@@ -54,16 +83,27 @@ serve(async (req) => {
       })
       .eq("id", user.id);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      logStep("Update error", { error: updateError.message });
+      throw new Error(`Failed to update balance: ${updateError.message}`);
+    }
+    logStep("Balance updated successfully");
 
     // Record transaction
-    await supabaseClient.from("wallet_transactions").insert({
+    const { error: txnError } = await supabaseClient.from("wallet_transactions").insert({
       user_id: user.id,
       amount: amount,
       transaction_type: "deposit",
-      description: `Wallet deposit of $${amount}`,
+      description: `Wallet deposit of $${amount.toFixed(2)}`,
       balance_after: newBalance,
     });
+
+    if (txnError) {
+      logStep("Transaction record error", { error: txnError.message });
+      // Don't throw - balance was already updated
+    } else {
+      logStep("Transaction recorded");
+    }
 
     return new Response(
       JSON.stringify({
@@ -77,8 +117,9 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Confirm wallet deposit error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    logStep("ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
