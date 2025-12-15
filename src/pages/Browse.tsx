@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X, Clock, Navigation, Sparkles } from "lucide-react";
+import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X, Clock, Navigation, Sparkles, Bookmark } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,9 @@ import { getCategoryTitles, timeEstimateLabels, TimeEstimate } from "@/lib/categ
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { calculateDistance, formatDistance } from "@/lib/distance";
 import { useTaskRecommendations } from "@/hooks/useTaskRecommendations";
+import { SmartSearchBar } from "@/components/SmartSearchBar";
+import { QuickFilters } from "@/components/QuickFilters";
+import { SaveSearchDialog } from "@/components/SaveSearchDialog";
 
 const Browse = () => {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -39,6 +42,8 @@ const Browse = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [activeQuickFilters, setActiveQuickFilters] = useState<string[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -252,9 +257,54 @@ const Browse = () => {
     setTimeFilter("all");
     setDistanceFilter(100);
     setSortBy("newest");
+    setActiveQuickFilters([]);
   };
 
-  const hasActiveFilters = searchTerm || categoryFilter !== "all" || dateFilter || budgetRange[0] > 0 || priorityFilter !== "all" || timeFilter !== "all" || distanceFilter < 100;
+  const hasActiveFilters = searchTerm || categoryFilter !== "all" || dateFilter || budgetRange[0] > 0 || priorityFilter !== "all" || timeFilter !== "all" || distanceFilter < 100 || activeQuickFilters.length > 0;
+
+  // Handle smart search
+  const handleSearch = useCallback((term: string) => {
+    setSearchTerm(term);
+    if (term && !recentSearches.includes(term)) {
+      setRecentSearches(prev => [term, ...prev.slice(0, 9)]);
+    }
+  }, [recentSearches]);
+
+  // Handle quick filter toggle
+  const handleQuickFilterToggle = useCallback((filterId: string, filterValue: any) => {
+    setActiveQuickFilters(prev => {
+      const isActive = prev.includes(filterId);
+      if (isActive) {
+        // Remove filter
+        if (filterValue.priority) setPriorityFilter("all");
+        if (filterValue.distance) setDistanceFilter(100);
+        if (filterValue.time) setTimeFilter("all");
+        if (filterValue.minBudget) setBudgetRange([0, budgetRange[1]]);
+        if (filterValue.category) setCategoryFilter("all");
+        if (filterValue.today) setDateFilter("");
+        return prev.filter(id => id !== filterId);
+      } else {
+        // Apply filter
+        if (filterValue.priority) setPriorityFilter(filterValue.priority);
+        if (filterValue.distance) setDistanceFilter(filterValue.distance);
+        if (filterValue.time) setTimeFilter(filterValue.time);
+        if (filterValue.minBudget) setBudgetRange([filterValue.minBudget, budgetRange[1]]);
+        if (filterValue.category) setCategoryFilter(filterValue.category);
+        if (filterValue.today) setDateFilter(new Date().toISOString().split('T')[0]);
+        return [...prev, filterId];
+      }
+    });
+  }, [budgetRange]);
+
+  // Get current search filters for saving
+  const getCurrentFilters = useCallback(() => ({
+    query: searchTerm || undefined,
+    category: categoryFilter !== "all" ? categoryFilter : undefined,
+    minBudget: budgetRange[0] > 0 ? budgetRange[0] : undefined,
+    maxBudget: budgetRange[1] < 1000 ? budgetRange[1] : undefined,
+    priority: priorityFilter !== "all" ? priorityFilter : undefined,
+    distance: distanceFilter < 100 ? distanceFilter : undefined,
+  }), [searchTerm, categoryFilter, budgetRange, priorityFilter, distanceFilter]);
 
   // Get time estimate for a task based on its duration
   const getTaskTimeEstimate = (duration: number | null): TimeEstimate => {
@@ -297,23 +347,44 @@ const Browse = () => {
           </Button>
         </div>
 
-        {/* Search and Filters */}
+        {/* Smart Search */}
+        <SmartSearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+          onSearch={handleSearch}
+          recentSearches={recentSearches}
+          className="mb-6"
+        />
+
+        {/* Quick Filters */}
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <QuickFilters
+            activeFilters={activeQuickFilters}
+            onToggle={handleQuickFilterToggle}
+            hasLocation={!!userLocation}
+          />
+          <div className="ml-auto flex gap-2">
+            {userId && (
+              <SaveSearchDialog
+                filters={getCurrentFilters()}
+                userId={userId}
+              />
+            )}
+            <Button variant="outline" onClick={() => navigate("/map")} className="gap-2">
+              <MapPin className="h-4 w-4" />
+              Map
+            </Button>
+          </div>
+        </div>
+
+        {/* Advanced Filters */}
         <Card className="mb-6 border-border">
           <CardContent className="p-4">
             <div className="flex flex-col gap-4">
-              {/* Main search row */}
+              {/* Category and filter toggle */}
               <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search tasks, location..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[200px]">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border z-[100]">
@@ -329,11 +400,17 @@ const Browse = () => {
                   onClick={() => setShowFilters(!showFilters)}
                 >
                   <SlidersHorizontal className="h-4 w-4" />
-                  Filters
+                  More Filters
                   {hasActiveFilters && (
                     <span className="h-2 w-2 rounded-full bg-primary" />
                   )}
                 </Button>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+                    <X className="h-4 w-4" />
+                    Clear All
+                  </Button>
+                )}
               </div>
 
               {/* Advanced Filters */}
