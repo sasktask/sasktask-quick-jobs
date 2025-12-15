@@ -58,34 +58,48 @@ serve(async (req) => {
       throw new Error("Invalid amount");
     }
 
-    // Get current wallet balance
+    // Get current wallet balance or create profile if it doesn't exist
     const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
-      .select("wallet_balance")
+      .select("wallet_balance, email")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
+    let currentBalance = 0;
+    
     if (profileError) {
       logStep("Profile fetch error", { error: profileError.message });
       throw new Error(`Failed to fetch profile: ${profileError.message}`);
     }
 
-    const currentBalance = profile?.wallet_balance || 0;
+    if (profile) {
+      currentBalance = profile.wallet_balance || 0;
+      logStep("Found existing profile", { currentBalance });
+    } else {
+      // Profile doesn't exist, we'll create it
+      logStep("No profile found, will create one");
+    }
+
     const newBalance = currentBalance + amount;
     logStep("Balance calculation", { currentBalance, amount, newBalance });
 
-    // Update wallet balance
-    const { error: updateError } = await supabaseClient
+    // Upsert profile with wallet balance (creates if doesn't exist, updates if exists)
+    const { error: upsertError } = await supabaseClient
       .from("profiles")
-      .update({
+      .upsert({
+        id: user.id,
+        email: user.email || '',
         wallet_balance: newBalance,
         minimum_balance_met: newBalance >= MINIMUM_BALANCE,
-      })
-      .eq("id", user.id);
+        updated_at: new Date().toISOString(),
+      }, { 
+        onConflict: 'id',
+        ignoreDuplicates: false 
+      });
 
-    if (updateError) {
-      logStep("Update error", { error: updateError.message });
-      throw new Error(`Failed to update balance: ${updateError.message}`);
+    if (upsertError) {
+      logStep("Upsert error", { error: upsertError.message });
+      throw new Error(`Failed to update balance: ${upsertError.message}`);
     }
     logStep("Balance updated successfully");
 

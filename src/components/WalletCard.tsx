@@ -63,12 +63,15 @@ export const WalletCard = () => {
         .from("profiles")
         .select("wallet_balance")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error("Error fetching profile:", profileError);
       } else if (profile) {
         setWalletBalance(profile.wallet_balance || 0);
+      } else {
+        // Profile doesn't exist yet - wallet balance is 0
+        setWalletBalance(0);
       }
 
       const { data: txns, error: txnError } = await supabase
