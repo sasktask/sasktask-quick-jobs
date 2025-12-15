@@ -25,6 +25,7 @@ import { EnhancedActivityFeed } from "@/components/EnhancedActivityFeed";
 import { QuickActionsFAB } from "@/components/QuickActionsFAB";
 import { UpcomingTasksCalendar } from "@/components/UpcomingTasksCalendar";
 import { QuickRebook } from "@/components/QuickRebook";
+import { AIAssistantWidget } from "@/components/AIAssistantWidget";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
   Briefcase, 
@@ -630,6 +631,9 @@ const Dashboard = () => {
       
       {/* Quick Actions FAB */}
       <QuickActionsFAB userRole={userRole} />
+      
+      {/* AI Assistant Widget */}
+      <AIAssistantWidget userRole={userRole} userName={profile?.full_name?.split(' ')[0]} />
     </div>
   );
 };
