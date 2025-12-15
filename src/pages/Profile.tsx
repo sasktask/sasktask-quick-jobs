@@ -17,6 +17,8 @@ import { PayoutAccountSetup } from "@/components/PayoutAccountSetup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { BadgeShowcase } from "@/components/BadgeShowcase";
+import { ProfileStrengthMeter } from "@/components/ProfileStrengthMeter";
+import { ProfileTips } from "@/components/ProfileTips";
 import { Loader2, Star, Briefcase, Award, Upload, Shield, TrendingUp, Clock, Settings, CreditCard, Wallet, Lock, User, Trophy, BadgeCheck, ShieldCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -203,7 +205,8 @@ const Profile = () => {
 
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Profile Sidebar - Enhanced Stats */}
-          <Card className="lg:col-span-1 border-border h-fit">
+          <div className="lg:col-span-1 space-y-6">
+            <Card className="border-border">
             <CardContent className="p-6">
               <div className="text-center mb-6">
                 <div className="relative inline-block mb-4">
@@ -327,6 +330,13 @@ const Profile = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Profile Strength Meter */}
+          <ProfileStrengthMeter profile={profile} userRole={userRole} />
+
+          {/* Profile Tips */}
+          {userRole === "task_doer" && <ProfileTips />}
+          </div>
 
           {/* Main Content with Tabs */}
           <div className="lg:col-span-3">
