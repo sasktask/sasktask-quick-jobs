@@ -313,9 +313,13 @@ export function TaskClusterMap({
   if (!mapboxToken) {
     return (
       <div className="w-full h-[500px] rounded-xl bg-muted flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center p-6">
           <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">Map Not Available</h3>
+          <h3 className="text-lg font-semibold mb-2">Map Loading...</h3>
+          <p className="text-sm text-muted-foreground max-w-sm">
+            The map is loading. If it doesn't appear, please refresh the page or check your connection.
+          </p>
+          <Loader2 className="h-6 w-6 mx-auto mt-4 animate-spin text-primary" />
         </div>
       </div>
     );
