@@ -367,81 +367,88 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={cn(
-                        "flex gap-2",
-                        msg.role === "user" ? "justify-end" : "justify-start"
-                      )}
-                    >
-                      {msg.role === "assistant" && (
-                        <Avatar className="h-7 w-7 flex-shrink-0">
-                          <AvatarFallback className="bg-gradient-to-br from-violet-600 to-indigo-600 text-white text-xs">
-                            <Bot className="h-4 w-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
+              <div className="space-y-4">
+                  {messages.map((msg, msgIndex) => (
+                    <div key={msg.id} className="space-y-2">
                       <div
                         className={cn(
-                          "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm relative group",
-                          msg.role === "user"
-                            ? "bg-primary text-primary-foreground rounded-br-md"
-                            : "bg-muted rounded-bl-md"
+                          "flex gap-2",
+                          msg.role === "user" ? "justify-end" : "justify-start"
                         )}
                       >
-                        {msg.role === "assistant" ? (
-                          <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <ReactMarkdown
-                              components={{
-                                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                                ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
-                                ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
-                                li: ({ children }) => <li className="mb-1">{children}</li>,
-                                strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-                                code: ({ children }) => (
-                                  <code className="bg-background/50 px-1 py-0.5 rounded text-xs">{children}</code>
-                                ),
-                              }}
+                        {msg.role === "assistant" && (
+                          <Avatar className="h-7 w-7 flex-shrink-0">
+                            <AvatarFallback className="bg-gradient-to-br from-violet-600 to-indigo-600 text-white text-xs">
+                              <Bot className="h-4 w-4" />
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                        <div
+                          className={cn(
+                            "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm relative group",
+                            msg.role === "user"
+                              ? "bg-primary text-primary-foreground rounded-br-md"
+                              : "bg-muted rounded-bl-md"
+                          )}
+                        >
+                          {msg.role === "assistant" ? (
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown
+                                components={{
+                                  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                  ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
+                                  ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
+                                  li: ({ children }) => <li className="mb-1">{children}</li>,
+                                  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                                  code: ({ children }) => (
+                                    <code className="bg-background/50 px-1 py-0.5 rounded text-xs">{children}</code>
+                                  ),
+                                }}
+                              >
+                                {msg.content}
+                              </ReactMarkdown>
+                            </div>
+                          ) : (
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                          )}
+                          
+                          {/* Copy button for assistant messages */}
+                          {msg.role === "assistant" && msg.content && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute -bottom-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border shadow-sm"
+                              onClick={() => copyToClipboard(msg.content, msg.id)}
                             >
-                              {msg.content}
-                            </ReactMarkdown>
-                          </div>
-                        ) : (
-                          <p className="whitespace-pre-wrap">{msg.content}</p>
-                        )}
-                        
-                        {/* Copy button for assistant messages */}
-                        {msg.role === "assistant" && msg.content && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute -bottom-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border shadow-sm"
-                            onClick={() => copyToClipboard(msg.content, msg.id)}
-                          >
-                            {copiedId === msg.id ? (
-                              <Check className="h-3 w-3 text-green-500" />
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                          </Button>
-                        )}
+                              {copiedId === msg.id ? (
+                                <Check className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       
-                      {/* Follow-up questions */}
-                      {msg.role === "assistant" && msg.followUpQuestions && msg.followUpQuestions.length > 0 && !isLoading && (
-                        <div className="mt-2 ml-9 flex flex-wrap gap-1.5">
-                          {msg.followUpQuestions.map((question, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => sendMessage(question)}
-                              className="text-xs px-2.5 py-1.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 hover:bg-violet-200 dark:hover:bg-violet-800/40 transition-colors border border-violet-200 dark:border-violet-700/50 flex items-center gap-1"
-                            >
-                              <Sparkles className="h-3 w-3" />
-                              {question.length > 40 ? question.substring(0, 40) + '...' : question}
-                            </button>
-                          ))}
+                      {/* Follow-up suggestions - ChatGPT style */}
+                      {msg.role === "assistant" && msg.followUpQuestions && msg.followUpQuestions.length > 0 && !isLoading && msgIndex === messages.length - 1 && (
+                        <div className="ml-9 space-y-1.5">
+                          <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
+                            <Sparkles className="h-3 w-3 text-violet-500" />
+                            Suggested follow-ups
+                          </p>
+                          <div className="flex flex-col gap-1">
+                            {msg.followUpQuestions.slice(0, 3).map((question, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => sendMessage(question)}
+                                className="text-xs text-left px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted text-foreground border border-border/50 hover:border-primary/30 transition-all flex items-start gap-2 group"
+                              >
+                                <span className="text-violet-500 mt-0.5">→</span>
+                                <span className="leading-relaxed">{question}</span>
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
