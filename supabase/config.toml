@@ -59,3 +59,12 @@ verify_jwt = false
 
 [functions.ai-assistant]
 verify_jwt = false
+
+[functions.create-deposit-payment]
+verify_jwt = true
+
+[functions.confirm-deposit]
+verify_jwt = true
+
+[functions.refund-deposit]
+verify_jwt = true

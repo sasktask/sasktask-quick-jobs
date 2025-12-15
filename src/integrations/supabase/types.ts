@@ -117,6 +117,9 @@ export type Database = {
         Row: {
           agreed_at: string | null
           created_at: string | null
+          deposit_paid: boolean | null
+          full_payment_at: string | null
+          full_payment_paid: boolean | null
           id: string
           message: string | null
           payment_agreed: boolean | null
@@ -128,6 +131,9 @@ export type Database = {
         Insert: {
           agreed_at?: string | null
           created_at?: string | null
+          deposit_paid?: boolean | null
+          full_payment_at?: string | null
+          full_payment_paid?: boolean | null
           id?: string
           message?: string | null
           payment_agreed?: boolean | null
@@ -139,6 +145,9 @@ export type Database = {
         Update: {
           agreed_at?: string | null
           created_at?: string | null
+          deposit_paid?: boolean | null
+          full_payment_at?: string | null
+          full_payment_paid?: boolean | null
           id?: string
           message?: string | null
           payment_agreed?: boolean | null
@@ -770,8 +779,11 @@ export type Database = {
           amount: number
           booking_id: string
           created_at: string
+          deposit_refund_id: string | null
+          deposit_refunded: boolean | null
           escrow_status: string | null
           id: string
+          is_deposit: boolean | null
           paid_at: string | null
           payee_id: string
           payer_id: string
@@ -791,8 +803,11 @@ export type Database = {
           amount: number
           booking_id: string
           created_at?: string
+          deposit_refund_id?: string | null
+          deposit_refunded?: boolean | null
           escrow_status?: string | null
           id?: string
+          is_deposit?: boolean | null
           paid_at?: string | null
           payee_id: string
           payer_id: string
@@ -812,8 +827,11 @@ export type Database = {
           amount?: number
           booking_id?: string
           created_at?: string
+          deposit_refund_id?: string | null
+          deposit_refunded?: boolean | null
           escrow_status?: string | null
           id?: string
+          is_deposit?: boolean | null
           paid_at?: string | null
           payee_id?: string
           payer_id?: string
@@ -1772,6 +1790,10 @@ export type Database = {
           budget_type: string | null
           category: string
           created_at: string | null
+          deposit_amount: number | null
+          deposit_paid: boolean | null
+          deposit_paid_at: string | null
+          deposit_payment_intent_id: string | null
           description: string
           estimated_duration: number | null
           expires_at: string | null
@@ -1783,6 +1805,7 @@ export type Database = {
           longitude: number | null
           pay_amount: number
           priority: string | null
+          requires_deposit: boolean | null
           scheduled_date: string | null
           status: Database["public"]["Enums"]["task_status"] | null
           task_doer_id: string | null
@@ -1796,6 +1819,10 @@ export type Database = {
           budget_type?: string | null
           category: string
           created_at?: string | null
+          deposit_amount?: number | null
+          deposit_paid?: boolean | null
+          deposit_paid_at?: string | null
+          deposit_payment_intent_id?: string | null
           description: string
           estimated_duration?: number | null
           expires_at?: string | null
@@ -1807,6 +1834,7 @@ export type Database = {
           longitude?: number | null
           pay_amount: number
           priority?: string | null
+          requires_deposit?: boolean | null
           scheduled_date?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           task_doer_id?: string | null
@@ -1820,6 +1848,10 @@ export type Database = {
           budget_type?: string | null
           category?: string
           created_at?: string | null
+          deposit_amount?: number | null
+          deposit_paid?: boolean | null
+          deposit_paid_at?: string | null
+          deposit_payment_intent_id?: string | null
           description?: string
           estimated_duration?: number | null
           expires_at?: string | null
@@ -1831,6 +1863,7 @@ export type Database = {
           longitude?: number | null
           pay_amount?: number
           priority?: string | null
+          requires_deposit?: boolean | null
           scheduled_date?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
           task_doer_id?: string | null
