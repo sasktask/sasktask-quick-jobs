@@ -19,6 +19,9 @@ import { DashboardActivityFeed } from "@/components/DashboardActivityFeed";
 import { WelcomeTour } from "@/components/WelcomeTour";
 import { StreakTracker } from "@/components/StreakTracker";
 import { DailyGoals } from "@/components/DailyGoals";
+import { LiveEarningsTicker } from "@/components/LiveEarningsTicker";
+import { ProgressRing } from "@/components/ProgressRing";
+import { EnhancedActivityFeed } from "@/components/EnhancedActivityFeed";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
   Briefcase, 
@@ -515,6 +518,25 @@ const Dashboard = () => {
 
               {/* Right Column - Stats and Info */}
               <div className="space-y-6">
+                {/* Live Earnings Ticker - For Task Doers */}
+                {userRole === "task_doer" && (
+                  <LiveEarningsTicker
+                    totalEarnings={stats.totalEarnings}
+                    thisWeekEarnings={stats.totalEarnings * 0.15}
+                    thisMonthEarnings={stats.totalEarnings * 0.4}
+                    completedTasks={stats.completedTasks}
+                  />
+                )}
+
+                {/* Progress Ring */}
+                <ProgressRing
+                  completedTasks={stats.completedTasks}
+                  targetTasks={10}
+                  level={Math.floor(stats.completedTasks / 5) + 1}
+                  xp={(stats.completedTasks * 25) % 100}
+                  xpToNextLevel={100}
+                />
+
                 {/* Streak Tracker */}
                 {user?.id && (
                   <StreakTracker 
@@ -528,9 +550,9 @@ const Dashboard = () => {
                 {/* Daily Goals */}
                 <DailyGoals userRole={userRole} stats={stats} />
 
-                {/* Activity Feed */}
+                {/* Enhanced Activity Feed */}
                 {user?.id && (
-                  <DashboardActivityFeed userId={user.id} userRole={userRole} />
+                  <EnhancedActivityFeed userId={user.id} userRole={userRole} />
                 )}
 
                 {/* Trust Score Card */}
