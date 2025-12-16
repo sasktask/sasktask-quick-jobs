@@ -56,6 +56,14 @@ interface UserContext {
   isTasker: boolean;
   recentActivity: string[];
   city?: string;
+  profileCompletion?: number;
+  rating?: number;
+  totalReviews?: number;
+  skills?: string[];
+  bio?: string;
+  avatarUrl?: string;
+  verificationStatus?: string;
+  completedTasksCount?: number;
 }
 
 // Extract follow-up questions from AI response
@@ -103,21 +111,72 @@ const getPersonalizedRecommendations = (context: UserContext | null) => {
 
   const recommendations = [];
 
-  if (!context.hasPostedTasks && !context.isTasker) {
+  // Profile completion suggestions
+  if ((context.profileCompletion || 0) < 80) {
     recommendations.push(
-      { icon: Zap, label: "Post your first task", prompt: "Help me create my first task on SaskTask. What information do I need?", color: "text-yellow-500" }
+      { icon: TrendingUp, label: "Complete your profile", prompt: `My profile is ${context.profileCompletion || 0}% complete. What specific things should I add to improve my profile and get more success on SaskTask?`, color: "text-orange-500" }
     );
   }
 
-  if (context.isTasker && context.taskCount === 0) {
+  // No avatar
+  if (!context.avatarUrl) {
     recommendations.push(
-      { icon: TrendingUp, label: "Get more bookings", prompt: "How can I improve my profile to get more task bookings?", color: "text-green-500" }
+      { icon: Star, label: "Add profile photo", prompt: "Why is a profile photo important on SaskTask? What makes a good profile photo?", color: "text-purple-500" }
+    );
+  }
+
+  // Verification suggestions
+  if (context.verificationStatus !== 'verified') {
+    recommendations.push(
+      { icon: Shield, label: "Get verified", prompt: "How do I get verified on SaskTask? What are the benefits of verification and what documents do I need?", color: "text-green-500" }
+    );
+  }
+
+  // For taskers without reviews
+  if (context.isTasker && (context.totalReviews || 0) === 0) {
+    recommendations.push(
+      { icon: Star, label: "Get first review", prompt: "I'm a tasker with no reviews yet. What strategies can I use to get my first reviews and build my reputation?", color: "text-yellow-500" }
+    );
+  }
+
+  // For taskers with low ratings
+  if (context.isTasker && context.rating && context.rating > 0 && context.rating < 4.5) {
+    recommendations.push(
+      { icon: TrendingUp, label: "Improve rating", prompt: `My current rating is ${context.rating?.toFixed(1)}. What can I do to improve my rating and get more 5-star reviews?`, color: "text-orange-500" }
+    );
+  }
+
+  // No skills for taskers
+  if (context.isTasker && (!context.skills || context.skills.length === 0)) {
+    recommendations.push(
+      { icon: Wrench, label: "Add your skills", prompt: "What skills should I add to my SaskTask profile to get more task opportunities? Give me examples for different categories.", color: "text-blue-500" }
+    );
+  }
+
+  // No bio
+  if (!context.bio) {
+    recommendations.push(
+      { icon: FileText, label: "Write your bio", prompt: "Help me write a compelling bio for my SaskTask profile. What should I include to attract more clients?", color: "text-indigo-500" }
+    );
+  }
+
+  // For new task posters
+  if (!context.hasPostedTasks && !context.isTasker) {
+    recommendations.push(
+      { icon: Zap, label: "Post your first task", prompt: "Help me create my first task on SaskTask. What information do I need and how do I write a good task description?", color: "text-yellow-500" }
+    );
+  }
+
+  // For successful users - advanced tips
+  if (context.isTasker && (context.completedTasksCount || 0) > 10) {
+    recommendations.push(
+      { icon: TrendingUp, label: "Grow your business", prompt: "I've completed over 10 tasks. What advanced strategies can I use to grow my SaskTask business and earn more?", color: "text-green-500" }
     );
   }
 
   if (context.hasPostedTasks) {
     recommendations.push(
-      { icon: Users, label: "Find perfect tasker", prompt: "What should I look for when choosing a tasker for my task?", color: "text-purple-500" }
+      { icon: Users, label: "Find perfect tasker", prompt: "What should I look for when choosing a tasker for my task? Give me tips on evaluating profiles and reviews.", color: "text-purple-500" }
     );
   }
 
@@ -133,7 +192,8 @@ const getPersonalizedRecommendations = (context: UserContext | null) => {
     );
   }
 
-  return recommendations;
+  // Limit to top 4 most relevant
+  return recommendations.slice(0, 4);
 };
 
 const quickPrompts = [
@@ -150,6 +210,8 @@ const STORAGE_KEY = 'sasktask_ai_chat_history';
 export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>(() => {
     // Load chat history from localStorage
     try {
@@ -214,6 +276,24 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
     return suggestions.slice(0, 3);
   }, [input]);
 
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+      setUserId(user?.id || null);
+    };
+    
+    checkAuth();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session?.user);
+      setUserId(session?.user?.id || null);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Fetch user context for personalized recommendations
   useEffect(() => {
     const fetchUserContext = async () => {
@@ -221,15 +301,17 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
       if (!user) return;
 
       try {
-        const [profileResult, tasksResult, bookingsResult] = await Promise.all([
-          supabase.from('profiles').select('full_name, city, skills').eq('id', user.id).maybeSingle(),
+        const [profileResult, tasksResult, bookingsResult, verificationsResult] = await Promise.all([
+          supabase.from('profiles').select('full_name, city, skills, bio, avatar_url, profile_completion, rating, total_reviews, completed_tasks').eq('id', user.id).maybeSingle(),
           supabase.from('tasks').select('id, status').eq('task_giver_id', user.id),
-          supabase.from('bookings').select('id, status').eq('task_doer_id', user.id)
+          supabase.from('bookings').select('id, status').eq('task_doer_id', user.id),
+          supabase.from('verifications').select('verification_status, id_verified, background_check_status').eq('user_id', user.id).maybeSingle()
         ]);
 
         const profile = profileResult.data;
         const tasks = tasksResult.data || [];
         const bookings = bookingsResult.data || [];
+        const verification = verificationsResult.data;
 
         setUserContext({
           name: profile?.full_name || userName || '',
@@ -238,17 +320,25 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
           taskCount: tasks.length,
           isTasker: bookings.length > 0 || (profile?.skills && profile.skills.length > 0),
           recentActivity: [],
-          city: profile?.city || undefined
+          city: profile?.city || undefined,
+          profileCompletion: profile?.profile_completion || 0,
+          rating: profile?.rating || 0,
+          totalReviews: profile?.total_reviews || 0,
+          skills: profile?.skills || [],
+          bio: profile?.bio || '',
+          avatarUrl: profile?.avatar_url || '',
+          verificationStatus: verification?.verification_status || 'pending',
+          completedTasksCount: profile?.completed_tasks || 0
         });
       } catch (error) {
         console.error('Error fetching user context:', error);
       }
     };
 
-    if (isOpen) {
+    if (isOpen && isAuthenticated) {
       fetchUserContext();
     }
-  }, [isOpen, userName]);
+  }, [isOpen, userName, isAuthenticated]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -295,7 +385,15 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
             userName: userContext?.name || userName,
             isTasker: userContext?.isTasker,
             hasPostedTasks: userContext?.hasPostedTasks,
-            city: userContext?.city
+            city: userContext?.city,
+            profileCompletion: userContext?.profileCompletion,
+            rating: userContext?.rating,
+            totalReviews: userContext?.totalReviews,
+            skills: userContext?.skills,
+            bio: userContext?.bio,
+            hasAvatar: !!userContext?.avatarUrl,
+            verificationStatus: userContext?.verificationStatus,
+            completedTasksCount: userContext?.completedTasksCount
           }
         }),
       });
@@ -405,6 +503,11 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
       sendMessage(lastUserMessage.content);
     }
   };
+
+  // Don't show the widget if user is not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (!isOpen) {
     return (
