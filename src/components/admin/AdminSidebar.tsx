@@ -3,14 +3,10 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Users,
-  Briefcase,
-  CreditCard,
-  AlertTriangle,
   Shield,
   Flag,
-  Calendar,
-  Settings,
-  BarChart3,
+  AlertTriangle,
+  CreditCard,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +18,7 @@ const navItems = [
     title: "Dashboard",
     href: "/admin/dashboard",
     icon: LayoutDashboard,
-    description: "Overview & quick actions",
+    description: "Overview & stats",
   },
   {
     title: "Users",
@@ -34,27 +30,9 @@ const navItems = [
     title: "Verifications",
     href: "/admin/verify-users",
     icon: Shield,
-    description: "Approve user verifications",
+    description: "Approve verifications",
     showBadge: true,
     badgeKey: "verifications",
-  },
-  {
-    title: "Tasks",
-    href: "/admin/tasks",
-    icon: Briefcase,
-    description: "Manage tasks",
-  },
-  {
-    title: "Bookings",
-    href: "/admin/bookings",
-    icon: Calendar,
-    description: "Manage bookings",
-  },
-  {
-    title: "Payments",
-    href: "/admin/payments",
-    icon: CreditCard,
-    description: "Payment controls",
   },
   {
     title: "Disputes",
@@ -73,16 +51,10 @@ const navItems = [
     badgeKey: "fraud",
   },
   {
-    title: "Analytics",
-    href: "/admin/analytics",
-    icon: BarChart3,
-    description: "Platform analytics",
-  },
-  {
-    title: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
-    description: "Admin settings",
+    title: "Payments",
+    href: "/admin/payments",
+    icon: CreditCard,
+    description: "Payment overview",
   },
 ];
 
