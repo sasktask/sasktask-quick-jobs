@@ -60,7 +60,7 @@ export function SocialProofBar({ className, variant = "default" }: SocialProofBa
             <item.icon className={cn("h-4 w-4", item.color)} />
             <span className="font-bold text-foreground">
               {stats.isLoading ? (
-                <Skeleton className="h-4 w-8 inline-block" />
+                <span className="inline-block h-4 w-8 bg-muted animate-pulse rounded" />
               ) : item.isRating ? (
                 item.value
               ) : typeof item.value === 'number' ? (
@@ -101,7 +101,7 @@ export function SocialProofBar({ className, variant = "default" }: SocialProofBa
                   <item.icon className={cn("h-5 w-5", item.color)} />
                 </div>
                 <div>
-                  <p className="font-bold text-lg text-foreground">
+                  <div className="font-bold text-lg text-foreground">
                     {stats.isLoading ? (
                       <Skeleton className="h-5 w-12" />
                     ) : item.isRating ? (
@@ -114,7 +114,7 @@ export function SocialProofBar({ className, variant = "default" }: SocialProofBa
                     ) : (
                       item.value
                     )}
-                  </p>
+                  </div>
                   <p className="text-xs text-muted-foreground">{item.label}</p>
                 </div>
               </div>
