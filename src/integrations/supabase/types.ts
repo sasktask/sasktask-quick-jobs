@@ -1964,6 +1964,383 @@ export type Database = {
           },
         ]
       }
+      tiffin_menus: {
+        Row: {
+          available_days: number[] | null
+          calories_approx: number | null
+          cover_image_url: string | null
+          created_at: string | null
+          cuisine_origin: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_gluten_free: boolean | null
+          is_halal: boolean | null
+          is_vegan: boolean | null
+          is_vegetarian: boolean | null
+          items: string[]
+          max_orders_per_day: number | null
+          meal_type: string
+          menu_name: string
+          preparation_time_minutes: number | null
+          price_per_meal: number
+          provider_id: string
+          spice_level: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          available_days?: number[] | null
+          calories_approx?: number | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          cuisine_origin?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_gluten_free?: boolean | null
+          is_halal?: boolean | null
+          is_vegan?: boolean | null
+          is_vegetarian?: boolean | null
+          items?: string[]
+          max_orders_per_day?: number | null
+          meal_type: string
+          menu_name: string
+          preparation_time_minutes?: number | null
+          price_per_meal: number
+          provider_id: string
+          spice_level?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          available_days?: number[] | null
+          calories_approx?: number | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          cuisine_origin?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_gluten_free?: boolean | null
+          is_halal?: boolean | null
+          is_vegan?: boolean | null
+          is_vegetarian?: boolean | null
+          items?: string[]
+          max_orders_per_day?: number | null
+          meal_type?: string
+          menu_name?: string
+          preparation_time_minutes?: number | null
+          price_per_meal?: number
+          provider_id?: string
+          spice_level?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiffin_menus_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "tiffin_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tiffin_orders: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          delivery_address: string
+          delivery_instructions: string | null
+          delivery_latitude: number | null
+          delivery_longitude: number | null
+          id: string
+          menu_id: string
+          order_type: string
+          payment_intent_id: string | null
+          payment_status: string | null
+          provider_id: string
+          quantity: number
+          scheduled_date: string | null
+          scheduled_time: string | null
+          special_requests: string | null
+          status: string | null
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          delivery_address: string
+          delivery_instructions?: string | null
+          delivery_latitude?: number | null
+          delivery_longitude?: number | null
+          id?: string
+          menu_id: string
+          order_type: string
+          payment_intent_id?: string | null
+          payment_status?: string | null
+          provider_id: string
+          quantity?: number
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          special_requests?: string | null
+          status?: string | null
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          delivery_address?: string
+          delivery_instructions?: string | null
+          delivery_latitude?: number | null
+          delivery_longitude?: number | null
+          id?: string
+          menu_id?: string
+          order_type?: string
+          payment_intent_id?: string | null
+          payment_status?: string | null
+          provider_id?: string
+          quantity?: number
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          special_requests?: string | null
+          status?: string | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiffin_orders_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "tiffin_menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tiffin_orders_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "tiffin_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tiffin_providers: {
+        Row: {
+          accepts_subscriptions: boolean | null
+          avg_rating: number | null
+          business_name: string
+          cover_image_url: string | null
+          created_at: string | null
+          cuisine_type: string[]
+          delivery_areas: string[] | null
+          delivery_radius_km: number | null
+          description: string | null
+          dietary_options: string[] | null
+          food_safety_certificate_url: string | null
+          gallery_images: string[] | null
+          hygiene_rating: number | null
+          id: string
+          is_active: boolean | null
+          kitchen_certified: boolean | null
+          latitude: number | null
+          longitude: number | null
+          min_order_amount: number | null
+          total_orders: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          accepts_subscriptions?: boolean | null
+          avg_rating?: number | null
+          business_name: string
+          cover_image_url?: string | null
+          created_at?: string | null
+          cuisine_type?: string[]
+          delivery_areas?: string[] | null
+          delivery_radius_km?: number | null
+          description?: string | null
+          dietary_options?: string[] | null
+          food_safety_certificate_url?: string | null
+          gallery_images?: string[] | null
+          hygiene_rating?: number | null
+          id?: string
+          is_active?: boolean | null
+          kitchen_certified?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          min_order_amount?: number | null
+          total_orders?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          accepts_subscriptions?: boolean | null
+          avg_rating?: number | null
+          business_name?: string
+          cover_image_url?: string | null
+          created_at?: string | null
+          cuisine_type?: string[]
+          delivery_areas?: string[] | null
+          delivery_radius_km?: number | null
+          description?: string | null
+          dietary_options?: string[] | null
+          food_safety_certificate_url?: string | null
+          gallery_images?: string[] | null
+          hygiene_rating?: number | null
+          id?: string
+          is_active?: boolean | null
+          kitchen_certified?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          min_order_amount?: number | null
+          total_orders?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tiffin_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          customer_id: string
+          delivery_rating: number
+          hygiene_rating: number
+          id: string
+          is_verified: boolean | null
+          order_id: string
+          overall_rating: number | null
+          packaging_rating: number
+          photo_urls: string[] | null
+          provider_id: string
+          taste_rating: number
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          customer_id: string
+          delivery_rating: number
+          hygiene_rating: number
+          id?: string
+          is_verified?: boolean | null
+          order_id: string
+          overall_rating?: number | null
+          packaging_rating: number
+          photo_urls?: string[] | null
+          provider_id: string
+          taste_rating: number
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          customer_id?: string
+          delivery_rating?: number
+          hygiene_rating?: number
+          id?: string
+          is_verified?: boolean | null
+          order_id?: string
+          overall_rating?: number | null
+          packaging_rating?: number
+          photo_urls?: string[] | null
+          provider_id?: string
+          taste_rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiffin_reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "tiffin_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tiffin_reviews_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "tiffin_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tiffin_subscriptions: {
+        Row: {
+          created_at: string | null
+          custom_days: number[] | null
+          customer_id: string
+          delivery_address: string
+          delivery_time: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          meals_per_day: number | null
+          menu_id: string
+          pause_from: string | null
+          pause_until: string | null
+          price_per_meal: number
+          provider_id: string
+          quantity_per_meal: number | null
+          start_date: string
+          subscription_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custom_days?: number[] | null
+          customer_id: string
+          delivery_address: string
+          delivery_time?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          meals_per_day?: number | null
+          menu_id: string
+          pause_from?: string | null
+          pause_until?: string | null
+          price_per_meal: number
+          provider_id: string
+          quantity_per_meal?: number | null
+          start_date: string
+          subscription_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custom_days?: number[] | null
+          customer_id?: string
+          delivery_address?: string
+          delivery_time?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          meals_per_day?: number | null
+          menu_id?: string
+          pause_from?: string | null
+          pause_until?: string | null
+          price_per_meal?: number
+          provider_id?: string
+          quantity_per_meal?: number | null
+          start_date?: string
+          subscription_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiffin_subscriptions_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "tiffin_menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tiffin_subscriptions_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "tiffin_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       typing_indicators: {
         Row: {
           booking_id: string

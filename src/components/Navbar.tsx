@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Menu, ShieldCheck, Globe, Sun, Moon, User, Settings, LogOut, ChevronDown, Briefcase, MessageSquare, LayoutDashboard, ClipboardList, Search, Users, Trophy } from "lucide-react";
+import { Menu, ShieldCheck, Globe, Sun, Moon, User, Settings, LogOut, ChevronDown, Briefcase, MessageSquare, LayoutDashboard, ClipboardList, Search, Users, Trophy, Utensils } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/sasktask-logo.png";
@@ -100,6 +100,10 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                     {t('findTaskers')}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/tiffin")} className="cursor-pointer gap-2">
+                    <Utensils className="h-4 w-4" />
+                    Tiffin Services
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/how-it-works")} className="cursor-pointer gap-2">
                     How It Works
                   </DropdownMenuItem>
