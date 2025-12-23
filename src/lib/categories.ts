@@ -460,6 +460,27 @@ export const categories: Category[] = [
     ]
   },
   {
+    icon: CookingPot,
+    title: "Tiffin Services",
+    count: "50+ providers",
+    color: "from-orange-500 to-amber-500",
+    description: "Home-cooked meals by cuisine & region",
+    timeEstimate: "flexible",
+    categoryType: "indoor",
+    skillLevel: "intermediate",
+    featured: true,
+    subcategories: [
+      { title: "Indian Cuisine", description: "North & South Indian home cooking", trending: true },
+      { title: "Chinese Cuisine", description: "Cantonese, Sichuan home meals" },
+      { title: "Middle Eastern", description: "Lebanese, Turkish, Persian food" },
+      { title: "African Cuisine", description: "Ethiopian, Nigerian home cooking" },
+      { title: "Weekly Meal Plans", description: "Subscribe to daily meals", trending: true },
+      { title: "Vegetarian Tiffin", description: "Pure vegetarian home meals" },
+      { title: "Halal Meals", description: "Certified halal home cooking" },
+      { title: "Special Diet", description: "Vegan, gluten-free options" }
+    ]
+  },
+  {
     icon: Plug,
     title: "Electrical Work",
     count: "75+ tasks",

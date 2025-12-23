@@ -13,7 +13,8 @@ import {
   LogOut,
   ChevronDown,
   HelpCircle,
-  Mail
+  Mail,
+  Utensils
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { OWNER_USER_ID } from "@/lib/constants";
@@ -126,6 +127,10 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
               <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/contact")}>
                 <Mail className="h-4 w-4" />
                 Contact
+              </Button>
+              <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/tiffin")}>
+                <Utensils className="h-4 w-4" />
+                Tiffin Services
               </Button>
             </CollapsibleContent>
           </Collapsible>

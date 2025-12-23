@@ -53,6 +53,7 @@ import PaymentCancelled from "./pages/PaymentCancelled";
 import Payouts from "./pages/Payouts";
 import Checkout from "./pages/Checkout";
 import Notifications from "./pages/Notifications";
+import Tiffin from "./pages/Tiffin";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import { ChatButton } from "./components/ChatButton";
@@ -119,6 +120,7 @@ const App = () => (
             <Route path="/payment-cancelled" element={<PaymentCancelled />} />
             <Route path="/payouts" element={<Payouts />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/tiffin" element={<Tiffin />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
