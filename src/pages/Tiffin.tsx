@@ -10,6 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { 
+  TiffinProviderCard,
+  TiffinMenuDialog,
+  TiffinOrderForm,
+  TiffinSubscriptionDialog
+} from "@/components/tiffin";
+import { 
   Utensils, 
   MapPin, 
   Star, 
@@ -26,8 +32,13 @@ import {
   Calendar,
   Users,
   CheckCircle2,
-  ArrowRight
+  ArrowRight,
+  Sparkles,
+  Globe,
+  TrendingUp
 } from "lucide-react";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 // Cuisine types with cultural origins
 const cuisineTypes = [
@@ -48,13 +59,13 @@ const dietaryFilters = [
   { id: "gluten-free", name: "Gluten-Free", icon: CheckCircle2, color: "text-blue-500" },
 ];
 
-// Mock featured providers for display (will be replaced with real data)
+// Enhanced featured providers
 const featuredProviders = [
   {
     id: "1",
     businessName: "Grandma's Kitchen",
     cuisineType: ["North Indian", "Punjabi"],
-    description: "Authentic home-style Punjabi food made with love, just like grandma used to make",
+    description: "Authentic home-style Punjabi food made with love, just like grandma used to make. Fresh rotis, rich dals, and aromatic curries.",
     avgRating: 4.9,
     totalOrders: 234,
     isVegetarian: true,
@@ -63,12 +74,15 @@ const featuredProviders = [
     deliveryAreas: ["Saskatoon", "Downtown", "Stonebridge"],
     kitchenCertified: true,
     coverImage: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400",
+    deliveryTime: "30-45 min",
+    spiceLevel: 3,
+    specialties: ["Dal Makhani", "Butter Chicken", "Stuffed Parathas"]
   },
   {
     id: "2",
     businessName: "Spice Route",
     cuisineType: ["South Indian", "Kerala"],
-    description: "Traditional South Indian meals with authentic spices and fresh ingredients",
+    description: "Traditional South Indian meals with authentic spices and fresh ingredients. Dosa, idli, and banana leaf thalis.",
     avgRating: 4.8,
     totalOrders: 189,
     isVegetarian: false,
@@ -78,12 +92,15 @@ const featuredProviders = [
     deliveryAreas: ["Regina", "University"],
     kitchenCertified: true,
     coverImage: "https://images.unsplash.com/photo-1567337710282-00832b415979?w=400",
+    deliveryTime: "35-50 min",
+    spiceLevel: 4,
+    specialties: ["Masala Dosa", "Kerala Fish Curry", "Sambar Rice"]
   },
   {
     id: "3",
     businessName: "Mediterranean Delights",
     cuisineType: ["Lebanese", "Turkish"],
-    description: "Fresh Mediterranean cuisine with homemade hummus, falafel, and grilled meats",
+    description: "Fresh Mediterranean cuisine with homemade hummus, falafel, and grilled meats. Healthy and flavorful.",
     avgRating: 4.7,
     totalOrders: 156,
     isVegetarian: false,
@@ -93,12 +110,15 @@ const featuredProviders = [
     deliveryAreas: ["Saskatoon", "Warman"],
     kitchenCertified: true,
     coverImage: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400",
+    deliveryTime: "25-40 min",
+    spiceLevel: 2,
+    specialties: ["Shawarma Plate", "Falafel Wrap", "Mixed Grill"]
   },
   {
     id: "4",
     businessName: "Mom's Chinese Kitchen",
     cuisineType: ["Cantonese", "Hakka"],
-    description: "Homestyle Chinese comfort food, dim sum weekends, and hearty noodle bowls",
+    description: "Homestyle Chinese comfort food, dim sum weekends, and hearty noodle bowls. Family recipes passed down generations.",
     avgRating: 4.6,
     totalOrders: 145,
     isVegetarian: false,
@@ -107,6 +127,45 @@ const featuredProviders = [
     deliveryAreas: ["Regina", "Moose Jaw"],
     kitchenCertified: true,
     coverImage: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400",
+    deliveryTime: "30-45 min",
+    spiceLevel: 2,
+    specialties: ["Dim Sum", "Hakka Noodles", "Sweet & Sour"]
+  },
+  {
+    id: "5",
+    businessName: "Ethiopian Flavors",
+    cuisineType: ["Ethiopian", "Eritrean"],
+    description: "Authentic East African cuisine with injera bread and flavorful stews. A unique dining experience.",
+    avgRating: 4.8,
+    totalOrders: 98,
+    isVegetarian: false,
+    isVegan: true,
+    hygienicRating: 5,
+    priceRange: "$13-18",
+    deliveryAreas: ["Saskatoon", "Martensville"],
+    kitchenCertified: true,
+    coverImage: "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=400",
+    deliveryTime: "40-55 min",
+    spiceLevel: 3,
+    specialties: ["Doro Wat", "Injera Combo", "Veggie Platter"]
+  },
+  {
+    id: "6",
+    businessName: "Thai Home Kitchen",
+    cuisineType: ["Thai", "Laotian"],
+    description: "Fresh Thai street food classics made at home. Pad Thai, curries, and refreshing salads.",
+    avgRating: 4.7,
+    totalOrders: 112,
+    isVegetarian: false,
+    isGlutenFree: true,
+    hygienicRating: 4,
+    priceRange: "$12-17",
+    deliveryAreas: ["Saskatoon", "Sutherland"],
+    kitchenCertified: true,
+    coverImage: "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400",
+    deliveryTime: "25-40 min",
+    spiceLevel: 4,
+    specialties: ["Pad Thai", "Green Curry", "Tom Yum Soup"]
   },
 ];
 
@@ -115,6 +174,12 @@ export default function Tiffin() {
   const [selectedCuisine, setSelectedCuisine] = useState<string | null>(null);
   const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<any>(null);
+  const [isMenuDialogOpen, setIsMenuDialogOpen] = useState(false);
+  const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
+  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
+  const [cartItems, setCartItems] = useState<any[]>([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -129,6 +194,54 @@ export default function Tiffin() {
       prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id]
     );
   };
+
+  const toggleFavorite = (providerId: string) => {
+    if (!user) {
+      toast.error("Please login to save favorites");
+      return;
+    }
+    setFavorites(prev => 
+      prev.includes(providerId) 
+        ? prev.filter(id => id !== providerId)
+        : [...prev, providerId]
+    );
+    toast.success(favorites.includes(providerId) ? "Removed from favorites" : "Added to favorites");
+  };
+
+  const handleViewMenu = (provider: any) => {
+    setSelectedProvider(provider);
+    setIsMenuDialogOpen(true);
+  };
+
+  const handleOrder = (providerId: string, items: any[]) => {
+    setCartItems(items);
+    setIsMenuDialogOpen(false);
+    setIsOrderFormOpen(true);
+  };
+
+  // Filter providers based on search and filters
+  const filteredProviders = featuredProviders.filter(provider => {
+    const matchesSearch = searchQuery === "" || 
+      provider.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      provider.cuisineType.some(c => c.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      provider.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCuisine = !selectedCuisine || 
+      cuisineTypes.find(c => c.id === selectedCuisine)?.regions.some(r => 
+        provider.cuisineType.includes(r)
+      );
+    
+    const matchesDietary = selectedDietary.length === 0 || 
+      selectedDietary.every(filter => {
+        if (filter === "vegetarian") return provider.isVegetarian;
+        if (filter === "vegan") return provider.isVegan;
+        if (filter === "halal") return provider.isHalal;
+        if (filter === "gluten-free") return provider.isGlutenFree;
+        return true;
+      });
+    
+    return matchesSearch && matchesCuisine && matchesDietary;
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -257,84 +370,34 @@ export default function Tiffin() {
 
             <TabsContent value="providers">
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredProviders.map(provider => (
-                  <Card key={provider.id} className="overflow-hidden hover:shadow-lg transition-all group">
-                    <div className="relative h-48">
-                      <img 
-                        src={provider.coverImage} 
-                        alt={provider.businessName}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                      {provider.kitchenCertified && (
-                        <Badge className="absolute top-3 left-3 bg-green-500 text-white">
-                          <Shield className="h-3 w-3 mr-1" />
-                          Certified
-                        </Badge>
-                      )}
-                      <div className="absolute top-3 right-3 flex gap-1">
-                        {provider.isVegetarian && (
-                          <Badge className="bg-green-100 text-green-700 border-green-300">
-                            <Leaf className="h-3 w-3" />
-                          </Badge>
-                        )}
-                        {provider.isHalal && (
-                          <Badge className="bg-amber-100 text-amber-700 border-amber-300">
-                            Halal
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-bold text-lg">{provider.businessName}</h3>
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                          <span className="font-medium">{provider.avgRating}</span>
-                          <span className="text-muted-foreground text-sm">({provider.totalOrders})</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {provider.cuisineType.map(cuisine => (
-                          <Badge key={cuisine} variant="secondary" className="text-xs">
-                            {cuisine}
-                          </Badge>
-                        ))}
-                      </div>
-                      
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                        {provider.description}
-                      </p>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          {provider.deliveryAreas[0]}
-                        </div>
-                        <span className="font-semibold text-primary">{provider.priceRange}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-1 mt-2">
-                        <span className="text-xs text-muted-foreground">Hygiene:</span>
-                        {[...Array(5)].map((_, i) => (
-                          <CheckCircle2 
-                            key={i} 
-                            className={`h-3 w-3 ${i < provider.hygienicRating ? 'text-green-500' : 'text-muted'}`} 
-                          />
-                        ))}
-                      </div>
-                      
-                      <Button className="w-full mt-4" size="sm">
-                        View Menu
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </CardContent>
-                  </Card>
+                {filteredProviders.map(provider => (
+                  <TiffinProviderCard
+                    key={provider.id}
+                    provider={provider}
+                    onViewMenu={handleViewMenu}
+                    onFavorite={toggleFavorite}
+                    isFavorite={favorites.includes(provider.id)}
+                  />
                 ))}
               </div>
+              {filteredProviders.length === 0 && (
+                <div className="text-center py-12">
+                  <ChefHat className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No chefs found</h3>
+                  <p className="text-muted-foreground">Try adjusting your filters</p>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="subscriptions">
+              <div className="text-center mb-8">
+                <Badge className="mb-4 bg-primary/10 text-primary">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Save up to 20%
+                </Badge>
+                <h3 className="text-2xl font-bold mb-2">Meal Subscription Plans</h3>
+                <p className="text-muted-foreground">Never worry about cooking again</p>
+              </div>
               <div className="grid md:grid-cols-3 gap-6">
                 {[
                   { 
@@ -381,7 +444,11 @@ export default function Tiffin() {
                           </li>
                         ))}
                       </ul>
-                      <Button className="w-full" variant={plan.popular ? "default" : "outline"}>
+                      <Button 
+                        className="w-full" 
+                        variant={plan.popular ? "default" : "outline"}
+                        onClick={() => setIsSubscriptionDialogOpen(true)}
+                      >
                         Subscribe Now
                       </Button>
                     </CardContent>
