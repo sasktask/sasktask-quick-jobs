@@ -199,13 +199,11 @@ export const useTiffinService = (userId: string | null) => {
           customer_id: userId,
           provider_id: subData.providerId,
           menu_id: subData.menuId,
-          plan_type: subData.planType,
-          meals_per_week: subData.mealsPerWeek,
-          price_per_week: subData.pricePerWeek,
+          subscription_type: subData.planType || 'weekly',
+          price_per_meal: subData.pricePerWeek ? subData.pricePerWeek / (subData.mealsPerWeek || 7) : 10,
           delivery_address: subData.deliveryAddress,
           start_date: startDate.toISOString().split('T')[0],
-          is_active: true,
-          payment_status: "pending"
+          is_active: true
         });
 
       if (error) throw error;
