@@ -196,13 +196,78 @@ const getPersonalizedRecommendations = (context: UserContext | null) => {
   return recommendations.slice(0, 4);
 };
 
+// Organized quick prompts by category
+const quickPromptCategories = [
+  {
+    title: "Getting Started",
+    prompts: [
+      { icon: HelpCircle, label: "How SaskTask works", prompt: "Explain how SaskTask works step by step - from posting a task to completion and payment. Include the payment flow and escrow system.", color: "text-blue-500" },
+      { icon: Lightbulb, label: "First steps guide", prompt: "I'm brand new to SaskTask. Give me a complete beginner's guide - what should I set up first and how do I get started successfully?", color: "text-yellow-500" },
+      { icon: Users, label: "Tasker vs Poster", prompt: "What's the difference between being a Task Poster and a Tasker? Can I do both? Explain the benefits of each.", color: "text-purple-500" },
+    ]
+  },
+  {
+    title: "Posting Tasks",
+    prompts: [
+      { icon: FileText, label: "Write task description", prompt: "Help me write a detailed and compelling task description that will attract quality taskers. Ask me what I need done.", color: "text-indigo-500" },
+      { icon: DollarSign, label: "Complete pricing guide", prompt: "Give me a comprehensive pricing guide for all types of tasks in Saskatchewan - home services, moving, yard work, handyman, and more. Include budget, standard, and premium rates.", color: "text-green-500" },
+      { icon: Users, label: "Choose best tasker", prompt: "What should I look for when choosing a tasker? Give me a detailed checklist for evaluating profiles, reviews, verification status, and bids.", color: "text-teal-500" },
+      { icon: Calendar, label: "Scheduling tips", prompt: "What's the best time to post tasks? How do I schedule recurring tasks and set up availability for taskers?", color: "text-cyan-500" },
+    ]
+  },
+  {
+    title: "For Taskers",
+    prompts: [
+      { icon: TrendingUp, label: "Get more tasks", prompt: "I'm a tasker - how do I get more tasks and stand out from the competition? Give me proven strategies to increase my bookings.", color: "text-orange-500" },
+      { icon: Star, label: "Get 5-star reviews", prompt: "How do I consistently get 5-star reviews? What do top-rated taskers do differently? Give me actionable tips.", color: "text-yellow-500" },
+      { icon: Zap, label: "Write winning bids", prompt: "How do I write bid messages that get accepted? Give me templates and examples for different task types.", color: "text-pink-500" },
+      { icon: DollarSign, label: "Set competitive rates", prompt: "How should I price my services as a new tasker vs an experienced one? When should I raise my rates?", color: "text-emerald-500" },
+    ]
+  },
+  {
+    title: "Safety & Trust",
+    prompts: [
+      { icon: Shield, label: "Safety guidelines", prompt: "What are all the safety guidelines I should follow on SaskTask? Both for meeting strangers and protecting my information.", color: "text-red-500" },
+      { icon: Shield, label: "Verification benefits", prompt: "Explain all the verification levels on SaskTask. What are the benefits of each and how do I get fully verified?", color: "text-green-500" },
+      { icon: HelpCircle, label: "Dispute resolution", prompt: "How does dispute resolution work on SaskTask? What happens if there's a problem with a task or payment?", color: "text-amber-500" },
+    ]
+  },
+  {
+    title: "Payments & Fees",
+    prompts: [
+      { icon: DollarSign, label: "Payment system", prompt: "Explain the complete payment system - deposits, escrow, platform fees, payouts, and when taskers get paid.", color: "text-green-500" },
+      { icon: Clock, label: "Cancellation policy", prompt: "What's the cancellation and refund policy? What happens if I need to cancel a task at different timeframes?", color: "text-orange-500" },
+      { icon: FileText, label: "Taxes & earnings", prompt: "How do taxes work for SaskTask earnings? Do I get a T4A? How do I track my earnings for tax purposes?", color: "text-blue-500" },
+    ]
+  },
+  {
+    title: "Task Categories",
+    prompts: [
+      { icon: Wrench, label: "All task types", prompt: "What types of tasks can I post or find on SaskTask? Give me examples for every category with typical pricing.", color: "text-orange-500" },
+      { icon: MapPin, label: "Seasonal tasks", prompt: "What tasks are in high demand each season in Saskatchewan? Snow removal, lawn care, spring cleaning, etc.", color: "text-sky-500" },
+      { icon: Wrench, label: "Tiffin service", prompt: "Tell me about the Tiffin meal delivery service on SaskTask. How does it work, what cuisines are available, and how do I order?", color: "text-rose-500" },
+    ]
+  },
+  {
+    title: "Profile & Account",
+    prompts: [
+      { icon: TrendingUp, label: "Optimize profile", prompt: "How do I create a profile that stands out? Give me a checklist of everything I should complete and tips for each section.", color: "text-violet-500" },
+      { icon: Star, label: "Build reputation", prompt: "How do I build a strong reputation on SaskTask? What badges can I earn and how do they help?", color: "text-amber-500" },
+      { icon: HelpCircle, label: "Account settings", prompt: "Walk me through all the account settings - notifications, privacy, payment methods, security, and preferences.", color: "text-slate-500" },
+    ]
+  },
+];
+
+// Flat list of most popular prompts for compact view
 const quickPrompts = [
-  { icon: Lightbulb, label: "Write a task description", prompt: "Help me write a detailed and clear task description that will attract quality taskers. Ask me what I need done.", color: "text-yellow-500" },
-  { icon: DollarSign, label: "Pricing guide", prompt: "What are fair price ranges for different types of tasks in Saskatchewan? Give me a comprehensive pricing guide.", color: "text-green-500" },
-  { icon: HelpCircle, label: "How SaskTask works", prompt: "Explain how SaskTask works step by step - from posting a task to completion and payment.", color: "text-blue-500" },
-  { icon: Users, label: "Finding taskers", prompt: "What should I look for when choosing a tasker? Give me tips on evaluating profiles and reviews.", color: "text-purple-500" },
-  { icon: Shield, label: "Safety tips", prompt: "What safety guidelines should I follow as a user of SaskTask? Both as a task giver and task doer.", color: "text-red-500" },
-  { icon: Wrench, label: "Task categories", prompt: "What types of tasks can I post or find on SaskTask? Give me examples for each category.", color: "text-orange-500" },
+  { icon: HelpCircle, label: "How it works", prompt: "Explain how SaskTask works step by step - from posting a task to completion and payment.", color: "text-blue-500" },
+  { icon: DollarSign, label: "Pricing guide", prompt: "Give me a comprehensive pricing guide for all types of tasks in Saskatchewan.", color: "text-green-500" },
+  { icon: Lightbulb, label: "Write task description", prompt: "Help me write a detailed task description that will attract quality taskers. Ask me what I need done.", color: "text-yellow-500" },
+  { icon: TrendingUp, label: "Get more tasks", prompt: "I'm a tasker - how do I get more tasks and stand out from the competition?", color: "text-orange-500" },
+  { icon: Shield, label: "Safety tips", prompt: "What safety guidelines should I follow on SaskTask?", color: "text-red-500" },
+  { icon: Star, label: "Get 5-star reviews", prompt: "How do I consistently get 5-star reviews as a tasker?", color: "text-yellow-500" },
+  { icon: Users, label: "Choose best tasker", prompt: "What should I look for when choosing a tasker?", color: "text-purple-500" },
+  { icon: Wrench, label: "Task categories", prompt: "What types of tasks can I post or find on SaskTask?", color: "text-orange-500" },
 ];
 
 const STORAGE_KEY = 'sasktask_ai_chat_history';
@@ -662,23 +727,48 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
                   <div className="space-y-2">
                     <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
                       <FileText className="h-3 w-3" />
-                      Quick actions
+                      Ask me anything
                     </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {quickPrompts.map((prompt) => (
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {quickPrompts.slice(0, 8).map((prompt) => (
                         <button
                           key={prompt.label}
                           onClick={() => handleQuickPrompt(prompt.prompt)}
-                          className="flex items-center gap-2 p-2.5 rounded-lg border border-border hover:bg-muted/50 hover:border-primary/30 transition-all text-left group"
+                          className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-muted/50 hover:border-primary/30 transition-all text-left group"
                         >
                           <div className={cn(
-                            "h-7 w-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform",
+                            "h-6 w-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform",
                           )}>
-                            <prompt.icon className={cn("h-3.5 w-3.5", prompt.color)} />
+                            <prompt.icon className={cn("h-3 w-3", prompt.color)} />
                           </div>
-                          <span className="text-xs font-medium leading-tight">{prompt.label}</span>
+                          <span className="text-[11px] font-medium leading-tight line-clamp-2">{prompt.label}</span>
                         </button>
                       ))}
+                    </div>
+                    
+                    {/* Popular Questions */}
+                    <div className="pt-2 border-t border-border/50">
+                      <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                        <HelpCircle className="h-3 w-3" />
+                        Popular questions
+                      </p>
+                      <div className="space-y-1">
+                        {[
+                          "What fees does SaskTask charge?",
+                          "How do I get verified?",
+                          "Is my payment protected?",
+                          "Can I cancel a booking?"
+                        ].map((question, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => sendMessage(question)}
+                            className="w-full text-left text-xs px-3 py-2 rounded-lg bg-muted/30 hover:bg-muted border border-transparent hover:border-primary/20 transition-all flex items-center gap-2"
+                          >
+                            <span className="text-violet-500">→</span>
+                            {question}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
