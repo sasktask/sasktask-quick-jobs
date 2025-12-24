@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls, PanInfo } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,9 @@ import {
   Clock,
   MapPin,
   Star,
-  Zap
+  Zap,
+  GripVertical,
+  MessageCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -302,6 +304,14 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
   const [userContext, setUserContext] = useState<UserContext | null>(null);
   const [hasShownWelcome, setHasShownWelcome] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  
+  // Draggable state
+  const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
+  const [windowPosition, setWindowPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const constraintsRef = useRef<HTMLDivElement>(null);
+  const dragControls = useDragControls();
+  
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -569,91 +579,183 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
     }
   };
 
+  // Handle drag end for button
+  const handleButtonDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    setButtonPosition({
+      x: buttonPosition.x + info.offset.x,
+      y: buttonPosition.y + info.offset.y
+    });
+    setTimeout(() => setIsDragging(false), 100);
+  };
+
+  // Handle drag end for window
+  const handleWindowDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    setWindowPosition({
+      x: windowPosition.x + info.offset.x,
+      y: windowPosition.y + info.offset.y
+    });
+  };
+
+  const startDrag = (event: React.PointerEvent) => {
+    dragControls.start(event);
+  };
+
   // Don't show the widget if user is not authenticated
   if (!isAuthenticated) {
     return null;
   }
 
-  if (!isOpen) {
-    return (
-      <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 left-4 lg:bottom-6 lg:left-6 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-xl flex items-center justify-center group"
-      >
-        <Bot className="h-6 w-6 group-hover:scale-110 transition-transform" />
-        <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-background animate-pulse" />
-        <span className="absolute inset-0 rounded-full bg-violet-400/30 animate-ping" />
-      </motion.button>
-    );
-  }
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      className={cn(
-        "fixed z-50 bg-background border border-border rounded-2xl shadow-2xl flex flex-col",
-        isMinimized 
-          ? "bottom-20 left-4 lg:bottom-6 lg:left-6 w-80 h-14"
-          : "bottom-20 left-4 lg:bottom-6 lg:left-6 w-[380px] h-[550px] max-h-[85vh]"
-      )}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-violet-600/10 to-indigo-600/10 border-b border-border rounded-t-2xl flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg">
-            <Bot className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="font-semibold text-sm">SaskTask AI</p>
-              <Badge variant="secondary" className="text-[10px] h-4 px-1.5 bg-gradient-to-r from-violet-600/20 to-indigo-600/20">
-                <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                Pro
-              </Badge>
-            </div>
-            {!isMinimized && (
-              <p className="text-xs text-muted-foreground">Ask me anything about tasks</p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          {messages.length > 0 && !isMinimized && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-destructive"
-              onClick={clearChat}
-              title="Clear chat"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setIsMinimized(!isMinimized)}
-          >
-            {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setIsOpen(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+    <>
+      {/* Constraints container */}
+      <div 
+        ref={constraintsRef}
+        className="fixed inset-0 pointer-events-none z-40"
+      />
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
+        {!isOpen ? (
+          // Floating button - Draggable
+          <motion.div
+            key="button"
+            drag
+            dragConstraints={constraintsRef}
+            dragElastic={0.1}
+            dragMomentum={false}
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={handleButtonDragEnd}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            whileHover={{ scale: 1.05 }}
+            className="fixed bottom-20 left-4 lg:bottom-6 lg:left-6 z-50 cursor-grab active:cursor-grabbing"
+            style={{ x: buttonPosition.x, y: buttonPosition.y }}
+          >
+            <button
+              onClick={() => !isDragging && setIsOpen(true)}
+              className="h-16 w-16 rounded-full bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 text-white shadow-2xl flex items-center justify-center group relative overflow-hidden"
+            >
+              {/* Animated gradient ring */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-violet-400/0 via-white/30 to-violet-400/0 animate-spin-slow" style={{ animationDuration: '3s' }} />
+              
+              {/* Inner glow */}
+              <div className="absolute inset-1 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600" />
+              
+              {/* Pulse rings */}
+              <span className="absolute inset-0 rounded-full bg-violet-400/30 animate-ping" />
+              <span className="absolute inset-2 rounded-full bg-violet-400/20 animate-pulse" />
+              
+              {/* Icon */}
+              <div className="relative z-10 flex items-center justify-center">
+                <Bot className="h-7 w-7 group-hover:scale-110 transition-transform duration-300" />
+                <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-yellow-300 animate-pulse" />
+              </div>
+              
+              {/* Online indicator */}
+              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-500 border-2 border-background animate-pulse z-20" />
+              
+              {/* Drag handle indicator */}
+              <div className="absolute -bottom-1 -left-1 h-5 w-5 rounded-full bg-background/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                <GripVertical className="h-3 w-3 text-muted-foreground" />
+              </div>
+            </button>
+            
+            {/* Floating label */}
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+              className="absolute left-full ml-3 top-1/2 -translate-y-1/2 whitespace-nowrap pointer-events-none"
+            >
+              <Badge variant="secondary" className="shadow-lg bg-background/95 backdrop-blur-sm border flex items-center gap-1.5 py-1 px-2.5">
+                <MessageCircle className="h-3 w-3 text-violet-500" />
+                <span className="text-xs font-medium">AI Assistant</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+              </Badge>
+            </motion.div>
+          </motion.div>
+        ) : (
+          // Chat window - Draggable via header
+          <motion.div
+            key="window"
+            drag
+            dragControls={dragControls}
+            dragConstraints={constraintsRef}
+            dragElastic={0.05}
+            dragMomentum={false}
+            dragListener={false}
+            onDragEnd={handleWindowDragEnd}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ 
+              opacity: 1, 
+              scale: 1, 
+              y: 0,
+            }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            style={{ x: windowPosition.x, y: windowPosition.y }}
+            className={cn(
+              "fixed z-50 bg-background/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden",
+              isMinimized 
+                ? "bottom-20 left-4 lg:bottom-6 lg:left-6 w-80 h-14"
+                : "bottom-20 left-4 lg:bottom-6 lg:left-6 w-[380px] h-[550px] max-h-[85vh]"
+            )}
+          >
+            {/* Header - Draggable */}
+            <div 
+              onPointerDown={startDrag}
+              className="flex items-center justify-between p-3 bg-gradient-to-r from-violet-600/10 to-indigo-600/10 border-b border-border rounded-t-2xl flex-shrink-0 cursor-move select-none"
+            >
+              <div className="flex items-center gap-2">
+                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                  <Bot className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-sm">SaskTask AI</p>
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5 bg-gradient-to-r from-violet-600/20 to-indigo-600/20">
+                      <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                      Pro
+                    </Badge>
+                  </div>
+                  {!isMinimized && (
+                    <p className="text-xs text-muted-foreground">Drag header to move • Ask anything</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <GripVertical className="h-4 w-4 text-muted-foreground mr-1" />
+                {messages.length > 0 && !isMinimized && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    onClick={clearChat}
+                    title="Clear chat"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setIsMinimized(!isMinimized)}
+                >
+                  {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <AnimatePresence>
         {!isMinimized && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -952,5 +1054,8 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
         )}
       </AnimatePresence>
     </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
