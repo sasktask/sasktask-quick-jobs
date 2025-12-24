@@ -202,7 +202,7 @@ export function TaskClusterMap({
         source: 'tasks',
         filter: ['!', ['has', 'point_count']],
         paint: {
-          'circle-color': 'hsl(var(--primary))',
+          'circle-color': '#8b5cf6',
           'circle-radius': 10,
           'circle-stroke-width': 2,
           'circle-stroke-color': '#fff'
