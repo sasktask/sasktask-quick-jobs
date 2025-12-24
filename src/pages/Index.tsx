@@ -283,50 +283,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Platform Stats Section */}
-      <section className="py-12 px-4 bg-muted/30 border-y border-border/50">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Calendar className="h-5 w-5 text-primary" />
-                <span className="text-3xl font-bold text-foreground">
-                  {stats.isLoading ? <Skeleton className="h-8 w-12 inline-block" /> : <StatsCounter end={stats.totalTasksPostedToday} />}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">Tasks Posted Today</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Users className="h-5 w-5 text-secondary" />
-                <span className="text-3xl font-bold text-foreground">
-                  {stats.isLoading ? <Skeleton className="h-8 w-12 inline-block" /> : <StatsCounter end={stats.totalActiveTaskers} />}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">Active Taskers</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Star className="h-5 w-5 text-warning fill-warning" />
-                <span className="text-3xl font-bold text-foreground">
-                  {stats.isLoading ? <Skeleton className="h-8 w-12 inline-block" /> : (stats.averageRating > 0 ? stats.averageRating : "5.0")}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">Average Rating</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <CheckCircle2 className="h-5 w-5 text-success" />
-                <span className="text-3xl font-bold text-foreground">
-                  {stats.isLoading ? <Skeleton className="h-8 w-12 inline-block" /> : <StatsCounter end={stats.totalTasksCompleted} />}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">Tasks Completed</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Social Proof Bar */}
       {!user && <SocialProofBar />}
 
