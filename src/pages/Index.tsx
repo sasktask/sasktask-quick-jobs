@@ -60,47 +60,49 @@ const Index = () => {
       {/* Urgency Banner */}
       <UrgencyBanner />
       
-      {/* Hero Section */}
-      <section className="pt-8 sm:pt-16 pb-12 sm:pb-20 px-4 relative overflow-hidden">
-        {/* Background with animated gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5 -z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent -z-10" />
+      {/* Hero Section - Bold & Vibrant */}
+      <section className="pt-8 sm:pt-20 pb-16 sm:pb-24 px-4 relative overflow-hidden">
+        {/* Animated Background Mesh */}
+        <div className="absolute inset-0 bg-gradient-mesh -z-10" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-blob -z-10" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-blob animation-delay-2000 -z-10" />
+        <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-accent/10 rounded-full blur-3xl animate-blob animation-delay-4000 -z-10" />
         
         <div className="container mx-auto">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center max-w-7xl mx-auto">
             {/* Left: Text Content */}
-            <div className="space-y-4 sm:space-y-6 text-center lg:text-left">
+            <div className="space-y-6 text-center lg:text-left">
+              {/* Badge */}
               <div 
-                className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary/10 border border-primary/20 rounded-full text-xs sm:text-sm font-medium text-primary animate-fade-in"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-full text-sm font-semibold text-primary animate-fade-in"
                 style={{ animationDelay: '0.1s' }}
               >
-                <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+                <Sparkles className="h-4 w-4 animate-pulse" />
                 {user ? "Welcome Back!" : "Saskatchewan's #1 Task Platform"}
+                <ArrowRight className="h-3 w-3" />
               </div>
               
+              {/* Main Heading */}
               <h1 
-                className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight animate-fade-up"
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight animate-fade-up"
                 style={{ animationDelay: '0.2s' }}
               >
                 {user ? (
                   <>
-                    Your Dashboard
-                    <span className="block bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
-                      Awaits
-                    </span>
+                    <span className="text-foreground">Your Dashboard</span>
+                    <span className="block text-gradient-hero mt-2">Awaits</span>
                   </>
                 ) : (
                   <>
-                    Get Things Done
-                    <span className="block bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
-                      The Easy Way
-                    </span>
+                    <span className="text-foreground">Get Things Done</span>
+                    <span className="block text-gradient-hero mt-2">The Easy Way</span>
                   </>
                 )}
               </h1>
               
+              {/* Subheading */}
               <p 
-                className="text-base sm:text-xl text-muted-foreground leading-relaxed animate-fade-up max-w-xl mx-auto lg:mx-0"
+                className="text-lg sm:text-xl text-muted-foreground leading-relaxed animate-fade-up max-w-xl mx-auto lg:mx-0"
                 style={{ animationDelay: '0.3s' }}
               >
                 {user 
@@ -109,87 +111,84 @@ const Index = () => {
                 }
               </p>
 
-              {/* Hero Search - Only for non-logged in users */}
-              {!user && (
-                <div className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
+              {/* Hero Search or CTA Buttons */}
+              {!user ? (
+                <div className="animate-fade-up pt-2" style={{ animationDelay: '0.4s' }}>
                   <HeroSearch />
                 </div>
-              )}
-
-              {/* CTA Buttons - For logged in users */}
-              {user && (
+              ) : (
                 <div 
-                  className="flex flex-col sm:flex-row gap-3 pt-4 animate-fade-up justify-center lg:justify-start"
+                  className="flex flex-col sm:flex-row gap-4 pt-4 animate-fade-up justify-center lg:justify-start"
                   style={{ animationDelay: '0.4s' }}
                 >
                   <Link to="/dashboard">
-                    <Button size="lg" variant="hero" className="w-full sm:w-auto text-base sm:text-lg h-12 sm:h-14 px-6 sm:px-8">
-                      <Briefcase className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                    <Button size="lg" variant="hero" className="w-full sm:w-auto text-base sm:text-lg h-14 px-8 gap-2">
+                      <Briefcase className="h-5 w-5" />
                       Go to Dashboard
                     </Button>
                   </Link>
                   <Link to="/browse">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg h-12 sm:h-14 px-6 sm:px-8 border-2">
-                      <Search className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg h-14 px-8 gap-2">
+                      <Search className="h-5 w-5" />
                       Browse Tasks
                     </Button>
                   </Link>
                 </div>
               )}
 
-              {/* Trust Indicators - Simplified for mobile */}
+              {/* Trust Indicators */}
               <div 
-                className="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 pt-4 sm:pt-6 border-t border-border animate-fade-up"
+                className="flex flex-wrap justify-center lg:justify-start gap-6 pt-8 animate-fade-up"
                 style={{ animationDelay: '0.5s' }}
               >
                 {user ? (
                   <>
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <div className="flex items-center gap-3 group">
+                      <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Briefcase className="h-6 w-6 text-primary" />
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-sm sm:text-base text-foreground">Dashboard</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Quick Access</p>
+                        <p className="font-bold text-foreground">Dashboard</p>
+                        <p className="text-sm text-muted-foreground">Quick Access</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <div className="flex items-center gap-3 group">
+                      <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-secondary/20 to-secondary/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <MessageSquare className="h-6 w-6 text-secondary" />
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-sm sm:text-base text-foreground">Messages</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Stay Connected</p>
+                        <p className="font-bold text-foreground">Messages</p>
+                        <p className="text-sm text-muted-foreground">Stay Connected</p>
                       </div>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <div className="flex items-center gap-3 group">
+                      <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Shield className="h-6 w-6 text-primary" />
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-sm sm:text-base text-foreground">Verified</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Taskers</p>
+                        <p className="font-bold text-foreground">Verified</p>
+                        <p className="text-sm text-muted-foreground">Taskers</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <div className="flex items-center gap-3 group">
+                      <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-secondary/20 to-secondary/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Lock className="h-6 w-6 text-secondary" />
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-sm sm:text-base text-foreground">Secure</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Payments</p>
+                        <p className="font-bold text-foreground">Secure</p>
+                        <p className="text-sm text-muted-foreground">Payments</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Star className="h-4 w-4 sm:h-5 sm:w-5 text-primary fill-primary" />
+                    <div className="flex items-center gap-3 group">
+                      <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Star className="h-6 w-6 text-accent fill-accent" />
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-sm sm:text-base text-foreground">Top Rated</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Service</p>
+                        <p className="font-bold text-foreground">Top Rated</p>
+                        <p className="text-sm text-muted-foreground">Service</p>
                       </div>
                     </div>
                   </>
@@ -197,72 +196,87 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Right: Infographic with Dynamic Stats - Hidden on small mobile */}
+            {/* Right: Enhanced Hero Visual */}
             <div className="relative animate-scale-in hidden sm:block" style={{ animationDelay: '0.3s' }}>
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl blur-3xl -z-10" />
-              <div className="relative bg-card/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-border shadow-2xl hover-lift">
+              {/* Glow effect behind image */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary/20 to-accent/30 rounded-3xl blur-3xl scale-110 -z-10" />
+              
+              {/* Main image card */}
+              <div className="relative bg-card/80 backdrop-blur-xl rounded-3xl p-4 border border-border/50 shadow-2xl hover-lift">
                 <img 
                   src={heroInfographic} 
                   alt="SaskTask workflow: Post task, connect with verified professionals, get it done" 
-                  className="w-full h-auto rounded-xl sm:rounded-2xl"
+                  className="w-full h-auto rounded-2xl"
                   loading="lazy"
                 />
+                
+                {/* Overlay gradient */}
+                <div className="absolute inset-4 rounded-2xl bg-gradient-to-t from-background/60 via-transparent to-transparent pointer-events-none" />
               </div>
 
-              {/* Floating stats cards with real data - Adjusted for responsiveness */}
-              <div className="absolute -bottom-2 sm:-bottom-4 -left-2 sm:-left-4 bg-card border border-border rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-xl animate-float">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              {/* Floating stats - Users */}
+              <div className="absolute -bottom-4 -left-4 bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl p-4 shadow-xl animate-float">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center shadow-lg">
+                    <Users className="h-6 w-6 text-primary-foreground" />
                   </div>
                   <div>
                     {stats.isLoading ? (
                       <>
-                        <Skeleton className="h-6 sm:h-7 w-14 sm:w-16 mb-1" />
-                        <Skeleton className="h-3 sm:h-4 w-16 sm:w-20" />
+                        <Skeleton className="h-7 w-16 mb-1" />
+                        <Skeleton className="h-4 w-12" />
                       </>
                     ) : (
                       <>
-                        <p className="text-xl sm:text-2xl font-bold text-foreground">
-                          <StatsCounter end={stats.totalUsers} suffix={stats.totalUsers > 0 ? "" : ""} />
+                        <p className="text-2xl font-bold text-foreground">
+                          <StatsCounter end={stats.totalUsers} />
                         </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Users</p>
+                        <p className="text-sm text-muted-foreground">Users</p>
                       </>
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="absolute -top-2 sm:-top-4 -right-2 sm:-right-4 bg-card border border-border rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-xl animate-float" style={{animationDelay: '0.5s'}}>
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              {/* Floating stats - Tasks */}
+              <div className="absolute -top-4 -right-4 bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl p-4 shadow-xl animate-float" style={{animationDelay: '0.5s'}}>
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-secondary to-secondary/50 flex items-center justify-center shadow-lg">
+                    <CheckCircle2 className="h-6 w-6 text-secondary-foreground" />
                   </div>
                   <div>
                     {stats.isLoading ? (
                       <>
-                        <Skeleton className="h-6 sm:h-7 w-14 sm:w-16 mb-1" />
-                        <Skeleton className="h-3 sm:h-4 w-20 sm:w-24" />
+                        <Skeleton className="h-7 w-16 mb-1" />
+                        <Skeleton className="h-4 w-20" />
                       </>
                     ) : (
                       <>
-                        <p className="text-xl sm:text-2xl font-bold text-foreground">
-                          <StatsCounter end={stats.totalTasksCompleted} suffix="" />
+                        <p className="text-2xl font-bold text-foreground">
+                          <StatsCounter end={stats.totalTasksCompleted} />
                         </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Tasks Done</p>
+                        <p className="text-sm text-muted-foreground">Tasks Done</p>
                       </>
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="absolute top-1/2 -right-4 sm:-right-6 bg-card border border-border rounded-xl sm:rounded-2xl p-2 sm:p-3 shadow-xl animate-float hidden lg:block" style={{animationDelay: '1s'}}>
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 fill-yellow-500" />
-                  <span className="font-bold text-sm sm:text-base text-foreground">
-                    {stats.averageRating > 0 ? stats.averageRating : "N/A"}
-                  </span>
-                </div>
+              {/* Rating badge */}
+              <div className="absolute top-1/2 -translate-y-1/2 -right-6 bg-card/95 backdrop-blur-xl border border-border/50 rounded-xl px-4 py-3 shadow-xl animate-float hidden lg:flex items-center gap-2" style={{animationDelay: '1s'}}>
+                <Star className="h-5 w-5 text-warning fill-warning" />
+                <span className="font-bold text-foreground">
+                  {stats.averageRating > 0 ? stats.averageRating : "5.0"}
+                </span>
+              </div>
+
+              {/* Live indicator */}
+              <div className="absolute bottom-1/4 -left-6 bg-card/95 backdrop-blur-xl border border-border/50 rounded-xl px-4 py-2 shadow-xl animate-float hidden lg:flex items-center gap-2" style={{animationDelay: '1.5s'}}>
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-success"></span>
+                </span>
+                <span className="text-sm font-medium text-foreground">Live Now</span>
               </div>
             </div>
           </div>
