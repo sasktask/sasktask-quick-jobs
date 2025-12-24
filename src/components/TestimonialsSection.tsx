@@ -259,6 +259,26 @@ export const TestimonialsSection = () => {
           </div>
         )}
 
+        {/* Bottom Stats - Real numbers only */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-muted/30 rounded-2xl p-6 md:p-8">
+          {[
+            { value: stats.totalUsers, label: "Users", color: "text-primary" },
+            { value: stats.totalActiveTaskers, label: "Taskers", color: "text-emerald-500" },
+            { value: stats.averageRating > 0 ? `${stats.averageRating}/5` : "N/A", label: "Avg Rating", color: "text-yellow-500" },
+            { value: stats.totalTasksCompleted, label: "Tasks Done", color: "text-blue-500" }
+          ].map((stat, index) => (
+            <div 
+              key={stat.label} 
+              className="text-center animate-fade-in"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <div className={cn("text-3xl md:text-4xl font-bold mb-1", stat.color)}>
+                {typeof stat.value === 'number' ? stat.value : stat.value}
+              </div>
+              <div className="text-sm text-muted-foreground">{stat.label}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
