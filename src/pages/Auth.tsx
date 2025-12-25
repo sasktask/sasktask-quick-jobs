@@ -40,9 +40,7 @@ const emailSchema = z
   .max(255, "Email is too long");
 
 // Phone validation (may be unused but included for isPhone helper)
-const phoneSchema = z
-  .string()
-  .regex(/^\+?[1-9]\d{6,14}$/, "Please enter a valid phone number (e.g., +1234567890)");
+const phoneSchema = z.string().regex(/^\+?[1-9]\d{6,14}$/, "Please enter a valid phone number (e.g., +1234567890)");
 
 // Sign in validation
 const signInSchema = z.object({
@@ -52,22 +50,9 @@ const signInSchema = z.object({
 
 // Sign up validation with strong password requirements
 const signUpSchema = z.object({
-  firstName: z
-    .string()
-    .trim()
-    .min(2, "First name must be at least 2 characters")
-    .max(50, "First name is too long"),
-  middleName: z
-    .string()
-    .trim()
-    .max(50, "Middle name is too long")
-    .optional()
-    .or(z.literal("")),
-  lastName: z
-    .string()
-    .trim()
-    .min(2, "Last name must be at least 2 characters")
-    .max(50, "Last name is too long"),
+  firstName: z.string().trim().min(2, "First name must be at least 2 characters").max(50, "First name is too long"),
+  middleName: z.string().trim().max(50, "Middle name is too long").optional().or(z.literal("")),
+  lastName: z.string().trim().min(2, "Last name must be at least 2 characters").max(50, "Last name is too long"),
   email: emailSchema,
   phone: z
     .string()
@@ -87,9 +72,7 @@ const signUpSchema = z.object({
 });
 
 // Password strength checker
-const getPasswordStrength = (
-  password: string
-): { score: number; label: string; color: string } => {
+const getPasswordStrength = (password: string): { score: number; label: string; color: string } => {
   let score = 0;
   if (password.length >= 8) score++;
   if (password.length >= 12) score++;
@@ -376,16 +359,11 @@ const Auth: React.FC = () => {
       }
 
       // Construct full name from parts
-      const fullName = [
-        validation.data.firstName,
-        validation.data.middleName,
-        validation.data.lastName,
-      ]
+      const fullName = [validation.data.firstName, validation.data.middleName, validation.data.lastName]
         .filter(Boolean)
         .join(" ");
 
-      const primaryRole =
-        validation.data.role === "both" ? "task_giver" : validation.data.role;
+      const primaryRole = validation.data.role === "both" ? "task_giver" : validation.data.role;
       const wantsBothRoles = validation.data.role === "both";
 
       const { data, error } = await supabase.auth.signUp({
@@ -437,10 +415,7 @@ const Auth: React.FC = () => {
         // Redirect handled by onAuthStateChange
       }
     } catch (error: any) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Unable to create account. Please try again.";
+      const errorMessage = error instanceof Error ? error.message : "Unable to create account. Please try again.";
       toast({
         title: "Sign up failed",
         description: errorMessage,
@@ -460,9 +435,7 @@ const Auth: React.FC = () => {
     // Check rate limiting
     const { allowed, remainingTime } = checkRateLimit();
     if (!allowed) {
-      setRateLimitError(
-        `Too many failed attempts. Please try again in ${remainingTime} minutes.`
-      );
+      setRateLimitError(`Too many failed attempts. Please try again in ${remainingTime} minutes.`);
       return;
     }
 
@@ -470,11 +443,7 @@ const Auth: React.FC = () => {
 
     try {
       const trimmedIdentifier = identifier.trim();
-      const detectedType = isEmail(trimmedIdentifier)
-        ? "email"
-        : isPhone(trimmedIdentifier)
-          ? "phone"
-          : null;
+      const detectedType = isEmail(trimmedIdentifier) ? "email" : isPhone(trimmedIdentifier) ? "phone" : null;
 
       if (!detectedType) {
         setFormErrors({
@@ -554,10 +523,7 @@ const Auth: React.FC = () => {
       });
       // Redirect handled by onAuthStateChange
     } catch (error: any) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Unable to sign in. Please try again.";
+      const errorMessage = error instanceof Error ? error.message : "Unable to sign in. Please try again.";
       toast({
         title: "Sign in failed",
         description: errorMessage,
@@ -590,14 +556,9 @@ const Auth: React.FC = () => {
 
       if (error) {
         // Handle specific error cases
-        if (
-          error.message &&
-          (error.message.includes("same") ||
-            error.message.includes("different from the old"))
-        ) {
+        if (error.message && (error.message.includes("same") || error.message.includes("different from the old"))) {
           setFormErrors({
-            newPassword:
-              "New password must be different from your current password",
+            newPassword: "New password must be different from your current password",
           });
           setIsLoading(false);
           return;
@@ -614,10 +575,7 @@ const Auth: React.FC = () => {
       setNewPassword("");
       navigate("/dashboard");
     } catch (error: any) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to update password";
+      const errorMessage = error instanceof Error ? error.message : "Failed to update password";
       toast({
         title: "Error",
         description: errorMessage,
@@ -657,10 +615,7 @@ const Auth: React.FC = () => {
 
       setShowForgotPassword(false);
     } catch (error: any) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to send reset email";
+      const errorMessage = error instanceof Error ? error.message : "Failed to send reset email";
       toast({
         title: "Error",
         description: errorMessage,
@@ -713,18 +668,10 @@ const Auth: React.FC = () => {
                         className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                         onClick={() => setShowPassword((show) => !show)}
                       >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
                     </div>
-                    {formErrors.newPassword && (
-                      <p className="text-sm text-destructive">
-                        {formErrors.newPassword}
-                      </p>
-                    )}
+                    {formErrors.newPassword && <p className="text-sm text-destructive">{formErrors.newPassword}</p>}
                     <p className="text-xs text-muted-foreground">
                       Must be 8+ characters with uppercase, lowercase, number, and special character
                     </p>
@@ -753,11 +700,7 @@ const Auth: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
         <style>{roleStyles}</style>
-        <SEOHead
-          title="Reset Password - SaskTask"
-          description="Reset your SaskTask account password"
-          url="/auth"
-        />
+        <SEOHead title="Reset Password - SaskTask" description="Reset your SaskTask account password" url="/auth" />
         <Navbar />
 
         <div className="container mx-auto px-4 pt-32 pb-20">
@@ -777,9 +720,7 @@ const Auth: React.FC = () => {
                   Back to Login
                 </Button>
                 <CardTitle className="text-2xl">Reset Password</CardTitle>
-                <CardDescription>
-                  Enter your email to receive a password reset link
-                </CardDescription>
+                <CardDescription>Enter your email to receive a password reset link</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleForgotPassword} className="space-y-4">
@@ -800,11 +741,7 @@ const Auth: React.FC = () => {
                         required
                       />
                     </div>
-                    {formErrors.resetEmail && (
-                      <p className="text-sm text-destructive">
-                        {formErrors.resetEmail}
-                      </p>
-                    )}
+                    {formErrors.resetEmail && <p className="text-sm text-destructive">{formErrors.resetEmail}</p>}
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading} variant="hero">
                     {isLoading ? (
@@ -838,12 +775,8 @@ const Auth: React.FC = () => {
       <div className="container mx-auto px-4 pt-32 pb-20">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8 animate-fade-in">
-            <h1 className="text-4xl font-bold mb-2 text-gradient">
-              Welcome to SaskTask
-            </h1>
-            <p className="text-muted-foreground">
-              Your local task marketplace
-            </p>
+            <h1 className="text-4xl font-bold mb-2 text-gradient">Welcome to SaskTask</h1>
+            <p className="text-muted-foreground">Your local task marketplace</p>
           </div>
 
           <Card className="shadow-2xl border-border">
@@ -852,9 +785,7 @@ const Auth: React.FC = () => {
                 <Shield className="h-5 w-5 text-primary" />
                 <CardTitle className="text-2xl">Get Started</CardTitle>
               </div>
-              <CardDescription>
-                Sign in or create your free account
-              </CardDescription>
+              <CardDescription>Sign in or create your free account</CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="signin" className="w-full">
@@ -940,11 +871,7 @@ const Auth: React.FC = () => {
                             className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                             onClick={() => setShowPassword((show) => !show)}
                           >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </Button>
                         </div>
                         {formErrors.password && (
@@ -961,20 +888,12 @@ const Auth: React.FC = () => {
                           checked={rememberMe}
                           onCheckedChange={(checked) => setRememberMe(!!checked)}
                         />
-                        <Label
-                          htmlFor="remember-me"
-                          className="text-sm font-normal cursor-pointer"
-                        >
+                        <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
                           Remember me for 30 days
                         </Label>
                       </div>
 
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isLoading || !!rateLimitError}
-                        variant="hero"
-                      >
+                      <Button type="submit" className="w-full" disabled={isLoading || !!rateLimitError} variant="hero">
                         {isLoading ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1020,10 +939,7 @@ const Auth: React.FC = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-middlename">
-                        Middle Name{" "}
-                        <span className="text-muted-foreground text-xs">
-                          (optional)
-                        </span>
+                        Middle Name <span className="text-muted-foreground text-xs">(optional)</span>
                       </Label>
                       <div className="relative">
                         <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -1121,9 +1037,7 @@ const Auth: React.FC = () => {
                           required
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Include country code (e.g., +1 for Canada/US)
-                      </p>
+                      <p className="text-xs text-muted-foreground">Include country code (e.g., +1 for Canada/US)</p>
                       {formErrors.phone && (
                         <p className="text-sm text-destructive flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
@@ -1156,11 +1070,7 @@ const Auth: React.FC = () => {
                           onClick={() => setShowPassword((show) => !show)}
                           tabIndex={-1}
                         >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
                       {password && (
@@ -1169,10 +1079,9 @@ const Auth: React.FC = () => {
                             {[...Array(6)].map((_, i) => (
                               <div
                                 key={i}
-                                className={`h-1 flex-1 rounded ${i < passwordStrength.score
-                                  ? passwordStrength.color
-                                  : "bg-muted"
-                                  }`}
+                                className={`h-1 flex-1 rounded ${
+                                  i < passwordStrength.score ? passwordStrength.color : "bg-muted"
+                                }`}
                               />
                             ))}
                           </div>
@@ -1192,61 +1101,26 @@ const Auth: React.FC = () => {
                           </p>
                         </div>
                       )}
-                      {formErrors.password && (
-                        <p className="text-sm text-destructive">
-                          {formErrors.password}
-                        </p>
-                      )}
+                      {formErrors.password && <p className="text-sm text-destructive">{formErrors.password}</p>}
                       <ul className="text-xs text-muted-foreground space-y-1 mt-2">
-                        <li
-                          className={`flex items-center gap-1 ${password.length >= 8 ? "text-green-600" : ""
-                            }`}
-                        >
-                          {password.length >= 8 ? (
-                            <Check className="h-3 w-3" />
-                          ) : (
-                            <AlertCircle className="h-3 w-3" />
-                          )}
+                        <li className={`flex items-center gap-1 ${password.length >= 8 ? "text-green-600" : ""}`}>
+                          {password.length >= 8 ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
                           At least 8 characters
                         </li>
-                        <li
-                          className={`flex items-center gap-1 ${/[A-Z]/.test(password) ? "text-green-600" : ""
-                            }`}
-                        >
-                          {/[A-Z]/.test(password) ? (
-                            <Check className="h-3 w-3" />
-                          ) : (
-                            <AlertCircle className="h-3 w-3" />
-                          )}
+                        <li className={`flex items-center gap-1 ${/[A-Z]/.test(password) ? "text-green-600" : ""}`}>
+                          {/[A-Z]/.test(password) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
                           One uppercase letter
                         </li>
-                        <li
-                          className={`flex items-center gap-1 ${/[a-z]/.test(password) ? "text-green-600" : ""
-                            }`}
-                        >
-                          {/[a-z]/.test(password) ? (
-                            <Check className="h-3 w-3" />
-                          ) : (
-                            <AlertCircle className="h-3 w-3" />
-                          )}
+                        <li className={`flex items-center gap-1 ${/[a-z]/.test(password) ? "text-green-600" : ""}`}>
+                          {/[a-z]/.test(password) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
                           One lowercase letter
                         </li>
-                        <li
-                          className={`flex items-center gap-1 ${/[0-9]/.test(password) ? "text-green-600" : ""
-                            }`}
-                        >
-                          {/[0-9]/.test(password) ? (
-                            <Check className="h-3 w-3" />
-                          ) : (
-                            <AlertCircle className="h-3 w-3" />
-                          )}
+                        <li className={`flex items-center gap-1 ${/[0-9]/.test(password) ? "text-green-600" : ""}`}>
+                          {/[0-9]/.test(password) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
                           One number
                         </li>
                         <li
-                          className={`flex items-center gap-1 ${/[^A-Za-z0-9]/.test(password)
-                            ? "text-green-600"
-                            : ""
-                            }`}
+                          className={`flex items-center gap-1 ${/[^A-Za-z0-9]/.test(password) ? "text-green-600" : ""}`}
                         >
                           {/[^A-Za-z0-9]/.test(password) ? (
                             <Check className="h-3 w-3" />
@@ -1258,9 +1132,7 @@ const Auth: React.FC = () => {
                       </ul>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-confirm-password">
-                        Confirm Password
-                      </Label>
+                      <Label htmlFor="signup-confirm-password">Confirm Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -1272,8 +1144,7 @@ const Auth: React.FC = () => {
                             setConfirmPassword(e.target.value);
                             if (formErrors.confirmPassword) clearErrors();
                           }}
-                          className={`pl-10 pr-10 ${formErrors.confirmPassword ? "border-destructive" : ""
-                            }`}
+                          className={`pl-10 pr-10 ${formErrors.confirmPassword ? "border-destructive" : ""}`}
                           required
                           autoComplete="new-password"
                         />
@@ -1282,29 +1153,20 @@ const Auth: React.FC = () => {
                           variant="ghost"
                           size="icon"
                           className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() =>
-                            setShowConfirmPassword((show) => !show)
-                          }
+                          onClick={() => setShowConfirmPassword((show) => !show)}
                           tabIndex={-1}
                         >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
+                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
                       {formErrors.confirmPassword && (
-                        <p className="text-sm text-destructive">
-                          {formErrors.confirmPassword}
+                        <p className="text-sm text-destructive">{formErrors.confirmPassword}</p>
+                      )}
+                      {confirmPassword && password === confirmPassword && (
+                        <p className="text-sm text-green-600 flex items-center gap-1">
+                          <Check className="h-3 w-3" /> Passwords match
                         </p>
                       )}
-                      {confirmPassword &&
-                        password === confirmPassword && (
-                          <p className="text-sm text-green-600 flex items-center gap-1">
-                            <Check className="h-3 w-3" /> Passwords match
-                          </p>
-                        )}
                     </div>
                     <div className="space-y-3">
                       <Label>I want to:</Label>
@@ -1324,9 +1186,7 @@ const Auth: React.FC = () => {
                                 <Wrench className="h-5 w-5 text-primary" />
                               </div>
                               <div className="flex flex-col">
-                                <span className="font-semibold">
-                                  Find Tasks & Earn Money
-                                </span>
+                                <span className="font-semibold">Find Tasks & Earn Money</span>
                                 <span className="text-sm text-muted-foreground">
                                   Browse and complete tasks posted by others
                                 </span>
@@ -1348,9 +1208,7 @@ const Auth: React.FC = () => {
                                 <Briefcase className="h-5 w-5 text-primary" />
                               </div>
                               <div className="flex flex-col">
-                                <span className="font-semibold">
-                                  Post Tasks & Get Help
-                                </span>
+                                <span className="font-semibold">Post Tasks & Get Help</span>
                                 <span className="text-sm text-muted-foreground">
                                   Hire local taskers to help with your needs
                                 </span>
@@ -1372,9 +1230,7 @@ const Auth: React.FC = () => {
                                 <Users className="h-5 w-5 text-primary" />
                               </div>
                               <div className="flex flex-col">
-                                <span className="font-semibold">
-                                  Both - Do & Post Tasks
-                                </span>
+                                <span className="font-semibold">Both - Do & Post Tasks</span>
                                 <span className="text-sm text-muted-foreground">
                                   Earn money and hire help whenever you need
                                 </span>
@@ -1387,10 +1243,9 @@ const Auth: React.FC = () => {
 
                     <div className="space-y-3">
                       <div
-                        className={`flex items-start space-x-3 p-4 rounded-lg border ${formErrors.termsAccepted
-                          ? "border-destructive bg-destructive/5"
-                          : "border-border"
-                          }`}
+                        className={`flex items-start space-x-3 p-4 rounded-lg border ${
+                          formErrors.termsAccepted ? "border-destructive bg-destructive/5" : "border-border"
+                        }`}
                       >
                         <Checkbox
                           id="terms-accept"
@@ -1401,10 +1256,7 @@ const Auth: React.FC = () => {
                           }}
                           className="mt-1"
                         />
-                        <Label
-                          htmlFor="terms-accept"
-                          className="cursor-pointer text-sm leading-relaxed"
-                        >
+                        <Label htmlFor="terms-accept" className="cursor-pointer text-sm leading-relaxed">
                           I agree to the{" "}
                           <a
                             href="/terms"
@@ -1433,12 +1285,7 @@ const Auth: React.FC = () => {
                         </p>
                       )}
                     </div>
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isLoading}
-                      variant="hero"
-                    >
+                    <Button type="submit" className="w-full" disabled={isLoading} variant="hero">
                       {isLoading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
