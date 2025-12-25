@@ -62,9 +62,7 @@ export default function Verification() {
   }, []);
 
   const checkAuth = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       navigate("/auth");
       return;
@@ -72,7 +70,11 @@ export default function Verification() {
     setUserId(user.id);
 
     // Check if verification already exists
-    const { data: existing } = await supabase.from("verifications").select("*").eq("user_id", user.id).maybeSingle();
+    const { data: existing } = await supabase
+      .from("verifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
     if (existing) {
       // If already verified, redirect to dashboard; otherwise stay on page so user can view status or resubmit
@@ -106,23 +108,25 @@ export default function Verification() {
     }
   };
 
-  const handleFileUpload = async (file: File, type: "id" | "insurance" | "selfie") => {
+  const handleFileUpload = async (file: File, type: 'id' | 'insurance' | 'selfie') => {
     if (!userId) return;
 
     setUploading(true);
     setUploadProgress(0);
 
     try {
-      const fileExt = file.name.split(".").pop();
+      const fileExt = file.name.split('.').pop();
       const fileName = `${type}_${Date.now()}.${fileExt}`;
       // Use userId as the folder name to match storage RLS policy
       const filePath = `${userId}/${fileName}`;
 
       const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => Math.min(prev + 10, 90));
+        setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 200);
 
-      const { error: uploadError } = await supabase.storage.from("verification-documents").upload(filePath, file);
+      const { error: uploadError } = await supabase.storage
+        .from('verification-documents')
+        .upload(filePath, file);
 
       clearInterval(progressInterval);
       setUploadProgress(100);
@@ -131,9 +135,9 @@ export default function Verification() {
 
       // Store the file path (not public URL) since bucket is private
       // Admins will use signed URLs to view documents
-      if (type === "id") {
+      if (type === 'id') {
         setIdDocumentUrl(filePath);
-      } else if (type === "selfie") {
+      } else if (type === 'selfie') {
         setSelfieDocumentUrl(filePath);
       } else {
         setInsuranceDocumentUrl(filePath);
@@ -141,7 +145,7 @@ export default function Verification() {
 
       toast({
         title: "Upload Successful",
-        description: `${type === "id" ? "ID" : type === "selfie" ? "Selfie" : "Insurance"} document uploaded successfully.`,
+        description: `${type === 'id' ? 'ID' : type === 'selfie' ? 'Selfie' : 'Insurance'} document uploaded successfully.`,
       });
     } catch (error: any) {
       toast({
@@ -189,9 +193,9 @@ export default function Verification() {
       // Hash ID number for security
       const encoder = new TextEncoder();
       const data = encoder.encode(formData.idNumber);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const idNumberHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+      const idNumberHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
       const { error } = await supabase.from("verifications").insert({
         user_id: userId,
@@ -211,8 +215,8 @@ export default function Verification() {
         insurance_policy_number: formData.insurancePolicyNumber || null,
         insurance_expiry_date: formData.insuranceExpiryDate || null,
         insurance_document_url: insuranceDocumentUrl,
-        skills: formData.skills ? formData.skills.split(",").map((s) => s.trim()) : [],
-        certifications: formData.certifications ? formData.certifications.split(",").map((c) => c.trim()) : [],
+        skills: formData.skills ? formData.skills.split(",").map(s => s.trim()) : [],
+        certifications: formData.certifications ? formData.certifications.split(",").map(c => c.trim()) : [],
         sin_provided: formData.sinProvided,
         verification_status: "pending",
       });
@@ -263,11 +267,12 @@ export default function Verification() {
                   <Checkbox
                     id="terms"
                     checked={formData.termsAccepted}
-                    onCheckedChange={(checked) => setFormData({ ...formData, termsAccepted: checked as boolean })}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, termsAccepted: checked as boolean })
+                    }
                   />
                   <Label htmlFor="terms" className="text-sm leading-relaxed cursor-pointer">
-                    I accept the Terms of Service and understand my rights and responsibilities as a Tasker in
-                    Saskatchewan and Canada.
+                    I accept the Terms of Service and understand my rights and responsibilities as a Tasker in Saskatchewan and Canada.
                   </Label>
                 </div>
 
@@ -275,11 +280,12 @@ export default function Verification() {
                   <Checkbox
                     id="privacy"
                     checked={formData.privacyAccepted}
-                    onCheckedChange={(checked) => setFormData({ ...formData, privacyAccepted: checked as boolean })}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, privacyAccepted: checked as boolean })
+                    }
                   />
                   <Label htmlFor="privacy" className="text-sm leading-relaxed cursor-pointer">
-                    I accept the Privacy Policy and consent to data processing in accordance with Canadian privacy laws
-                    (PIPEDA).
+                    I accept the Privacy Policy and consent to data processing in accordance with Canadian privacy laws (PIPEDA).
                   </Label>
                 </div>
               </div>
@@ -302,7 +308,7 @@ export default function Verification() {
                   type="date"
                   value={formData.dateOfBirth}
                   onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
+                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
                   required
                 />
               </div>
@@ -315,7 +321,9 @@ export default function Verification() {
           <div className="space-y-6">
             <div className="space-y-4">
               <h3 className="text-xl font-semibold">Identity Verification</h3>
-              <p className="text-muted-foreground">Verify your identity to build trust with task givers.</p>
+              <p className="text-muted-foreground">
+                Verify your identity to build trust with task givers.
+              </p>
 
               <div className="space-y-3">
                 <Label htmlFor="idType">Government ID Type *</Label>
@@ -381,7 +389,7 @@ export default function Verification() {
                           const file = e.target.files?.[0];
                           if (file) {
                             setIdDocument(file);
-                            handleFileUpload(file, "id");
+                            handleFileUpload(file, 'id');
                           }
                         }}
                         disabled={uploading}
@@ -396,7 +404,9 @@ export default function Verification() {
                     </>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">Accepted formats: JPG, PNG, PDF (Max 5MB)</p>
+                <p className="text-xs text-muted-foreground">
+                  Accepted formats: JPG, PNG, PDF (Max 5MB)
+                </p>
               </div>
 
               {/* Selfie Upload */}
@@ -436,7 +446,7 @@ export default function Verification() {
                           const file = e.target.files?.[0];
                           if (file) {
                             setSelfieDocument(file);
-                            handleFileUpload(file, "selfie");
+                            handleFileUpload(file, 'selfie');
                           }
                         }}
                         disabled={uploading}
@@ -451,7 +461,9 @@ export default function Verification() {
                     </>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">Accepted formats: JPG, PNG (Max 5MB)</p>
+                <p className="text-xs text-muted-foreground">
+                  Accepted formats: JPG, PNG (Max 5MB)
+                </p>
               </div>
 
               <div className="flex items-start space-x-3">
@@ -483,7 +495,9 @@ export default function Verification() {
                 <Checkbox
                   id="insurance"
                   checked={formData.hasInsurance}
-                  onCheckedChange={(checked) => setFormData({ ...formData, hasInsurance: checked as boolean })}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, hasInsurance: checked as boolean })
+                  }
                 />
                 <Label htmlFor="insurance" className="text-sm leading-relaxed cursor-pointer">
                   I have liability insurance (Recommended for certain tasks)
@@ -551,7 +565,7 @@ export default function Verification() {
                               const file = e.target.files?.[0];
                               if (file) {
                                 setInsuranceDocument(file);
-                                handleFileUpload(file, "insurance");
+                                handleFileUpload(file, 'insurance');
                               }
                             }}
                             disabled={uploading}
@@ -600,11 +614,12 @@ export default function Verification() {
                 <Checkbox
                   id="sin"
                   checked={formData.sinProvided}
-                  onCheckedChange={(checked) => setFormData({ ...formData, sinProvided: checked as boolean })}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, sinProvided: checked as boolean })
+                  }
                 />
                 <Label htmlFor="sin" className="text-sm leading-relaxed cursor-pointer">
-                  I will provide my Social Insurance Number (SIN) for tax reporting purposes as required by the Canada
-                  Revenue Agency.
+                  I will provide my Social Insurance Number (SIN) for tax reporting purposes as required by the Canada Revenue Agency.
                 </Label>
               </div>
 
@@ -651,14 +666,13 @@ export default function Verification() {
                   { num: 1, icon: FileCheck, label: "Legal" },
                   { num: 2, icon: Shield, label: "Identity" },
                   { num: 3, icon: Award, label: "Skills" },
-                  { num: 4, icon: CreditCard, label: "Tax Info" },
+                  { num: 4, icon: CreditCard, label: "Tax Info" }
                 ].map((step) => (
                   <div key={step.num} className="flex flex-col items-center gap-2">
-                    <div
-                      className={`h-12 w-12 rounded-full flex items-center justify-center ${
-                        currentStep >= step.num ? "bg-primary text-white" : "bg-muted text-muted-foreground"
-                      }`}
-                    >
+                    <div className={`h-12 w-12 rounded-full flex items-center justify-center ${currentStep >= step.num
+                      ? "bg-primary text-white"
+                      : "bg-muted text-muted-foreground"
+                      }`}>
                       <step.icon className="h-6 w-6" />
                     </div>
                     <span className="text-xs text-center">{step.label}</span>
