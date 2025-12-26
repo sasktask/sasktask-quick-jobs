@@ -1516,6 +1516,39 @@ export type Database = {
         }
         Relationships: []
       }
+      signup_verifications: {
+        Row: {
+          attempts: number | null
+          code: string
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          code: string
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          code?: string
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       skill_endorsements: {
         Row: {
           created_at: string | null
@@ -2779,6 +2812,7 @@ export type Database = {
       }
       cleanup_expired_otp_codes: { Args: never; Returns: undefined }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
+      cleanup_expired_signup_verifications: { Args: never; Returns: undefined }
       create_notification: {
         Args: {
           p_link?: string

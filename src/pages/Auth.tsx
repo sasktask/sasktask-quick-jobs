@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
+import { SignupOTPVerification } from "@/components/SignupOTPVerification";
 import { z } from "zod";
 import {
   Eye,
@@ -266,6 +267,20 @@ const Auth: React.FC = () => {
   const [newPassword, setNewPassword] = useState("");
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
 
+  // OTP verification state for signup
+  const [showOTPVerification, setShowOTPVerification] = useState(false);
+  const [pendingSignupData, setPendingSignupData] = useState<{
+    email: string;
+    password: string;
+    fullName: string;
+    firstName: string;
+    middleName: string | null;
+    lastName: string;
+    phone: string;
+    role: string;
+    wantsBothRoles: boolean;
+  } | null>(null);
+
   // Unified identifier (email or phone)
   const [identifier, setIdentifier] = useState("");
 
@@ -324,7 +339,7 @@ const Auth: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, isPasswordReset]);
 
-  // Sign up handler
+  // Sign up handler - now sends to OTP verification
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     clearErrors();
@@ -366,64 +381,43 @@ const Auth: React.FC = () => {
       const primaryRole = validation.data.role === "both" ? "task_giver" : validation.data.role;
       const wantsBothRoles = validation.data.role === "both";
 
-      const { data, error } = await supabase.auth.signUp({
+      // Store signup data and show OTP verification
+      setPendingSignupData({
         email: validation.data.email,
         password: validation.data.password,
-        options: {
-          data: {
-            full_name: fullName,
-            first_name: validation.data.firstName,
-            middle_name: validation.data.middleName || null,
-            last_name: validation.data.lastName,
-            phone: validation.data.phone,
-            role: primaryRole,
-            wants_both_roles: wantsBothRoles,
-          },
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
+        fullName,
+        firstName: validation.data.firstName,
+        middleName: validation.data.middleName || null,
+        lastName: validation.data.lastName,
+        phone: validation.data.phone,
+        role: primaryRole,
+        wantsBothRoles,
       });
-
-      if (error) {
-        if (
-          error.message &&
-          typeof error.message === "string" &&
-          error.message.toLowerCase().includes("already registered")
-        ) {
-          setFormErrors({
-            email: "This email is already registered. Please sign in instead.",
-          });
-          setIsLoading(false);
-          return;
-        }
-        throw error;
-      }
-
-      if (data && data.user) {
-        toast({
-          title: "Account created!",
-          description: "Welcome to SaskTask. Please sign in with your credentials.",
-        });
-        // Auto sign-in after signup
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: validation.data.email,
-          password: validation.data.password,
-        });
-
-        if (signInError) {
-          // Could log the error if desired
-        }
-        // Redirect handled by onAuthStateChange
-      }
+      setShowOTPVerification(true);
     } catch (error: any) {
-      const errorMessage = error instanceof Error ? error.message : "Unable to create account. Please try again.";
+      const errorMessage = error instanceof Error ? error.message : "Unable to proceed. Please try again.";
       toast({
-        title: "Sign up failed",
+        title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Handle successful OTP verification
+  const handleOTPVerified = () => {
+    // Reset state
+    setShowOTPVerification(false);
+    setPendingSignupData(null);
+    // Navigation will be handled by onAuthStateChange
+  };
+
+  // Handle going back from OTP verification
+  const handleOTPBack = () => {
+    setShowOTPVerification(false);
+    // Keep the signup data so user doesn't have to re-enter
   };
 
   // Sign in handler
@@ -756,6 +750,37 @@ const Auth: React.FC = () => {
                 </form>
               </CardContent>
             </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // OTP Verification View for Signup
+  if (showOTPVerification && pendingSignupData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+        <style>{roleStyles}</style>
+        <SEOHead
+          title="Verify Your Email - SaskTask"
+          description="Verify your email address to complete your SaskTask registration"
+          url="/auth"
+        />
+        <Navbar />
+
+        <div className="container mx-auto px-4 pt-32 pb-20">
+          <div className="max-w-md mx-auto">
+            <div className="text-center mb-8 animate-fade-in">
+              <h1 className="text-4xl font-bold mb-2 text-gradient">Almost There!</h1>
+              <p className="text-muted-foreground">Verify your email to complete registration</p>
+            </div>
+
+            <SignupOTPVerification
+              email={pendingSignupData.email}
+              signupData={pendingSignupData}
+              onVerified={handleOTPVerified}
+              onBack={handleOTPBack}
+            />
           </div>
         </div>
       </div>
