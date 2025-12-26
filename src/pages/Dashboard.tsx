@@ -54,6 +54,7 @@ const Dashboard = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [verification, setVerification] = useState<any>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [badgeCount, setBadgeCount] = useState(0);
@@ -69,22 +70,27 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Computed role flags
+  const isTaskGiver = userRoles.includes('task_giver');
+  const isTaskDoer = userRoles.includes('task_doer');
+  const hasBothRoles = isTaskGiver && isTaskDoer;
+
   // Realtime notifications
   const handleNewTask = useCallback((task: any) => {
-    if (userRole === "task_doer") {
+    if (isTaskDoer) {
       setTasks(prev => [task, ...prev.slice(0, 4)]);
     }
-  }, [userRole]);
+  }, [isTaskDoer]);
 
   const handleNewMessage = useCallback(() => {
     setStats(prev => ({ ...prev, unreadMessages: prev.unreadMessages + 1 }));
   }, []);
 
   const handleBookingUpdate = useCallback(() => {
-    if (user?.id && userRole) {
-      fetchStats(user.id, userRole);
+    if (user?.id && userRoles.length > 0) {
+      fetchStats(user.id, userRoles);
     }
-  }, [user?.id, userRole]);
+  }, [user?.id, userRoles]);
 
   useRealtimeNotifications({
     userId: user?.id || null,
@@ -118,14 +124,19 @@ const Dashboard = () => {
       if (profileError) throw profileError;
       setProfile(profileData);
 
-      // Fetch user role
-      const { data: roleData } = await supabase
+      // Fetch user roles
+      const { data: rolesData } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+        .eq("user_id", session.user.id);
       
-      setUserRole(roleData?.role || null);
+      const roles = rolesData?.map(r => r.role) || [];
+      setUserRoles(roles);
+      // Set primary role: admin > task_doer > task_giver
+      const adminRole = roles.find(r => r === 'admin');
+      const taskDoerRole = roles.find(r => r === 'task_doer');
+      const taskGiverRole = roles.find(r => r === 'task_giver');
+      setUserRole(adminRole || taskDoerRole || taskGiverRole || null);
 
       // Fetch verification status
       const { data: verificationData } = await supabase
@@ -144,26 +155,17 @@ const Dashboard = () => {
       
       setBadgeCount(badges || 0);
 
-      // Check if this is a new user (show welcome tour)
-      const isNewUser = !profileData?.bio && (badges || 0) === 0;
-      const hasSeenTour = localStorage.getItem(`welcome_tour_${session.user.id}`);
-      if (isNewUser && !hasSeenTour) {
-        setShowWelcomeTour(true);
-      }
+      // Check role flags for fetching tasks
+      const hasTaskGiverRole = roles.includes('task_giver');
+      const hasTaskDoerRole = roles.includes('task_doer');
 
       // Fetch stats
-      await fetchStats(session.user.id, roleData?.role);
+      await fetchStats(session.user.id, roles);
 
-      // Fetch tasks based on role
-      if (roleData?.role === "task_giver") {
-        const { data: tasksData } = await supabase
-          .from("tasks")
-          .select("*")
-          .eq("task_giver_id", session.user.id)
-          .order("created_at", { ascending: false })
-          .limit(5);
-        setTasks(tasksData || []);
-      } else {
+      // Fetch tasks based on roles - if task_doer, show available tasks; if only task_giver, show their tasks
+      if (hasTaskDoerRole) {
+
+        // Task doers see available tasks
         const { data: tasksData } = await supabase
           .from("tasks")
           .select("*")
@@ -171,6 +173,22 @@ const Dashboard = () => {
           .order("created_at", { ascending: false })
           .limit(5);
         setTasks(tasksData || []);
+      } else if (hasTaskGiverRole) {
+        // Task givers see their own tasks
+        const { data: tasksData } = await supabase
+          .from("tasks")
+          .select("*")
+          .eq("task_giver_id", session.user.id)
+          .order("created_at", { ascending: false })
+          .limit(5);
+        setTasks(tasksData || []);
+      }
+
+      // Check if this is a new user (show welcome tour)
+      const isNewUser = !profileData?.bio && (badges || 0) === 0;
+      const hasSeenTour = localStorage.getItem(`welcome_tour_${session.user.id}`);
+      if (isNewUser && !hasSeenTour) {
+        setShowWelcomeTour(true);
       }
     } catch (error: any) {
       toast({
@@ -183,7 +201,8 @@ const Dashboard = () => {
     }
   };
 
-  const fetchStats = async (userId: string, role: string | undefined) => {
+  const fetchStats = async (userId: string, roles: string[]) => {
+    const hasTaskDoerRole = roles.includes('task_doer');
     try {
       // Get bookings count
       const { count: totalBookings } = await supabase
@@ -285,6 +304,7 @@ const Dashboard = () => {
         {/* Sidebar - Hidden on mobile */}
         <DashboardSidebar
           userRole={userRole}
+          userRoles={userRoles}
           unreadMessages={stats.unreadMessages}
           pendingBookings={stats.pendingBookings}
           isVerified={isVerified}
@@ -313,7 +333,13 @@ const Dashboard = () => {
                   )}
                 </div>
                 <div className="flex items-center gap-4 text-muted-foreground">
-                  {userRole === "task_giver" ? (
+                  {hasBothRoles ? (
+                    <span className="flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" />
+                      <Zap className="h-4 w-4 text-primary" />
+                      Full Access Dashboard
+                    </span>
+                  ) : isTaskGiver ? (
                     <span className="flex items-center gap-2">
                       <Briefcase className="h-4 w-4" />
                       Task Giver Dashboard
@@ -331,16 +357,17 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="flex gap-3 animate-fade-in" style={{ animationDelay: "100ms" }}>
-                {userRole === "task_giver" ? (
+                {isTaskGiver && (
                   <Link to="/post-task">
                     <Button variant="default" className="gap-2 shadow-lg hover:shadow-xl transition-shadow">
                       <Plus className="h-4 w-4" />
                       Post New Task
                     </Button>
                   </Link>
-                ) : (
+                )}
+                {isTaskDoer && (
                   <Link to="/browse">
-                    <Button variant="default" className="gap-2 shadow-lg hover:shadow-xl transition-shadow">
+                    <Button variant={isTaskGiver ? "outline" : "default"} className="gap-2 shadow-lg hover:shadow-xl transition-shadow">
                       <Search className="h-4 w-4" />
                       Find Tasks
                     </Button>
@@ -361,7 +388,7 @@ const Dashboard = () => {
             </div>
 
             {/* Verification Prompt for Task Doers */}
-            {userRole === "task_doer" && !isVerified && (
+            {isTaskDoer && !isVerified && (
               <Card className="mb-6 border-primary/50 bg-primary/5">
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between gap-4">
@@ -392,16 +419,30 @@ const Dashboard = () => {
               <div className="lg:col-span-2 space-y-6">
                 {/* Quick Actions */}
                 <div className="grid sm:grid-cols-4 gap-4">
-                  <Link to={userRole === "task_giver" ? "/post-task" : "/browse"}>
-                    <Card className="cursor-pointer hover:shadow-lg transition-all border-primary/30 hover:border-primary h-full">
-                      <CardContent className="p-4 text-center">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                          {userRole === "task_giver" ? <Plus className="h-5 w-5 text-primary" /> : <Search className="h-5 w-5 text-primary" />}
-                        </div>
-                        <h3 className="font-semibold text-sm">{userRole === "task_giver" ? "Post Task" : "Find Tasks"}</h3>
-                      </CardContent>
-                    </Card>
-                  </Link>
+                  {isTaskGiver && (
+                    <Link to="/post-task">
+                      <Card className="cursor-pointer hover:shadow-lg transition-all border-primary/30 hover:border-primary h-full">
+                        <CardContent className="p-4 text-center">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                            <Plus className="h-5 w-5 text-primary" />
+                          </div>
+                          <h3 className="font-semibold text-sm">Post Task</h3>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  )}
+                  {isTaskDoer && (
+                    <Link to="/browse">
+                      <Card className="cursor-pointer hover:shadow-lg transition-all border-primary/30 hover:border-primary h-full">
+                        <CardContent className="p-4 text-center">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                            <Search className="h-5 w-5 text-primary" />
+                          </div>
+                          <h3 className="font-semibold text-sm">Find Tasks</h3>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  )}
 
                   <Link to="/bookings">
                     <Card className="cursor-pointer hover:shadow-lg transition-all border-secondary/30 hover:border-secondary h-full">
@@ -444,7 +485,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Quick Rebook for Task Givers */}
-                {userRole === "task_giver" && user?.id && (
+                {isTaskGiver && user?.id && (
                   <QuickRebook userId={user.id} />
                 )}
 
@@ -454,7 +495,7 @@ const Dashboard = () => {
                 )}
 
                 {/* AI-Powered Recommendations for Task Doers */}
-                {userRole === "task_doer" && user?.id && (
+                {isTaskDoer && user?.id && (
                   <RecommendedTasks userId={user.id} />
                 )}
 
@@ -463,18 +504,18 @@ const Dashboard = () => {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2 text-lg">
-                        {userRole === "task_giver" ? "Your Recent Tasks" : "Available Tasks"}
+                        {isTaskDoer ? "Available Tasks" : "Your Recent Tasks"}
                       </CardTitle>
-                      <Link to={userRole === "task_giver" ? "/my-tasks" : "/browse"}>
+                      <Link to={isTaskDoer ? "/browse" : "/my-tasks"}>
                         <Button variant="ghost" size="sm" className="gap-1">
                           View All <ArrowRight className="h-4 w-4" />
                         </Button>
                       </Link>
                     </div>
                     <CardDescription>
-                      {userRole === "task_giver" 
-                        ? "Manage your posted tasks" 
-                        : "Accept tasks instantly to start earning"}
+                      {isTaskDoer 
+                        ? "Accept tasks instantly to start earning"
+                        : "Manage your posted tasks"}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

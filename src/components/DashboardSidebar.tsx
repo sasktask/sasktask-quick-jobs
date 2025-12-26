@@ -29,6 +29,7 @@ import { OWNER_USER_ID } from "@/lib/constants";
 
 interface DashboardSidebarProps {
   userRole: string | null;
+  userRoles?: string[];
   unreadMessages: number;
   pendingBookings: number;
   isVerified?: boolean;
@@ -38,6 +39,7 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({
   userRole,
+  userRoles = [],
   unreadMessages,
   pendingBookings,
   isVerified,
@@ -50,6 +52,11 @@ export function DashboardSidebar({
 
   const isActive = (path: string) => currentPath === path;
 
+  // Check if user has specific roles
+  const isTaskGiver = userRoles.includes('task_giver');
+  const isTaskDoer = userRoles.includes('task_doer');
+  const hasBothRoles = isTaskGiver && isTaskDoer;
+
   const mainNavItems = [
     {
       title: "Dashboard",
@@ -57,12 +64,20 @@ export function DashboardSidebar({
       icon: LayoutDashboard,
       badge: null,
     },
-    {
-      title: userRole === "task_giver" ? "Post Task" : "Find Tasks",
-      href: userRole === "task_giver" ? "/post-task" : "/browse",
-      icon: userRole === "task_giver" ? ClipboardList : Search,
+    // Show Post Task for task givers
+    ...(isTaskGiver ? [{
+      title: "Post Task",
+      href: "/post-task",
+      icon: ClipboardList,
       badge: null,
-    },
+    }] : []),
+    // Show Find Tasks for task doers
+    ...(isTaskDoer ? [{
+      title: "Find Tasks",
+      href: "/browse",
+      icon: Search,
+      badge: null,
+    }] : []),
     {
       title: "My Tasks",
       href: "/my-tasks",
@@ -132,8 +147,8 @@ export function DashboardSidebar({
     },
   ];
 
-  // Task doer specific items
-  const taskDoerItems = userRole === "task_doer" ? [
+  // Task doer specific items - only show if user has task_doer role
+  const taskDoerItems = isTaskDoer ? [
     {
       title: "Get Verified",
       href: "/verification",
