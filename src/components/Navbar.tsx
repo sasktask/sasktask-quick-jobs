@@ -20,11 +20,16 @@ interface NavbarProps {
 export const Navbar = ({ onMenuClick }: NavbarProps) => {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const unreadCount = useUnreadMessageCount(user?.id);
   const navigate = useNavigate();
+
+  // Computed role flags
+  const isTaskGiver = userRoles.includes('task_giver');
+  const isTaskDoer = userRoles.includes('task_doer');
 
   useEffect(() => {
     checkUser();
@@ -34,6 +39,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
         fetchUserRole(session.user.id);
       } else {
         setUserRole(null);
+        setUserRoles([]);
       }
     });
     return () => subscription.unsubscribe();
@@ -50,12 +56,15 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
   const fetchUserRole = async (userId: string) => {
     const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     if (data) {
+      const roles = data.map(r => r.role);
+      setUserRoles(roles);
       const adminRole = data.find(r => r.role === 'admin');
       const taskDoerRole = data.find(r => r.role === 'task_doer');
       const taskGiverRole = data.find(r => r.role === 'task_giver');
       setUserRole(adminRole?.role || taskDoerRole?.role || taskGiverRole?.role || null);
     } else {
       setUserRole(null);
+      setUserRoles([]);
     }
   };
 
@@ -132,10 +141,18 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                         <LayoutDashboard className="h-4 w-4" />
                         {t('dashboard')}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate("/post-task")} className="cursor-pointer gap-2">
-                        <ClipboardList className="h-4 w-4" />
-                        Post Task
-                      </DropdownMenuItem>
+                      {isTaskGiver && (
+                        <DropdownMenuItem onClick={() => navigate("/post-task")} className="cursor-pointer gap-2">
+                          <ClipboardList className="h-4 w-4" />
+                          Post Task
+                        </DropdownMenuItem>
+                      )}
+                      {isTaskDoer && (
+                        <DropdownMenuItem onClick={() => navigate("/browse")} className="cursor-pointer gap-2">
+                          <Search className="h-4 w-4" />
+                          Find Tasks
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={() => navigate("/my-tasks")} className="cursor-pointer gap-2">
                         <Briefcase className="h-4 w-4" />
                         My Tasks
@@ -187,7 +204,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                   )}
 
                   {/* Verification Link for Task Doers */}
-                  {userRole === "task_doer" && (
+                  {isTaskDoer && (
                     <Button variant="ghost" className="gap-1 font-medium" onClick={() => navigate("/verification")}>
                       <ShieldCheck className="h-4 w-4" />
                       {t('getVerified')}
@@ -280,7 +297,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
         </div>
       </div>
 
-      <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} user={user} userRole={userRole} />
+      <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} user={user} userRole={userRole} userRoles={userRoles} />
     </nav>
   );
 };

@@ -38,15 +38,20 @@ interface MobileMenuProps {
   onClose: () => void;
   user: any;
   userRole: string | null;
+  userRoles?: string[];
 }
 
-export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps) => {
+export const MobileMenu = ({ isOpen, onClose, user, userRole, userRoles = [] }: MobileMenuProps) => {
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
   const [exploreOpen, setExploreOpen] = useState(false);
   const [tasksOpen, setTasksOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const { t } = useLanguage();
+
+  // Computed role flags
+  const isTaskGiver = userRoles.includes('task_giver');
+  const isTaskDoer = userRoles.includes('task_doer');
 
   useEffect(() => {
     if (user) {
@@ -153,10 +158,18 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
                     <LayoutDashboard className="h-4 w-4" />
                     {t('dashboard')}
                   </Button>
-                  <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/post-task")}>
-                    <ClipboardList className="h-4 w-4" />
-                    Post Task
-                  </Button>
+                  {isTaskGiver && (
+                    <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/post-task")}>
+                      <ClipboardList className="h-4 w-4" />
+                      Post Task
+                    </Button>
+                  )}
+                  {isTaskDoer && (
+                    <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/browse")}>
+                      <Search className="h-4 w-4" />
+                      Find Tasks
+                    </Button>
+                  )}
                   <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/my-tasks")}>
                     <Briefcase className="h-4 w-4" />
                     My Tasks
@@ -184,7 +197,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole }: MobileMenuProps)
               </Button>
 
               {/* Task Doer Verification */}
-              {userRole === "task_doer" && (
+              {isTaskDoer && (
                 <Button 
                   variant="ghost" 
                   className="w-full justify-start text-base font-medium gap-2"

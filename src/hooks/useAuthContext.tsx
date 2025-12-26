@@ -7,8 +7,12 @@ interface AuthContextType {
   session: Session | null;
   profile: any | null;
   userRole: string | null;
+  userRoles: string[];
   isLoading: boolean;
   isAuthenticated: boolean;
+  isTaskGiver: boolean;
+  isTaskDoer: boolean;
+  hasBothRoles: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -20,20 +24,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
     try {
-      const [profileResult, roleResult] = await Promise.all([
+      const [profileResult, rolesResult] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).single(),
-        supabase.from("user_roles").select("role").eq("user_id", userId).single(),
+        supabase.from("user_roles").select("role").eq("user_id", userId),
       ]);
 
       if (profileResult.data) {
         setProfile(profileResult.data);
       }
-      if (roleResult.data) {
-        setUserRole(roleResult.data.role);
+      if (rolesResult.data) {
+        const roles = rolesResult.data.map(r => r.role);
+        setUserRoles(roles);
+        // Set primary role: admin > task_doer > task_giver
+        const adminRole = roles.find(r => r === 'admin');
+        const taskDoerRole = roles.find(r => r === 'task_doer');
+        const taskGiverRole = roles.find(r => r === 'task_giver');
+        setUserRole(adminRole || taskDoerRole || taskGiverRole || null);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -52,6 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setProfile(null);
     setUserRole(null);
+    setUserRoles([]);
   };
 
   useEffect(() => {
@@ -69,6 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setProfile(null);
           setUserRole(null);
+          setUserRoles([]);
         }
 
         if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
@@ -90,6 +103,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Computed role flags
+  const isTaskGiver = userRoles.includes('task_giver');
+  const isTaskDoer = userRoles.includes('task_doer');
+  const hasBothRoles = isTaskGiver && isTaskDoer;
+
   return (
     <AuthContext.Provider
       value={{
@@ -97,8 +115,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session,
         profile,
         userRole,
+        userRoles,
         isLoading,
         isAuthenticated: !!user,
+        isTaskGiver,
+        isTaskDoer,
+        hasBothRoles,
         signOut,
         refreshProfile,
       }}
