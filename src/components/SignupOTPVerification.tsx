@@ -56,7 +56,17 @@ export const SignupOTPVerification: React.FC<SignupOTPVerificationProps> = ({
         body: { email },
       });
 
-      if (error) throw error;
+      // Handle error response from edge function
+      if (error) {
+        // Try to get error message from response context
+        const errorMessage = data?.error || error.message || "Failed to send verification code";
+        throw new Error(errorMessage);
+      }
+
+      // Check if data contains an error (edge function returned error in body)
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
       if (data?.verificationId) {
         setVerificationId(data.verificationId);
@@ -69,9 +79,23 @@ export const SignupOTPVerification: React.FC<SignupOTPVerificationProps> = ({
       setCountdown(60);
     } catch (error: any) {
       console.error("Failed to send OTP:", error);
+      
+      const errorMessage = error.message || "Please try again";
+      
+      // If email already registered, show specific message and go back
+      if (errorMessage.toLowerCase().includes("already registered")) {
+        toast({
+          title: "Email already registered",
+          description: "This email is already registered. Please sign in instead.",
+          variant: "destructive",
+        });
+        onBack();
+        return;
+      }
+      
       toast({
         title: "Failed to send code",
-        description: error.message || "Please try again",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
