@@ -119,7 +119,6 @@ const Account = () => {
             </Tabs>
           </div>
         </div>
-      </div>
     </DashboardLayout>
   );
 };
