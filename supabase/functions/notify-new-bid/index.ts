@@ -3,8 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
@@ -62,15 +61,13 @@ serve(async (req) => {
     const bidderRating = bidder?.rating ? `${bidder.rating.toFixed(1)} ⭐` : "New tasker";
 
     // Create in-app notification
-    const { error: notificationError } = await supabase
-      .from("notifications")
-      .insert({
-        user_id: task.task_giver_id,
-        title: "New Bid Received",
-        message: `${bidderName} placed a bid of $${bidAmount} on "${task.title}"`,
-        type: "bid",
-        link: `/task/${taskId}`,
-      });
+    const { error: notificationError } = await supabase.from("notifications").insert({
+      user_id: task.task_giver_id,
+      title: "New Bid Received",
+      message: `${bidderName} placed a bid of $${bidAmount} on "${task.title}"`,
+      type: "bid",
+      link: `/task/${taskId}`,
+    });
 
     if (notificationError) {
       console.error("Error creating notification:", notificationError);
@@ -112,7 +109,7 @@ serve(async (req) => {
             Authorization: `Bearer ${resendApiKey}`,
           },
           body: JSON.stringify({
-            from: "SaskTask <onboarding@resend.dev>",
+            from: "SaskTask <onboarding@sending.tanjeen.com>",
             to: [taskGiver.email],
             subject: `💰 New Bid: $${bidAmount} on "${task.title}"`,
             html: emailHtml,
@@ -130,22 +127,16 @@ serve(async (req) => {
       }
     }
 
-    return new Response(
-      JSON.stringify({ success: true, message: "Notification sent" }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
+    return new Response(JSON.stringify({ success: true, message: "Notification sent" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in notify-new-bid:", errorMessage);
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
   }
 });
