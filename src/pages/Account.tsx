@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { SEOHead } from "@/components/SEOHead";
 import {
   Card,
@@ -61,18 +60,15 @@ const Account = () => {
   }
 
   return (
-    <>
+    <DashboardLayout>
       <SEOHead
         title="Account Settings - Manage Your Profile"
         description="Manage your SaskTask account settings, profile, security, and billing information."
         url="/account"
       />
       
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        
-        <div className="container mx-auto px-4 py-24">
-          <div className="max-w-5xl mx-auto">
+      <div className="container mx-auto px-4 py-6">
+        <div className="max-w-5xl mx-auto">
             <div className="mb-8">
               <h1 className="text-4xl font-bold mb-2">Account Settings</h1>
               <p className="text-muted-foreground">
@@ -123,10 +119,8 @@ const Account = () => {
             </Tabs>
           </div>
         </div>
-
-        <Footer />
       </div>
-    </>
+    </DashboardLayout>
   );
 };
 

@@ -20,6 +20,7 @@ import {
   Copy
 } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 type Task = Tables<"tasks">;
@@ -333,14 +334,14 @@ export default function MyTasks() {
   }
 
   return (
-    <>
-      <SEOHead
-        title="My Tasks - SaskTask"
-        description="Manage your posted tasks"
-      />
+    <DashboardLayout>
+      <>
+        <SEOHead
+          title="My Tasks - SaskTask"
+          description="Manage your posted tasks"
+        />
 
-      <div className="min-h-screen bg-background py-12">
-        <div className="container max-w-6xl">
+        <div className="container max-w-6xl py-6">
           <div className="flex justify-between items-center mb-8">
             <div>
               <h1 className="text-4xl font-bold">My Tasks</h1>
@@ -415,36 +416,36 @@ export default function MyTasks() {
             ))}
           </Tabs>
         </div>
-      </div>
 
-      <AlertDialog open={!!deleteTaskId} onOpenChange={() => setDeleteTaskId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Task?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the task
-              and all associated data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+        <AlertDialog open={!!deleteTaskId} onOpenChange={() => setDeleteTaskId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Task?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the task
+                and all associated data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={deleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    </DashboardLayout>
   );
 }
