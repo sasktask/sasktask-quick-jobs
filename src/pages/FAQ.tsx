@@ -18,15 +18,15 @@ export default function FAQ() {
       faqs: [
         {
           question: "What is SaskTask?",
-          answer: "SaskTask is Saskatchewan's local task marketplace that connects people who need help with everyday tasks to skilled, verified taskers in their community. Whether you need snow removal, cleaning, moving help, or handyman services, SaskTask makes it easy to find trusted local help."
+          answer: "SaskTask is Canada's trusted task marketplace that connects people who need help with everyday tasks to skilled, verified taskers in their community. Whether you need snow removal in Calgary, cleaning in Toronto, moving help in Vancouver, or handyman services in Halifax, SaskTask makes it easy to find trusted local help coast to coast."
         },
         {
           question: "How does SaskTask work?",
-          answer: "For Task Givers: Post your task with details and budget, receive offers from nearby taskers, review their profiles and ratings, choose the best fit, communicate through our secure platform, and pay only when the job is completed to your satisfaction.\n\nFor Taskers: Browse available tasks, submit proposals, get accepted, complete the work professionally, and receive payment directly to your bank account."
+          answer: "For Task Givers: Post your task with details and budget, receive offers from nearby taskers, review their profiles and ratings, choose the best fit, communicate through our secure platform, and pay only when the job is completed to your satisfaction.\n\nFor Taskers: Browse available tasks, submit proposals, get accepted, complete the work professionally, and receive payment directly to your Canadian bank account."
         },
         {
-          question: "Is SaskTask available throughout Saskatchewan?",
-          answer: "Yes! SaskTask operates across all of Saskatchewan, including Regina, Saskatoon, Prince Albert, Moose Jaw, Swift Current, Yorkton, North Battleford, and all smaller communities. Our platform uses location-based matching to connect you with taskers in your area."
+          question: "Where is SaskTask available in Canada?",
+          answer: "SaskTask operates across all Canadian provinces and territories! We serve major cities like Toronto, Vancouver, Calgary, Edmonton, Montreal, Ottawa, Winnipeg, Halifax, and many more—plus smaller communities throughout the country. Our platform uses location-based matching to connect you with taskers in your area."
         },
         {
           question: "How do I create an account?",
@@ -40,19 +40,19 @@ export default function FAQ() {
       faqs: [
         {
           question: "How are taskers verified?",
-          answer: "All taskers must complete our verification process which includes:\n\n• Government ID verification (Canadian driver's license or passport)\n• Criminal background check through a certified Canadian provider\n• Address and contact verification\n• Profile review by our trust & safety team\n\nVerified taskers display verification badges on their profiles. We recommend only hiring verified taskers for added peace of mind."
+          answer: "All taskers must complete our verification process which includes:\n\n• Government ID verification (Canadian driver's license, provincial ID, or passport)\n• Criminal background check through a certified Canadian provider\n• Address and contact verification\n• Profile review by our trust & safety team\n\nVerified taskers display verification badges on their profiles. We recommend only hiring verified taskers for added peace of mind."
         },
         {
           question: "Is my personal information secure?",
-          answer: "Yes. SaskTask complies with Canadian privacy laws including PIPEDA (Personal Information Protection and Electronic Documents Act). We use bank-level encryption, never share your personal data with third parties without consent, and you control what information is visible on your profile. Read our full Privacy Policy for details."
+          answer: "Yes. SaskTask complies with Canadian federal and provincial privacy laws including PIPEDA (Personal Information Protection and Electronic Documents Act) and provincial legislation like PIPA (BC/Alberta) and Quebec's privacy laws. We use bank-level encryption, never share your personal data with third parties without consent, and you control what information is visible on your profile."
         },
         {
           question: "What insurance coverage does SaskTask provide?",
-          answer: "Tasks completed through our platform include general liability coverage up to $1,000,000 per incident, covering accidental property damage during task completion. This protection is subject to terms and requires the task to be fully booked and paid through our platform. For personal injury protection, taskers are encouraged to obtain their own WCB coverage."
+          answer: "Tasks completed through our platform include general liability coverage up to $1,000,000 per incident, covering accidental property damage during task completion. This protection is subject to terms and requires the task to be fully booked and paid through our platform. For personal injury protection, taskers are encouraged to obtain coverage through their provincial Workers' Compensation Board."
         },
         {
           question: "What if I feel unsafe during a task?",
-          answer: "Your safety is our top priority. If you ever feel unsafe:\n\n• Leave the situation immediately if you're in danger\n• Call 911 for emergencies\n• Report the incident to our Trust & Safety team via the app or email\n• We have a zero-tolerance policy for harassment, threats, or inappropriate behavior\n\nBoth parties can cancel a task at any time if they feel uncomfortable."
+          answer: "Your safety is our top priority. If you ever feel unsafe:\n\n• Leave the situation immediately if you're in danger\n• Call 911 for emergencies (available across all of Canada)\n• Report the incident to our Trust & Safety team via the app or email\n• We have a zero-tolerance policy for harassment, threats, or inappropriate behavior\n\nBoth parties can cancel a task at any time if they feel uncomfortable."
         }
       ]
     },
@@ -66,7 +66,7 @@ export default function FAQ() {
         },
         {
           question: "What fees does SaskTask charge?",
-          answer: "Task Givers: Pay the agreed task amount with no additional platform fees.\n\nTaskers: A 15% service fee is deducted from completed tasks. This covers:\n• Payment processing\n• Platform insurance coverage\n• Customer support\n• Platform development and maintenance\n• Trust & safety systems\n\nAll prices are displayed in Canadian dollars (CAD)."
+          answer: "Task Givers: Pay the agreed task amount with no additional platform fees.\n\nTaskers: A 15% service fee is deducted from completed tasks. This covers:\n• Payment processing\n• Platform insurance coverage\n• Customer support\n• Platform development and maintenance\n• Trust & safety systems\n\nAll prices are displayed in Canadian dollars (CAD). GST/HST applies based on your province."
         },
         {
           question: "What is your refund policy?",
@@ -74,7 +74,7 @@ export default function FAQ() {
         },
         {
           question: "How do taskers get paid?",
-          answer: "Taskers receive payments via direct deposit to their Canadian bank account. To set up payouts:\n\n1. Complete identity verification\n2. Add your banking information in Account Settings\n3. Payments are processed 3-5 business days after task completion\n\nYou can track all earnings and pending payments in your Dashboard."
+          answer: "Taskers receive payments via direct deposit to their Canadian bank account (available at all major banks including TD, RBC, Scotiabank, BMO, CIBC, and credit unions). To set up payouts:\n\n1. Complete identity verification\n2. Add your banking information in Account Settings\n3. Payments are processed 3-5 business days after task completion\n\nYou can track all earnings and pending payments in your Dashboard."
         }
       ]
     },
@@ -84,19 +84,19 @@ export default function FAQ() {
       faqs: [
         {
           question: "How do I become a tasker?",
-          answer: "Becoming a tasker involves these steps:\n\n1. Create an account and select 'Become a Tasker'\n2. Complete your profile with skills, experience, and service areas\n3. Upload government-issued ID for verification\n4. Consent to and pass a background check\n5. Set your rates and availability\n\nThe verification process typically takes 2-5 business days. Once approved, you can start bidding on tasks immediately."
+          answer: "Becoming a tasker involves these steps:\n\n1. Create an account and select 'Become a Tasker'\n2. Complete your profile with skills, experience, and service areas\n3. Upload government-issued ID for verification\n4. Consent to and pass a background check\n5. Set your rates and availability\n\nThe verification process typically takes 2-5 business days. Once approved, you can start bidding on tasks immediately anywhere in Canada."
         },
         {
           question: "Am I an employee or independent contractor?",
-          answer: "Taskers on SaskTask are independent contractors, not employees. This means:\n\n• You set your own rates and schedule\n• You're responsible for your own taxes (income tax, CPP contributions)\n• You may need to register for GST/HST if earning over $30,000/year\n• You're not entitled to employment benefits through SaskTask\n\nWe provide T4A slips for earnings over $500 in a calendar year. Consult a tax professional for personalized advice."
+          answer: "Taskers on SaskTask are independent contractors, not employees. Under Canadian law, this means:\n\n• You set your own rates and schedule\n• You're responsible for your own taxes (federal + provincial income tax, CPP/QPP contributions)\n• You may need to register for GST/HST if earning over $30,000/year\n• You're not entitled to employment benefits through SaskTask\n\nWe provide T4A slips for earnings over $500 in a calendar year. Tax obligations vary by province—consult a tax professional for personalized advice."
         },
         {
           question: "What categories of tasks can I offer?",
-          answer: "SaskTask supports a wide range of services including:\n\n• Snow Removal & Yard Work\n• Cleaning (home, office, move-in/out)\n• Moving & Delivery\n• Handyman & Home Repairs\n• Furniture Assembly\n• Pet Care\n• Errands & Shopping\n• Tech Support\n• And many more!\n\nYou can select multiple categories that match your skills. Some categories may require proof of certifications (e.g., electrical, plumbing)."
+          answer: "SaskTask supports a wide range of services including:\n\n• Snow Removal & Yard Work\n• Cleaning (home, office, move-in/out)\n• Moving & Delivery\n• Handyman & Home Repairs\n• Furniture Assembly\n• Pet Care\n• Errands & Shopping\n• Tech Support\n• And many more!\n\nYou can select multiple categories that match your skills. Some categories may require proof of certifications (requirements vary by province—e.g., Red Seal trades, provincial licenses)."
         },
         {
           question: "How can I maximize my earnings?",
-          answer: "Top-earning taskers on SaskTask:\n\n• Complete their profile with photos and detailed descriptions\n• Respond to task requests quickly (within 1 hour)\n• Maintain a 4.8+ star rating\n• Offer competitive but fair pricing\n• Communicate professionally with clients\n• Show up on time and complete work thoroughly\n• Ask satisfied clients for reviews\n• Stay active during peak demand times"
+          answer: "Top-earning taskers on SaskTask:\n\n• Complete their profile with photos and detailed descriptions\n• Respond to task requests quickly (within 1 hour)\n• Maintain a 4.8+ star rating\n• Offer competitive but fair pricing (research rates in your city)\n• Communicate professionally with clients\n• Show up on time and complete work thoroughly\n• Ask satisfied clients for reviews\n• Stay active during peak demand times"
         }
       ]
     },
@@ -105,20 +105,20 @@ export default function FAQ() {
       icon: Scale,
       faqs: [
         {
-          question: "What laws govern SaskTask in Saskatchewan?",
-          answer: "SaskTask operates under Canadian federal law and Saskatchewan provincial regulations, including:\n\n• Consumer Protection and Business Practices Act (Saskatchewan)\n• Personal Information Protection and Electronic Documents Act (PIPEDA)\n• Canada Revenue Agency tax regulations\n• Canadian Human Rights Act\n• Saskatchewan Employment Act (regarding contractor classification)\n\nOur Terms of Service and Privacy Policy are designed to comply with all applicable laws."
+          question: "What laws govern SaskTask across Canada?",
+          answer: "SaskTask operates under Canadian federal law and provincial/territorial regulations, including:\n\n• Provincial Consumer Protection Acts (varies by province)\n• Personal Information Protection and Electronic Documents Act (PIPEDA)\n• Provincial privacy legislation (PIPA in BC/Alberta, Quebec Privacy Act)\n• Canada Revenue Agency tax regulations\n• Canadian Human Rights Act and provincial human rights codes\n• Provincial employment/labour standards (for contractor classification)\n\nOur Terms of Service and Privacy Policy are designed to comply with all applicable laws across Canada."
         },
         {
           question: "Do I need a business license to be a tasker?",
-          answer: "This depends on your municipality and the services you offer. In most Saskatchewan cities, you may need a business license if you're operating as a sole proprietor providing services. Check with your local city hall for specific requirements. Some services (like electrical or plumbing) may require provincial trade certifications."
+          answer: "This depends on your municipality and province. Requirements vary:\n\n• Some cities require business licenses for home-based services\n• Some provinces require specific trade licenses (electrical, plumbing, HVAC)\n• Red Seal certification may be needed for certain skilled trades\n\nCheck with your local city hall and provincial licensing body for specific requirements in your area."
         },
         {
           question: "What are my tax obligations as a tasker?",
-          answer: "As a self-employed individual in Canada, you must:\n\n• Report all income on your annual tax return\n• Pay both employee and employer portions of CPP (11.9% in 2024)\n• Register for and collect GST/HST if earning over $30,000/year\n• Keep records of income and business expenses\n• File taxes by June 15 (payment due April 30)\n\nSaskTask provides T4A slips for annual earnings over $500. Consult a tax professional for personalized guidance."
+          answer: "As a self-employed individual in Canada, you must:\n\n• Report all income on your annual tax return\n• Pay federal income tax plus provincial/territorial tax (rates vary)\n• Pay both employee and employer portions of CPP (11.9% in 2024) or QPP in Quebec\n• Register for and collect GST/HST if earning over $30,000/year\n• Keep records of income and business expenses for 6 years\n• File taxes by June 15 (payment due April 30)\n\nSaskTask provides T4A slips for annual earnings over $500. Visit our blog for province-specific tax guides."
         },
         {
           question: "How does SaskTask handle disputes?",
-          answer: "We have a structured dispute resolution process:\n\n1. Direct resolution: We encourage parties to communicate and resolve issues directly\n2. Mediation: Our support team reviews evidence and mediates\n3. Final decision: If needed, we make a binding decision based on our Terms of Service\n\nAll disputes must be filed within 48 hours of task completion. We aim to resolve most disputes within 5 business days."
+          answer: "We have a structured dispute resolution process:\n\n1. Direct resolution: We encourage parties to communicate and resolve issues directly\n2. Mediation: Our support team reviews evidence and mediates\n3. Final decision: If needed, we make a binding decision based on our Terms of Service\n\nAll disputes must be filed within 48 hours of task completion. We aim to resolve most disputes within 5 business days. For unresolved matters, provincial consumer protection agencies and small claims courts are available across Canada."
         }
       ]
     }
@@ -131,9 +131,9 @@ export default function FAQ() {
     <>
       <SEOHead
         title="FAQ - Frequently Asked Questions"
-        description="Find answers to common questions about SaskTask, Saskatchewan's local task marketplace. Learn about payments, safety, verification, and how the platform works."
+        description="Find answers to common questions about SaskTask, Canada's trusted task marketplace. Learn about payments, safety, verification, and how the platform works across all provinces."
         url="/faq"
-        keywords={["FAQ", "help", "questions", "SaskTask support", "how it works"]}
+        keywords={["FAQ", "help", "questions", "SaskTask support", "how it works", "Canada", "task marketplace"]}
       />
       <FAQPageSchema faqs={allFaqs} />
       <BreadcrumbSchema items={[
