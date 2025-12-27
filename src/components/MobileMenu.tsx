@@ -108,33 +108,36 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole, userRoles = [] }: 
         </SheetHeader>
         
         <div className="flex flex-col gap-1 mt-6">
-          {/* Explore Section */}
-          <Collapsible open={exploreOpen} onOpenChange={setExploreOpen}>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between text-base font-medium">
-                Explore
-                <ChevronDown className={`h-4 w-4 transition-transform ${exploreOpen ? 'rotate-180' : ''}`} />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pl-4 flex flex-col gap-1">
-              <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/browse")}>
-                <Search className="h-4 w-4" />
-                {t('browseTasks')}
-              </Button>
-              <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/find-taskers")}>
-                <Users className="h-4 w-4" />
-                {t('findTaskers')}
-              </Button>
-              <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/how-it-works")}>
-                <HelpCircle className="h-4 w-4" />
-                How It Works
-              </Button>
-              <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/contact")}>
-                <Mail className="h-4 w-4" />
-                Contact
-              </Button>
-            </CollapsibleContent>
-          </Collapsible>
+          {/* Explore Section - Only for logged in users */}
+          {user && (
+            <Collapsible open={exploreOpen} onOpenChange={setExploreOpen}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between text-base font-medium">
+                  Explore
+                  <ChevronDown className={`h-4 w-4 transition-transform ${exploreOpen ? 'rotate-180' : ''}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pl-4 flex flex-col gap-1">
+                <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/browse")}>
+                  <Search className="h-4 w-4" />
+                  {t('browseTasks')}
+                </Button>
+                <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/find-taskers")}>
+                  <Users className="h-4 w-4" />
+                  {t('findTaskers')}
+                </Button>
+                <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/how-it-works")}>
+                  <HelpCircle className="h-4 w-4" />
+                  How It Works
+                </Button>
+                <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/contact")}>
+                  <Mail className="h-4 w-4" />
+                  Contact
+                </Button>
+              </CollapsibleContent>
+            </Collapsible>
+          )
+}
 
           {user && (
             <>
