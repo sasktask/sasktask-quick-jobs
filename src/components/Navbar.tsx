@@ -92,35 +92,37 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
           
           <div className="flex items-center gap-2">
             <div className="hidden lg:flex items-center gap-1">
-              {/* Explore Dropdown - Always visible */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-1 font-medium">
-                    Explore <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 bg-card border-border z-[100]">
-                  <DropdownMenuItem onClick={() => navigate("/browse")} className="cursor-pointer gap-2">
-                    <Search className="h-4 w-4" />
-                    {t('browseTasks')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/find-taskers")} className="cursor-pointer gap-2">
-                    <Users className="h-4 w-4" />
-                    {t('findTaskers')}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/how-it-works")} className="cursor-pointer gap-2">
-                    How It Works
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/leaderboard")} className="cursor-pointer gap-2">
-                    <Trophy className="h-4 w-4" />
-                    Leaderboard
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/contact")} className="cursor-pointer gap-2">
-                    Contact
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Explore Dropdown - Only visible when logged in */}
+              {user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="gap-1 font-medium">
+                      Explore <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48 bg-card border-border z-[100]">
+                    <DropdownMenuItem onClick={() => navigate("/browse")} className="cursor-pointer gap-2">
+                      <Search className="h-4 w-4" />
+                      {t('browseTasks')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/find-taskers")} className="cursor-pointer gap-2">
+                      <Users className="h-4 w-4" />
+                      {t('findTaskers')}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/how-it-works")} className="cursor-pointer gap-2">
+                      How It Works
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/leaderboard")} className="cursor-pointer gap-2">
+                      <Trophy className="h-4 w-4" />
+                      Leaderboard
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/contact")} className="cursor-pointer gap-2">
+                      Contact
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
 
               {user && (
                 <>

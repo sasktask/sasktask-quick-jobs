@@ -23,8 +23,6 @@ const navItems: NavItem[] = [
 
 const guestNavItems: NavItem[] = [
   { icon: Home, label: "Home", path: "/" },
-  { icon: Search, label: "Browse", path: "/browse" },
-  { icon: Briefcase, label: "How It Works", path: "/how-it-works" },
   { icon: User, label: "Sign In", path: "/auth" },
 ];
 

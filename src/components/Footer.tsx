@@ -1,13 +1,31 @@
 import { Link } from "react-router-dom";
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Trophy } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin, Mail } from "lucide-react";
 import { NewsletterSignup } from "./NewsletterSignup";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Footer = () => {
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <footer className="bg-card border-t border-border mt-20 pb-20 lg:pb-0">
       <div className="container mx-auto px-4 py-12">
         {/* Main Footer Content */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* Newsletter Section */}
           <div className="lg:col-span-2">
             <h4 className="font-bold text-foreground mb-4">Stay Updated</h4>
@@ -21,33 +39,8 @@ export const Footer = () => {
           <div>
             <h4 className="font-bold text-foreground mb-4">Company</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/how-it-works" className="hover:text-primary transition-colors">How It Works</Link></li>
-              <li><Link to="/become-tasker" className="hover:text-primary transition-colors">Become a Tasker</Link></li>
               <li><Link to="/blog" className="hover:text-primary transition-colors">Blog</Link></li>
               <li><Link to="/install" className="hover:text-primary transition-colors">Install App</Link></li>
-              <li><Link to="/faq" className="hover:text-primary transition-colors">FAQ</Link></li>
-            </ul>
-          </div>
-
-          {/* Browse */}
-          <div>
-            <h4 className="font-bold text-foreground mb-4">Browse</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/browse" className="hover:text-primary transition-colors">All Tasks</Link></li>
-              <li><Link to="/find-taskers" className="hover:text-primary transition-colors">Find Taskers</Link></li>
-              <li><Link to="/categories" className="hover:text-primary transition-colors">Categories</Link></li>
-              <li><Link to="/leaderboard" className="hover:text-primary transition-colors flex items-center gap-1">
-                <Trophy className="h-3 w-3" />
-                Leaderboard
-              </Link></li>
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div>
-            <h4 className="font-bold text-foreground mb-4">Support</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/faq" className="hover:text-primary transition-colors">Help Center</Link></li>
               <li><Link to="/contact" className="hover:text-primary transition-colors flex items-center gap-1">
                 <Mail className="h-3 w-3" />
                 Contact Us
