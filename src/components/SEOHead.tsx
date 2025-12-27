@@ -35,8 +35,8 @@ export const SEOHead = ({
 
   // Default keywords
   const defaultKeywords = [
-    "tasks", "jobs", "Saskatchewan", "local services", "handyman",
-    "cleaning", "moving help", "task marketplace", "gig economy"
+    "tasks", "jobs", "local services", "handyman",
+    "cleaning", "moving help", "task marketplace", "gig economy", "trusted professionals"
   ];
   const allKeywords = [...new Set([...keywords, ...defaultKeywords])];
 
