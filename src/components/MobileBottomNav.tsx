@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Search, PlusCircle, MessageSquare, User, Briefcase } from "lucide-react";
+import { Home, Search, PlusCircle, MessageSquare, User, Briefcase, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,8 @@ const navItems: NavItem[] = [
 
 const guestNavItems: NavItem[] = [
   { icon: Home, label: "Home", path: "/" },
+  { icon: Layers, label: "Services", path: "/services" },
+  { icon: Briefcase, label: "Earn Money", path: "/become-tasker" },
   { icon: User, label: "Sign In", path: "/auth" },
 ];
 
