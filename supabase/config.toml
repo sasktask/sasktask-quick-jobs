@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.verify-signup-otp]
 verify_jwt = false
+
+[functions.help-chatbot]
+verify_jwt = false
