@@ -61,38 +61,47 @@ const Index = () => {
       <UrgencyBanner />
       
       {/* Hero Section */}
-      <section className="pt-8 sm:pt-16 pb-12 sm:pb-20 px-4 relative overflow-hidden">
-        {/* Background with animated gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5 -z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent -z-10" />
+      <section className="pt-8 sm:pt-16 pb-12 sm:pb-24 px-4 relative overflow-hidden">
+        {/* Enhanced Background with mesh gradient */}
+        <div className="absolute inset-0 bg-gradient-mesh -z-10" />
+        <div className="absolute inset-0 bg-gradient-radial-lg -z-10" />
+        
+        {/* Decorative elements */}
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse-slow -z-10" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse-slow -z-10" style={{ animationDelay: '1s' }} />
         
         <div className="container mx-auto">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center max-w-7xl mx-auto">
             {/* Left: Text Content */}
-            <div className="space-y-4 sm:space-y-6 text-center lg:text-left">
+            <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
+              {/* Premium Badge */}
               <div 
-                className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary/10 border border-primary/20 rounded-full text-xs sm:text-sm font-medium text-primary animate-fade-in"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm font-semibold text-primary animate-fade-in shadow-sm"
                 style={{ animationDelay: '0.1s' }}
               >
-                <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </span>
                 {user ? "Welcome Back!" : "Saskatchewan's #1 Task Platform"}
               </div>
               
+              {/* Main Headline */}
               <h1 
-                className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight animate-fade-up"
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] animate-fade-up"
                 style={{ animationDelay: '0.2s' }}
               >
                 {user ? (
                   <>
                     Your Dashboard
-                    <span className="block bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
+                    <span className="block text-gradient-hero mt-2">
                       Awaits
                     </span>
                   </>
                 ) : (
                   <>
                     Get Things Done
-                    <span className="block bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
+                    <span className="block text-gradient-hero mt-2">
                       The Easy Way
                     </span>
                   </>
@@ -119,77 +128,78 @@ const Index = () => {
               {/* CTA Buttons - For logged in users */}
               {user && (
                 <div 
-                  className="flex flex-col sm:flex-row gap-3 pt-4 animate-fade-up justify-center lg:justify-start"
+                  className="flex flex-col sm:flex-row gap-4 pt-4 animate-fade-up justify-center lg:justify-start"
                   style={{ animationDelay: '0.4s' }}
                 >
                   <Link to="/dashboard">
-                    <Button size="lg" variant="hero" className="w-full sm:w-auto text-base sm:text-lg h-12 sm:h-14 px-6 sm:px-8">
-                      <Briefcase className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                    <Button size="lg" variant="premium" className="w-full sm:w-auto text-base sm:text-lg h-14 px-8 gap-3">
+                      <Briefcase className="h-5 w-5" />
                       Go to Dashboard
+                      <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
                   <Link to="/browse">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg h-12 sm:h-14 px-6 sm:px-8 border-2">
-                      <Search className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                    <Button size="lg" variant="premium-outline" className="w-full sm:w-auto text-base sm:text-lg h-14 px-8 gap-3">
+                      <Search className="h-5 w-5" />
                       Browse Tasks
                     </Button>
                   </Link>
                 </div>
               )}
 
-              {/* Trust Indicators - Simplified for mobile */}
+              {/* Trust Indicators - Enhanced with glass effect */}
               <div 
-                className="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 pt-4 sm:pt-6 border-t border-border animate-fade-up"
+                className="flex flex-wrap justify-center lg:justify-start gap-3 sm:gap-4 pt-6 sm:pt-8 animate-fade-up"
                 style={{ animationDelay: '0.5s' }}
               >
                 {user ? (
                   <>
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl glass-sm">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-colored">
+                        <Briefcase className="h-5 w-5 text-white" />
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-sm sm:text-base text-foreground">Dashboard</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Quick Access</p>
+                        <p className="font-bold text-sm text-foreground">Dashboard</p>
+                        <p className="text-xs text-muted-foreground">Quick Access</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl glass-sm">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-secondary flex items-center justify-center shadow-md">
+                        <MessageSquare className="h-5 w-5 text-white" />
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-sm sm:text-base text-foreground">Messages</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Stay Connected</p>
+                        <p className="font-bold text-sm text-foreground">Messages</p>
+                        <p className="text-xs text-muted-foreground">Stay Connected</p>
                       </div>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl glass-sm hover:shadow-premium-md transition-all">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-colored">
+                        <Shield className="h-5 w-5 text-white" />
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-sm sm:text-base text-foreground">Verified</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Taskers</p>
+                        <p className="font-bold text-sm text-foreground">Verified Taskers</p>
+                        <p className="text-xs text-muted-foreground">Background checked</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl glass-sm hover:shadow-premium-md transition-all">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-secondary flex items-center justify-center shadow-md">
+                        <Lock className="h-5 w-5 text-white" />
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-sm sm:text-base text-foreground">Secure</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Payments</p>
+                        <p className="font-bold text-sm text-foreground">Secure Pay</p>
+                        <p className="text-xs text-muted-foreground">Protected payments</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Star className="h-4 w-4 sm:h-5 sm:w-5 text-primary fill-primary" />
+                    <div className="hidden sm:flex items-center gap-3 px-4 py-3 rounded-2xl glass-sm hover:shadow-premium-md transition-all">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-accent flex items-center justify-center shadow-md">
+                        <Star className="h-5 w-5 text-white" />
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-sm sm:text-base text-foreground">Top Rated</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Service</p>
+                        <p className="font-bold text-sm text-foreground">4.9★ Rating</p>
+                        <p className="text-xs text-muted-foreground">Trusted service</p>
                       </div>
                     </div>
                   </>
