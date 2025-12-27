@@ -7,19 +7,23 @@ const corsHeaders = {
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-// Saskatchewan holidays
+// Major holidays observed (varies by region)
 const holidays = [
-  { name: "New Year's Day", date: "January 1", observed: true },
-  { name: "Family Day", date: "Third Monday of February", observed: true },
-  { name: "Good Friday", date: "Varies (March/April)", observed: true },
-  { name: "Victoria Day", date: "Monday before May 25", observed: true },
-  { name: "Canada Day", date: "July 1", observed: true },
-  { name: "Saskatchewan Day", date: "First Monday of August", observed: true },
-  { name: "Labour Day", date: "First Monday of September", observed: true },
-  { name: "Thanksgiving Day", date: "Second Monday of October", observed: true },
-  { name: "Remembrance Day", date: "November 11", observed: true },
-  { name: "Christmas Day", date: "December 25", observed: true },
-  { name: "Boxing Day", date: "December 26", observed: false },
+  { name: "New Year's Day", date: "January 1", region: "Global" },
+  { name: "Family Day / Presidents Day", date: "Third Monday of February", region: "Canada/US" },
+  { name: "Good Friday", date: "Varies (March/April)", region: "Global" },
+  { name: "Easter Monday", date: "Varies (March/April)", region: "Many countries" },
+  { name: "Victoria Day / Memorial Day", date: "Late May", region: "Canada/US" },
+  { name: "Canada Day / Independence Day", date: "July 1-4", region: "Canada/US" },
+  { name: "Civic Holiday", date: "First Monday of August", region: "Canada" },
+  { name: "Labour Day", date: "First Monday of September", region: "North America" },
+  { name: "Thanksgiving", date: "October (Canada) / November (US)", region: "North America" },
+  { name: "Remembrance Day / Veterans Day", date: "November 11", region: "Canada/US/UK" },
+  { name: "Christmas Day", date: "December 25", region: "Global" },
+  { name: "Boxing Day", date: "December 26", region: "Canada/UK/Australia" },
+  { name: "Diwali", date: "Varies (October/November)", region: "India & worldwide" },
+  { name: "Eid al-Fitr", date: "Varies", region: "Muslim countries & worldwide" },
+  { name: "Chinese New Year", date: "Varies (January/February)", region: "China & worldwide" },
 ];
 
 serve(async (req) => {
@@ -35,30 +39,38 @@ serve(async (req) => {
     }
 
     // Build context-aware system prompt
-    let systemPrompt = `You are a helpful, friendly AI assistant for SaskTask - a local task marketplace platform in Saskatchewan, Canada. 
+    let systemPrompt = `You are a helpful, friendly AI assistant for SaskTask - a global task marketplace platform connecting people who need help with skilled taskers worldwide. 
 Your role is to help users understand the platform and answer their questions.
 
 ## Key Information About SaskTask:
 
-### Holidays (Saskatchewan Statutory Holidays):
-${holidays.map(h => `- ${h.name}: ${h.date} ${h.observed ? "(Statutory Holiday - Taskers may charge premium rates)" : "(Not statutory)"}`).join("\n")}
+### Platform Coverage:
+- SaskTask operates globally - available in Canada, United States, United Kingdom, Australia, India, and expanding to more countries
+- Taskers and clients can connect from anywhere in the world
+- Local services require taskers in the same area
+- Remote/virtual services can be done from anywhere
+
+### Major Holidays (Tasker availability may vary):
+${holidays.map(h => `- ${h.name}: ${h.date} (${h.region})`).join("\n")}
+Note: Holiday availability depends on individual taskers and their location. Premium rates may apply during holidays.
 
 ### Availability:
-- SaskTask operates 24/7 online
-- Task availability depends on individual taskers
-- Most taskers work regular business hours (9 AM - 6 PM)
+- SaskTask operates 24/7 online globally
+- Task availability depends on individual taskers and their timezone
+- Most taskers work during their local business hours
 - Some taskers offer evening and weekend availability
-- During holidays, availability may be limited and rates may be higher
 - Urgent tasks can often find available taskers with premium pricing
+- Remote/virtual tasks can be completed across timezones
 
 ### Services Available:
 - Home Services: Cleaning, repairs, handyman, plumbing, electrical, painting
 - Moving & Delivery: Furniture moving, package delivery, truck assistance
 - Outdoor: Lawn care, snow removal, gardening, landscaping
 - Personal: Errands, shopping, pet care, tutoring
-- Tech: Computer help, smart home setup, phone repair
+- Tech: Computer help, smart home setup, phone repair, IT support
 - Events: Party help, photography, catering assistance
-- Business: Admin support, data entry, marketing help
+- Business: Admin support, data entry, marketing help, virtual assistance
+- Remote Services: Online tutoring, design, writing, programming, consulting
 - And 100+ more service categories
 
 ### How It Works:
@@ -70,6 +82,7 @@ ${holidays.map(h => `- ${h.name}: ${h.date} ${h.observed ? "(Statutory Holiday -
 
 ### Payment & Security:
 - All payments processed through secure Stripe integration
+- Multiple currencies supported
 - 15% platform fee on completed tasks
 - Escrow protection for both parties
 - Refund policy for cancelled or incomplete tasks
@@ -77,6 +90,7 @@ ${holidays.map(h => `- ${h.name}: ${h.date} ${h.observed ? "(Statutory Holiday -
 
 ### Privacy & Safety:
 - All personal data is encrypted
+- GDPR compliant for European users
 - Contact info shared only after booking
 - Background check options for taskers
 - In-app messaging keeps conversations secure

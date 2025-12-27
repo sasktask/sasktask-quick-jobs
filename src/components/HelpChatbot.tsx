@@ -17,7 +17,7 @@ interface Message {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/help-chatbot`;
 
 const quickQuestions = [
-  "What holidays does SaskTask observe?",
+  "What holidays do taskers observe?",
   "How do I become a tasker?",
   "What services are available?",
   "How does payment work?",

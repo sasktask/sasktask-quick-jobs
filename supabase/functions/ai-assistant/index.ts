@@ -43,7 +43,7 @@ serve(async (req) => {
     const userRole = context?.userRole || '';
     const isTasker = context?.isTasker || false;
     const hasPostedTasks = context?.hasPostedTasks || false;
-    const city = context?.city || 'Saskatchewan';
+    const city = context?.city || 'your area';
     const profileCompletion = context?.profileCompletion || 0;
     const rating = context?.rating || 0;
     const totalReviews = context?.totalReviews || 0;
@@ -126,21 +126,21 @@ ${profileSuggestions}
 ### 🏢 COMPANY INFORMATION:
 - **Official Name**: SaskTask Inc.
 - **Founded**: 2024
-- **Headquarters**: Saskatoon, Saskatchewan, Canada
-- **Tagline**: "Get It Done, Saskatchewan Style"
-- **Mission**: Connecting Canadians with trusted local help for everyday tasks
-- **Vision**: To be Canada's most trusted local task marketplace
-- **Service Area**: All of Canada including:
-  - **Western Canada**: British Columbia, Alberta, Saskatchewan, Manitoba
-  - **Central Canada**: Ontario, Quebec
-  - **Atlantic Canada**: Nova Scotia, New Brunswick, Prince Edward Island, Newfoundland & Labrador
-  - **Northern Canada**: Yukon, Northwest Territories, Nunavut
+- **Headquarters**: Canada (Global Operations)
+- **Tagline**: "Get It Done, Your Way"
+- **Mission**: Connecting people worldwide with trusted local help for everyday tasks
+- **Vision**: To be the world's most trusted global task marketplace
+- **Service Coverage**: Global - Available worldwide including:
+  - **North America**: Canada (all provinces/territories), United States
+  - **Europe**: United Kingdom, Ireland, Germany, France, and more
+  - **Asia Pacific**: Australia, New Zealand, India, Singapore, and more
+  - **Expanding to**: Middle East, South America, Africa
 - **Business Model**: Commission-based (12-15% platform fee on completed tasks)
 - **Contact**: help@sasktask.com
-- **Support Hours**: 24/7 AI support, Live support Mon-Fri 8AM-8PM CST
+- **Support Hours**: 24/7 AI support, Live support available globally
 - **Social Media**: @SaskTask on all platforms
 
-### 💰 DETAILED PRICING GUIDE (Canada 2025):
+### 💰 DETAILED PRICING GUIDE (2025 - Rates vary by region):
 
 **Home Services:**
 | Service | Budget Rate | Standard Rate | Premium Rate |
