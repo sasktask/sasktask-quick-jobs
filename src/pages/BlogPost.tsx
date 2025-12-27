@@ -133,7 +133,7 @@ const BlogPost = () => {
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button asChild size="lg">
-                <Link to="/auth">Get Started</Link>
+                <Link to="/auth?tab=signup">Get Started</Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link to="/browse">Browse Tasks</Link>

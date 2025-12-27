@@ -246,6 +246,8 @@ const recordAttempt = (success: boolean) => {
 const Auth: React.FC = () => {
   const [searchParams] = useSearchParams();
   const isPasswordReset = searchParams.get("reset") === "true";
+  const defaultTab = searchParams.get("tab") === "signup" ? "signup" : "signin";
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -813,7 +815,7 @@ const Auth: React.FC = () => {
               <CardDescription>Sign in or create your free account</CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="signin" className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="signin" onClick={clearErrors}>
                     Sign In
