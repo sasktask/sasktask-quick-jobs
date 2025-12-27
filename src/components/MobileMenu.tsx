@@ -14,7 +14,7 @@ import {
   ChevronDown,
   HelpCircle,
   Mail,
-  Utensils
+  Layers
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { OWNER_USER_ID } from "@/lib/constants";
@@ -272,6 +272,28 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole, userRoles = [] }: 
 
           {!user && (
             <div className="flex flex-col gap-3 mt-4">
+              <Button
+                variant="ghost"
+                size="lg"
+                className="w-full justify-start gap-2 font-semibold"
+                onClick={() => handleNavigation("/services")}
+              >
+                <Layers className="h-4 w-4" />
+                Services
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="lg"
+                className="w-full justify-start gap-2 font-semibold"
+                onClick={() => handleNavigation("/become-tasker")}
+              >
+                <Briefcase className="h-4 w-4" />
+                Become a Tasker
+              </Button>
+
+              <div className="border-t border-border my-2" />
+              
               <Button
                 variant="outline"
                 size="lg"

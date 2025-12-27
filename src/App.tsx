@@ -54,6 +54,7 @@ import PaymentCancelled from "./pages/PaymentCancelled";
 import Payouts from "./pages/Payouts";
 import Checkout from "./pages/Checkout";
 import Notifications from "./pages/Notifications";
+import Services from "./pages/Services";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import { ChatButton } from "./components/ChatButton";
@@ -85,6 +86,9 @@ const App = () => (
             <Route path="/rss.xml" element={<RSSFeed />} />
             <Route path="/sitemap.xml" element={<Sitemap />} />
             <Route path="/install" element={<Install />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/become-tasker" element={<BecomeTasker />} />
+            <Route path="/install" element={<Install />} />
             
             {/* Protected routes - require authentication */}
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
@@ -98,7 +102,6 @@ const App = () => (
             <Route path="/task/:id" element={<ProtectedRoute><TaskDetail /></ProtectedRoute>} />
             <Route path="/tasks/:id/edit" element={<ProtectedRoute><TaskEdit /></ProtectedRoute>} />
             <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
-            <Route path="/find-taskers" element={<ProtectedRoute><FindTaskers /></ProtectedRoute>} />
             <Route path="/become-tasker" element={<ProtectedRoute><BecomeTasker /></ProtectedRoute>} />
             <Route path="/how-it-works" element={<ProtectedRoute><HowItWorks /></ProtectedRoute>} />
             <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />

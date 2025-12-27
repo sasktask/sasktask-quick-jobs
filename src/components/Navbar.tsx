@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Menu, ShieldCheck, Globe, Sun, Moon, User, Settings, LogOut, ChevronDown, Briefcase, MessageSquare, LayoutDashboard, ClipboardList, Search, Users, Trophy, Utensils } from "lucide-react";
+import { Menu, ShieldCheck, Globe, Sun, Moon, User, Settings, LogOut, ChevronDown, Briefcase, MessageSquare, LayoutDashboard, ClipboardList, Search, Users, Trophy, Layers, Sparkles, Truck, Wrench, Leaf, Dog, Baby, Heart, Package, Plug, PaintBucket, Hammer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/sasktask-logo.png";
@@ -273,6 +273,53 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 </DropdownMenu>
               ) : (
                 <div className="hidden lg:flex items-center gap-2">
+                  {/* Services Dropdown for Guests */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="gap-1 font-medium">
+                        <Layers className="h-4 w-4" />
+                        Services <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56 bg-card border-border z-[100]">
+                      <DropdownMenuItem onClick={() => navigate("/services")} className="cursor-pointer gap-2 font-medium">
+                        <Layers className="h-4 w-4" />
+                        All Services
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigate("/services#cleaning")} className="cursor-pointer gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        Cleaning
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate("/services#handyman")} className="cursor-pointer gap-2">
+                        <Hammer className="h-4 w-4" />
+                        Handyman
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate("/services#moving")} className="cursor-pointer gap-2">
+                        <Truck className="h-4 w-4" />
+                        Moving & Delivery
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate("/services#yard")} className="cursor-pointer gap-2">
+                        <Leaf className="h-4 w-4" />
+                        Yard Work
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate("/services#assembly")} className="cursor-pointer gap-2">
+                        <Package className="h-4 w-4" />
+                        Assembly
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate("/services#pet-care")} className="cursor-pointer gap-2">
+                        <Dog className="h-4 w-4" />
+                        Pet Care
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <Link to="/become-tasker">
+                    <Button variant="ghost" className="gap-1 font-medium">
+                      <Briefcase className="h-4 w-4" />
+                      Become a Tasker
+                    </Button>
+                  </Link>
                   <Link to="/auth?tab=signin">
                     <Button variant="outline" size="sm" className="font-medium">
                       {t('signIn')}
