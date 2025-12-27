@@ -137,7 +137,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             <div class="footer">
               <p>© ${new Date().getFullYear()} SaskTask. All rights reserved.</p>
-              <p>Your local task marketplace in Saskatchewan</p>
+              <p>Your global task marketplace</p>
             </div>
           </div>
         </body>
