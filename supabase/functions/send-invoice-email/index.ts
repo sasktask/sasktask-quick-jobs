@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[SEND-INVOICE-EMAIL] ${step}${detailsStr}`);
 };
 
@@ -19,7 +19,7 @@ serve(async (req) => {
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
 
   const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -58,7 +58,8 @@ serve(async (req) => {
     // Fetch booking details
     const { data: booking } = await supabaseClient
       .from("bookings")
-      .select(`
+      .select(
+        `
         *,
         tasks (
           title,
@@ -68,7 +69,8 @@ serve(async (req) => {
           scheduled_date,
           location
         )
-      `)
+      `,
+      )
       .eq("id", payment.booking_id)
       .single();
 
@@ -115,8 +117,8 @@ serve(async (req) => {
             
             <!-- Status Badge -->
             <div style="text-align: center; padding: 20px 0;">
-              <span style="display: inline-block; padding: 8px 20px; background-color: ${payment.status === 'completed' ? '#dcfce7' : '#dbeafe'}; color: ${payment.status === 'completed' ? '#166534' : '#1e40af'}; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase;">
-                ${payment.status === 'completed' ? '✓ Paid' : payment.escrow_status === 'held' ? '🔒 In Escrow' : '⏳ Pending'}
+              <span style="display: inline-block; padding: 8px 20px; background-color: ${payment.status === "completed" ? "#dcfce7" : "#dbeafe"}; color: ${payment.status === "completed" ? "#166534" : "#1e40af"}; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase;">
+                ${payment.status === "completed" ? "✓ Paid" : payment.escrow_status === "held" ? "🔒 In Escrow" : "⏳ Pending"}
               </span>
             </div>
 
@@ -127,14 +129,14 @@ serve(async (req) => {
                 <tr>
                   <td style="width: 50%; vertical-align: top; padding: 16px; background-color: #f8fafc; border-radius: 8px;">
                     <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;">From</p>
-                    <p style="margin: 0; font-weight: 600; color: #1a1a1a;">${payee?.full_name || 'Service Provider'}</p>
-                    <p style="margin: 4px 0 0 0; font-size: 14px; color: #64748b;">${payee?.email || ''}</p>
+                    <p style="margin: 0; font-weight: 600; color: #1a1a1a;">${payee?.full_name || "Service Provider"}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 14px; color: #64748b;">${payee?.email || ""}</p>
                   </td>
                   <td style="width: 16px;"></td>
                   <td style="width: 50%; vertical-align: top; padding: 16px; background-color: #f8fafc; border-radius: 8px;">
                     <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;">To</p>
-                    <p style="margin: 0; font-weight: 600; color: #1a1a1a;">${payer?.full_name || 'Client'}</p>
-                    <p style="margin: 4px 0 0 0; font-size: 14px; color: #64748b;">${payer?.email || ''}</p>
+                    <p style="margin: 0; font-weight: 600; color: #1a1a1a;">${payer?.full_name || "Client"}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 14px; color: #64748b;">${payer?.email || ""}</p>
                   </td>
                 </tr>
               </table>
@@ -142,8 +144,8 @@ serve(async (req) => {
               <!-- Task Details -->
               <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
                 <p style="margin: 0 0 4px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;">Service</p>
-                <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">${booking?.tasks?.title || 'Task Service'}</p>
-                <p style="margin: 0; font-size: 14px; color: #64748b;">${booking?.tasks?.category || 'General'} • ${booking?.tasks?.location || 'Location not specified'}</p>
+                <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">${booking?.tasks?.title || "Task Service"}</p>
+                <p style="margin: 0; font-size: 14px; color: #64748b;">${booking?.tasks?.category || "General"} • ${booking?.tasks?.location || "Location not specified"}</p>
               </div>
 
               <!-- Amount Summary -->
@@ -173,7 +175,7 @@ serve(async (req) => {
 
               <!-- Invoice Date -->
               <p style="text-align: center; font-size: 12px; color: #64748b; margin-bottom: 24px;">
-                Invoice Date: ${invoiceDate.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+                Invoice Date: ${invoiceDate.toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}
               </p>
             </div>
 
@@ -189,9 +191,9 @@ serve(async (req) => {
 
     // Send email via Resend
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "SaskTask <invoices@resend.dev>",
+      from: "SaskTask <invoices@tanjeen.com>",
       to: [emailTo],
-      subject: `Invoice ${invoiceNumber} - ${booking?.tasks?.title || 'Task Payment'}`,
+      subject: `Invoice ${invoiceNumber} - ${booking?.tasks?.title || "Task Payment"}`,
       html: emailHTML,
     });
 
@@ -202,22 +204,28 @@ serve(async (req) => {
 
     logStep("Email sent successfully", { emailId: emailData?.id });
 
-    return new Response(JSON.stringify({ 
-      success: true,
-      message: `Invoice sent to ${emailTo}`,
-      invoiceNumber,
-      emailId: emailData?.id
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `Invoice sent to ${emailTo}`,
+        invoiceNumber,
+        emailId: emailData?.id,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      },
+    );
   } catch (error: any) {
     logStep("ERROR", { message: error.message });
-    return new Response(JSON.stringify({ 
-      error: error.message || "Failed to send invoice email" 
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({
+        error: error.message || "Failed to send invoice email",
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      },
+    );
   }
 });
