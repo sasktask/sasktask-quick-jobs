@@ -8,8 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { AdvancedProfileSettings } from "@/components/AdvancedProfileSettings";
 import { PaymentMethodManager } from "@/components/PaymentMethodManager";
 import { PayoutAccountSetup } from "@/components/PayoutAccountSetup";
@@ -250,10 +249,8 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 pt-20 pb-20 max-w-7xl">
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Page Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
@@ -696,9 +693,7 @@ const Profile = () => {
           </div>
         </div>
       </div>
-
-      <Footer />
-    </div>
+    </DashboardLayout>
   );
 };
 

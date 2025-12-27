@@ -8,8 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { PaymentPanel } from "@/components/PaymentPanel";
 import { TaskCompletionFlow } from "@/components/TaskCompletionFlow";
 import { CancellationDialog } from "@/components/CancellationDialog";
@@ -256,10 +255,8 @@ const Bookings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 pt-24 pb-20">
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-6">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">My Bookings</h1>
           <p className="text-muted-foreground">
@@ -621,9 +618,7 @@ const Bookings = () => {
           </Dialog>
         )}
       </div>
-
-      <Footer />
-    </div>
+    </DashboardLayout>
   );
 };
 

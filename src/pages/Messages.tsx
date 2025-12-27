@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { SEOHead } from "@/components/SEOHead";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -248,17 +247,14 @@ const Messages = () => {
   }
 
   return (
-    <>
+    <DashboardLayout>
       <SEOHead
         title="Messages - Your Conversations"
         description="View and manage your conversations on SaskTask"
         url="/messages"
       />
       
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        
-        <div className="container mx-auto px-4 py-24">
+      <div className="container mx-auto px-4 py-6">
           <div className="max-w-4xl mx-auto">
             <div className="mb-8">
               <h1 className="text-4xl font-bold mb-2">Messages</h1>
@@ -345,10 +341,7 @@ const Messages = () => {
             )}
           </div>
         </div>
-
-        <Footer />
-      </div>
-    </>
+    </DashboardLayout>
   );
 };
 

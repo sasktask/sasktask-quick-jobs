@@ -9,8 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Loader2, Save, CheckCircle, Clock, AlertTriangle, MapPin, Shield, BadgePercent } from "lucide-react";
 import { TaskPriorityBadge } from "@/components/TaskPriorityBadge";
 import { DurationSelector } from "@/components/DurationSelector";
@@ -372,10 +371,8 @@ const [formData, setFormData] = useState({
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 pt-24 pb-20 max-w-3xl">
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-6 max-w-3xl">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold mb-2">Post a New Task</h1>
@@ -772,9 +769,7 @@ const [formData, setFormData] = useState({
           </CardContent>
         </Card>
       </div>
-
-      <Footer />
-    </div>
+    </DashboardLayout>
   );
 };
 

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { PaymentHistory } from '@/components/PaymentHistory';
 import { WalletCard } from '@/components/WalletCard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -93,9 +92,8 @@ export default function Payments() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="container mx-auto px-4 py-8">
+      <DashboardLayout>
+        <main className="container mx-auto px-4 py-6">
           <div className="space-y-6">
             <Skeleton className="h-10 w-64" />
             <div className="grid md:grid-cols-4 gap-4">
@@ -106,20 +104,18 @@ export default function Payments() {
             <Skeleton className="h-96" />
           </div>
         </main>
-        <Footer />
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <DashboardLayout>
       <SEOHead 
         title="Payments - SaskTask"
         description="Manage your payments, view transaction history, and track earnings on SaskTask"
       />
-      <Navbar />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
@@ -252,8 +248,6 @@ export default function Payments() {
           </TabsContent>
         </Tabs>
       </main>
-
-      <Footer />
-    </div>
+    </DashboardLayout>
   );
 }

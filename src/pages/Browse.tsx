@@ -6,8 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X, Clock, Navigation, Sparkles, Bookmark } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -326,10 +325,8 @@ const Browse = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 pt-24 pb-20">
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-4xl font-bold mb-2">
@@ -657,9 +654,7 @@ const Browse = () => {
           </div>
         )}
       </div>
-
-      <Footer />
-    </div>
+    </DashboardLayout>
   );
 };
 
