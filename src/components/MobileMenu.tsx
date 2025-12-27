@@ -133,10 +133,6 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole, userRoles = [] }: 
                 <Mail className="h-4 w-4" />
                 Contact
               </Button>
-              <Button variant="ghost" className="justify-start gap-3 text-sm" onClick={() => handleNavigation("/browse?category=Tiffin+Services")}>
-                <Utensils className="h-4 w-4" />
-                Tiffin Services
-              </Button>
             </CollapsibleContent>
           </Collapsible>
 

@@ -109,10 +109,6 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                     {t('findTaskers')}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/browse?category=Tiffin+Services")} className="cursor-pointer gap-2">
-                    <Utensils className="h-4 w-4" />
-                    Tiffin Services
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/how-it-works")} className="cursor-pointer gap-2">
                     How It Works
                   </DropdownMenuItem>
