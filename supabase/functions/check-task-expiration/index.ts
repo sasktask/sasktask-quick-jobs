@@ -27,7 +27,8 @@ const handler = async (req: Request): Promise<Response> => {
     // 1. Find tasks expiring within 24 hours that haven't had a reminder sent
     const { data: expiringTasks, error: expiringError } = await supabase
       .from("tasks")
-      .select(`
+      .select(
+        `
         id,
         title,
         expires_at,
@@ -36,7 +37,8 @@ const handler = async (req: Request): Promise<Response> => {
           full_name,
           email
         )
-      `)
+      `,
+      )
       .eq("status", "open")
       .eq("expiry_reminder_sent", false)
       .not("expires_at", "is", null)
@@ -57,7 +59,7 @@ const handler = async (req: Request): Promise<Response> => {
 
           try {
             await resend.emails.send({
-              from: "SaskTask <onboarding@resend.dev>",
+              from: "SaskTask <onboarding@sending.tanjeen.com>",
               to: [profile.email],
               subject: `Your Task Expires in ${hoursLeft} Hours ⏰`,
               html: `
@@ -83,10 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
             });
 
             // Mark reminder as sent
-            await supabase
-              .from("tasks")
-              .update({ expiry_reminder_sent: true })
-              .eq("id", task.id);
+            await supabase.from("tasks").update({ expiry_reminder_sent: true }).eq("id", task.id);
 
             console.log(`Sent expiry reminder for task ${task.id}`);
           } catch (emailError) {
@@ -111,10 +110,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Update expired tasks to cancelled
       for (const task of expiredTasks || []) {
-        const { error: updateError } = await supabase
-          .from("tasks")
-          .update({ status: "cancelled" })
-          .eq("id", task.id);
+        const { error: updateError } = await supabase.from("tasks").update({ status: "cancelled" }).eq("id", task.id);
 
         if (updateError) {
           console.error(`Failed to expire task ${task.id}:`, updateError);
@@ -133,17 +129,14 @@ const handler = async (req: Request): Promise<Response> => {
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      },
     );
   } catch (error: any) {
     console.error("Error in check-task-expiration function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 };
 
