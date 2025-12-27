@@ -1,16 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X, Clock, Navigation, Sparkles, Bookmark } from "lucide-react";
+import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X, Clock, Navigation, Sparkles, Bookmark, Utensils, Star, Shield, ChefHat, Leaf, Award, CheckCircle2, Package, Users, Flame, ArrowRight } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Collapsible,
   CollapsibleContent,
@@ -24,6 +25,138 @@ import { useTaskRecommendations } from "@/hooks/useTaskRecommendations";
 import { SmartSearchBar } from "@/components/SmartSearchBar";
 import { QuickFilters } from "@/components/QuickFilters";
 import { SaveSearchDialog } from "@/components/SaveSearchDialog";
+import { TiffinProviderCard, TiffinMenuDialog, TiffinOrderForm } from "@/components/tiffin";
+import { motion } from "framer-motion";
+import { toast as sonnerToast } from "sonner";
+
+// Tiffin cuisine types
+const tiffinCuisineTypes = [
+  { id: "indian", name: "Indian", emoji: "🇮🇳" },
+  { id: "chinese", name: "Chinese", emoji: "🇨🇳" },
+  { id: "middle-eastern", name: "Middle Eastern", emoji: "🌙" },
+  { id: "african", name: "African", emoji: "🌍" },
+  { id: "caribbean", name: "Caribbean", emoji: "🏝️" },
+  { id: "asian", name: "Pan-Asian", emoji: "🥢" },
+  { id: "european", name: "European", emoji: "🇪🇺" },
+  { id: "canadian", name: "Canadian", emoji: "🍁" },
+];
+
+const tiffinDietaryFilters = [
+  { id: "vegetarian", name: "Vegetarian", icon: Leaf, color: "text-green-500" },
+  { id: "vegan", name: "Vegan", icon: Leaf, color: "text-emerald-500" },
+  { id: "halal", name: "Halal", icon: Award, color: "text-amber-500" },
+  { id: "gluten-free", name: "Gluten-Free", icon: CheckCircle2, color: "text-blue-500" },
+];
+
+// Featured tiffin providers
+const featuredTiffinProviders = [
+  {
+    id: "1",
+    businessName: "Grandma's Kitchen",
+    cuisineType: ["North Indian", "Punjabi"],
+    description: "Authentic home-style Punjabi food made with love. Fresh rotis, rich dals, and aromatic curries.",
+    avgRating: 4.9,
+    totalOrders: 234,
+    isVegetarian: true,
+    hygienicRating: 5,
+    priceRange: "$12-18",
+    deliveryAreas: ["Saskatoon", "Downtown", "Stonebridge"],
+    kitchenCertified: true,
+    coverImage: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400",
+    deliveryTime: "30-45 min",
+    spiceLevel: 3,
+    specialties: ["Dal Makhani", "Butter Chicken", "Stuffed Parathas"]
+  },
+  {
+    id: "2",
+    businessName: "Spice Route",
+    cuisineType: ["South Indian", "Kerala"],
+    description: "Traditional South Indian meals with authentic spices. Dosa, idli, and banana leaf thalis.",
+    avgRating: 4.8,
+    totalOrders: 189,
+    isVegetarian: false,
+    isHalal: true,
+    hygienicRating: 5,
+    priceRange: "$10-15",
+    deliveryAreas: ["Regina", "University"],
+    kitchenCertified: true,
+    coverImage: "https://images.unsplash.com/photo-1567337710282-00832b415979?w=400",
+    deliveryTime: "35-50 min",
+    spiceLevel: 4,
+    specialties: ["Masala Dosa", "Kerala Fish Curry", "Sambar Rice"]
+  },
+  {
+    id: "3",
+    businessName: "Mediterranean Delights",
+    cuisineType: ["Lebanese", "Turkish"],
+    description: "Fresh Mediterranean cuisine with homemade hummus, falafel, and grilled meats.",
+    avgRating: 4.7,
+    totalOrders: 156,
+    isVegetarian: false,
+    isHalal: true,
+    hygienicRating: 4,
+    priceRange: "$14-20",
+    deliveryAreas: ["Saskatoon", "Warman"],
+    kitchenCertified: true,
+    coverImage: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400",
+    deliveryTime: "25-40 min",
+    spiceLevel: 2,
+    specialties: ["Shawarma Plate", "Falafel Wrap", "Mixed Grill"]
+  },
+  {
+    id: "4",
+    businessName: "Mom's Chinese Kitchen",
+    cuisineType: ["Cantonese", "Hakka"],
+    description: "Homestyle Chinese comfort food, dim sum weekends, and hearty noodle bowls.",
+    avgRating: 4.6,
+    totalOrders: 145,
+    isVegetarian: false,
+    hygienicRating: 5,
+    priceRange: "$11-16",
+    deliveryAreas: ["Regina", "Moose Jaw"],
+    kitchenCertified: true,
+    coverImage: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400",
+    deliveryTime: "30-45 min",
+    spiceLevel: 2,
+    specialties: ["Dim Sum", "Hakka Noodles", "Sweet & Sour"]
+  },
+  {
+    id: "5",
+    businessName: "Ethiopian Flavors",
+    cuisineType: ["Ethiopian", "Eritrean"],
+    description: "Authentic East African cuisine with injera bread and flavorful stews.",
+    avgRating: 4.8,
+    totalOrders: 98,
+    isVegetarian: false,
+    isVegan: true,
+    hygienicRating: 5,
+    priceRange: "$13-18",
+    deliveryAreas: ["Saskatoon", "Martensville"],
+    kitchenCertified: true,
+    coverImage: "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=400",
+    deliveryTime: "40-55 min",
+    spiceLevel: 3,
+    specialties: ["Doro Wat", "Injera Combo", "Veggie Platter"]
+  },
+  {
+    id: "6",
+    businessName: "Thai Home Kitchen",
+    cuisineType: ["Thai", "Laotian"],
+    description: "Fresh Thai street food classics. Pad Thai, curries, and refreshing salads.",
+    avgRating: 4.7,
+    totalOrders: 112,
+    isVegetarian: false,
+    isGlutenFree: true,
+    hygienicRating: 4,
+    priceRange: "$12-17",
+    deliveryAreas: ["Saskatoon", "Sutherland"],
+    kitchenCertified: true,
+    coverImage: "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400",
+    deliveryTime: "25-40 min",
+    spiceLevel: 4,
+    specialties: ["Pad Thai", "Green Curry", "Tom Yum Soup"]
+  },
+];
 
 const Browse = () => {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -43,6 +176,18 @@ const Browse = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [activeQuickFilters, setActiveQuickFilters] = useState<string[]>([]);
+  
+  // Tiffin-specific state
+  const [tiffinSearchQuery, setTiffinSearchQuery] = useState("");
+  const [selectedCuisine, setSelectedCuisine] = useState<string | null>(null);
+  const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
+  const [tiffinFavorites, setTiffinFavorites] = useState<string[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<any>(null);
+  const [isMenuDialogOpen, setIsMenuDialogOpen] = useState(false);
+  const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
+  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [tiffinActiveTab, setTiffinActiveTab] = useState("providers");
+  
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -52,6 +197,9 @@ const Browse = () => {
   const { data: recommendationsData } = useTaskRecommendations(userId || undefined);
 
   const categories = getCategoryTitles();
+  
+  // Check if Tiffin category is selected
+  const isTiffinCategory = categoryFilter === "Tiffin Services";
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -313,6 +461,60 @@ const Browse = () => {
     return "long";
   };
 
+  // Tiffin-specific handlers
+  const toggleDietary = (id: string) => {
+    setSelectedDietary(prev => 
+      prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id]
+    );
+  };
+
+  const toggleTiffinFavorite = (providerId: string) => {
+    if (!userId) {
+      sonnerToast.error("Please login to save favorites");
+      return;
+    }
+    setTiffinFavorites(prev => 
+      prev.includes(providerId) 
+        ? prev.filter(id => id !== providerId)
+        : [...prev, providerId]
+    );
+    sonnerToast.success(tiffinFavorites.includes(providerId) ? "Removed from favorites" : "Added to favorites");
+  };
+
+  const handleViewMenu = (provider: any) => {
+    setSelectedProvider(provider);
+    setIsMenuDialogOpen(true);
+  };
+
+  const handleOrder = (providerId: string, items: any[]) => {
+    setCartItems(items);
+    setIsMenuDialogOpen(false);
+    setIsOrderFormOpen(true);
+  };
+
+  // Filter tiffin providers
+  const filteredTiffinProviders = featuredTiffinProviders.filter(provider => {
+    const matchesSearch = tiffinSearchQuery === "" || 
+      provider.businessName.toLowerCase().includes(tiffinSearchQuery.toLowerCase()) ||
+      provider.cuisineType.some(c => c.toLowerCase().includes(tiffinSearchQuery.toLowerCase())) ||
+      provider.description.toLowerCase().includes(tiffinSearchQuery.toLowerCase());
+    
+    const matchesCuisine = !selectedCuisine || 
+      tiffinCuisineTypes.find(c => c.id === selectedCuisine)?.name.toLowerCase() === provider.cuisineType[0]?.toLowerCase() ||
+      provider.cuisineType.some(c => c.toLowerCase().includes(selectedCuisine));
+    
+    const matchesDietary = selectedDietary.length === 0 || 
+      selectedDietary.every(filter => {
+        if (filter === "vegetarian") return provider.isVegetarian;
+        if (filter === "vegan") return (provider as any).isVegan;
+        if (filter === "halal") return (provider as any).isHalal;
+        if (filter === "gluten-free") return (provider as any).isGlutenFree;
+        return true;
+      });
+    
+    return matchesSearch && matchesCuisine && matchesDietary;
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -330,19 +532,250 @@ const Browse = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-4xl font-bold mb-2">
-              {userRole === "task_doer" ? "Recommended Tasks For You" : "Browse Available Tasks"}
+              {isTiffinCategory 
+                ? "Tiffin Services" 
+                : userRole === "task_doer" 
+                  ? "Recommended Tasks For You" 
+                  : "Browse Available Tasks"}
             </h1>
             <p className="text-muted-foreground">
-              {userRole === "task_doer" 
-                ? "Tasks matched to your skills and preferences" 
-                : "Find and accept tasks near you instantly"}
+              {isTiffinCategory 
+                ? "Authentic home-cooked meals delivered fresh to your door" 
+                : userRole === "task_doer" 
+                  ? "Tasks matched to your skills and preferences" 
+                  : "Find and accept tasks near you instantly"}
             </p>
           </div>
-          <Button variant="outline" onClick={() => navigate("/map")} className="gap-2">
-            <MapPin className="h-4 w-4" />
-            Map View
-          </Button>
+          <div className="flex gap-2">
+            {isTiffinCategory && (
+              <Button variant="outline" onClick={() => setCategoryFilter("all")} className="gap-2">
+                <X className="h-4 w-4" />
+                View All Tasks
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => navigate("/map")} className="gap-2">
+              <MapPin className="h-4 w-4" />
+              Map View
+            </Button>
+          </div>
         </div>
+
+        {/* Tiffin-specific UI */}
+        {isTiffinCategory ? (
+          <>
+            {/* Tiffin Hero Banner */}
+            <div className="mb-8 p-6 rounded-2xl bg-gradient-to-br from-orange-50 via-background to-amber-50 dark:from-orange-950/20 dark:via-background dark:to-amber-950/20 border">
+              <div className="flex items-center gap-2 mb-4">
+                <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                  <Utensils className="h-3 w-3 mr-1" />
+                  Home-Cooked Goodness
+                </Badge>
+              </div>
+              
+              {/* Tiffin Search */}
+              <div className="max-w-2xl">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by cuisine, dish, or chef..."
+                    className="pl-12 pr-4 h-12 rounded-full border-2 focus:border-primary"
+                    value={tiffinSearchQuery}
+                    onChange={(e) => setTiffinSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Cuisine Types */}
+            <div className="mb-6 pb-4 border-b">
+              <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Cuisines:</span>
+                {tiffinCuisineTypes.map(cuisine => (
+                  <Button
+                    key={cuisine.id}
+                    variant={selectedCuisine === cuisine.id ? "default" : "outline"}
+                    size="sm"
+                    className="rounded-full whitespace-nowrap"
+                    onClick={() => setSelectedCuisine(selectedCuisine === cuisine.id ? null : cuisine.id)}
+                  >
+                    <span className="mr-1">{cuisine.emoji}</span>
+                    {cuisine.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Dietary Filters */}
+            <div className="mb-6 py-4 bg-muted/30 -mx-4 px-4 rounded-lg">
+              <div className="flex items-center gap-4 overflow-x-auto pb-2">
+                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Dietary:</span>
+                {tiffinDietaryFilters.map(filter => (
+                  <Button
+                    key={filter.id}
+                    variant={selectedDietary.includes(filter.id) ? "default" : "outline"}
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => toggleDietary(filter.id)}
+                  >
+                    <filter.icon className={`h-4 w-4 mr-1 ${selectedDietary.includes(filter.id) ? "" : filter.color}`} />
+                    {filter.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Safety Features Banner */}
+            <div className="mb-6 py-4 px-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900/30">
+              <div className="flex flex-wrap justify-center gap-6 md:gap-12">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-green-600" />
+                  <span className="text-sm font-medium">Verified Kitchens</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <span className="text-sm font-medium">Hygiene Certified</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-green-600" />
+                  <span className="text-sm font-medium">Safe Packaging</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-green-600" />
+                  <span className="text-sm font-medium">Background Verified</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tiffin Tabs */}
+            <Tabs value={tiffinActiveTab} onValueChange={setTiffinActiveTab} className="w-full">
+              <TabsList className="mb-8">
+                <TabsTrigger value="providers">Home Chefs</TabsTrigger>
+                <TabsTrigger value="subscriptions">Meal Plans</TabsTrigger>
+                <TabsTrigger value="become-chef">Become a Chef</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="providers">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredTiffinProviders.map(provider => (
+                    <TiffinProviderCard
+                      key={provider.id}
+                      provider={provider}
+                      onViewMenu={handleViewMenu}
+                      onFavorite={toggleTiffinFavorite}
+                      isFavorite={tiffinFavorites.includes(provider.id)}
+                    />
+                  ))}
+                </div>
+                {filteredTiffinProviders.length === 0 && (
+                  <div className="text-center py-12">
+                    <ChefHat className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">No chefs found</h3>
+                    <p className="text-muted-foreground">Try adjusting your filters</p>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="subscriptions">
+                <div className="text-center mb-8">
+                  <Badge className="mb-4 bg-primary/10 text-primary">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Save up to 20%
+                  </Badge>
+                  <h3 className="text-2xl font-bold mb-2">Meal Subscription Plans</h3>
+                  <p className="text-muted-foreground">Never worry about cooking again</p>
+                </div>
+                <div className="grid md:grid-cols-3 gap-6">
+                  {[
+                    { name: "Weekly Plan", meals: "5 meals/week", price: "$55", desc: "Perfect for weekday lunches", features: ["Choose your cuisine", "Flexible delivery", "Skip anytime"] },
+                    { name: "Daily Plan", meals: "7 meals/week", price: "$70", desc: "Full week coverage", features: ["Daily fresh meals", "Weekend specials", "Priority delivery"], popular: true },
+                    { name: "Family Plan", meals: "14 meals/week", price: "$120", desc: "Feed the whole family", features: ["4 servings/meal", "Mixed cuisines", "Custom preferences"] },
+                  ].map((plan, i) => (
+                    <Card key={i} className={`relative ${plan.popular ? 'border-primary ring-2 ring-primary/20' : ''}`}>
+                      {plan.popular && (
+                        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
+                          Most Popular
+                        </Badge>
+                      )}
+                      <CardHeader className="text-center">
+                        <CardTitle>{plan.name}</CardTitle>
+                        <div className="text-3xl font-bold text-primary">{plan.price}<span className="text-sm font-normal text-muted-foreground">/week</span></div>
+                        <p className="text-sm text-muted-foreground">{plan.meals}</p>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-4">{plan.desc}</p>
+                        <ul className="space-y-2 mb-6">
+                          {plan.features.map((f, j) => (
+                            <li key={j} className="flex items-center gap-2 text-sm">
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                              {f}
+                            </li>
+                          ))}
+                        </ul>
+                        <Button className="w-full" variant={plan.popular ? "default" : "outline"}>
+                          Choose Plan
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="become-chef">
+                <Card className="max-w-2xl mx-auto">
+                  <CardHeader className="text-center">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                      <ChefHat className="h-8 w-8 text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl">Start Your Tiffin Business</CardTitle>
+                    <p className="text-muted-foreground">Share your culinary heritage with the community</p>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {[
+                        { icon: DollarSign, title: "Set Your Prices", desc: "You control your rates" },
+                        { icon: Clock, title: "Flexible Schedule", desc: "Cook when it suits you" },
+                        { icon: Users, title: "Build Clientele", desc: "Grow your customer base" },
+                        { icon: Shield, title: "Secure Payments", desc: "Get paid safely" },
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                          <item.icon className="h-5 w-5 text-primary mt-0.5" />
+                          <div>
+                            <p className="font-medium text-sm">{item.title}</p>
+                            <p className="text-xs text-muted-foreground">{item.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <Button className="w-full" size="lg" onClick={() => navigate("/become-tasker")}>
+                      Apply Now <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+
+            {/* Tiffin Dialogs */}
+            {selectedProvider && (
+              <>
+                <TiffinMenuDialog
+                  isOpen={isMenuDialogOpen}
+                  onClose={() => setIsMenuDialogOpen(false)}
+                  provider={selectedProvider}
+                  onOrder={handleOrder}
+                />
+                <TiffinOrderForm
+                  isOpen={isOrderFormOpen}
+                  onClose={() => setIsOrderFormOpen(false)}
+                  providerId={selectedProvider.id}
+                  providerName={selectedProvider.businessName}
+                  cartItems={cartItems}
+                />
+              </>
+            )}
+          </>
+        ) : (
+          /* Standard task browse UI */
+          <>
 
         {/* Smart Search */}
         <SmartSearchBar
@@ -652,6 +1085,8 @@ const Browse = () => {
               </Card>
             ))}
           </div>
+        )}
+        </>
         )}
       </div>
     </DashboardLayout>
