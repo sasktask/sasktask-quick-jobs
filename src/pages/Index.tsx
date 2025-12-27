@@ -15,6 +15,7 @@ import { HeroSearch } from "@/components/HeroSearch";
 import { UrgencyBanner } from "@/components/UrgencyBanner";
 import { StatsCounter } from "@/components/StatsCounter";
 import { SocialProofBar } from "@/components/SocialProofBar";
+import { HelpChatbot } from "@/components/HelpChatbot";
 import { usePlatformStats } from "@/hooks/usePlatformStats";
 import { Skeleton } from "@/components/ui/skeleton";
 import React, { useEffect, useState } from "react";
@@ -574,6 +575,7 @@ const Index = () => {
       )}
 
       <Footer />
+      <HelpChatbot />
     </div>
   );
 };
