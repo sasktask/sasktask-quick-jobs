@@ -33,7 +33,10 @@ import {
   Star,
   Zap,
   GripVertical,
-  MessageCircle
+  MessageCircle,
+  Brain,
+  Rocket,
+  Settings2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -304,6 +307,7 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
   const [userContext, setUserContext] = useState<UserContext | null>(null);
   const [hasShownWelcome, setHasShownWelcome] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [aiMode, setAiMode] = useState<'standard' | 'advanced' | 'enhanced'>('standard');
   
   // Draggable state
   const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
@@ -469,7 +473,8 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
             hasAvatar: !!userContext?.avatarUrl,
             verificationStatus: userContext?.verificationStatus,
             completedTasksCount: userContext?.completedTasksCount
-          }
+          },
+          mode: aiMode
         }),
       });
 
@@ -713,13 +718,34 @@ export function AIAssistantWidget({ userRole, userName }: AIAssistantWidgetProps
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-sm">SaskTask AI</p>
-                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5 bg-gradient-to-r from-violet-600/20 to-indigo-600/20">
-                      <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                      Pro
+                    <Badge 
+                      variant="secondary" 
+                      className={cn(
+                        "text-[10px] h-4 px-1.5 cursor-pointer transition-colors",
+                        aiMode === 'standard' && "bg-gradient-to-r from-blue-600/20 to-cyan-600/20",
+                        aiMode === 'advanced' && "bg-gradient-to-r from-violet-600/20 to-indigo-600/20",
+                        aiMode === 'enhanced' && "bg-gradient-to-r from-amber-600/20 to-orange-600/20"
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const modes: ('standard' | 'advanced' | 'enhanced')[] = ['standard', 'advanced', 'enhanced'];
+                        const currentIndex = modes.indexOf(aiMode);
+                        setAiMode(modes[(currentIndex + 1) % modes.length]);
+                      }}
+                      title="Click to change mode"
+                    >
+                      {aiMode === 'standard' && <Zap className="h-2.5 w-2.5 mr-0.5" />}
+                      {aiMode === 'advanced' && <Brain className="h-2.5 w-2.5 mr-0.5" />}
+                      {aiMode === 'enhanced' && <Rocket className="h-2.5 w-2.5 mr-0.5" />}
+                      {aiMode === 'standard' ? 'Standard' : aiMode === 'advanced' ? 'Advanced' : 'Enhanced'}
                     </Badge>
                   </div>
                   {!isMinimized && (
-                    <p className="text-xs text-muted-foreground">Drag header to move • Ask anything</p>
+                    <p className="text-xs text-muted-foreground">
+                      {aiMode === 'standard' && 'Quick answers • Tap badge to upgrade'}
+                      {aiMode === 'advanced' && 'Deep analysis • Comprehensive insights'}
+                      {aiMode === 'enhanced' && 'Expert mode • All articles & research'}
+                    </p>
                   )}
                 </div>
               </div>
