@@ -275,12 +275,12 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 </DropdownMenu>
               ) : (
                 <div className="hidden lg:flex items-center gap-2">
-                  <Link to="/auth">
+                  <Link to="/auth?tab=signin">
                     <Button variant="outline" size="sm" className="font-medium">
                       {t('signIn')}
                     </Button>
                   </Link>
-                  <Link to="/auth">
+                  <Link to="/auth?tab=signup">
                     <Button variant="default" size="sm" className="font-medium">
                       {t('getStarted')}
                     </Button>

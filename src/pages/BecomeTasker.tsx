@@ -71,7 +71,7 @@ export default function BecomeTasker() {
             Join thousands of skilled professionals earning money by helping people in Saskatchewan
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Link to="/auth">
+            <Link to="/auth?tab=signup">
               <Button size="lg" variant="hero" className="text-lg px-8 py-6">
                 Get Started Today
               </Button>
@@ -190,7 +190,7 @@ export default function BecomeTasker() {
               <p className="text-xl mb-8 opacity-90">
                 Join SaskTask today and turn your skills into income
               </p>
-              <Link to="/auth">
+              <Link to="/auth?tab=signup">
                 <Button size="lg" variant="accent" className="text-lg px-8 py-6">
                   Sign Up Now - It's Free
                 </Button>

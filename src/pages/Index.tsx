@@ -576,7 +576,7 @@ const Index = () => {
                 </p>
                 
                 <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
-                  <Link to="/auth">
+                  <Link to="/auth?tab=signup">
                     <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 shadow-xl text-lg h-14 px-8 gap-2">
                       Get Started Free
                       <ArrowRight className="h-5 w-5" />

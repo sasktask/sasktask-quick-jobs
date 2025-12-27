@@ -277,7 +277,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole, userRoles = [] }: 
                 variant="outline"
                 size="lg"
                 className="w-full font-semibold"
-                onClick={() => handleNavigation("/auth")}
+                onClick={() => handleNavigation("/auth?tab=signin")}
               >
                 {t('signIn')}
               </Button>
@@ -285,7 +285,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole, userRoles = [] }: 
               <Button
                 size="lg"
                 className="w-full font-semibold"
-                onClick={() => handleNavigation("/auth")}
+                onClick={() => handleNavigation("/auth?tab=signup")}
               >
                 {t('getStarted')}
               </Button>
