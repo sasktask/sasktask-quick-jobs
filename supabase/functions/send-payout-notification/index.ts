@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[PAYOUT-NOTIFICATION] ${step}${detailsStr}`);
 };
 
@@ -19,7 +19,7 @@ serve(async (req) => {
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
 
   const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -36,13 +36,7 @@ serve(async (req) => {
     if (!user) throw new Error("Not authenticated");
     logStep("User authenticated", { userId: user.id });
 
-    const { 
-      payoutAmount, 
-      payoutType, 
-      bankLast4, 
-      transactionCount,
-      paymentIds 
-    } = await req.json();
+    const { payoutAmount, payoutType, bankLast4, transactionCount, paymentIds } = await req.json();
 
     if (!payoutAmount) throw new Error("Payout amount is required");
     logStep("Request received", { payoutAmount, payoutType, transactionCount });
@@ -59,22 +53,22 @@ serve(async (req) => {
 
     const recipientEmail = profile.email;
     const recipientName = profile.full_name || "Tasker";
-    const payoutDate = new Date().toLocaleDateString('en-CA', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    const payoutDate = new Date().toLocaleDateString("en-CA", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
 
     // Determine payout type label
     const payoutTypeLabels: Record<string, string> = {
-      'manual': 'Manual Withdrawal',
-      'auto_weekly': 'Weekly Auto-Payout',
-      'auto_biweekly': 'Bi-Weekly Auto-Payout',
-      'auto_monthly': 'Monthly Auto-Payout',
+      manual: "Manual Withdrawal",
+      auto_weekly: "Weekly Auto-Payout",
+      auto_biweekly: "Bi-Weekly Auto-Payout",
+      auto_monthly: "Monthly Auto-Payout",
     };
-    const payoutLabel = payoutTypeLabels[payoutType] || 'Payout';
+    const payoutLabel = payoutTypeLabels[payoutType] || "Payout";
 
     // Generate email HTML
     const emailHTML = `
@@ -122,18 +116,26 @@ serve(async (req) => {
                     <td style="padding: 8px 0; font-size: 14px; color: #64748b;">Payout Type</td>
                     <td style="padding: 8px 0; font-size: 14px; text-align: right; font-weight: 600; color: #1a1a1a;">${payoutLabel}</td>
                   </tr>
-                  ${bankLast4 ? `
+                  ${
+                    bankLast4
+                      ? `
                   <tr>
                     <td style="padding: 8px 0; font-size: 14px; color: #64748b;">Bank Account</td>
                     <td style="padding: 8px 0; font-size: 14px; text-align: right; font-weight: 600; color: #1a1a1a;">•••• ${bankLast4}</td>
                   </tr>
-                  ` : ''}
-                  ${transactionCount ? `
+                  `
+                      : ""
+                  }
+                  ${
+                    transactionCount
+                      ? `
                   <tr>
                     <td style="padding: 8px 0; font-size: 14px; color: #64748b;">Tasks Included</td>
-                    <td style="padding: 8px 0; font-size: 14px; text-align: right; font-weight: 600; color: #1a1a1a;">${transactionCount} ${transactionCount === 1 ? 'task' : 'tasks'}</td>
+                    <td style="padding: 8px 0; font-size: 14px; text-align: right; font-weight: 600; color: #1a1a1a;">${transactionCount} ${transactionCount === 1 ? "task" : "tasks"}</td>
                   </tr>
-                  ` : ''}
+                  `
+                      : ""
+                  }
                   <tr>
                     <td style="padding: 8px 0; font-size: 14px; color: #64748b;">Processed On</td>
                     <td style="padding: 8px 0; font-size: 14px; text-align: right; font-weight: 600; color: #1a1a1a;">${payoutDate}</td>
@@ -170,7 +172,7 @@ serve(async (req) => {
 
     // Send email via Resend
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "SaskTask <payouts@resend.dev>",
+      from: "SaskTask <payouts@tanjeen.com>",
       to: [recipientEmail],
       subject: `✓ Payout of $${payoutAmount.toFixed(2)} Processed - SaskTask`,
       html: emailHTML,
@@ -188,21 +190,27 @@ serve(async (req) => {
       logStep("Marking payments as notified", { count: paymentIds.length });
     }
 
-    return new Response(JSON.stringify({ 
-      success: true,
-      message: `Payout notification sent to ${recipientEmail}`,
-      emailId: emailData?.id
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `Payout notification sent to ${recipientEmail}`,
+        emailId: emailData?.id,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      },
+    );
   } catch (error: any) {
     logStep("ERROR", { message: error.message });
-    return new Response(JSON.stringify({ 
-      error: error.message || "Failed to send payout notification" 
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({
+        error: error.message || "Failed to send payout notification",
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      },
+    );
   }
 });
