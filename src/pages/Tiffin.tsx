@@ -247,9 +247,9 @@ export default function Tiffin() {
     <div className="min-h-screen bg-background">
       <SEOHead 
         title="Tiffin Services - Home-Cooked Meals Delivered | SaskTask"
-        description="Order authentic home-cooked tiffin meals from local home chefs. Indian, Chinese, Middle Eastern, and more cuisines. Fresh, hygienic, and delivered to your door in Saskatchewan."
+        description="Order authentic home-cooked tiffin meals from local home chefs. Indian, Chinese, Middle Eastern, and more cuisines. Fresh, hygienic, and delivered to your door."
         url="/tiffin"
-        keywords={["tiffin service", "home cooked meals", "Indian food delivery", "meal subscription", "Saskatchewan"]}
+        keywords={["tiffin service", "home cooked meals", "Indian food delivery", "meal subscription", "food delivery"]}
       />
       <Navbar />
       

@@ -215,7 +215,7 @@ const quickPromptCategories = [
     title: "Posting Tasks",
     prompts: [
       { icon: FileText, label: "Write task description", prompt: "Help me write a detailed and compelling task description that will attract quality taskers. Ask me what I need done.", color: "text-indigo-500" },
-      { icon: DollarSign, label: "Complete pricing guide", prompt: "Give me a comprehensive pricing guide for all types of tasks in Saskatchewan - home services, moving, yard work, handyman, and more. Include budget, standard, and premium rates.", color: "text-green-500" },
+      { icon: DollarSign, label: "Complete pricing guide", prompt: "Give me a comprehensive pricing guide for all types of tasks - home services, moving, yard work, handyman, and more. Include budget, standard, and premium rates.", color: "text-green-500" },
       { icon: Users, label: "Choose best tasker", prompt: "What should I look for when choosing a tasker? Give me a detailed checklist for evaluating profiles, reviews, verification status, and bids.", color: "text-teal-500" },
       { icon: Calendar, label: "Scheduling tips", prompt: "What's the best time to post tasks? How do I schedule recurring tasks and set up availability for taskers?", color: "text-cyan-500" },
     ]
@@ -249,7 +249,7 @@ const quickPromptCategories = [
     title: "Task Categories",
     prompts: [
       { icon: Wrench, label: "All task types", prompt: "What types of tasks can I post or find on SaskTask? Give me examples for every category with typical pricing.", color: "text-orange-500" },
-      { icon: MapPin, label: "Seasonal tasks", prompt: "What tasks are in high demand each season in Saskatchewan? Snow removal, lawn care, spring cleaning, etc.", color: "text-sky-500" },
+      { icon: MapPin, label: "Seasonal tasks", prompt: "What tasks are in high demand each season? Snow removal, lawn care, spring cleaning, etc.", color: "text-sky-500" },
       { icon: Wrench, label: "Tiffin service", prompt: "Tell me about the Tiffin meal delivery service on SaskTask. How does it work, what cuisines are available, and how do I order?", color: "text-rose-500" },
     ]
   },
@@ -266,7 +266,7 @@ const quickPromptCategories = [
 // Flat list of most popular prompts for compact view
 const quickPrompts = [
   { icon: HelpCircle, label: "How it works", prompt: "Explain how SaskTask works step by step - from posting a task to completion and payment.", color: "text-blue-500" },
-  { icon: DollarSign, label: "Pricing guide", prompt: "Give me a comprehensive pricing guide for all types of tasks in Saskatchewan.", color: "text-green-500" },
+  { icon: DollarSign, label: "Pricing guide", prompt: "Give me a comprehensive pricing guide for all types of tasks.", color: "text-green-500" },
   { icon: Lightbulb, label: "Write task description", prompt: "Help me write a detailed task description that will attract quality taskers. Ask me what I need done.", color: "text-yellow-500" },
   { icon: TrendingUp, label: "Get more tasks", prompt: "I'm a tasker - how do I get more tasks and stand out from the competition?", color: "text-orange-500" },
   { icon: Shield, label: "Safety tips", prompt: "What safety guidelines should I follow on SaskTask?", color: "text-red-500" },

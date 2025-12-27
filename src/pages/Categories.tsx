@@ -159,7 +159,7 @@ export default function Categories() {
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-3 text-center">
-              Based on task demand in Saskatchewan • Updated weekly
+              Based on real-time task demand • Updated weekly
             </p>
           </CardContent>
         </Card>

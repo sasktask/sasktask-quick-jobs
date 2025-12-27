@@ -50,10 +50,10 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead 
-        title="Find Local Help or Earn Money in Saskatchewan"
-        description="SaskTask connects you with verified local professionals for any task. From snow removal to home repairs, find trusted help in your Saskatchewan community or earn money completing tasks."
+        title="Get Things Done - Find Trusted Help Anywhere"
+        description="SaskTask connects you with verified professionals for any task. From home repairs to deliveries, find trusted help worldwide or earn money completing tasks."
         url="/"
-        keywords={["Saskatchewan tasks", "local help", "handyman", "cleaning services", "gig economy", "earn money", "hire help"]}
+        keywords={["task marketplace", "local help", "handyman", "cleaning services", "gig economy", "earn money", "hire help", "trusted professionals"]}
       />
       <HomePageSchema />
       <Navbar />
@@ -84,7 +84,7 @@ const Index = () => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
-                {user ? "Welcome Back!" : "Saskatchewan's #1 Task Platform"}
+                {user ? "Welcome Back!" : "Trusted by Thousands Worldwide"}
               </div>
               
               {/* Main Headline */}
@@ -115,7 +115,7 @@ const Index = () => {
               >
                 {user 
                   ? "Access your dashboard to manage tasks, bookings, and connect with clients."
-                  : "Connect with verified local professionals for any task. Find trusted help in your Saskatchewan community."
+                  : "Connect with verified professionals for any task. Your trusted global marketplace for getting things done."
                 }
               </p>
 

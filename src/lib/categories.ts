@@ -184,17 +184,17 @@ export interface LocalTrend {
 }
 
 export const localTrends: LocalTrend[] = [
-  { category: "Snow Removal", subcategory: "Driveway Clearing", demand: "high", change: 45, region: "Saskatchewan" },
-  { category: "Snow Removal", subcategory: "Roof Snow Removal", demand: "high", change: 38, region: "Saskatchewan" },
+  { category: "Snow Removal", subcategory: "Driveway Clearing", demand: "high", change: 45, region: "North America" },
+  { category: "Snow Removal", subcategory: "Roof Snow Removal", demand: "high", change: 38, region: "Cold Regions" },
   { category: "Cleaning", subcategory: "Move-out Cleaning", demand: "high", change: 32, region: "Urban Areas" },
-  { category: "Yard Work", subcategory: "Fall Leaf Cleanup", demand: "medium", change: 28, region: "Saskatchewan" },
+  { category: "Yard Work", subcategory: "Fall Leaf Cleanup", demand: "medium", change: 28, region: "All Regions" },
   { category: "Handyman Services", subcategory: "Weatherproofing", demand: "high", change: 55, region: "Rural Areas" },
-  { category: "Moving & Delivery", subcategory: "Furniture Delivery", demand: "medium", change: 22, region: "Saskatoon" },
+  { category: "Moving & Delivery", subcategory: "Furniture Delivery", demand: "medium", change: 22, region: "Urban Areas" },
   { category: "Pet Care", subcategory: "Dog Walking", demand: "medium", change: 18, region: "Urban Areas" },
   { category: "Senior Care", subcategory: "Grocery Shopping", demand: "high", change: 40, region: "All Regions" },
-  { category: "Electrical Work", subcategory: "Holiday Lighting", demand: "high", change: 65, region: "Saskatchewan" },
-  { category: "Plumbing", subcategory: "Pipe Winterization", demand: "high", change: 50, region: "Rural Areas" },
-  { category: "HVAC Services", subcategory: "Furnace Maintenance", demand: "high", change: 42, region: "Saskatchewan" },
+  { category: "Electrical Work", subcategory: "Holiday Lighting", demand: "high", change: 65, region: "All Regions" },
+  { category: "Plumbing", subcategory: "Pipe Winterization", demand: "high", change: 50, region: "Cold Regions" },
+  { category: "HVAC Services", subcategory: "Furnace Maintenance", demand: "high", change: 42, region: "All Regions" },
   { category: "Firewood Services", subcategory: "Firewood Delivery", demand: "high", change: 35, region: "Rural Areas" },
 ];
 
