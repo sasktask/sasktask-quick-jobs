@@ -22,7 +22,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-    
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -30,21 +30,21 @@ const handler = async (req: Request): Promise<Response> => {
     const { email }: SendSignupOTPRequest = await req.json();
 
     if (!email) {
-      return new Response(
-        JSON.stringify({ error: "Email is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Email is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Check if email is already registered
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const emailExists = existingUsers?.users?.some(u => u.email?.toLowerCase() === email.toLowerCase());
-    
+    const emailExists = existingUsers?.users?.some((u) => u.email?.toLowerCase() === email.toLowerCase());
+
     if (emailExists) {
-      return new Response(
-        JSON.stringify({ error: "This email is already registered. Please sign in instead." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "This email is already registered. Please sign in instead." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Check rate limiting - max 5 OTP requests per hour per email
@@ -57,10 +57,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (recentRequests && recentRequests >= 5) {
       console.log(`Rate limit exceeded for ${email}`);
-      return new Response(
-        JSON.stringify({ error: "Too many verification requests. Please try again later." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Too many verification requests. Please try again later." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Invalidate any existing unused verification codes for this email
@@ -75,9 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes expiry
 
     // Get client IP from headers
-    const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0] || 
-                      req.headers.get("x-real-ip") || 
-                      "unknown";
+    const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "unknown";
 
     // Store verification in database
     const { data: verification, error: insertError } = await supabase
@@ -93,15 +91,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (insertError) {
       console.error("Failed to store verification:", insertError);
-      return new Response(
-        JSON.stringify({ error: "Failed to generate verification code" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Failed to generate verification code" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Send OTP via email
     const emailResponse = await resend.emails.send({
-      from: "SaskTask <onboarding@resend.dev>",
+      from: "SaskTask <onboarding@sending.tanjeen.com>",
       to: [email],
       subject: "Verify Your Email - SaskTask Signup",
       html: `
@@ -147,28 +145,28 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (emailResponse.error) {
       console.error("Failed to send verification email:", emailResponse.error);
-      return new Response(
-        JSON.stringify({ error: "Failed to send verification email. Please try again." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Failed to send verification email. Please try again." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     console.log("Signup verification email sent successfully to:", email);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: "Verification code sent successfully",
-        verificationId: verification.id 
+        verificationId: verification.id,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error: any) {
     console.error("Error in send-signup-otp function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message || "Failed to send verification code" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: error.message || "Failed to send verification code" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 };
 
