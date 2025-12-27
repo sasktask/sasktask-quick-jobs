@@ -24,7 +24,8 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { type, taskId, taskTitle, recipientEmail, recipientName, bookerName }: NotificationRequest = await req.json();
+    const { type, taskId, taskTitle, recipientEmail, recipientName, bookerName }: NotificationRequest =
+      await req.json();
 
     console.log(`Sending ${type} notification for task ${taskId} to ${recipientEmail}`);
 
@@ -78,7 +79,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailResponse = await resend.emails.send({
-      from: "SaskTask <onboarding@resend.dev>",
+      from: "SaskTask <onboarding@sending.tanjeen.com>",
       to: [recipientEmail],
       subject,
       html,
@@ -92,13 +93,10 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("Error in send-task-notification function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 };
 
