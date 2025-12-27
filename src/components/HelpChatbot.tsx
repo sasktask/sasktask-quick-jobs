@@ -2,11 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from "lucide-react";
+import { MessageCircle, X, Send, Bot, User as UserIcon, Loader2, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuthContext";
 import ReactMarkdown from "react-markdown";
+import type { User } from "@supabase/supabase-js";
 
 interface Message {
   role: "user" | "assistant";
@@ -37,8 +37,45 @@ export const HelpChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { user, profile, isAuthenticated } = useAuth();
+
+  // Handle auth state locally
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+        setProfile(data);
+      }
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+        setProfile(data);
+      } else {
+        setProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -261,7 +298,7 @@ export const HelpChatbot = () => {
                         ? "bg-primary text-primary-foreground" 
                         : "bg-muted"
                     }`}>
-                      {message.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                      {message.role === "user" ? <UserIcon className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                     </div>
                     <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${
                       message.role === "user"
