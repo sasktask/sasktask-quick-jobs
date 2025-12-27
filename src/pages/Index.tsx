@@ -115,7 +115,7 @@ const Index = () => {
               >
                 {user 
                   ? "Access your dashboard to manage tasks, bookings, and connect with clients."
-                  : "Connect with verified professionals for any task. Your trusted global marketplace for getting things done."
+                  : "Connect with verified professionals. Trusted help for any task, anywhere."
                 }
               </p>
 
