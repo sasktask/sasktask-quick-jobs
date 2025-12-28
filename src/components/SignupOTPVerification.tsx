@@ -104,14 +104,14 @@ export const SignupOTPVerification: React.FC<SignupOTPVerificationProps> = ({
   };
 
   const verifyOTP = async () => {
-    // if (otp.length !== 6) {
-    //   toast({
-    //     title: "Invalid code",
-    //     description: "Please enter all 6 digits",
-    //     variant: "destructive",
-    //   });
-    //   return;
-    // }
+    if (otp.length !== 6) {
+      // toast({
+      //   title: "Invalid code",
+      //   description: "Please enter all 6 digits",
+      //   variant: "destructive",
+      // });
+      return;
+    }
 
     setIsVerifying(true);
     try {
