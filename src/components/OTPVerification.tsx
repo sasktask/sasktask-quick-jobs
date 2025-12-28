@@ -58,15 +58,15 @@ export const OTPVerification = ({ email, userId, onVerified, onBack }: OTPVerifi
     }
   };
 
-  const verifyOTP = async () => {
-    // if (otp.length !== 6) {
-    //   toast({
-    //     title: "Invalid code",
-    //     description: "Please enter a 6-digit verification code",
-    //     variant: "destructive",
-    //   });
-    //   return;
-    // }
+  // const verifyOTP = async () => {
+  //   if (otp.length !== 6) {
+  //     toast({
+  //       title: "Invalid code",
+  //       description: "Please enter a 6-digit verification code",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
 
     setIsVerifying(true);
     try {
@@ -114,7 +114,12 @@ export const OTPVerification = ({ email, userId, onVerified, onBack }: OTPVerifi
   return (
     <Card className="shadow-2xl border-border glass">
       <CardHeader className="text-center">
-        <Button variant="ghost" size="sm" className="w-fit mb-2" onClick={onBack}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-fit mb-2"
+          onClick={onBack}
+        >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Login
         </Button>
@@ -128,7 +133,12 @@ export const OTPVerification = ({ email, userId, onVerified, onBack }: OTPVerifi
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex justify-center">
-          <InputOTP maxLength={6} value={otp} onChange={handleOTPComplete} disabled={isVerifying}>
+          <InputOTP
+            maxLength={6}
+            value={otp}
+            onChange={handleOTPComplete}
+            disabled={isVerifying}
+          >
             <InputOTPGroup>
               <InputOTPSlot index={0} />
               <InputOTPSlot index={1} />
@@ -151,7 +161,9 @@ export const OTPVerification = ({ email, userId, onVerified, onBack }: OTPVerifi
         </Button>
 
         <div className="text-center space-y-2">
-          <p className="text-sm text-muted-foreground">Didn't receive the code?</p>
+          <p className="text-sm text-muted-foreground">
+            Didn't receive the code?
+          </p>
           <Button
             variant="outline"
             size="sm"
