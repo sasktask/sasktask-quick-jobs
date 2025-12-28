@@ -99,7 +99,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send OTP via email
     const emailResponse = await resend.emails.send({
-      from: "SaskTask <onboarding@sending.tanjeen.com>",
+      from: "SaskTask <onboarding@tanjeen.com>",
       to: [email],
       subject: "Verify Your Email - SaskTask Signup",
       html: `
