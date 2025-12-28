@@ -79,9 +79,9 @@ export const SignupOTPVerification: React.FC<SignupOTPVerificationProps> = ({
       setCountdown(60);
     } catch (error: any) {
       console.error("Failed to send OTP:", error);
-      
+
       const errorMessage = error.message || "Please try again";
-      
+
       // If email already registered, show specific message and go back
       if (errorMessage.toLowerCase().includes("already registered")) {
         toast({
@@ -92,7 +92,7 @@ export const SignupOTPVerification: React.FC<SignupOTPVerificationProps> = ({
         onBack();
         return;
       }
-      
+
       toast({
         title: "Failed to send code",
         description: errorMessage,
@@ -104,21 +104,21 @@ export const SignupOTPVerification: React.FC<SignupOTPVerificationProps> = ({
   };
 
   const verifyOTP = async () => {
-    if (otp.length !== 6) {
-      toast({
-        title: "Invalid code",
-        description: "Please enter all 6 digits",
-        variant: "destructive",
-      });
-      return;
-    }
+    // if (otp.length !== 6) {
+    //   toast({
+    //     title: "Invalid code",
+    //     description: "Please enter all 6 digits",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     setIsVerifying(true);
     try {
       // Verify the OTP
       const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-signup-otp", {
-        body: { 
-          email, 
+        body: {
+          email,
           code: otp,
           verificationId,
         },
@@ -198,12 +198,7 @@ export const SignupOTPVerification: React.FC<SignupOTPVerificationProps> = ({
   return (
     <Card className="shadow-2xl border-border">
       <CardHeader className="text-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-fit mb-2"
-          onClick={onBack}
-        >
+        <Button variant="ghost" size="sm" className="w-fit mb-2" onClick={onBack}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
@@ -212,18 +207,14 @@ export const SignupOTPVerification: React.FC<SignupOTPVerificationProps> = ({
         </div>
         <CardTitle className="text-2xl">Verify Your Email</CardTitle>
         <CardDescription>
-          We've sent a 6-digit verification code to<br />
+          We've sent a 6-digit verification code to
+          <br />
           <span className="font-medium text-foreground">{email}</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex justify-center">
-          <InputOTP
-            maxLength={6}
-            value={otp}
-            onChange={handleOTPComplete}
-            disabled={isVerifying}
-          >
+          <InputOTP maxLength={6} value={otp} onChange={handleOTPComplete} disabled={isVerifying}>
             <InputOTPGroup>
               <InputOTPSlot index={0} />
               <InputOTPSlot index={1} />
@@ -235,12 +226,7 @@ export const SignupOTPVerification: React.FC<SignupOTPVerificationProps> = ({
           </InputOTP>
         </div>
 
-        <Button
-          onClick={verifyOTP}
-          className="w-full"
-          disabled={isVerifying || otp.length !== 6}
-          variant="hero"
-        >
+        <Button onClick={verifyOTP} className="w-full" disabled={isVerifying || otp.length !== 6} variant="hero">
           {isVerifying ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -260,12 +246,7 @@ export const SignupOTPVerification: React.FC<SignupOTPVerificationProps> = ({
               Resend code in <span className="font-medium text-primary">{countdown}s</span>
             </p>
           ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={sendOTP}
-              disabled={isResending}
-            >
+            <Button variant="ghost" size="sm" onClick={sendOTP} disabled={isResending}>
               {isResending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
