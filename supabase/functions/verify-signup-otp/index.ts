@@ -24,6 +24,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { email, code, verificationId }: VerifySignupOTPRequest = await req.json();
 
+    console.log("Verifying OTP for email:", email, "code:", code, "verificationId:", verificationId);
+
     if (!email || !code) {
       return new Response(
         JSON.stringify({ error: "Email and code are required" }),
@@ -31,13 +33,15 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    const now = new Date().toISOString();
+    console.log("Current time:", now);
+
     // Find the most recent unverified verification code for this email
     let query = supabase
       .from("signup_verifications")
       .select("*")
       .eq("email", email)
       .is("verified_at", null)
-      .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false })
       .limit(1);
 
@@ -46,18 +50,28 @@ const handler = async (req: Request): Promise<Response> => {
         .from("signup_verifications")
         .select("*")
         .eq("id", verificationId)
-        .is("verified_at", null)
-        .gt("expires_at", new Date().toISOString());
+        .is("verified_at", null);
     }
 
     const { data: verifications, error: fetchError } = await query;
 
+    console.log("Found verifications:", JSON.stringify(verifications));
+
     const verification = verifications?.[0];
 
     if (fetchError || !verification) {
-      console.log("No valid verification found for:", email);
+      console.log("No verification found for:", email, "fetchError:", fetchError);
       return new Response(
         JSON.stringify({ error: "No valid verification code found. Please request a new code." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if code has expired
+    if (new Date(verification.expires_at) < new Date()) {
+      console.log("Verification code expired. Expires at:", verification.expires_at, "Current time:", now);
+      return new Response(
+        JSON.stringify({ error: "Verification code has expired. Please request a new code." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
