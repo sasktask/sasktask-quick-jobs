@@ -59,7 +59,7 @@ const handler = async (req: Request): Promise<Response> => {
 
           try {
             await resend.emails.send({
-              from: "SaskTask <onboarding@sending.tanjeen.com>",
+              from: "SaskTask <onboarding@tanjeen.com>",
               to: [profile.email],
               subject: `Your Task Expires in ${hoursLeft} Hours ⏰`,
               html: `
