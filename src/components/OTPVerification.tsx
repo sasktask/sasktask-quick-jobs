@@ -58,16 +58,7 @@ export const OTPVerification = ({ email, userId, onVerified, onBack }: OTPVerifi
     }
   };
 
-  // const verifyOTP = async () => {
-  //   if (otp.length !== 6) {
-  //     toast({
-  //       title: "Invalid code",
-  //       description: "Please enter a 6-digit verification code",
-  //       variant: "destructive",
-  //     });
-  //     return;
-  //   }
-
+  const verifyOTP = async () => {
     setIsVerifying(true);
     try {
       const { data, error } = await supabase.functions.invoke("verify-otp", {
