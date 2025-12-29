@@ -51,6 +51,7 @@ export const SignupOTPVerification: React.FC<SignupOTPVerificationProps> = ({
 
   const sendOTP = async () => {
     setIsResending(true);
+    console.log("sendOTP");
     try {
       const { data, error } = await supabase.functions.invoke("send-signup-otp", {
         body: { email },

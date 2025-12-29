@@ -109,7 +109,7 @@ serve(async (req) => {
             Authorization: `Bearer ${resendApiKey}`,
           },
           body: JSON.stringify({
-            from: "SaskTask <onboarding@tanjeen.com>",
+            from: "SaskTask <onboarding@sending.tanjeen.com>",
             to: [taskGiver.email],
             subject: `💰 New Bid: $${bidAmount} on "${task.title}"`,
             html: emailHtml,

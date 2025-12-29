@@ -88,7 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send OTP via email
     const emailResponse = await resend.emails.send({
-      from: "SaskTask <onboarding@tanjeen.com>",
+      from: "SaskTask <onboarding@sending.tanjeen.com>",
       to: [email],
       subject: "Your SaskTask Login Verification Code",
       html: `

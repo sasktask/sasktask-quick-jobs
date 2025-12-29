@@ -343,6 +343,7 @@ const Auth: React.FC = () => {
 
   // Sign up handler - now sends to OTP verification
   const handleSignUp = async (e: React.FormEvent) => {
+    // console.log("click!");
     e.preventDefault();
     clearErrors();
     setIsLoading(true);
@@ -1106,9 +1107,8 @@ const Auth: React.FC = () => {
                             {[...Array(6)].map((_, i) => (
                               <div
                                 key={i}
-                                className={`h-1 flex-1 rounded ${
-                                  i < passwordStrength.score ? passwordStrength.color : "bg-muted"
-                                }`}
+                                className={`h-1 flex-1 rounded ${i < passwordStrength.score ? passwordStrength.color : "bg-muted"
+                                  }`}
                               />
                             ))}
                           </div>
@@ -1270,9 +1270,8 @@ const Auth: React.FC = () => {
 
                     <div className="space-y-3">
                       <div
-                        className={`flex items-start space-x-3 p-4 rounded-lg border ${
-                          formErrors.termsAccepted ? "border-destructive bg-destructive/5" : "border-border"
-                        }`}
+                        className={`flex items-start space-x-3 p-4 rounded-lg border ${formErrors.termsAccepted ? "border-destructive bg-destructive/5" : "border-border"
+                          }`}
                       >
                         <Checkbox
                           id="terms-accept"
