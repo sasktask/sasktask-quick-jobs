@@ -2439,6 +2439,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_financial_data: {
+        Row: {
+          created_at: string | null
+          id: string
+          minimum_balance_met: boolean | null
+          stripe_customer_id: string | null
+          stripe_payment_method_id: string | null
+          updated_at: string | null
+          user_id: string
+          wallet_balance: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          minimum_balance_met?: boolean | null
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          wallet_balance?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          minimum_balance_met?: boolean | null
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          wallet_balance?: number | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -2456,6 +2489,45 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_security_settings: {
+        Row: {
+          account_locked_until: string | null
+          created_at: string | null
+          failed_login_attempts: number | null
+          id: string
+          last_password_change: string | null
+          security_notifications_enabled: boolean | null
+          security_questions_set: boolean | null
+          two_factor_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_locked_until?: string | null
+          created_at?: string | null
+          failed_login_attempts?: number | null
+          id?: string
+          last_password_change?: string | null
+          security_notifications_enabled?: boolean | null
+          security_questions_set?: boolean | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_locked_until?: string | null
+          created_at?: string | null
+          failed_login_attempts?: number | null
+          id?: string
+          last_password_change?: string | null
+          security_notifications_enabled?: boolean | null
+          security_questions_set?: boolean | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
