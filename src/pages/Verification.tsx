@@ -209,6 +209,8 @@ export default function Verification() {
         age_verified: calculateAge(formData.dateOfBirth) >= 18,
         legal_name: formData.legalName,
         date_of_birth: formData.dateOfBirth,
+        phone_verified: formData.phoneVerified,
+        verified_phone: formData.verifiedPhone || null,
         id_type: formData.idType,
         id_number_hash: idNumberHash,
         id_document_url: idDocumentUrl,
