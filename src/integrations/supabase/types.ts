@@ -954,6 +954,42 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_verifications: {
+        Row: {
+          attempts: number | null
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          phone: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          phone: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          phone?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       pinned_messages: {
         Row: {
           booking_id: string
