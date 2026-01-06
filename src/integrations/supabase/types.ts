@@ -2688,7 +2688,6 @@ export type Database = {
           insurance_policy_number: string | null
           insurance_provider: string | null
           legal_name: string | null
-          phone_verified: boolean | null
           privacy_accepted: boolean
           privacy_accepted_at: string | null
           rejection_reason: string | null
@@ -2704,7 +2703,6 @@ export type Database = {
             | Database["public"]["Enums"]["verification_status"]
             | null
           verified_by: string | null
-          verified_phone: string | null
         }
         Insert: {
           age_verified?: boolean
@@ -2729,7 +2727,6 @@ export type Database = {
           insurance_policy_number?: string | null
           insurance_provider?: string | null
           legal_name?: string | null
-          phone_verified?: boolean | null
           privacy_accepted?: boolean
           privacy_accepted_at?: string | null
           rejection_reason?: string | null
@@ -2745,7 +2742,6 @@ export type Database = {
             | Database["public"]["Enums"]["verification_status"]
             | null
           verified_by?: string | null
-          verified_phone?: string | null
         }
         Update: {
           age_verified?: boolean
@@ -2770,7 +2766,6 @@ export type Database = {
           insurance_policy_number?: string | null
           insurance_provider?: string | null
           legal_name?: string | null
-          phone_verified?: boolean | null
           privacy_accepted?: boolean
           privacy_accepted_at?: string | null
           rejection_reason?: string | null
@@ -2786,7 +2781,6 @@ export type Database = {
             | Database["public"]["Enums"]["verification_status"]
             | null
           verified_by?: string | null
-          verified_phone?: string | null
         }
         Relationships: [
           {
