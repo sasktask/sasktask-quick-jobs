@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, FileCheck, Award, CreditCard, CheckCircle, Upload, FileText, X } from "lucide-react";
+import { Shield, FileCheck, Award, CreditCard, CheckCircle, Upload, FileText, X, Phone } from "lucide-react";
+import { PhoneVerification } from "@/components/PhoneVerification";
 import { Progress } from "@/components/ui/progress";
 
 export default function Verification() {
@@ -35,6 +36,8 @@ export default function Verification() {
     privacyAccepted: false,
     legalName: "",
     dateOfBirth: "",
+    phoneVerified: false,
+    verifiedPhone: "",
 
     // Identity
     idType: "",
@@ -312,6 +315,14 @@ export default function Verification() {
                   required
                 />
               </div>
+
+              {/* Phone Verification */}
+              {userId && (
+                <PhoneVerification
+                  userId={userId}
+                  onVerified={(phone) => setFormData({ ...formData, phoneVerified: true, verifiedPhone: phone })}
+                />
+              )}
             </div>
           </div>
         );
@@ -630,6 +641,7 @@ export default function Verification() {
                 </h4>
                 <ul className="text-sm space-y-1 text-muted-foreground">
                   <li>✓ Legal name: {formData.legalName}</li>
+                  <li>✓ Phone verified: {formData.phoneVerified ? formData.verifiedPhone : "No"}</li>
                   <li>✓ Age verified: {calculateAge(formData.dateOfBirth) >= 18 ? "Yes" : "No"}</li>
                   <li>✓ ID type: {formData.idType}</li>
                   <li>✓ Background check consent: {formData.backgroundCheckConsent ? "Yes" : "No"}</li>
@@ -698,7 +710,7 @@ export default function Verification() {
                   <Button
                     type="submit"
                     className="flex-1"
-                    disabled={loading || (currentStep === 1 && (!formData.termsAccepted || !formData.privacyAccepted))}
+                    disabled={loading || (currentStep === 1 && (!formData.termsAccepted || !formData.privacyAccepted || !formData.phoneVerified))}
                   >
                     {loading ? "Submitting..." : currentStep === 4 ? "Submit Verification" : "Continue"}
                   </Button>
