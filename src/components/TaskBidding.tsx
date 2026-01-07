@@ -50,6 +50,7 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
   const [bidAmount, setBidAmount] = useState(originalAmount.toString());
   const [message, setMessage] = useState("");
   const [estimatedHours, setEstimatedHours] = useState("");
+  const [showBidForm, setShowBidForm] = useState(false);
   const { toast } = useToast();
 
   const isTaskGiver = currentUserId === taskGiverId;
@@ -482,12 +483,98 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
         </Card>
       )}
 
-      {/* No bids message */}
-      {bids.length === 0 && (
-        <Card>
+      {/* No bids message - clickable for task doers */}
+      {bids.length === 0 && !showBidForm && (
+        <Card 
+          className={isTaskDoer && !isTaskGiver ? "cursor-pointer hover:border-primary/50 transition-colors" : ""}
+          onClick={() => {
+            if (isTaskDoer && !isTaskGiver) {
+              setShowBidForm(true);
+            }
+          }}
+        >
           <CardContent className="p-8 text-center">
             <Gavel className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">No bids yet. Be the first to submit a proposal!</p>
+            <p className="text-muted-foreground">
+              No bids yet. {isTaskDoer && !isTaskGiver ? "Be the first to submit a proposal!" : ""}
+            </p>
+            {isTaskDoer && !isTaskGiver && (
+              <p className="text-sm text-primary mt-2">Click here to place your bid</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Inline Bid Form when triggered from empty state */}
+      {bids.length === 0 && showBidForm && isTaskDoer && !isTaskGiver && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Gavel className="h-5 w-5" />
+              Place a Bid
+            </CardTitle>
+            <CardDescription>
+              Submit your proposal for this task. Original budget: ${originalAmount}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="bidAmountInline">Your Bid Amount ($) *</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="bidAmountInline"
+                    type="number"
+                    step="0.01"
+                    min="1"
+                    placeholder="e.g., 100.00"
+                    value={bidAmount}
+                    onChange={(e) => setBidAmount(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="estimatedHoursInline">Estimated Hours</Label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="estimatedHoursInline"
+                    type="number"
+                    step="0.5"
+                    min="0.5"
+                    placeholder="e.g., 2.5"
+                    value={estimatedHours}
+                    onChange={(e) => setEstimatedHours(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="messageInline">Message to Task Giver</Label>
+              <Textarea
+                id="messageInline"
+                placeholder="Introduce yourself and explain why you're the best fit..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleSubmitBid}
+                disabled={isSubmitting}
+                className="flex-1"
+              >
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Submit Bid
+              </Button>
+              <Button variant="outline" onClick={() => setShowBidForm(false)}>
+                Cancel
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
