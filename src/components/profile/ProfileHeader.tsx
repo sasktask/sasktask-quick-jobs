@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { BadgeCheck, Camera, MapPin, Calendar, Shield, Upload } from "lucide-react";
+import { BadgeCheck, Camera, MapPin, Calendar, Shield, Upload, Hash } from "lucide-react";
 import { format } from "date-fns";
 
 interface ProfileHeaderProps {
@@ -87,6 +87,21 @@ export const ProfileHeader = ({
           
           {/* Meta Info Row */}
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            {profile?.user_id_number && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 bg-primary/10 px-2 py-1 rounded-md font-mono font-medium text-primary">
+                      <Hash className="h-3.5 w-3.5" />
+                      <span>{profile.user_id_number}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Your unique User ID</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             {profile?.city && (
               <div className="flex items-center gap-1.5">
                 <MapPin className="h-4 w-4" />
