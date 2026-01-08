@@ -1118,6 +1118,7 @@ export type Database = {
           twitter: string | null
           two_factor_enabled: boolean | null
           updated_at: string | null
+          user_id_number: string | null
           verification_level: string | null
           verification_notes: string | null
           verified_at: string | null
@@ -1172,6 +1173,7 @@ export type Database = {
           twitter?: string | null
           two_factor_enabled?: boolean | null
           updated_at?: string | null
+          user_id_number?: string | null
           verification_level?: string | null
           verification_notes?: string | null
           verified_at?: string | null
@@ -1226,6 +1228,7 @@ export type Database = {
           twitter?: string | null
           two_factor_enabled?: boolean | null
           updated_at?: string | null
+          user_id_number?: string | null
           verification_level?: string | null
           verification_notes?: string | null
           verified_at?: string | null
@@ -2935,6 +2938,10 @@ export type Database = {
           p_type: string
           p_user_id: string
         }
+        Returns: string
+      }
+      generate_user_id_number: {
+        Args: { p_role: string; p_wants_both?: boolean }
         Returns: string
       }
       get_user_leaderboard_rank: {
