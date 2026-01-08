@@ -2,8 +2,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { BadgeCheck, Camera, MapPin, Calendar, Shield, Upload, Hash } from "lucide-react";
+import { BadgeCheck, Camera, MapPin, Calendar, Shield, Upload, Hash, Copy, Check } from "lucide-react";
 import { format } from "date-fns";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileHeaderProps {
   profile: any;
@@ -20,8 +22,19 @@ export const ProfileHeader = ({
   uploading,
   onPhotoUpload
 }: ProfileHeaderProps) => {
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
   const isVerified = verification?.verification_status === 'verified';
   const joinedDate = profile?.joined_date || profile?.created_at;
+
+  const copyUserId = async () => {
+    if (profile?.user_id_number) {
+      await navigator.clipboard.writeText(profile.user_id_number);
+      setCopied(true);
+      toast({ title: "Copied!", description: "User ID copied to clipboard" });
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <div className="relative">
@@ -91,13 +104,21 @@ export const ProfileHeader = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1.5 bg-primary/10 px-2 py-1 rounded-md font-mono font-medium text-primary">
+                    <button
+                      onClick={copyUserId}
+                      className="flex items-center gap-1.5 bg-primary/10 px-2 py-1 rounded-md font-mono font-medium text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                    >
                       <Hash className="h-3.5 w-3.5" />
                       <span>{profile.user_id_number}</span>
-                    </div>
+                      {copied ? (
+                        <Check className="h-3.5 w-3.5 text-green-500" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5 opacity-60" />
+                      )}
+                    </button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Your unique User ID</p>
+                    <p>Click to copy User ID</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

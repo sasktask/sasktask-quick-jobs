@@ -47,7 +47,9 @@ import {
   Award,
   Loader2,
   Calendar,
-  Zap
+  Zap,
+  Copy,
+  Check
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -59,6 +61,7 @@ const Dashboard = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [badgeCount, setBadgeCount] = useState(0);
   const [showWelcomeTour, setShowWelcomeTour] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
   const [stats, setStats] = useState({
     totalBookings: 0,
     pendingBookings: 0,
@@ -268,6 +271,15 @@ const Dashboard = () => {
     setShowWelcomeTour(false);
   };
 
+  const copyUserId = async () => {
+    if (profile?.user_id_number) {
+      await navigator.clipboard.writeText(profile.user_id_number);
+      setCopiedId(true);
+      toast({ title: "Copied!", description: "User ID copied to clipboard" });
+      setTimeout(() => setCopiedId(false), 2000);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -334,9 +346,17 @@ const Dashboard = () => {
                 </div>
                 <div className="flex items-center gap-4 text-muted-foreground flex-wrap">
                   {profile?.user_id_number && (
-                    <span className="flex items-center gap-1.5 bg-primary/10 px-2 py-0.5 rounded-md font-mono text-sm font-medium text-primary">
+                    <button
+                      onClick={copyUserId}
+                      className="flex items-center gap-1.5 bg-primary/10 px-2 py-0.5 rounded-md font-mono text-sm font-medium text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                    >
                       #{profile.user_id_number}
-                    </span>
+                      {copiedId ? (
+                        <Check className="h-3.5 w-3.5 text-green-500" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5 opacity-60" />
+                      )}
+                    </button>
                   )}
                   {hasBothRoles ? (
                     <span className="flex items-center gap-2">
