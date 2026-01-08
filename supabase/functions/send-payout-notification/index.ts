@@ -172,7 +172,7 @@ serve(async (req) => {
 
     // Send email via Resend
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "SaskTask <payouts@tanjeen.com>",
+      from: "SaskTask <payouts@sasktask.com>",
       to: [recipientEmail],
       subject: `✓ Payout of $${payoutAmount.toFixed(2)} Processed - SaskTask`,
       html: emailHTML,
