@@ -269,6 +269,23 @@ const TaskDetail = () => {
                   </span>
                 </div>
               </div>
+              
+              {/* Place a Bid Button for Task Doers */}
+              {userRole === "task_doer" && task.status === "open" && userId !== task.task_giver_id && (
+                <Button 
+                  className="mt-4 w-full sm:w-auto"
+                  size="lg"
+                  onClick={() => {
+                    const biddingSection = document.getElementById('bidding-section');
+                    if (biddingSection) {
+                      biddingSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                >
+                  <Gavel className="mr-2 h-5 w-5" />
+                  Place a Bid
+                </Button>
+              )}
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
@@ -355,7 +372,7 @@ const TaskDetail = () => {
 
               {/* Bidding Section */}
               {task.status === "open" && userId && (
-                <div className="pt-6 border-t">
+                <div id="bidding-section" className="pt-6 border-t">
                   <div className="flex items-center gap-2 mb-4">
                     <Gavel className="h-5 w-5" />
                     <h3 className="font-semibold text-lg">Bidding</h3>
