@@ -332,7 +332,12 @@ const Dashboard = () => {
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-4 text-muted-foreground">
+                <div className="flex items-center gap-4 text-muted-foreground flex-wrap">
+                  {profile?.user_id_number && (
+                    <span className="flex items-center gap-1.5 bg-primary/10 px-2 py-0.5 rounded-md font-mono text-sm font-medium text-primary">
+                      #{profile.user_id_number}
+                    </span>
+                  )}
                   {hasBothRoles ? (
                     <span className="flex items-center gap-2">
                       <Briefcase className="h-4 w-4" />
