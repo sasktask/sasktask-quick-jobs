@@ -11,6 +11,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount";
 import { NotificationCenter } from "./NotificationCenter";
 import { MobileMenu } from "./MobileMenu";
+import { UserIdSearch } from "./UserIdSearch";
 import { OWNER_USER_ID } from "@/lib/constants";
 
 interface NavbarProps {
@@ -214,6 +215,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
 
             {/* Right side icons */}
             <div className="flex items-center gap-1">
+              {user && <UserIdSearch />}
               {user && <NotificationCenter userId={user.id} />}
               
               {/* Theme Toggle */}
