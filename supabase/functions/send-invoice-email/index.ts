@@ -191,7 +191,7 @@ serve(async (req) => {
 
     // Send email via Resend
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "SaskTask <invoices@tanjeen.com>",
+      from: "SaskTask <invoices@sasktask.com>",
       to: [emailTo],
       subject: `Invoice ${invoiceNumber} - ${booking?.tasks?.title || "Task Payment"}`,
       html: emailHTML,
