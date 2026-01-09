@@ -34,7 +34,7 @@ interface Bid {
   estimated_hours: number | null;
   status: string;
   created_at: string;
-  profiles?: {
+  public_profiles?: {
     full_name: string | null;
     avatar_url: string | null;
     rating: number | null;
@@ -83,11 +83,12 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
   const fetchBids = async () => {
     try {
+      // Use public_profiles view so task givers can see bidder name/avatar without hitting locked profiles RLS
       const { data, error } = await supabase
         .from("task_bids")
         .select(`
           *,
-          profiles:bidder_id (
+          public_profiles:bidder_id (
             full_name,
             avatar_url,
             rating,
@@ -411,19 +412,19 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={bid.profiles?.avatar_url || undefined} />
+                        <AvatarImage src={bid.public_profiles?.avatar_url || undefined} />
                         <AvatarFallback>
-                          {bid.profiles?.full_name?.charAt(0) || <User className="h-4 w-4" />}
+                          {bid.public_profiles?.full_name?.charAt(0) || <User className="h-4 w-4" />}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold">
-                            {bid.profiles?.full_name || "Anonymous"}
+                            {bid.public_profiles?.full_name || "Anonymous"}
                           </span>
-                          {bid.profiles?.rating && (
+                          {bid.public_profiles?.rating && (
                             <span className="text-sm text-muted-foreground">
-                              ⭐ {bid.profiles.rating.toFixed(1)} ({bid.profiles.total_reviews} reviews)
+                              ⭐ {bid.public_profiles.rating.toFixed(1)} ({bid.public_profiles.total_reviews} reviews)
                             </span>
                           )}
                           {bid.bidder_id === currentUserId && (

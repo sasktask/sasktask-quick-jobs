@@ -18,6 +18,7 @@ import { BadgeShowcase } from "@/components/BadgeShowcase";
 import { ProfileStrengthMeter } from "@/components/ProfileStrengthMeter";
 import { ProfileTips } from "@/components/ProfileTips";
 import { ProfileHeader, ProfileStatsCard, ProfileQuickActions, ProfileNavTabs } from "@/components/profile";
+import { compressImage } from "@/lib/imageCompression";
 import { 
   Loader2, Shield, Clock, Settings, CreditCard, Lock, User, 
   ShieldCheck, AlertCircle, Camera, FileCheck, CheckCircle2, XCircle,
@@ -60,6 +61,7 @@ const Profile = () => {
     twitter: ""
   });
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [trustScore, setTrustScore] = useState<number>(50);
   const [verification, setVerification] = useState<VerificationStatus | null>(null);
   const [activeTab, setActiveTab] = useState("basic");
@@ -159,20 +161,53 @@ const Profile = () => {
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputEl = e.target;
     try {
       if (!e.target.files || e.target.files.length === 0) return;
       
-      setUploading(true);
       const file = e.target.files[0];
-      const fileExt = file.name.split('.').pop();
+      const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB (matches storage bucket limit)
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        toast({
+          title: "File too large",
+          description: "Please upload an image smaller than 5 MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setUploadStatus("Optimizing photo...");
+      setUploading(true);
+
+      // Compress to ~1.5MB target with max dimensions to avoid oversized uploads
+      const compressedFile = await compressImage(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.8,
+        maxSizeMB: 1.5,
+      });
+
+      const finalFile = compressedFile.size <= MAX_FILE_SIZE_BYTES ? compressedFile : file;
+      if (finalFile.size > MAX_FILE_SIZE_BYTES) {
+        toast({
+          title: "File still too large",
+          description: "Try a smaller image or reduce resolution.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setUploadStatus("Uploading photo...");
+      const fileExt = "jpg"; // compressed output is jpeg
       const fileName = `${userId}/${Math.random()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('profile-photos')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, finalFile, { upsert: true });
 
       if (uploadError) throw uploadError;
 
+      setUploadStatus("Finalizing...");
       const { data: { publicUrl } } = supabase.storage
         .from('profile-photos')
         .getPublicUrl(fileName);
@@ -183,14 +218,22 @@ const Profile = () => {
         title: "Photo uploaded!",
         description: "Don't forget to save your changes",
       });
+      setUploadStatus("Upload complete");
+      setTimeout(() => setUploadStatus(null), 2000);
     } catch (error: any) {
       toast({
         title: "Upload failed",
         description: error.message,
         variant: "destructive",
       });
+      setUploadStatus("Upload failed");
     } finally {
       setUploading(false);
+      // Clear the input so the same file can be re-selected if desired
+      if (inputEl) {
+        inputEl.value = "";
+      }
+      setTimeout(() => setUploadStatus(null), 500);
     }
   };
 
@@ -270,6 +313,8 @@ const Profile = () => {
                 userRole={userRole}
                 verification={verification}
                 uploading={uploading}
+                avatarUrl={formData.avatar_url || profile?.avatar_url}
+                uploadStatus={uploadStatus}
                 onPhotoUpload={handlePhotoUpload}
               />
             </Card>

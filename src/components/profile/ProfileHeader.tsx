@@ -12,6 +12,8 @@ interface ProfileHeaderProps {
   userRole: string | null;
   verification: any;
   uploading: boolean;
+  avatarUrl?: string;
+  uploadStatus?: string | null;
   onPhotoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -20,6 +22,8 @@ export const ProfileHeader = ({
   userRole,
   verification,
   uploading,
+  avatarUrl,
+  uploadStatus,
   onPhotoUpload
 }: ProfileHeaderProps) => {
   const [copied, setCopied] = useState(false);
@@ -47,7 +51,7 @@ export const ProfileHeader = ({
         <div className="relative -mt-16 sm:-mt-20 mb-4">
           <div className="relative inline-block">
             <Avatar className="h-28 w-28 sm:h-36 sm:w-36 border-4 border-background shadow-xl">
-              <AvatarImage src={profile?.avatar_url} className="object-cover" />
+              <AvatarImage src={avatarUrl || profile?.avatar_url} className="object-cover" />
               <AvatarFallback className="text-3xl sm:text-4xl bg-primary/10 text-primary font-semibold">
                 {profile?.full_name?.charAt(0) || profile?.email?.charAt(0) || "?"}
               </AvatarFallback>
@@ -85,6 +89,9 @@ export const ProfileHeader = ({
               />
             </label>
           </div>
+          {uploadStatus && (
+            <p className="mt-1 text-xs text-muted-foreground">{uploadStatus}</p>
+          )}
         </div>
 
         {/* Name and Info */}

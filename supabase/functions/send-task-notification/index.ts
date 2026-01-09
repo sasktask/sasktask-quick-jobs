@@ -23,9 +23,31 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
   try {
-    const { type, taskId, taskTitle, recipientEmail, recipientName, bookerName }: NotificationRequest =
-      await req.json();
+    const body = await req.json().catch(() => null);
+
+    if (!body) {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const { type, taskId, taskTitle, recipientEmail, recipientName, bookerName } = body as NotificationRequest;
+
+    if (!type || !taskId || !taskTitle || !recipientEmail) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: type, taskId, taskTitle, recipientEmail" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     console.log(`Sending ${type} notification for task ${taskId} to ${recipientEmail}`);
 
@@ -75,7 +97,10 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
       `;
     } else {
-      throw new Error("Invalid notification type");
+      return new Response(JSON.stringify({ error: "Invalid notification type" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     const emailResponse = await resend.emails.send({
@@ -93,7 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("Error in send-task-notification function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error.message || "Internal Server Error" }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
