@@ -247,18 +247,39 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
       if (rejectError) throw rejectError;
 
-      // Create a booking for the accepted bidder
+      // Create a booking for the accepted bidder and get the booking id
       const acceptedBid = bids.find(b => b.id === bidId);
-      const { error: bookingError } = await supabase
+      const { data: bookingData, error: bookingError } = await supabase
         .from("bookings")
         .insert({
           task_id: taskId,
           task_doer_id: bidderId,
           message: acceptedBid?.message || "Bid accepted",
           status: "accepted",
-        });
+        })
+        .select("id")
+        .single();
 
       if (bookingError) throw bookingError;
+
+      // Seed the message board so both parties can chat immediately
+      if (bookingData?.id) {
+        const initialMessage = acceptedBid?.message && acceptedBid.message.trim().length > 0
+          ? `Bid accepted: ${acceptedBid.message}`
+          : "Bid accepted. Let's discuss the details here.";
+
+        const { error: messageError } = await supabase.from("messages").insert({
+          booking_id: bookingData.id,
+          sender_id: currentUserId,      // task giver
+          receiver_id: bidderId,         // task doer
+          message: initialMessage,
+          status: "sent",
+        });
+
+        if (messageError) {
+          console.error("Failed to seed message thread:", messageError);
+        }
+      }
 
       toast({
         title: "Bid Accepted",
