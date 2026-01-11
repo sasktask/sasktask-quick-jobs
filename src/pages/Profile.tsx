@@ -18,8 +18,8 @@ import { BadgeShowcase } from "@/components/BadgeShowcase";
 import { ProfileStrengthMeter } from "@/components/ProfileStrengthMeter";
 import { ProfileTips } from "@/components/ProfileTips";
 import { ProfileHeader, ProfileStatsCard, ProfileQuickActions, ProfileNavTabs } from "@/components/profile";
-import { 
-  Loader2, Shield, Clock, Settings, CreditCard, Lock, User, 
+import {
+  Loader2, Shield, Clock, Settings, CreditCard, Lock, User,
   ShieldCheck, AlertCircle, Camera, FileCheck, CheckCircle2, XCircle,
   Sparkles
 } from "lucide-react";
@@ -71,7 +71,7 @@ const Profile = () => {
   const checkUserAndLoadProfile = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         navigate("/auth");
         return;
@@ -99,7 +99,7 @@ const Profile = () => {
           })
           .select()
           .single();
-        
+
         if (createError) throw createError;
         setProfile(newProfile);
         setTrustScore(newProfile?.trust_score || 50);
@@ -135,7 +135,7 @@ const Profile = () => {
         .select("role")
         .eq("user_id", session.user.id)
         .maybeSingle();
-      
+
       setUserRole(roleData?.role || null);
 
       const { data: verificationData } = await supabase
@@ -143,7 +143,7 @@ const Profile = () => {
         .select("id_verified, verification_status, background_check_status, has_insurance, terms_accepted, privacy_accepted, age_verified, id_document_url, legal_name, skills, certifications")
         .eq("user_id", session.user.id)
         .maybeSingle();
-      
+
       if (verificationData) {
         setVerification(verificationData);
       }
@@ -160,28 +160,45 @@ const Profile = () => {
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
+      if (!userId) {
+        toast({
+          title: "Upload unavailable",
+          description: "We could not confirm your session. Please re-login.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (!e.target.files || e.target.files.length === 0) return;
-      
+
       setUploading(true);
       const file = e.target.files[0];
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${Math.random()}.${fileExt}`;
+      const filePath = `${userId}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('profile-photos')
-        .upload(fileName, file, { upsert: true });
+        .from("profile-photos")
+        .upload(filePath, file, { upsert: true, contentType: file.type });
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('profile-photos')
-        .getPublicUrl(fileName);
+        .from("profile-photos")
+        .getPublicUrl(filePath);
 
-      setFormData({ ...formData, avatar_url: publicUrl });
-      
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+        .eq("id", userId);
+
+      if (updateError) throw updateError;
+
+      setFormData((prev) => ({ ...prev, avatar_url: publicUrl }));
+      setProfile((prev: any) => prev ? { ...prev, avatar_url: publicUrl } : prev);
+
       toast({
         title: "Photo uploaded!",
-        description: "Don't forget to save your changes",
+        description: "Your profile photo was updated successfully.",
       });
     } catch (error: any) {
       toast({
@@ -265,7 +282,7 @@ const Profile = () => {
           <div className="lg:col-span-4 xl:col-span-3 space-y-6">
             {/* Main Profile Card */}
             <Card className="border-border overflow-hidden">
-              <ProfileHeader 
+              <ProfileHeader
                 profile={profile}
                 userRole={userRole}
                 verification={verification}
@@ -471,7 +488,7 @@ const Profile = () => {
                       ];
                       const completedSteps = steps.filter(s => s.done).length;
                       const progressPercent = (completedSteps / steps.length) * 100;
-                      
+
                       return (
                         <div className="p-4 rounded-lg bg-muted/30 border border-border">
                           <div className="flex items-center justify-between mb-3">
@@ -513,7 +530,7 @@ const Profile = () => {
                     {/* Verification Checklist */}
                     <div className="space-y-3">
                       <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Verification Steps</h4>
-                      
+
                       <div className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${verification?.terms_accepted ? 'border-green-500/30 bg-green-500/5' : 'border-border hover:border-primary/30'}`}>
                         <div className="flex items-center gap-3">
                           {verification?.terms_accepted ? (

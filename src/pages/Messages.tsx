@@ -88,7 +88,7 @@ const Messages = () => {
   const checkUser = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         toast.error("Please sign in to view messages");
         navigate("/auth");
@@ -253,94 +253,94 @@ const Messages = () => {
         description="View and manage your conversations on SaskTask"
         url="/messages"
       />
-      
+
       <div className="container mx-auto px-4 py-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-2">Messages</h1>
-              <p className="text-muted-foreground">
-                Your conversations with task givers and doers
-              </p>
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">Messages</h1>
+            <p className="text-muted-foreground">
+              Your conversations with task givers and doers
+            </p>
+          </div>
+
+          {/* Search */}
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
             </div>
+          </div>
 
-            {/* Search */}
-            <div className="mb-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search conversations..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
+          {/* Conversations List */}
+          {filteredConversations.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No conversations yet</h3>
+                <p className="text-muted-foreground">
+                  {searchQuery
+                    ? "No conversations match your search"
+                    : "Start by accepting a booking to begin chatting"}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {filteredConversations.map((conversation) => (
+                <Card
+                  key={conversation.booking_id}
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => navigate(`/chat/${conversation.booking_id}`)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={conversation.other_user_avatar || undefined} />
+                        <AvatarFallback>
+                          <User className="h-6 w-6" />
+                        </AvatarFallback>
+                      </Avatar>
 
-            {/* Conversations List */}
-            {filteredConversations.length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No conversations yet</h3>
-                  <p className="text-muted-foreground">
-                    {searchQuery
-                      ? "No conversations match your search"
-                      : "Start by accepting a booking to begin chatting"}
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-2">
-                {filteredConversations.map((conversation) => (
-                  <Card
-                    key={conversation.booking_id}
-                    className="cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => navigate(`/chat/${conversation.booking_id}`)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={conversation.other_user_avatar || undefined} />
-                          <AvatarFallback>
-                            <User className="h-6 w-6" />
-                          </AvatarFallback>
-                        </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <h4 className="font-semibold truncate">
+                            {conversation.other_user_name}
+                          </h4>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {conversation.last_message_time
+                              ? format(new Date(conversation.last_message_time), "MMM d, HH:mm")
+                              : ""}
+                          </span>
+                        </div>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <h4 className="font-semibold truncate">
-                              {conversation.other_user_name}
-                            </h4>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                              {conversation.last_message_time 
-                                ? format(new Date(conversation.last_message_time), "MMM d, HH:mm")
-                                : ""}
-                            </span>
-                          </div>
-                          
-                          <p className="text-sm text-muted-foreground mb-1 truncate">
-                            {conversation.task_title}
+                        <p className="text-sm text-muted-foreground mb-1 truncate">
+                          {conversation.task_title}
+                        </p>
+
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm truncate flex-1">
+                            {conversation.last_message}
                           </p>
-                          
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm truncate flex-1">
-                              {conversation.last_message}
-                            </p>
-                            {conversation.unread_count > 0 && (
-                              <Badge variant="default" className="shrink-0">
-                                {conversation.unread_count}
-                              </Badge>
-                            )}
-                          </div>
+                          {conversation.unread_count > 0 && (
+                            <Badge variant="default" className="shrink-0">
+                              {conversation.unread_count}
+                            </Badge>
+                          )}
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
+      </div>
     </DashboardLayout>
   );
 };
