@@ -35,6 +35,7 @@ const Messages = () => {
   const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
   const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
   const [mutedIds, setMutedIds] = useState<Set<string>>(new Set());
+  const [authLoading, setAuthLoading] = useState(true);
   const reloadTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -97,6 +98,7 @@ const Messages = () => {
       if (!session) {
         toast.error("Please sign in to view messages");
         navigate("/auth");
+        setUser(null);
         return;
       }
 
@@ -104,6 +106,8 @@ const Messages = () => {
     } catch (error) {
       console.error("Error checking user:", error);
       toast.error("Failed to load messages");
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -177,7 +181,7 @@ const Messages = () => {
           .eq("booking_id", booking.id)
           .order("created_at", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         const { count: unreadCount } = await supabase
           .from("messages")
@@ -231,8 +235,9 @@ const Messages = () => {
     isLoading,
     isFetching,
     refetch,
+    error: conversationsError,
   } = useQuery({
-    queryKey: ["conversations", user?.id],
+    queryKey: ["conversations", user?.id || "no-user"],
     enabled: !!user?.id,
     queryFn: async () => {
       if (!user?.id) return [];
@@ -271,14 +276,6 @@ const Messages = () => {
     };
   }, [user, refetch]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   const filteredConversations = useMemo(() => {
     if (!searchQuery) return conversations;
     return conversations.filter(
@@ -296,6 +293,21 @@ const Messages = () => {
       ),
     [filteredConversations, blockedIds, archivedIds]
   );
+
+  // Auto-select first conversation when data arrives
+  useEffect(() => {
+    if (!selectedConversation && visibleConversations.length > 0) {
+      setSelectedConversation(visibleConversations[0]);
+    }
+  }, [visibleConversations, selectedConversation]);
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const handleSelectConversation = (conv: Conversation) => {
     setSelectedConversation(conv);
@@ -317,6 +329,11 @@ const Messages = () => {
       />
 
       <div className="container mx-auto px-4 py-6">
+        {conversationsError && (
+          <div className="mb-4 text-sm text-red-600">
+            Failed to load conversations. Please try again.
+          </div>
+        )}
         <div className="grid gap-6 lg:grid-cols-[320px,1fr,320px]">
           {/* Sidebar */}
           <div className="space-y-4">
@@ -457,14 +474,22 @@ const Messages = () => {
                   </div>
                 </div>
 
-                <ChatInterface
-                  bookingId={selectedConversation.booking_id}
-                  currentUserId={user?.id}
-                  otherUserId={selectedConversation.other_user_id}
-                  otherUserName={selectedConversation.other_user_name}
-                  otherUserAvatar={selectedConversation.other_user_avatar || undefined}
-                  otherUserRole={selectedOtherRole as any}
-                />
+                {user?.id ? (
+                  <ChatInterface
+                    bookingId={selectedConversation.booking_id}
+                    currentUserId={user.id}
+                    otherUserId={selectedConversation.other_user_id}
+                    otherUserName={selectedConversation.other_user_name}
+                    otherUserAvatar={selectedConversation.other_user_avatar || undefined}
+                    otherUserRole={selectedOtherRole as any}
+                  />
+                ) : (
+                  <Card>
+                    <CardContent className="p-6 text-center text-muted-foreground">
+                      Sign in to chat.
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             ) : (
               <Card>
