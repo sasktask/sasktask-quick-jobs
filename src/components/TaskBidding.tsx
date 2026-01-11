@@ -34,7 +34,7 @@ interface Bid {
   estimated_hours: number | null;
   status: string;
   created_at: string;
-  public_profiles?: {
+  profiles?: {
     full_name: string | null;
     avatar_url: string | null;
     rating: number | null;
@@ -58,7 +58,7 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
   useEffect(() => {
     fetchBids();
-
+    
     // Subscribe to real-time updates
     const channel = supabase
       .channel('task-bids')
@@ -83,12 +83,11 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
   const fetchBids = async () => {
     try {
-      // Use public_profiles view so task givers can see bidder name/avatar without hitting locked profiles RLS
       const { data, error } = await supabase
         .from("task_bids")
         .select(`
           *,
-          public_profiles:bidder_id (
+          profiles:bidder_id (
             full_name,
             avatar_url,
             rating,
@@ -102,10 +101,10 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
       const typedBids = (data || []) as Bid[];
       setBids(typedBids);
-
+      
       const userBid = typedBids.find(b => b.bidder_id === currentUserId);
       setMyBid(userBid || null);
-
+      
       if (userBid) {
         setBidAmount(userBid.bid_amount.toString());
         setMessage(userBid.message || "");
@@ -247,59 +246,18 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
       if (rejectError) throw rejectError;
 
-      // Create a booking for the accepted bidder and get the booking id
+      // Create a booking for the accepted bidder
       const acceptedBid = bids.find(b => b.id === bidId);
-      const { data: bookingData, error: bookingError } = await supabase
+      const { error: bookingError } = await supabase
         .from("bookings")
         .insert({
           task_id: taskId,
           task_doer_id: bidderId,
           message: acceptedBid?.message || "Bid accepted",
           status: "accepted",
-        })
-        .select("id")
-        .single();
-
-      if (bookingError) throw bookingError;
-
-      // Seed the message board so both parties can chat immediately
-      if (bookingData?.id) {
-        const initialMessage = acceptedBid?.message && acceptedBid.message.trim().length > 0
-          ? `Bid accepted: ${acceptedBid.message}`
-          : "Bid accepted. Let's discuss the details here.";
-
-        const { error: messageError } = await supabase.from("messages").insert({
-          booking_id: bookingData.id,
-          sender_id: currentUserId,      // task giver
-          receiver_id: bidderId,         // task doer
-          message: initialMessage,
-          status: "sent",
         });
 
-        if (messageError) {
-          console.error("Failed to seed message thread:", messageError);
-        }
-
-        // Upsert conversation summary so the chat list shows immediately
-        const { error: summaryError } = await supabase
-          // conversation_summaries is created via migration; cast to any to satisfy typed client
-          .from("conversation_summaries" as any)
-          .upsert({
-            booking_id: bookingData.id,
-            task_id: taskId,
-            task_giver_id: taskGiverId,
-            task_doer_id: bidderId,
-            last_message: initialMessage,
-            last_message_time: new Date().toISOString(),
-            last_sender_id: currentUserId,
-            unread_for_task_giver: 0,
-            unread_for_task_doer: 1, // task doer has a new message
-          } as any);
-
-        if (summaryError) {
-          console.error("Failed to upsert conversation summary:", summaryError);
-        }
-      }
+      if (bookingError) throw bookingError;
 
       toast({
         title: "Bid Accepted",
@@ -444,27 +402,28 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
               {bids.map((bid) => (
                 <div
                   key={bid.id}
-                  className={`p-4 rounded-lg border ${bid.bidder_id === currentUserId
-                    ? "border-primary bg-primary/5"
-                    : "border-border"
-                    } ${bid.status === "rejected" ? "opacity-50" : ""}`}
+                  className={`p-4 rounded-lg border ${
+                    bid.bidder_id === currentUserId 
+                      ? "border-primary bg-primary/5" 
+                      : "border-border"
+                  } ${bid.status === "rejected" ? "opacity-50" : ""}`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={bid.public_profiles?.avatar_url || undefined} />
+                        <AvatarImage src={bid.profiles?.avatar_url || undefined} />
                         <AvatarFallback>
-                          {bid.public_profiles?.full_name?.charAt(0) || <User className="h-4 w-4" />}
+                          {bid.profiles?.full_name?.charAt(0) || <User className="h-4 w-4" />}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold">
-                            {bid.public_profiles?.full_name || "Anonymous"}
+                            {bid.profiles?.full_name || "Anonymous"}
                           </span>
-                          {bid.public_profiles?.rating && (
+                          {bid.profiles?.rating && (
                             <span className="text-sm text-muted-foreground">
-                              ⭐ {bid.public_profiles.rating.toFixed(1)} ({bid.public_profiles.total_reviews} reviews)
+                              ⭐ {bid.profiles.rating.toFixed(1)} ({bid.profiles.total_reviews} reviews)
                             </span>
                           )}
                           {bid.bidder_id === currentUserId && (
@@ -526,7 +485,7 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
       {/* No bids message - clickable for task doers */}
       {bids.length === 0 && !showBidForm && (
-        <Card
+        <Card 
           className={isTaskDoer && !isTaskGiver ? "cursor-pointer hover:border-primary/50 transition-colors" : ""}
           onClick={() => {
             if (isTaskDoer && !isTaskGiver) {

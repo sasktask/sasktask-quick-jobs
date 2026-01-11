@@ -5,14 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CreditCard, Plus, Trash2, Shield } from "lucide-react";
-import { loadStripe, Stripe } from "@stripe/stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { StripeSetupGuide } from "./StripeSetupGuide";
 
-const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-const stripePromise: Promise<Stripe | null> | null = publishableKey
-  ? loadStripe(publishableKey)
-  : null;
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
 
 const AddPaymentMethodForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const stripe = useStripe();
@@ -160,10 +157,10 @@ export const PaymentMethodManager = () => {
               </CardTitle>
               <CardDescription>Manage your credit and debit cards</CardDescription>
             </div>
-            <Button
-              onClick={() => setShowAddForm(!showAddForm)}
+            <Button 
+              onClick={() => setShowAddForm(!showAddForm)} 
               size="sm"
-              disabled={!publishableKey}
+              disabled={!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Card
@@ -172,20 +169,14 @@ export const PaymentMethodManager = () => {
         </CardHeader>
         <CardContent className="space-y-4">
         {showAddForm && (
-          publishableKey && stripePromise ? (
-            <Elements stripe={stripePromise}>
-              <AddPaymentMethodForm
-                onSuccess={() => {
-                  setShowAddForm(false);
-                  fetchPaymentMethods();
-                }}
-              />
-            </Elements>
-          ) : (
-            <div className="p-4 text-sm text-red-600 border border-border rounded-md">
-              Stripe publishable key is missing. Please set VITE_STRIPE_PUBLISHABLE_KEY.
-            </div>
-          )
+          <Elements stripe={stripePromise}>
+            <AddPaymentMethodForm
+              onSuccess={() => {
+                setShowAddForm(false);
+                fetchPaymentMethods();
+              }}
+            />
+          </Elements>
         )}
 
         {paymentMethods.length === 0 && !showAddForm && (

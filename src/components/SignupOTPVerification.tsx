@@ -177,23 +177,9 @@ export const SignupOTPVerification: React.FC<SignupOTPVerificationProps> = ({
       }
     } catch (error: any) {
       console.error("Verification failed:", error);
-
-      const errorMessage = error.message || "Invalid or expired code. Please try again.";
-
-      // If email already registered, show specific message and go back
-      if (errorMessage.toLowerCase().includes("already registered")) {
-        toast({
-          title: "Email already registered",
-          description: "This email is already registered. Please sign in instead.",
-          variant: "destructive",
-        });
-        onBack();
-        return;
-      }
-
       toast({
         title: "Verification failed",
-        description: errorMessage,
+        description: error.message || "Invalid or expired code. Please try again.",
         variant: "destructive",
       });
       setOtp("");
