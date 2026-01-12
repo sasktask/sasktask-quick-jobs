@@ -249,25 +249,47 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
       if (rejectError) throw rejectError;
 
-      // Create a booking for the accepted bidder
-      const acceptedBid = bids.find(b => b.id === bidId);
-      const { error: bookingError } = await supabase
+      // Check for existing booking first
+      const { data: existingBooking } = await supabase
         .from("bookings")
-        .insert({
-          task_id: taskId,
-          task_doer_id: bidderId,
-          message: acceptedBid?.message || "Bid accepted",
-          status: "accepted",
-        });
+        .select("id")
+        .eq("task_id", taskId)
+        .eq("task_doer_id", bidderId)
+        .maybeSingle();
 
-      if (bookingError) throw bookingError;
+      let bookingId = existingBooking?.id;
+
+      if (!bookingId) {
+        // Create a booking for the accepted bidder
+        const acceptedBid = bids.find(b => b.id === bidId);
+        const { data: newBooking, error: bookingError } = await supabase
+          .from("bookings")
+          .insert({
+            task_id: taskId,
+            task_doer_id: bidderId,
+            message: acceptedBid?.message || "Bid accepted",
+            status: "accepted",
+          })
+          .select("id")
+          .single();
+
+        if (bookingError) throw bookingError;
+        bookingId = newBooking.id;
+      } else {
+        // Update existing booking to accepted
+        await supabase
+          .from("bookings")
+          .update({ status: "accepted" })
+          .eq("id", bookingId);
+      }
 
       toast({
         title: "Bid Accepted",
-        description: "The tasker has been notified and a booking has been created",
+        description: "Redirecting you to chat with the tasker...",
       });
 
-      fetchBids();
+      // Navigate to chat with the task doer
+      navigate(`/chat/${bookingId}`);
     } catch (error: any) {
       toast({
         title: "Error",
