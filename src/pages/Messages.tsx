@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Search, User, Loader2 } from "lucide-react";
+import { MessageSquare, Search, User, Users, Loader2 } from "lucide-react";
 
 interface Conversation {
   booking_id: string;
@@ -22,13 +22,23 @@ interface Conversation {
   task_title: string;
 }
 
+interface RegisteredUser {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  created_at: string | null;
+}
+
 const Messages = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
+  const [allUsers, setAllUsers] = useState<RegisteredUser[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<RegisteredUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [usersLoading, setUsersLoading] = useState(true);
 
   useEffect(() => {
     checkUser();
@@ -85,6 +95,20 @@ const Messages = () => {
     }
   }, [searchQuery, conversations]);
 
+  useEffect(() => {
+    if (searchQuery) {
+      const filtered = allUsers.filter(
+        (profile) =>
+          (profile.full_name || "User")
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())
+      );
+      setFilteredUsers(filtered);
+    } else {
+      setFilteredUsers(allUsers);
+    }
+  }, [searchQuery, allUsers]);
+
   const checkUser = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -96,7 +120,10 @@ const Messages = () => {
       }
 
       setUser(session.user);
-      await loadConversations(session.user.id);
+      await Promise.all([
+        loadConversations(session.user.id),
+        loadAllUsers(session.user.id),
+      ]);
     } catch (error) {
       console.error("Error checking user:", error);
       toast.error("Failed to load messages");
@@ -238,6 +265,32 @@ const Messages = () => {
     }
   };
 
+  const loadAllUsers = async (currentUserId: string) => {
+    try {
+      setUsersLoading(true);
+
+      const { data, error } = await supabase
+        .from("public_profiles")
+        .select("id, full_name, avatar_url, created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const validUsers =
+        (data || [])
+          .filter((profile): profile is RegisteredUser => Boolean(profile.id))
+          .filter((profile) => profile.id !== currentUserId);
+
+      setAllUsers(validUsers);
+      setFilteredUsers(validUsers);
+    } catch (error) {
+      console.error("Error loading users:", error);
+      toast.error("Failed to load registered users");
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -274,6 +327,69 @@ const Messages = () => {
                 className="pl-10"
               />
             </div>
+          </div>
+
+          {/* Registered Users */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-xl font-semibold">Registered Users</h2>
+              </div>
+              <Badge variant="secondary">
+                {usersLoading ? "Loading..." : filteredUsers.length}
+              </Badge>
+            </div>
+
+            {usersLoading ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <Card key={index} className="p-4">
+                    <div className="flex items-center gap-3 animate-pulse">
+                      <div className="h-12 w-12 rounded-full bg-muted" />
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 bg-muted rounded w-1/2" />
+                        <div className="h-3 bg-muted rounded w-1/3" />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <h3 className="text-lg font-semibold mb-2">No users found</h3>
+                  <p className="text-muted-foreground">
+                    Registered users will appear here.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {filteredUsers.map((profile) => (
+                  <Card key={profile.id} className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={profile.avatar_url || undefined} />
+                        <AvatarFallback>
+                          {profile.full_name?.charAt(0) || <User className="h-5 w-5" />}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">
+                          {profile.full_name || "User"}
+                        </p>
+                        {profile.created_at && (
+                          <p className="text-xs text-muted-foreground">
+                            Joined {format(new Date(profile.created_at), "MMM d, yyyy")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Conversations List */}

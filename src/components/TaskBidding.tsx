@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Gavel, User, Clock, Check, X, DollarSign } from "lucide-react";
+import { Loader2, Gavel, User, Clock, Check, X, DollarSign, MessageSquare } from "lucide-react";
 import { z } from "zod";
 
 const bidSchema = z.object({
@@ -47,11 +48,13 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
   const [myBid, setMyBid] = useState<Bid | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [chatLoadingId, setChatLoadingId] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState(originalAmount.toString());
   const [message, setMessage] = useState("");
   const [estimatedHours, setEstimatedHours] = useState("");
   const [showBidForm, setShowBidForm] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const isTaskGiver = currentUserId === taskGiverId;
   const isTaskDoer = userRole === "task_doer";
@@ -298,6 +301,51 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
     }
   };
 
+  const handleChatWithBidder = async (bid: Bid) => {
+    if (!isTaskGiver) return;
+
+    setChatLoadingId(bid.id);
+    try {
+      // Reuse existing booking between this task and bidder if present
+      const { data: existingBooking, error: existingError } = await supabase
+        .from("bookings")
+        .select("id, status")
+        .eq("task_id", taskId)
+        .eq("task_doer_id", bid.bidder_id)
+        .maybeSingle();
+
+      if (existingError) throw existingError;
+
+      let bookingId = existingBooking?.id;
+
+      if (!bookingId) {
+        const { data: newBooking, error: createError } = await supabase
+          .from("bookings")
+          .insert({
+            task_id: taskId,
+            task_doer_id: bid.bidder_id,
+            message: bid.message || "Chat initiated from bid",
+            status: bid.status === "accepted" ? "accepted" : "pending",
+          })
+          .select("id")
+          .single();
+
+        if (createError) throw createError;
+        bookingId = newBooking.id;
+      }
+
+      navigate(`/chat/${bookingId}`);
+    } catch (error: any) {
+      toast({
+        title: "Chat Unavailable",
+        description: error.message || "Unable to start chat. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setChatLoadingId(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -454,25 +502,43 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
                     </div>
 
                     {/* Actions for Task Giver */}
-                    {isTaskGiver && bid.status === "pending" && (
+                    {isTaskGiver && (
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          onClick={() => handleAcceptBid(bid.id, bid.bidder_id)}
-                          className="gap-1"
-                        >
-                          <Check className="h-4 w-4" />
-                          Accept
-                        </Button>
-                        <Button
-                          size="sm"
                           variant="outline"
-                          onClick={() => handleRejectBid(bid.id)}
+                          onClick={() => handleChatWithBidder(bid)}
+                          disabled={chatLoadingId === bid.id}
                           className="gap-1"
                         >
-                          <X className="h-4 w-4" />
-                          Reject
+                          {chatLoadingId === bid.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <MessageSquare className="h-4 w-4" />
+                          )}
+                          Chat
                         </Button>
+                        {bid.status === "pending" && (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => handleAcceptBid(bid.id, bid.bidder_id)}
+                              className="gap-1"
+                            >
+                              <Check className="h-4 w-4" />
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRejectBid(bid.id)}
+                              className="gap-1"
+                            >
+                              <X className="h-4 w-4" />
+                              Reject
+                            </Button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>

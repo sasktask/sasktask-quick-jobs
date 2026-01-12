@@ -10,11 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { 
-  MapPin, 
-  DollarSign, 
-  Calendar, 
-  Wrench, 
+import {
+  MapPin,
+  DollarSign,
+  Calendar,
+  Wrench,
   Star,
   Loader2,
   ArrowLeft,
@@ -67,7 +67,7 @@ const TaskDetail = () => {
       const { error } = await supabase.functions.invoke('confirm-deposit', {
         body: { taskId: id }
       });
-      
+
       if (!error) {
         toast({
           title: "Deposit Confirmed!",
@@ -83,7 +83,7 @@ const TaskDetail = () => {
   const checkUserAndFetchTask = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         navigate("/auth");
         return;
@@ -242,7 +242,7 @@ const TaskDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <div className="container mx-auto px-4 pt-24 pb-20 max-w-4xl">
         <Button
           variant="ghost"
@@ -269,23 +269,8 @@ const TaskDetail = () => {
                   </span>
                 </div>
               </div>
-              
+
               {/* Place a Bid Button for Task Doers */}
-              {userRole === "task_doer" && task.status === "open" && userId !== task.task_giver_id && (
-                <Button 
-                  className="mt-4 w-full sm:w-auto"
-                  size="lg"
-                  onClick={() => {
-                    const biddingSection = document.getElementById('bidding-section');
-                    if (biddingSection) {
-                      biddingSection.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                >
-                  <Gavel className="mr-2 h-5 w-5" />
-                  Place a Bid
-                </Button>
-              )}
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
