@@ -174,7 +174,10 @@ export const ChatDrawer = ({ isOpen, onClose, userId }: ChatDrawerProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handleBack}
+                onClick={() => {
+                  console.log("ChatDrawer: back button clicked");
+                  handleBack();
+                }}
                 className="h-8 w-8"
               >
                 <ArrowLeft className="h-5 w-5" />

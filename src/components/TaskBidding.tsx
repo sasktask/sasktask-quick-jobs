@@ -232,6 +232,15 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
   const handleAcceptBid = async (bidId: string, bidderId: string) => {
     try {
+      console.log("Accepted bid:", bidId, bidderId);
+      const acceptedBid = bids.find(b => b.id === bidId);
+      const bookingInsertPayload = {
+        task_id: taskId,
+        task_doer_id: bidderId,
+        message: acceptedBid?.message || "Bid accepted",
+        status: "accepted" as const,
+      };
+
       // Update the accepted bid
       const { error: bidError } = await supabase
         .from("task_bids")
@@ -261,15 +270,9 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
       if (!bookingId) {
         // Create a booking for the accepted bidder
-        const acceptedBid = bids.find(b => b.id === bidId);
         const { data: newBooking, error: bookingError } = await supabase
           .from("bookings")
-          .insert({
-            task_id: taskId,
-            task_doer_id: bidderId,
-            message: acceptedBid?.message || "Bid accepted",
-            status: "accepted",
-          })
+          .insert(bookingInsertPayload)
           .select("id")
           .single();
 
@@ -473,8 +476,8 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
                 <div
                   key={bid.id}
                   className={`p-4 rounded-lg border ${bid.bidder_id === currentUserId
-                      ? "border-primary bg-primary/5"
-                      : "border-border"
+                    ? "border-primary bg-primary/5"
+                    : "border-border"
                     } ${bid.status === "rejected" ? "opacity-50" : ""}`}
                 >
                   <div className="flex items-start justify-between gap-4">
