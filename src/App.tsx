@@ -57,7 +57,6 @@ import Notifications from "./pages/Notifications";
 import Services from "./pages/Services";
 
 import AdminDashboard from "./pages/AdminDashboard";
-import { ChatButton } from "./components/ChatButton";
 import { MobileBottomNav } from "./components/MobileBottomNav";
 
 const queryClient = new QueryClient();
@@ -71,67 +70,66 @@ const App = () => (
           <Sonner />
           <NotificationPermissionPrompt />
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-            <ChatButton />
             <MobileBottomNav />
             <AIAssistantWidget />
             <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:slug" element={<BlogPost />} />
-            <Route path="/rss.xml" element={<RSSFeed />} />
-            <Route path="/sitemap.xml" element={<Sitemap />} />
-            <Route path="/install" element={<Install />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/become-tasker" element={<BecomeTasker />} />
-            <Route path="/install" element={<Install />} />
-            
-            {/* Protected routes - require authentication */}
-            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/browse" element={<ProtectedRoute><Browse /></ProtectedRoute>} />
-            <Route path="/post-task" element={<ProtectedRoute><PostTask /></ProtectedRoute>} />
-            <Route path="/my-tasks" element={<ProtectedRoute><MyTasks /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/profile/:id" element={<ProtectedRoute><PublicProfile /></ProtectedRoute>} />
-            <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
-            <Route path="/task/:id" element={<ProtectedRoute><TaskDetail /></ProtectedRoute>} />
-            <Route path="/tasks/:id/edit" element={<ProtectedRoute><TaskEdit /></ProtectedRoute>} />
-            <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
-            <Route path="/become-tasker" element={<ProtectedRoute><BecomeTasker /></ProtectedRoute>} />
-            <Route path="/how-it-works" element={<ProtectedRoute><HowItWorks /></ProtectedRoute>} />
-            <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
-            <Route path="/map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />
-            <Route path="/faq" element={<ProtectedRoute><FAQ /></ProtectedRoute>} />
-            <Route path="/admin/verify-users" element={<ProtectedRoute><AdminVerification /></ProtectedRoute>} />
-            <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/disputes" element={<ProtectedRoute><AdminDisputes /></ProtectedRoute>} />
-            <Route path="/admin/fraud" element={<ProtectedRoute><AdminFraud /></ProtectedRoute>} />
-            <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
-            <Route path="/admin/payments" element={<ProtectedRoute><AdminPayments /></ProtectedRoute>} />
-            <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-            <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
-            <Route path="/referrals" element={<ProtectedRoute><ReferralProgram /></ProtectedRoute>} />
-            <Route path="/help" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
-            <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-            <Route path="/chat/:bookingId" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
-            <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
-            <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-            <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
-            <Route path="/payment-cancelled" element={<ProtectedRoute><PaymentCancelled /></ProtectedRoute>} />
-            <Route path="/payouts" element={<ProtectedRoute><Payouts /></ProtectedRoute>} />
-            <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-            <Route path="/tiffin" element={<Navigate to="/browse?category=Tiffin+Services" replace />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+              {/* Public routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
+              <Route path="/rss.xml" element={<RSSFeed />} />
+              <Route path="/sitemap.xml" element={<Sitemap />} />
+              <Route path="/install" element={<Install />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/become-tasker" element={<BecomeTasker />} />
+              <Route path="/install" element={<Install />} />
+
+              {/* Protected routes - require authentication */}
+              <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/browse" element={<ProtectedRoute><Browse /></ProtectedRoute>} />
+              <Route path="/post-task" element={<ProtectedRoute><PostTask /></ProtectedRoute>} />
+              <Route path="/my-tasks" element={<ProtectedRoute><MyTasks /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/profile/:id" element={<ProtectedRoute><PublicProfile /></ProtectedRoute>} />
+              <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
+              <Route path="/task/:id" element={<ProtectedRoute><TaskDetail /></ProtectedRoute>} />
+              <Route path="/tasks/:id/edit" element={<ProtectedRoute><TaskEdit /></ProtectedRoute>} />
+              <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
+              <Route path="/become-tasker" element={<ProtectedRoute><BecomeTasker /></ProtectedRoute>} />
+              <Route path="/how-it-works" element={<ProtectedRoute><HowItWorks /></ProtectedRoute>} />
+              <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
+              <Route path="/map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />
+              <Route path="/faq" element={<ProtectedRoute><FAQ /></ProtectedRoute>} />
+              <Route path="/admin/verify-users" element={<ProtectedRoute><AdminVerification /></ProtectedRoute>} />
+              <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin/disputes" element={<ProtectedRoute><AdminDisputes /></ProtectedRoute>} />
+              <Route path="/admin/fraud" element={<ProtectedRoute><AdminFraud /></ProtectedRoute>} />
+              <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
+              <Route path="/admin/payments" element={<ProtectedRoute><AdminPayments /></ProtectedRoute>} />
+              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+              <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+              <Route path="/referrals" element={<ProtectedRoute><ReferralProgram /></ProtectedRoute>} />
+              <Route path="/help" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
+              <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+              <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+              <Route path="/chat/:bookingId" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
+              <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+              <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+              <Route path="/payment-cancelled" element={<ProtectedRoute><PaymentCancelled /></ProtectedRoute>} />
+              <Route path="/payouts" element={<ProtectedRoute><Payouts /></ProtectedRoute>} />
+              <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+              <Route path="/tiffin" element={<Navigate to="/browse?category=Tiffin+Services" replace />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
       </LanguageProvider>
     </ThemeProvider>
   </QueryClientProvider>

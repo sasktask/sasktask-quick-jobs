@@ -61,7 +61,7 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
   useEffect(() => {
     fetchBids();
-    
+
     // Subscribe to real-time updates
     const channel = supabase
       .channel('task-bids')
@@ -104,10 +104,10 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
       const typedBids = (data || []) as Bid[];
       setBids(typedBids);
-      
+
       const userBid = typedBids.find(b => b.bidder_id === currentUserId);
       setMyBid(userBid || null);
-      
+
       if (userBid) {
         setBidAmount(userBid.bid_amount.toString());
         setMessage(userBid.message || "");
@@ -450,11 +450,10 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
               {bids.map((bid) => (
                 <div
                   key={bid.id}
-                  className={`p-4 rounded-lg border ${
-                    bid.bidder_id === currentUserId 
-                      ? "border-primary bg-primary/5" 
+                  className={`p-4 rounded-lg border ${bid.bidder_id === currentUserId
+                      ? "border-primary bg-primary/5"
                       : "border-border"
-                  } ${bid.status === "rejected" ? "opacity-50" : ""}`}
+                    } ${bid.status === "rejected" ? "opacity-50" : ""}`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
@@ -551,7 +550,7 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
       {/* No bids message - clickable for task doers */}
       {bids.length === 0 && !showBidForm && (
-        <Card 
+        <Card
           className={isTaskDoer && !isTaskGiver ? "cursor-pointer hover:border-primary/50 transition-colors" : ""}
           onClick={() => {
             if (isTaskDoer && !isTaskGiver) {

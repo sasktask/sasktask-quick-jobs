@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
-import { MessagingPanel } from "./MessagingPanel";
+import { ChatInterface } from "@/components/chat/ChatInterface";
 import { MessageCircle, ArrowLeft } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -33,6 +33,7 @@ export const ChatDrawer = ({ isOpen, onClose, userId }: ChatDrawerProps) => {
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
   const [selectedOtherUserId, setSelectedOtherUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -51,6 +52,7 @@ export const ChatDrawer = ({ isOpen, onClose, userId }: ChatDrawerProps) => {
         .maybeSingle();
 
       const userRole = roleData?.role;
+      setUserRole(userRole || null);
 
       // Fetch bookings with messages
       let query = supabase
@@ -89,8 +91,8 @@ export const ChatDrawer = ({ isOpen, onClose, userId }: ChatDrawerProps) => {
       // Get unread counts and last messages for each booking
       const conversationsWithMessages = await Promise.all(
         (bookings || []).map(async (booking) => {
-          const otherUser = userRole === "task_giver" 
-            ? booking.task_doer 
+          const otherUser = userRole === "task_giver"
+            ? booking.task_doer
             : booking.tasks?.task_giver;
 
           // Get unread count
@@ -156,7 +158,7 @@ export const ChatDrawer = ({ isOpen, onClose, userId }: ChatDrawerProps) => {
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    
+
     if (diff < 60000) return "Just now";
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
@@ -186,16 +188,18 @@ export const ChatDrawer = ({ isOpen, onClose, userId }: ChatDrawerProps) => {
             </SheetTitle>
           )}
         </SheetHeader>
-        
+
         <Separator />
 
         {selectedBooking && selectedOtherUserId ? (
           <div className="flex-1 overflow-hidden">
-            <MessagingPanel
+            <ChatInterface
               bookingId={selectedBooking}
               currentUserId={userId}
               otherUserId={selectedOtherUserId}
               otherUserName={conversations.find(c => c.bookingId === selectedBooking)?.otherUser.full_name || "User"}
+              otherUserAvatar={conversations.find(c => c.bookingId === selectedBooking)?.otherUser.avatar_url}
+              otherUserRole={userRole === "task_giver" ? "Task Doer" : "Task Giver"}
             />
           </div>
         ) : (
@@ -221,13 +225,13 @@ export const ChatDrawer = ({ isOpen, onClose, userId }: ChatDrawerProps) => {
                     className="w-full p-4 hover:bg-accent/50 transition-colors text-left flex items-start gap-3"
                   >
                     <Avatar className="h-12 w-12 border-2 border-primary/20">
-                      <AvatarImage 
+                      <AvatarImage
                         src={conv.otherUser.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.otherUser.full_name}`}
                         alt={conv.otherUser.full_name}
                       />
                       <AvatarFallback>{conv.otherUser.full_name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <h4 className="font-semibold truncate">{conv.otherUser.full_name}</h4>
