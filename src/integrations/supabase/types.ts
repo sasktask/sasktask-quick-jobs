@@ -116,8 +116,10 @@ export type Database = {
       bookings: {
         Row: {
           agreed_at: string | null
+          completion_evidence_uploaded: boolean | null
           created_at: string | null
           deposit_paid: boolean | null
+          evidence_count: number | null
           full_payment_at: string | null
           full_payment_paid: boolean | null
           id: string
@@ -130,8 +132,10 @@ export type Database = {
         }
         Insert: {
           agreed_at?: string | null
+          completion_evidence_uploaded?: boolean | null
           created_at?: string | null
           deposit_paid?: boolean | null
+          evidence_count?: number | null
           full_payment_at?: string | null
           full_payment_paid?: boolean | null
           id?: string
@@ -144,8 +148,10 @@ export type Database = {
         }
         Update: {
           agreed_at?: string | null
+          completion_evidence_uploaded?: boolean | null
           created_at?: string | null
           deposit_paid?: boolean | null
+          evidence_count?: number | null
           full_payment_at?: string | null
           full_payment_paid?: boolean | null
           id?: string
@@ -304,6 +310,53 @@ export type Database = {
           submitted_at?: string | null
         }
         Relationships: []
+      }
+      dispute_evidence: {
+        Row: {
+          created_at: string
+          description: string | null
+          dispute_id: string
+          evidence_type: string
+          file_name: string
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          dispute_id: string
+          evidence_type?: string
+          file_name: string
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          dispute_id?: string
+          evidence_type?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispute_evidence_dispute_id_fkey"
+            columns: ["dispute_id"]
+            isOneToOne: false
+            referencedRelation: "disputes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       disputes: {
         Row: {
@@ -2869,6 +2922,66 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_evidence: {
+        Row: {
+          booking_id: string
+          caption: string | null
+          created_at: string
+          evidence_type: string
+          file_name: string
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          metadata: Json | null
+          task_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          booking_id: string
+          caption?: string | null
+          created_at?: string
+          evidence_type?: string
+          file_name: string
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          metadata?: Json | null
+          task_id: string
+          uploaded_by: string
+        }
+        Update: {
+          booking_id?: string
+          caption?: string | null
+          created_at?: string
+          evidence_type?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          metadata?: Json | null
+          task_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_evidence_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_evidence_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]

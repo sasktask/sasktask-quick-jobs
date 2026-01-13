@@ -5,10 +5,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, AlertCircle, Shield, Clock, DollarSign, Heart } from "lucide-react";
+import { CheckCircle, AlertCircle, Shield, Clock, DollarSign, Heart, Camera, Image } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TipDialog } from "@/components/TipDialog";
-
+import { WorkEvidenceUpload } from "@/components/WorkEvidenceUpload";
+import { EvidenceGallery } from "@/components/EvidenceGallery";
+import { Badge } from "@/components/ui/badge";
 interface TaskCompletionFlowProps {
   bookingId: string;
   taskId: string;
@@ -45,6 +47,8 @@ export const TaskCompletionFlow = ({
   const [showTipDialog, setShowTipDialog] = useState(false);
   const [tipAdded, setTipAdded] = useState(false);
   const [tipAmount, setTipAmount] = useState(0);
+  const [evidenceCount, setEvidenceCount] = useState(0);
+  const [showEvidenceUpload, setShowEvidenceUpload] = useState(false);
   
   const isTaskDoer = currentUserId === taskDoerId;
   const isTaskGiver = currentUserId === taskGiverId;
@@ -54,7 +58,7 @@ export const TaskCompletionFlow = ({
   const tax = (paymentAmount * 0.05).toFixed(2);
   const taskerPayout = (paymentAmount - parseFloat(platformFee) - parseFloat(tax)).toFixed(2);
 
-  // Fetch payment status
+  // Fetch payment status and evidence count
   useEffect(() => {
     const fetchPaymentStatus = async () => {
       const { data } = await supabase
@@ -65,8 +69,29 @@ export const TaskCompletionFlow = ({
       
       setPaymentStatus(data);
     };
+
+    const fetchEvidenceCount = async () => {
+      const { count } = await supabase
+        .from("work_evidence")
+        .select("*", { count: 'exact', head: true })
+        .eq("booking_id", bookingId);
+      
+      setEvidenceCount(count || 0);
+    };
+
     fetchPaymentStatus();
+    fetchEvidenceCount();
   }, [bookingId]);
+
+  const handleEvidenceUploaded = async () => {
+    const { count } = await supabase
+      .from("work_evidence")
+      .select("*", { count: 'exact', head: true })
+      .eq("booking_id", bookingId);
+    
+    setEvidenceCount(count || 0);
+    setShowEvidenceUpload(false);
+  };
 
   // Task Doer marks task as completed
   const handleMarkComplete = async () => {
@@ -264,45 +289,98 @@ export const TaskCompletionFlow = ({
 
     if (bookingStatus === "in_progress" && paymentStatus?.escrow_status === "held") {
       return (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-6 w-6 text-primary" />
-              Payment Secured - Ready to Complete
-            </CardTitle>
-            <CardDescription>
-              Mark the task as complete when finished. Payment will be released after task giver confirms.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert className="bg-primary/5 border-primary/20">
-              <DollarSign className="h-4 w-4 text-primary" />
-              <AlertDescription>
-                <strong>${paymentAmount.toFixed(2)}</strong> is held in escrow. You'll receive <strong>${taskerPayout}</strong> after confirmation.
-              </AlertDescription>
-            </Alert>
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-6 w-6 text-primary" />
+                Payment Secured - Ready to Complete
+              </CardTitle>
+              <CardDescription>
+                Upload proof of work before marking the task as complete. This protects you in case of disputes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert className="bg-primary/5 border-primary/20">
+                <DollarSign className="h-4 w-4 text-primary" />
+                <AlertDescription>
+                  <strong>${paymentAmount.toFixed(2)}</strong> is held in escrow. You'll receive <strong>${taskerPayout}</strong> after confirmation.
+                </AlertDescription>
+              </Alert>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Completion Notes (Optional)</Label>
-              <Textarea
-                id="notes"
-                placeholder="Add any notes about the completed work..."
-                value={completionNotes}
-                onChange={(e) => setCompletionNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
+              {/* Evidence Status */}
+              <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Camera className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Work Evidence</span>
+                  </div>
+                  <Badge variant={evidenceCount > 0 ? "default" : "secondary"}>
+                    {evidenceCount} file{evidenceCount !== 1 ? 's' : ''} uploaded
+                  </Badge>
+                </div>
+                {evidenceCount === 0 && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    ⚠️ We strongly recommend uploading photos as proof of completed work
+                  </p>
+                )}
+              </div>
 
-            <Button 
-              onClick={handleMarkComplete}
-              disabled={isProcessing}
-              className="w-full"
-              size="lg"
-            >
-              {isProcessing ? "Processing..." : "Mark Task Complete"}
-            </Button>
-          </CardContent>
-        </Card>
+              {/* Evidence Upload or Gallery */}
+              {showEvidenceUpload ? (
+                <WorkEvidenceUpload
+                  bookingId={bookingId}
+                  taskId={taskId}
+                  onUploadComplete={handleEvidenceUploaded}
+                  title="Upload Completion Proof"
+                  description="Add photos showing your completed work"
+                />
+              ) : evidenceCount > 0 ? (
+                <div className="space-y-2">
+                  <EvidenceGallery bookingId={bookingId} title="Your Evidence" showUploader={false} />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2"
+                    onClick={() => setShowEvidenceUpload(true)}
+                  >
+                    <Image className="h-4 w-4" />
+                    Add More Evidence
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => setShowEvidenceUpload(true)}
+                >
+                  <Camera className="h-4 w-4" />
+                  Upload Work Evidence
+                </Button>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Completion Notes (Optional)</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Add any notes about the completed work..."
+                  value={completionNotes}
+                  onChange={(e) => setCompletionNotes(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              <Button 
+                onClick={handleMarkComplete}
+                disabled={isProcessing}
+                className="w-full"
+                size="lg"
+              >
+                {isProcessing ? "Processing..." : "Mark Task Complete"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       );
     }
 
@@ -351,7 +429,7 @@ export const TaskCompletionFlow = ({
               Confirm Completion & Release Payment
             </CardTitle>
             <CardDescription>
-              The tasker has marked this task as complete. Review the work and release payment.
+              The tasker has marked this task as complete. Review the work evidence and release payment.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -361,6 +439,18 @@ export const TaskCompletionFlow = ({
                 ✅ Tasker has completed the task and is waiting for your confirmation.
               </AlertDescription>
             </Alert>
+
+            {/* Evidence Gallery for Task Giver to Review */}
+            {evidenceCount > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Camera className="h-4 w-4" />
+                  Work Evidence Provided
+                  <Badge variant="secondary">{evidenceCount} file{evidenceCount !== 1 ? 's' : ''}</Badge>
+                </div>
+                <EvidenceGallery bookingId={bookingId} title="Review Work Evidence" />
+              </div>
+            )}
 
             <div className="p-4 bg-muted/50 rounded-lg border border-border space-y-2">
               <div className="flex justify-between text-sm">
