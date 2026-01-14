@@ -22,7 +22,7 @@ const ChatRoom = () => {
   const [loading, setLoading] = useState(true);
   const [showVideoCall, setShowVideoCall] = useState(false);
   const [callType, setCallType] = useState<'video' | 'audio'>('video');
-  
+
   // Enable realtime chat notifications
   const { unreadCount } = useRealtimeChatNotifications(user?.id || "");
 
@@ -33,7 +33,7 @@ const ChatRoom = () => {
   const checkAccess = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         toast.error("Please sign in to access chat");
         navigate("/auth");
@@ -124,10 +124,10 @@ const ChatRoom = () => {
         description="Real-time chat for your booking"
         url={`/chat/${bookingId}`}
       />
-      
+
       <div className="min-h-screen bg-background">
         <Navbar />
-        
+
         <div className="container mx-auto px-4 py-24">
           <div className="max-w-4xl mx-auto">
             <Button

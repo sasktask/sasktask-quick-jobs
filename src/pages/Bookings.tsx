@@ -60,12 +60,13 @@ const Bookings = () => {
       setProfile(profileData);
 
       // Fetch user role
-      const { data: roleData } = await supabase
+      const { data: roleData, error: roleError } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
       
+      if (roleError && roleError.code !== "PGRST116") throw roleError;
       setUserRole(roleData?.role || null);
 
       // Fetch bookings based on role with task doer profile (verification fetched separately)

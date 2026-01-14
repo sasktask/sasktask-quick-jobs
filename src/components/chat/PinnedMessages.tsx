@@ -23,9 +23,7 @@ interface PinnedMessage {
     message: string;
     created_at: string;
     sender_id: string;
-    profiles: {
-      full_name: string;
-    };
+    sender_name?: string;
   };
 }
 
@@ -47,17 +45,45 @@ export const PinnedMessages = ({ bookingId, currentUserId, onMessageClick }: Pin
           id,
           message,
           created_at,
-          sender_id,
-          profiles:profiles!messages_sender_id_fkey (
-            full_name
-          )
+          sender_id
         )
       `)
       .eq("booking_id", bookingId)
       .order("pinned_at", { ascending: false });
 
     if (!error && data) {
-      setPinnedMessages(data as any);
+      // Fetch sender names separately because messages.sender_id lacks a direct FK to profiles
+      const senderIds = Array.from(
+        new Set(
+          (data as any[])
+            .map((pin) => pin.message?.sender_id)
+            .filter(Boolean)
+        )
+      );
+
+      let profilesMap: Record<string, string> = {};
+      if (senderIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", senderIds);
+
+        profilesMap =
+          profilesData?.reduce<Record<string, string>>((acc, profile) => {
+            acc[profile.id] = profile.full_name || "User";
+            return acc;
+          }, {}) || {};
+      }
+
+      const enriched = (data as any[]).map((pin) => ({
+        ...pin,
+        message: {
+          ...pin.message,
+          sender_name: profilesMap[pin.message?.sender_id] || "User",
+        },
+      }));
+
+      setPinnedMessages(enriched as PinnedMessage[]);
     }
   };
 
@@ -137,7 +163,7 @@ export const PinnedMessages = ({ bookingId, currentUserId, onMessageClick }: Pin
                 <Pin className="h-3 w-3 text-primary mt-1 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {pin.message.profiles?.full_name}
+                    {pin.message.sender_name || "User"}
                   </p>
                   <p className="text-xs text-muted-foreground line-clamp-2">
                     {pin.message.message}
