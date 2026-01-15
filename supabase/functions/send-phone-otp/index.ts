@@ -59,6 +59,7 @@ serve(async (req: Request) => {
   }
 
   try {
+    console.log("Sending SMS");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -160,11 +161,20 @@ serve(async (req: Request) => {
         httpsProxy: httpsProxy || undefined,
       });
 
-      await twilioClient.messages.create({
-        body: `Your SaskTask verification code is: ${otp}`,
-        from: fromNumber,
-        to: phone,
-      });
+      try {
+        await twilioClient.messages.create({
+          body: `Your SaskTask verification code is: ${otp}`,
+          from: fromNumber,
+          to: phone,
+        });
+        console.log("SMS sent successfully to", phone);
+      } catch (twilioError: any) {
+        console.error("Twilio send failed:", twilioError?.message || twilioError);
+        return new Response(
+          JSON.stringify({ error: twilioError?.message || "Twilio send failed" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     return new Response(

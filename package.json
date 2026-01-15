@@ -76,6 +76,7 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.160.1",
+    "twilio": "^5.11.2",
     "vaul": "^0.9.9",
     "vite-plugin-pwa": "^1.1.0",
     "workbox-window": "^7.3.0",

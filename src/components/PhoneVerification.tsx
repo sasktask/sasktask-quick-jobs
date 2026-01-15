@@ -39,7 +39,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   const formatPhoneNumber = (value: string) => {
     // Remove all non-digit characters
     const digits = value.replace(/\D/g, "");
-    
+
     // Format as Canadian phone number
     if (digits.length <= 3) return digits;
     if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
@@ -61,7 +61,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
 
   const sendOTP = async () => {
     const digits = getDigitsOnly(phone);
-    
+
     if (digits.length !== 10) {
       toast({
         title: "Invalid phone number",
@@ -74,9 +74,9 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
     setIsSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-phone-otp", {
-        body: { 
+        body: {
           phone: `+1${digits}`,
-          userId 
+          userId
         },
       });
 
@@ -116,7 +116,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
     setIsVerifying(true);
     try {
       const digits = getDigitsOnly(phone);
-      
+
       const { data, error } = await supabase.functions.invoke("verify-phone-otp", {
         body: {
           phone: `+1${digits}`,
@@ -272,7 +272,17 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
                 Resend code in <span className="font-medium text-primary">{countdown}s</span>
               </p>
             ) : (
-              <Button type="button" variant="ghost" size="sm" onClick={sendOTP} disabled={isSending}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const fromNumber = (import.meta as any).env?.VITE_TWILIO_FROM_NUMBER;
+                  console.log("PhoneVerification resend clicked. From number:", fromNumber || "not set in VITE_TWILIO_FROM_NUMBER");
+                  sendOTP();
+                }}
+                disabled={isSending}
+              >
                 {isSending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
