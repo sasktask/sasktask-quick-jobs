@@ -38,6 +38,8 @@ interface ChatInterfaceProps {
   otherUserName: string;
   otherUserAvatar?: string;
   otherUserRole: "Task Giver" | "Task Doer";
+  currentUserName?: string;
+  currentUserAvatar?: string;
 }
 
 export const ChatInterface = ({
@@ -47,6 +49,8 @@ export const ChatInterface = ({
   otherUserName,
   otherUserAvatar,
   otherUserRole,
+  currentUserName,
+  currentUserAvatar,
 }: ChatInterfaceProps) => {
   const [inputValue, setInputValue] = useState("");
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
@@ -670,7 +674,7 @@ export const ChatInterface = ({
               <Avatar className="h-10 w-10">
                 <AvatarImage src={otherUserAvatar} />
                 <AvatarFallback>
-                  <User className="h-5 w-5" />
+                  {otherUserName?.[0]?.toUpperCase() || <User className="h-5 w-5" />}
                 </AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-0.5 -right-0.5">
@@ -796,14 +800,12 @@ export const ChatInterface = ({
                       />
                     )}
                     
-                    {!isOwn && (
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={otherUserAvatar} />
-                        <AvatarFallback>
-                          <User className="h-4 w-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={isOwn ? currentUserAvatar : otherUserAvatar} />
+                      <AvatarFallback>
+                        {(isOwn ? currentUserName : otherUserName)?.[0]?.toUpperCase() || <User className="h-4 w-4" />}
+                      </AvatarFallback>
+                    </Avatar>
                     
                     <div className="flex-1 max-w-[70%]">
                       <div
@@ -816,6 +818,12 @@ export const ChatInterface = ({
                           isUnread && !isOwn && "ring-2 ring-primary/50"
                         )}
                       >
+                        <p className={cn(
+                          "text-xs font-semibold mb-1",
+                          isOwn ? "text-primary-foreground/80" : "text-muted-foreground"
+                        )}>
+                          {isOwn ? (currentUserName || "You") : otherUserName}
+                        </p>
                         {isUnread && !isOwn && (
                           <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-primary rounded-full" />
                         )}

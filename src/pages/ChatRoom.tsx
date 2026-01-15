@@ -19,6 +19,7 @@ const ChatRoom = () => {
   const [user, setUser] = useState<any>(null);
   const [booking, setBooking] = useState<any>(null);
   const [otherUser, setOtherUser] = useState<any>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showVideoCall, setShowVideoCall] = useState(false);
   const [callType, setCallType] = useState<'video' | 'audio'>('video');
@@ -47,6 +48,14 @@ const ChatRoom = () => {
         navigate("/bookings");
         return;
       }
+
+      // Load current user profile for sender name/avatar in chat
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      setCurrentUserProfile(profileData || null);
 
       // Load booking details
       const { data: bookingData, error: bookingError } = await supabase
@@ -182,6 +191,8 @@ const ChatRoom = () => {
                   otherUserName={otherUser.full_name || "User"}
                   otherUserAvatar={otherUser.avatar_url}
                   otherUserRole={isTaskGiver ? "Task Doer" : "Task Giver"}
+                  currentUserName={currentUserProfile?.full_name || "You"}
+                  currentUserAvatar={currentUserProfile?.avatar_url}
                 />
               </CardContent>
             </Card>

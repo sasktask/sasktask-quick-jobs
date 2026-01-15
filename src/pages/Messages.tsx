@@ -329,68 +329,6 @@ const Messages = () => {
             </div>
           </div>
 
-          {/* Registered Users */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-muted-foreground" />
-                <h2 className="text-xl font-semibold">Registered Users</h2>
-              </div>
-              <Badge variant="secondary">
-                {usersLoading ? "Loading..." : filteredUsers.length}
-              </Badge>
-            </div>
-
-            {usersLoading ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <Card key={index} className="p-4">
-                    <div className="flex items-center gap-3 animate-pulse">
-                      <div className="h-12 w-12 rounded-full bg-muted" />
-                      <div className="space-y-2 flex-1">
-                        <div className="h-4 bg-muted rounded w-1/2" />
-                        <div className="h-3 bg-muted rounded w-1/3" />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : filteredUsers.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <h3 className="text-lg font-semibold mb-2">No users found</h3>
-                  <p className="text-muted-foreground">
-                    Registered users will appear here.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {filteredUsers.map((profile) => (
-                  <Card key={profile.id} className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={profile.avatar_url || undefined} />
-                        <AvatarFallback>
-                          {profile.full_name?.charAt(0) || <User className="h-5 w-5" />}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">
-                          {profile.full_name || "User"}
-                        </p>
-                        {profile.created_at && (
-                          <p className="text-xs text-muted-foreground">
-                            Joined {format(new Date(profile.created_at), "MMM d, yyyy")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
 
           {/* Conversations List */}
           {filteredConversations.length === 0 ? (
