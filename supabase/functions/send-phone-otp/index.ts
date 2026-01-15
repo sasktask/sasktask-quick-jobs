@@ -156,10 +156,7 @@ serve(async (req: Request) => {
     if (!accountSid || !authToken || !fromNumber) {
       console.warn("Twilio not configured; skipping SMS send");
     } else {
-      const twilioClient = twilio(accountSid, authToken, {
-        httpProxy: httpProxy || undefined,
-        httpsProxy: httpsProxy || undefined,
-      });
+      const twilioClient = twilio(accountSid, authToken);
 
       try {
         await twilioClient.messages.create({
