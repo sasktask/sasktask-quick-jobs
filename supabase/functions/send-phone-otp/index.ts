@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import twilio from "npm:twilio";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +16,42 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+const normalizeProxy = (value?: string | null) => {
+  if (!value) return null;
+  const raw = value.trim();
+  const needsScheme = /^[^/]+:\d+$/.test(raw) && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(raw);
+  const candidate = needsScheme ? `http://${raw}` : raw;
+  try {
+    return new URL(candidate).href;
+  } catch (_err) {
+    console.warn(`Ignoring invalid proxy value: ${value}`);
+    return null;
+  }
+};
+
+const sanitizeProxyEnv = () => {
+  const candidates = [
+    "TWILIO_HTTP_PROXY",
+    "TWILIO_HTTPS_PROXY",
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "http_proxy",
+    "https_proxy",
+  ];
+  const normalized: Record<string, string> = {};
+  for (const key of candidates) {
+    const val = Deno.env.get(key);
+    const norm = normalizeProxy(val);
+    if (val && !norm) {
+      Deno.env.delete(key);
+    } else if (norm) {
+      Deno.env.set(key, norm);
+      normalized[key] = norm;
+    }
+  }
+  return normalized;
+};
+
 serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -25,6 +62,20 @@ serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+    const fromNumber = Deno.env.get("TWILIO_FROM_NUMBER");
+    const normalizedProxies = sanitizeProxyEnv();
+    const httpProxy =
+      normalizedProxies["TWILIO_HTTP_PROXY"] ||
+      normalizedProxies["HTTP_PROXY"] ||
+      normalizedProxies["http_proxy"] ||
+      null;
+    const httpsProxy =
+      normalizedProxies["TWILIO_HTTPS_PROXY"] ||
+      normalizedProxies["HTTPS_PROXY"] ||
+      normalizedProxies["https_proxy"] ||
+      httpProxy;
 
     const { phone, userId }: SendPhoneOTPRequest = await req.json();
 
@@ -76,8 +127,8 @@ serve(async (req: Request) => {
 
     // Get client IP
     const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-                     req.headers.get("x-real-ip") ||
-                     "unknown";
+      req.headers.get("x-real-ip") ||
+      "unknown";
 
     // Insert verification record
     const { data: verification, error: insertError } = await supabase
@@ -100,33 +151,31 @@ serve(async (req: Request) => {
       );
     }
 
-    // In production, you would send SMS via Twilio or similar service
-    // For now, we'll log the OTP (in production, remove this!)
-    console.log(`Phone OTP for ${phone}: ${otp}`);
+    // Send SMS via Twilio if credentials are present
+    if (!accountSid || !authToken || !fromNumber) {
+      console.warn("Twilio not configured; skipping SMS send");
+    } else {
+      const twilioClient = twilio(accountSid, authToken, {
+        httpProxy: httpProxy || undefined,
+        httpsProxy: httpsProxy || undefined,
+      });
 
-    // TODO: Integrate with SMS provider (Twilio, MessageBird, etc.)
-    // For demo purposes, we simulate success
-    // Example Twilio integration:
-    // const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
-    // const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
-    // const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
-    // 
-    // const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
-    // await twilioClient.messages.create({
-    //   body: `Your SaskTask verification code is: ${otp}`,
-    //   from: twilioPhoneNumber,
-    //   to: phone,
-    // });
+      await twilioClient.messages.create({
+        body: `Your SaskTask verification code is: ${otp}`,
+        from: fromNumber,
+        to: phone,
+      });
+    }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         verificationId: verification.id,
-        message: "Verification code sent successfully" 
+        message: "Verification code sent successfully"
       }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       }
     );
 

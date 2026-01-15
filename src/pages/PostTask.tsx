@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Loader2, Save, CheckCircle, Clock, AlertTriangle, MapPin, Shield, BadgePercent } from "lucide-react";
@@ -17,6 +18,7 @@ import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { z } from "zod";
 import { TaskTemplateManager } from "@/components/TaskTemplateManager";
 import { getCategoryTitles } from "@/lib/categories";
+import { PhoneVerification } from "@/components/PhoneVerification";
 
 // Full validation for publishing
 const taskSchema = z.object({
@@ -42,6 +44,8 @@ const PostTask = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [profilePhone, setProfilePhone] = useState<string | null>(null);
+  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -49,7 +53,7 @@ const PostTask = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     title: "",
     description: "",
     category: "",
@@ -86,7 +90,7 @@ const [formData, setFormData] = useState({
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
       }
-      
+
       autoSaveTimeoutRef.current = setTimeout(() => {
         handleAutoSave();
       }, 30000); // Auto-save every 30 seconds
@@ -189,7 +193,7 @@ const [formData, setFormData] = useState({
   const checkUser = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         navigate("/auth");
         return;
@@ -203,6 +207,14 @@ const [formData, setFormData] = useState({
         .eq("user_id", session.user.id);
 
       const hasTaskGiverRole = roleData?.some(r => r.role === "task_giver" || r.role === "admin");
+
+      // Fetch profile phone for verification prompt
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("phone")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      setProfilePhone(profileData?.phone || null);
 
       if (!hasTaskGiverRole) {
         toast({
@@ -283,7 +295,7 @@ const [formData, setFormData] = useState({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!userId) {
       toast({
         title: "Error",
@@ -293,9 +305,30 @@ const [formData, setFormData] = useState({
       return;
     }
 
+    const requirePhoneVerified = async () => {
+      const phone = profilePhone;
+      if (!phone) {
+        throw new Error("Please verify your phone number before posting a task.");
+      }
+
+      const { count, error: verificationError } = await supabase
+        .from("phone_verifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("phone", phone)
+        .not("verified_at", "is", null);
+
+      if (verificationError) throw verificationError;
+      if (!count || count === 0) {
+        throw new Error("Please verify your phone number before posting a task.");
+      }
+    };
+
     setIsSubmitting(true);
 
     try {
+      await requirePhoneVerified();
+
       const validation = taskSchema.safeParse({
         title: formData.title,
         description: formData.description,
@@ -360,9 +393,13 @@ const [formData, setFormData] = useState({
         navigate("/my-tasks");
       }
     } catch (error: any) {
+      const message = error.message || "Verification required";
+      if (message.toLowerCase().includes("verify your phone number")) {
+        setShowPhoneVerification(true);
+      }
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -388,7 +425,7 @@ const [formData, setFormData] = useState({
 
         {/* Task Templates */}
         <div className="mb-6">
-          <TaskTemplateManager 
+          <TaskTemplateManager
             onSelectTemplate={handleSelectTemplate}
             currentFormData={formData}
           />
@@ -447,7 +484,7 @@ const [formData, setFormData] = useState({
                   <LocationAutocomplete
                     value={formData.location}
                     onChange={(location, coordinates) => {
-                      handleFormChange({ 
+                      handleFormChange({
                         location,
                         latitude: coordinates?.latitude ?? null,
                         longitude: coordinates?.longitude ?? null
@@ -470,7 +507,7 @@ const [formData, setFormData] = useState({
                     <MapPin className="h-5 w-5 text-emerald-600" />
                     <h3 className="font-semibold text-emerald-900 dark:text-emerald-100">Transport Details</h3>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>Ride Type *</Label>
                     <Select
@@ -498,7 +535,7 @@ const [formData, setFormData] = useState({
                     <LocationAutocomplete
                       value={formData.destination}
                       onChange={(destination, coordinates) => {
-                        handleFormChange({ 
+                        handleFormChange({
                           destination,
                           destination_latitude: coordinates?.latitude ?? null,
                           destination_longitude: coordinates?.longitude ?? null
@@ -769,6 +806,27 @@ const [formData, setFormData] = useState({
           </CardContent>
         </Card>
       </div>
+      <Dialog open={showPhoneVerification} onOpenChange={setShowPhoneVerification}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Verify your phone to post</DialogTitle>
+          </DialogHeader>
+          {userId && (
+            <PhoneVerification
+              userId={userId}
+              initialPhone={profilePhone || undefined}
+              onVerified={(phone) => {
+                setProfilePhone(phone);
+                setShowPhoneVerification(false);
+                toast({
+                  title: "Phone verified",
+                  description: "You can now post your task.",
+                });
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
