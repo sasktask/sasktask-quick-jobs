@@ -599,10 +599,6 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
       {bids.length === 0 && showBidForm && isTaskDoer && !isTaskGiver && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Gavel className="h-5 w-5" />
-              Place a Bid
-            </CardTitle>
             <CardDescription>
               Submit your proposal for this task. Original budget: ${originalAmount}
             </CardDescription>
