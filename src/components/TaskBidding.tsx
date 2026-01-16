@@ -8,9 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Gavel, User, Clock, Check, X, DollarSign, MessageSquare } from "lucide-react";
 import { z } from "zod";
+import { PhoneVerification } from "@/components/PhoneVerification";
 
 const bidSchema = z.object({
   bid_amount: z.number().positive("Bid amount must be positive").max(100000, "Bid amount too high"),
@@ -53,6 +55,8 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
   const [message, setMessage] = useState("");
   const [estimatedHours, setEstimatedHours] = useState("");
   const [showBidForm, setShowBidForm] = useState(false);
+  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
+  const [currentUserPhone, setCurrentUserPhone] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -108,6 +112,14 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
       const userBid = typedBids.find(b => b.bidder_id === currentUserId);
       setMyBid(userBid || null);
 
+      // Load current user's phone for verification checks
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("phone")
+        .eq("id", currentUserId)
+        .maybeSingle();
+      setCurrentUserPhone(profile?.phone || null);
+
       if (userBid) {
         setBidAmount(userBid.bid_amount.toString());
         setMessage(userBid.message || "");
@@ -124,6 +136,27 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
     setIsSubmitting(true);
 
     try {
+      const ensurePhoneVerified = async () => {
+        const phone = currentUserPhone;
+        if (!phone) {
+          throw new Error("Please verify your phone number before submitting a bid.");
+        }
+
+        const { count, error: verificationError } = await supabase
+          .from("phone_verifications")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", currentUserId)
+          .eq("phone", phone)
+          .not("verified_at", "is", null);
+
+        if (verificationError) throw verificationError;
+        if (!count || count === 0) {
+          throw new Error("Please verify your phone number before submitting a bid.");
+        }
+      };
+
+      await ensurePhoneVerified();
+
       const validation = bidSchema.safeParse({
         bid_amount: parseFloat(bidAmount),
         message: message || undefined,
@@ -190,9 +223,13 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
       fetchBids();
     } catch (error: any) {
+      const message = error.message || "Verification required";
+      if (message.toLowerCase().includes("verify your phone")) {
+        setShowPhoneVerification(true);
+      }
       toast({
         title: "Error",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -664,6 +701,28 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={showPhoneVerification} onOpenChange={setShowPhoneVerification}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Verify your phone to place a bid</DialogTitle>
+          </DialogHeader>
+          {currentUserId && (
+            <PhoneVerification
+              userId={currentUserId}
+              initialPhone={currentUserPhone || undefined}
+              onVerified={(phone) => {
+                setCurrentUserPhone(phone);
+                setShowPhoneVerification(false);
+                toast({
+                  title: "Phone verified",
+                  description: "You can now submit your bid.",
+                });
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

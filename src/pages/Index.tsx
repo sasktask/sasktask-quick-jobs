@@ -15,7 +15,6 @@ import { HeroSearch } from "@/components/HeroSearch";
 import { UrgencyBanner } from "@/components/UrgencyBanner";
 import { StatsCounter } from "@/components/StatsCounter";
 import { SocialProofBar } from "@/components/SocialProofBar";
-import { HelpChatbot } from "@/components/HelpChatbot";
 import { usePlatformStats } from "@/hooks/usePlatformStats";
 import { Skeleton } from "@/components/ui/skeleton";
 import React, { useEffect, useState } from "react";
@@ -32,7 +31,7 @@ const Index = () => {
   // Check if user is logged in and init performance
   useEffect(() => {
     initPerformanceOptimizations();
-    
+
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
@@ -49,7 +48,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEOHead 
+      <SEOHead
         title="Get Things Done - Find Trusted Help Anywhere"
         description="SaskTask connects you with verified professionals for any task. From home repairs to deliveries, find trusted help worldwide or earn money completing tasks."
         url="/"
@@ -57,26 +56,26 @@ const Index = () => {
       />
       <HomePageSchema />
       <Navbar />
-      
+
       {/* Urgency Banner */}
       <UrgencyBanner />
-      
+
       {/* Hero Section */}
       <section className="pt-8 sm:pt-16 pb-12 sm:pb-24 px-4 relative overflow-hidden">
         {/* Enhanced Background with mesh gradient */}
         <div className="absolute inset-0 bg-gradient-mesh -z-10" />
         <div className="absolute inset-0 bg-gradient-radial-lg -z-10" />
-        
+
         {/* Decorative elements */}
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse-slow -z-10" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse-slow -z-10" style={{ animationDelay: '1s' }} />
-        
+
         <div className="container mx-auto">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center max-w-7xl mx-auto">
             {/* Left: Text Content */}
             <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
               {/* Premium Badge */}
-              <div 
+              <div
                 className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-sm font-semibold text-primary animate-fade-in shadow-sm"
                 style={{ animationDelay: '0.1s' }}
               >
@@ -86,9 +85,9 @@ const Index = () => {
                 </span>
                 {user ? "Welcome Back!" : "Trusted by Thousands Worldwide"}
               </div>
-              
+
               {/* Main Headline */}
-              <h1 
+              <h1
                 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] animate-fade-up"
                 style={{ animationDelay: '0.2s' }}
               >
@@ -108,12 +107,12 @@ const Index = () => {
                   </>
                 )}
               </h1>
-              
-              <p 
+
+              <p
                 className="text-base sm:text-xl text-muted-foreground leading-relaxed animate-fade-up max-w-xl mx-auto lg:mx-0"
                 style={{ animationDelay: '0.3s' }}
               >
-                {user 
+                {user
                   ? "Access your dashboard to manage tasks, bookings, and connect with clients."
                   : "Connect with verified professionals. Trusted help for any task, anywhere."
                 }
@@ -128,7 +127,7 @@ const Index = () => {
 
               {/* CTA Buttons - For logged in users */}
               {user && (
-                <div 
+                <div
                   className="flex flex-col sm:flex-row gap-4 pt-4 animate-fade-up justify-center lg:justify-start"
                   style={{ animationDelay: '0.4s' }}
                 >
@@ -149,7 +148,7 @@ const Index = () => {
               )}
 
               {/* Trust Indicators - Enhanced with glass effect */}
-              <div 
+              <div
                 className="flex flex-wrap justify-center lg:justify-start gap-3 sm:gap-4 pt-6 sm:pt-8 animate-fade-up"
                 style={{ animationDelay: '0.5s' }}
               >
@@ -212,9 +211,9 @@ const Index = () => {
             <div className="relative animate-scale-in hidden sm:block" style={{ animationDelay: '0.3s' }}>
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl blur-3xl -z-10" />
               <div className="relative bg-card/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-border shadow-2xl hover-lift">
-                <img 
-                  src={heroInfographic} 
-                  alt="SaskTask workflow: Post task, connect with verified professionals, get it done" 
+                <img
+                  src={heroInfographic}
+                  alt="SaskTask workflow: Post task, connect with verified professionals, get it done"
                   className="w-full h-auto rounded-xl sm:rounded-2xl"
                   loading="lazy"
                 />
@@ -244,7 +243,7 @@ const Index = () => {
                 </div>
               </div>
 
-              <div className="absolute -top-2 sm:-top-4 -right-2 sm:-right-4 bg-card border border-border rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-xl animate-float" style={{animationDelay: '0.5s'}}>
+              <div className="absolute -top-2 sm:-top-4 -right-2 sm:-right-4 bg-card border border-border rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-xl animate-float" style={{ animationDelay: '0.5s' }}>
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
@@ -267,7 +266,7 @@ const Index = () => {
                 </div>
               </div>
 
-              <div className="absolute top-1/2 -right-4 sm:-right-6 bg-card border border-border rounded-xl sm:rounded-2xl p-2 sm:p-3 shadow-xl animate-float hidden lg:block" style={{animationDelay: '1s'}}>
+              <div className="absolute top-1/2 -right-4 sm:-right-6 bg-card border border-border rounded-xl sm:rounded-2xl p-2 sm:p-3 shadow-xl animate-float hidden lg:block" style={{ animationDelay: '1s' }}>
                 <div className="flex items-center gap-2">
                   <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 fill-yellow-500" />
                   <span className="font-bold text-sm sm:text-base text-foreground">
@@ -309,7 +308,7 @@ const Index = () => {
                   </div>
                   <p className="text-muted-foreground">Post tasks and find reliable help in minutes</p>
                 </div>
-                
+
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[{
                     icon: FileEdit,
@@ -360,7 +359,7 @@ const Index = () => {
                   </div>
                   <p className="text-muted-foreground">Find flexible work opportunities and grow your business</p>
                 </div>
-                
+
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[{
                     icon: Search,
@@ -522,21 +521,21 @@ const Index = () => {
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-                
+
                 <CardContent className="p-8 md:p-16 relative z-10">
                   <div className="max-w-3xl mx-auto text-center">
                     <div className="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full mb-6">
                       <Zap className="h-4 w-4 text-yellow-300" />
                       <span className="text-white/90 text-sm font-medium">Join thousands of Saskatchewan users</span>
                     </div>
-                    
+
                     <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
                       Ready to Get Started?
                     </h2>
                     <p className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl mx-auto">
                       Create your free account and discover a trusted community of local professionals
                     </p>
-                    
+
                     <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
                       <Link to="/auth?tab=signup">
                         <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 shadow-xl text-lg h-14 px-8 gap-2">
@@ -575,7 +574,6 @@ const Index = () => {
       )}
 
       <Footer />
-      <HelpChatbot />
     </div>
   );
 };
