@@ -45,6 +45,7 @@ const PostTask = () => {
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [profilePhone, setProfilePhone] = useState<string | null>(null);
+  const [isPhoneVerified, setIsPhoneVerified] = useState<boolean>(false);
   const [showPhoneVerification, setShowPhoneVerification] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -208,13 +209,26 @@ const PostTask = () => {
 
       const hasTaskGiverRole = roleData?.some(r => r.role === "task_giver" || r.role === "admin");
 
-      // Fetch profile phone for verification prompt
+      // Fetch profile phone and verification status for gating
       const { data: profileData } = await supabase
         .from("profiles")
         .select("phone")
         .eq("id", session.user.id)
         .maybeSingle();
-      setProfilePhone(profileData?.phone || null);
+      const phone = profileData?.phone || null;
+      setProfilePhone(phone);
+
+      if (phone) {
+        const { count: phoneVerifiedCount } = await supabase
+          .from("phone_verifications")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", session.user.id)
+          .eq("phone", phone)
+          .not("verified_at", "is", null);
+        setIsPhoneVerified(!!phoneVerifiedCount && phoneVerifiedCount > 0);
+      } else {
+        setIsPhoneVerified(false);
+      }
 
       if (!hasTaskGiverRole) {
         toast({
@@ -306,6 +320,8 @@ const PostTask = () => {
     }
 
     const requirePhoneVerified = async () => {
+      if (isPhoneVerified) return;
+
       const phone = profilePhone;
       if (!phone) {
         throw new Error("Please verify your phone number before posting a task.");
@@ -322,6 +338,8 @@ const PostTask = () => {
       if (!count || count === 0) {
         throw new Error("Please verify your phone number before posting a task.");
       }
+
+      setIsPhoneVerified(true);
     };
 
     setIsSubmitting(true);
