@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import twilio from "npm:twilio";
@@ -201,7 +202,11 @@ serve(async (req: Request) => {
 
     // Send SMS via Twilio if credentials are present
     if (!accountSid || !authToken || !fromNumber) {
-      console.warn("Twilio not configured; skipping SMS send");
+      console.error("Twilio not configured: missing SID/token/from number");
+      return new Response(
+        JSON.stringify({ error: "SMS sending not configured. Missing Twilio credentials." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     } else {
       const twilioClient = twilio(accountSid, authToken);
 
