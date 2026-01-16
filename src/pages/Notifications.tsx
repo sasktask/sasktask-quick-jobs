@@ -9,13 +9,13 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
-import { 
-  Bell, 
-  CheckCheck, 
-  Trash2, 
-  MessageSquare, 
-  DollarSign, 
-  Calendar, 
+import {
+  Bell,
+  CheckCheck,
+  Trash2,
+  MessageSquare,
+  DollarSign,
+  Calendar,
   AlertCircle,
   Briefcase,
   Star,
@@ -116,10 +116,18 @@ const Notifications = () => {
   };
 
   const deleteNotifications = async (ids: string[]) => {
-    await supabase
+    if (!userId || ids.length === 0) return;
+    const { error } = await supabase
       .from("notifications")
       .delete()
+      .eq("user_id", userId)
       .in("id", ids);
+
+    if (error) {
+      console.error("Failed to delete notifications:", error);
+      toast.error("Failed to delete notifications");
+      return;
+    }
 
     setNotifications(prev => prev.filter(n => !ids.includes(n.id)));
     setSelectedIds(new Set());
@@ -198,7 +206,7 @@ const Notifications = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <div className="container mx-auto px-4 pt-24 pb-20">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -264,8 +272,8 @@ const Notifications = () => {
                         {selectedIds.size} selected
                       </span>
                       <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => markAsRead(Array.from(selectedIds))}
                           className="gap-1"
@@ -273,8 +281,8 @@ const Notifications = () => {
                           <CheckCheck className="h-3 w-3" />
                           Mark Read
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="destructive"
                           onClick={() => deleteNotifications(Array.from(selectedIds))}
                           className="gap-1"
@@ -282,8 +290,8 @@ const Notifications = () => {
                           <Trash2 className="h-3 w-3" />
                           Delete
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="ghost"
                           onClick={() => setSelectedIds(new Set())}
                         >
@@ -311,7 +319,7 @@ const Notifications = () => {
               ) : (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between px-2">
-                    <button 
+                    <button
                       onClick={selectAll}
                       className="text-sm text-muted-foreground hover:text-foreground"
                     >
@@ -327,7 +335,7 @@ const Notifications = () => {
                         exit={{ opacity: 0, x: -100 }}
                         transition={{ delay: index * 0.05 }}
                       >
-                        <Card 
+                        <Card
                           className={cn(
                             "cursor-pointer transition-all hover:shadow-md",
                             !notification.read && "border-l-4 border-l-primary bg-primary/5",
@@ -336,7 +344,7 @@ const Notifications = () => {
                         >
                           <CardContent className="p-4">
                             <div className="flex gap-4">
-                              <div 
+                              <div
                                 className="shrink-0"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -350,7 +358,7 @@ const Notifications = () => {
                                   {getIcon(notification.type)}
                                 </div>
                               </div>
-                              <div 
+                              <div
                                 className="flex-1 min-w-0"
                                 onClick={() => handleNotificationClick(notification)}
                               >
@@ -369,8 +377,8 @@ const Notifications = () => {
                                   {notification.message}
                                 </p>
                                 {notification.link && (
-                                  <Button 
-                                    variant="link" 
+                                  <Button
+                                    variant="link"
                                     className="h-auto p-0 mt-2 text-sm"
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -415,7 +423,7 @@ const Notifications = () => {
                         </div>
                         <Switch
                           checked={preferences.push_notifications}
-                          onCheckedChange={(checked) => 
+                          onCheckedChange={(checked) =>
                             setPreferences(p => ({ ...p, push_notifications: checked }))
                           }
                         />
@@ -429,7 +437,7 @@ const Notifications = () => {
                         </div>
                         <Switch
                           checked={preferences.email_notifications}
-                          onCheckedChange={(checked) => 
+                          onCheckedChange={(checked) =>
                             setPreferences(p => ({ ...p, email_notifications: checked }))
                           }
                         />
@@ -452,7 +460,7 @@ const Notifications = () => {
                         </div>
                         <Switch
                           checked={preferences.task_alerts}
-                          onCheckedChange={(checked) => 
+                          onCheckedChange={(checked) =>
                             setPreferences(p => ({ ...p, task_alerts: checked }))
                           }
                         />
@@ -469,7 +477,7 @@ const Notifications = () => {
                         </div>
                         <Switch
                           checked={preferences.message_alerts}
-                          onCheckedChange={(checked) => 
+                          onCheckedChange={(checked) =>
                             setPreferences(p => ({ ...p, message_alerts: checked }))
                           }
                         />
@@ -486,7 +494,7 @@ const Notifications = () => {
                         </div>
                         <Switch
                           checked={preferences.payment_alerts}
-                          onCheckedChange={(checked) => 
+                          onCheckedChange={(checked) =>
                             setPreferences(p => ({ ...p, payment_alerts: checked }))
                           }
                         />
@@ -503,7 +511,7 @@ const Notifications = () => {
                         </div>
                         <Switch
                           checked={preferences.booking_alerts}
-                          onCheckedChange={(checked) => 
+                          onCheckedChange={(checked) =>
                             setPreferences(p => ({ ...p, booking_alerts: checked }))
                           }
                         />

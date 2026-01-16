@@ -96,6 +96,53 @@ serve(async (req: Request) => {
       );
     }
 
+    // Reject if phone is already verified/claimed by another user
+    const { data: existingProfile, error: profileCheckError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("phone", phone)
+      .neq("id", userId)
+      .maybeSingle();
+
+    if (profileCheckError) {
+      console.error("Profile check error:", profileCheckError);
+      return new Response(
+        JSON.stringify({ error: "Unable to verify phone ownership. Please try again." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (existingProfile) {
+      return new Response(
+        JSON.stringify({ error: "This phone number is already in use by another account. Please use a different number." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Also block if another user has a verified record for this phone
+    const { data: existingVerification, error: verificationCheckError } = await supabase
+      .from("phone_verifications")
+      .select("user_id, verified_at")
+      .eq("phone", phone)
+      .neq("user_id", userId)
+      .not("verified_at", "is", null)
+      .maybeSingle();
+
+    if (verificationCheckError) {
+      console.error("Verification ownership check error:", verificationCheckError);
+      return new Response(
+        JSON.stringify({ error: "Unable to verify phone ownership. Please try again." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (existingVerification) {
+      return new Response(
+        JSON.stringify({ error: "This phone number has already been verified by another account. Please use a different number." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Rate limiting: Check for recent OTPs
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     const { data: recentOTPs, error: rateError } = await supabase
