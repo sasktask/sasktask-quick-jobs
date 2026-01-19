@@ -91,20 +91,20 @@ const Index = () => {
 
               {/* Main Headline */}
               <h1
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] animate-fade-up"
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] animate-fade-up tracking-tight"
                 style={{ animationDelay: '0.2s' }}
               >
                 {user ? (
                   <>
-                    Your Dashboard
-                    <span className="block text-gradient-hero mt-2">
+                    <span className="text-foreground">Your Dashboard</span>
+                    <span className="block text-gradient-hero mt-2 drop-shadow-sm">
                       Awaits
                     </span>
                   </>
                 ) : (
                   <>
-                    Get Things Done
-                    <span className="block text-gradient-hero mt-2">
+                    <span className="text-foreground">Get Things Done</span>
+                    <span className="block text-gradient-hero mt-2 drop-shadow-sm">
                       The Easy Way
                     </span>
                   </>
@@ -112,7 +112,7 @@ const Index = () => {
               </h1>
 
               <p
-                className="text-base sm:text-xl text-muted-foreground leading-relaxed animate-fade-up max-w-xl mx-auto lg:mx-0"
+                className="text-lg sm:text-xl text-foreground/80 font-medium leading-relaxed animate-fade-up max-w-xl mx-auto lg:mx-0"
                 style={{ animationDelay: '0.3s' }}
               >
                 {user
