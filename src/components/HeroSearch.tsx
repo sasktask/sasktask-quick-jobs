@@ -227,12 +227,12 @@ export const HeroSearch = () => {
 
       {/* Popular Searches */}
       <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 justify-center lg:justify-start">
-        <span className="text-xs sm:text-sm text-muted-foreground">Popular:</span>
+        <span className="text-xs sm:text-sm font-medium text-foreground/70">Popular:</span>
         {popularSearches.slice(0, 4).map((term) => (
           <button
             key={term}
             onClick={() => handlePopularSearchClick(term)}
-            className="px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-muted/50 hover:bg-primary/10 hover:text-primary rounded-full transition-colors border border-transparent hover:border-primary/30 touch-manipulation"
+            className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium bg-card/80 backdrop-blur-sm text-foreground hover:bg-primary hover:text-primary-foreground rounded-full transition-all border border-border/50 hover:border-primary shadow-sm hover:shadow-md touch-manipulation"
           >
             {term}
           </button>
@@ -242,7 +242,7 @@ export const HeroSearch = () => {
             <button
               key={term}
               onClick={() => handlePopularSearchClick(term)}
-              className="px-3 py-1.5 text-sm bg-muted/50 hover:bg-primary/10 hover:text-primary rounded-full transition-colors border border-transparent hover:border-primary/30"
+              className="px-4 py-2 text-sm font-medium bg-card/80 backdrop-blur-sm text-foreground hover:bg-primary hover:text-primary-foreground rounded-full transition-all border border-border/50 hover:border-primary shadow-sm hover:shadow-md"
             >
               {term}
             </button>

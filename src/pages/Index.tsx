@@ -57,11 +57,14 @@ const Index = () => {
       <HomePageSchema />
       <Navbar />
 
+      {/* Spacer for fixed navbar */}
+      <div className="h-16" />
+
       {/* Urgency Banner */}
       <UrgencyBanner />
 
       {/* Hero Section */}
-      <section className="pt-8 sm:pt-16 pb-12 sm:pb-24 px-4 relative overflow-hidden">
+      <section className="pt-12 sm:pt-20 pb-12 sm:pb-24 px-4 relative overflow-hidden">
         {/* Enhanced Background with mesh gradient */}
         <div className="absolute inset-0 bg-gradient-mesh -z-10" />
         <div className="absolute inset-0 bg-gradient-radial-lg -z-10" />
