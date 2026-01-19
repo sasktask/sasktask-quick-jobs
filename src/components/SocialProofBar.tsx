@@ -84,7 +84,7 @@ export function SocialProofBar({ className, variant = "default" }: SocialProofBa
       <div className="container mx-auto px-4">
         <div className="flex flex-wrap justify-center lg:justify-between items-center gap-6 lg:gap-4">
           {/* Trust badge */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <Shield className="h-5 w-5 text-primary" />
             <span>Trusted by Saskatchewan</span>
           </div>
@@ -101,9 +101,9 @@ export function SocialProofBar({ className, variant = "default" }: SocialProofBa
                   <item.icon className={cn("h-5 w-5", item.color)} />
                 </div>
                 <div>
-                  <div className="font-bold text-lg text-foreground">
+                  <div className="font-bold text-xl text-foreground">
                     {stats.isLoading ? (
-                      <Skeleton className="h-5 w-12" />
+                      <Skeleton className="h-6 w-14" />
                     ) : item.isRating ? (
                       <span className="flex items-center gap-1">
                         {item.value}
@@ -115,7 +115,7 @@ export function SocialProofBar({ className, variant = "default" }: SocialProofBa
                       item.value
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                  <p className="text-sm font-medium text-foreground/70">{item.label}</p>
                 </div>
               </div>
             ))}

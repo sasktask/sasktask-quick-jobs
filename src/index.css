@@ -40,7 +40,7 @@
     --info-foreground: 0 0% 100%;
     
     --muted: 210 25% 96%;
-    --muted-foreground: 215 20% 35%;
+    --muted-foreground: 215 25% 40%;
     
     --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
@@ -172,9 +172,14 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Sora', 'Inter', sans-serif;
     font-weight: 700;
-    letter-spacing: -0.025em;
-    line-height: 1.2;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
     @apply text-foreground;
+  }
+  
+  /* Paragraph readability */
+  p {
+    line-height: 1.7;
   }
   
   h1 { @apply text-4xl md:text-5xl lg:text-6xl; }
