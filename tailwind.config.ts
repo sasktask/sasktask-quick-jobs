@@ -89,6 +89,7 @@ export default {
         'glow': 'var(--shadow-glow)',
         'glow-lg': 'var(--shadow-glow-lg)',
         'colored': 'var(--shadow-colored)',
+        'glass': 'var(--shadow-glass)',
         'premium-sm': 'var(--shadow-sm)',
         'premium-md': 'var(--shadow-md)',
         'premium-lg': 'var(--shadow-lg)',
