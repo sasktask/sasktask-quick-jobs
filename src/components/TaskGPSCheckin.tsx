@@ -381,52 +381,66 @@ export const TaskGPSCheckin = ({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <Card className="glass-card overflow-hidden border-border/50">
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center space-y-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+            <p className="text-sm text-muted-foreground">Loading check-ins...</p>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="glass-card overflow-hidden border-border/50">
+      <CardHeader className="bg-gradient-to-r from-primary/5 via-transparent to-secondary/5">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Navigation className="h-5 w-5" />
-              GPS Check-in
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
+                <Navigation className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl">GPS Check-in</span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="mt-1.5">
               Record your start/end times with verified location
             </CardDescription>
           </div>
           {getStatusBadge()}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-4">
         {/* Location error warning */}
         {locationError && (
-          <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
-            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-            <span>{locationError}</span>
+          <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm backdrop-blur-sm">
+            <div className="h-8 w-8 rounded-lg bg-destructive/20 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="h-4 w-4" />
+            </div>
+            <span className="font-medium">{locationError}</span>
           </div>
         )}
 
         {/* Task location reference */}
         {taskLocation && (
-          <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <span>Task location: <span className="font-medium">{taskLocation}</span></span>
+          <div className="flex items-center gap-3 p-4 bg-muted/30 backdrop-blur-sm border border-border/50 rounded-xl text-sm">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <MapPin className="h-4 w-4 text-primary" />
+            </div>
+            <span>Task location: <span className="font-semibold text-foreground">{taskLocation}</span></span>
           </div>
         )}
 
         {/* Duration tracker */}
         {checkins.length > 0 && (
-          <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg">
-            <Clock className="h-4 w-4 text-primary" />
-            <span className="text-sm">Total time: <span className="font-semibold">{calculateDuration()}</span></span>
+          <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-primary/10 to-primary/5 backdrop-blur-sm border border-primary/20 rounded-xl">
+            <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Clock className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Time</p>
+              <p className="text-lg font-bold text-primary">{calculateDuration()}</p>
+            </div>
           </div>
         )}
 
@@ -435,13 +449,14 @@ export const TaskGPSCheckin = ({
           <>
             {showNotes ? (
               <div className="space-y-2">
-                <Label htmlFor="checkin-notes">Add notes (optional)</Label>
+                <Label htmlFor="checkin-notes" className="text-sm font-medium">Add notes (optional)</Label>
                 <Textarea
                   id="checkin-notes"
                   placeholder="Any notes about this check-in..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
+                  className="bg-background/50 backdrop-blur-sm"
                 />
               </div>
             ) : (
@@ -449,7 +464,7 @@ export const TaskGPSCheckin = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowNotes(true)}
-                className="text-muted-foreground"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted/50"
               >
                 + Add notes
               </Button>
@@ -458,14 +473,14 @@ export const TaskGPSCheckin = ({
         )}
 
         {/* Action buttons */}
-        <div className="flex justify-center py-2">
+        <div className="flex justify-center py-4">
           {getActionButton()}
         </div>
 
         {/* Check-in history */}
         {checkins.length > 0 && (
-          <div className="space-y-2 pt-4 border-t">
-            <h4 className="text-sm font-medium text-muted-foreground">Check-in History</h4>
+          <div className="space-y-3 pt-4 border-t border-border/50">
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Check-in History</h4>
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {checkins.map((checkin) => (
                 <div 
