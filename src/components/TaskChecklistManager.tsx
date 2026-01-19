@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -360,9 +361,12 @@ export const TaskChecklistManager = ({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <Card className="glass-card overflow-hidden border-border/50">
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center space-y-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+            <p className="text-sm text-muted-foreground">Loading checklist...</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -370,64 +374,76 @@ export const TaskChecklistManager = ({
 
   return (
     <>
-      <Card>
-        <CardHeader>
+      <Card className="glass-card overflow-hidden border-border/50">
+        <CardHeader className="bg-gradient-to-r from-primary/5 via-transparent to-secondary/5">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <CheckSquare className="h-5 w-5" />
-                Task Checklist
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
+                  <CheckSquare className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-xl">Task Checklist</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="mt-1.5">
                 {isTaskGiver ? 'Define requirements for task completion' : 'Complete each item with proof'}
               </CardDescription>
             </div>
             {items.length > 0 && (
-              <div className="text-right">
-                <span className="text-2xl font-bold">{completedCount}/{items.length}</span>
-                <p className="text-xs text-muted-foreground">completed</p>
+              <div className="text-right bg-primary/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-primary/20">
+                <span className="text-2xl font-bold text-primary">{completedCount}/{items.length}</span>
+                <p className="text-xs text-primary/70">completed</p>
               </div>
             )}
           </div>
           {items.length > 0 && (
-            <Progress value={progress} className="mt-2" />
+            <div className="mt-3">
+              <Progress value={progress} className="h-2" />
+            </div>
           )}
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-4">
           {/* Pending approvals notice for task giver */}
           {isTaskGiver && pendingCount > 0 && (
-            <div className="flex items-center gap-2 p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg text-sm">
-              <AlertCircle className="h-4 w-4 text-yellow-600" />
-              <span className="text-yellow-800 dark:text-yellow-400">
+            <div className="flex items-center gap-3 p-4 bg-yellow-100/80 dark:bg-yellow-900/30 backdrop-blur-sm rounded-xl text-sm border border-yellow-200 dark:border-yellow-800/50">
+              <div className="h-8 w-8 rounded-lg bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="h-4 w-4 text-yellow-600" />
+              </div>
+              <span className="text-yellow-800 dark:text-yellow-400 font-medium">
                 {pendingCount} item{pendingCount > 1 ? 's' : ''} waiting for your approval
               </span>
             </div>
           )}
 
-          {/* Checklist items */}
           <div className="space-y-3">
             {items.map((item) => (
               <div 
                 key={item.id}
-                className={`flex items-start gap-3 p-3 rounded-lg border ${
+                className={cn(
+                  "flex items-start gap-4 p-4 rounded-xl border backdrop-blur-sm transition-all duration-300",
                   item.completion?.status === 'approved' 
-                    ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' 
+                    ? 'bg-green-50/80 dark:bg-green-900/20 border-green-200/50 dark:border-green-700/50' 
                     : item.completion?.status === 'rejected'
-                    ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'
-                    : 'bg-muted/30 border-border'
-                }`}
+                    ? 'bg-red-50/80 dark:bg-red-900/20 border-red-200/50 dark:border-red-700/50'
+                    : item.completion?.status === 'pending'
+                    ? 'bg-yellow-50/80 dark:bg-yellow-900/20 border-yellow-200/50 dark:border-yellow-700/50'
+                    : 'bg-muted/30 border-border/50 hover:border-primary/30 hover:bg-muted/50'
+                )}
               >
                 <div className="flex-shrink-0 mt-0.5">
                   {item.completion?.status === 'approved' ? (
-                    <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
-                      <Check className="h-3 w-3 text-white" />
+                    <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md">
+                      <Check className="h-4 w-4 text-white" />
                     </div>
                   ) : item.completion?.status === 'rejected' ? (
-                    <div className="h-5 w-5 rounded-full bg-red-500 flex items-center justify-center">
-                      <X className="h-3 w-3 text-white" />
+                    <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-md">
+                      <X className="h-4 w-4 text-white" />
+                    </div>
+                  ) : item.completion?.status === 'pending' ? (
+                    <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center shadow-md">
+                      <Clock className="h-4 w-4 text-white" />
                     </div>
                   ) : (
-                    <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
+                    <div className="h-7 w-7 rounded-lg border-2 border-muted-foreground/30 flex items-center justify-center bg-background/50" />
                   )}
                 </div>
 

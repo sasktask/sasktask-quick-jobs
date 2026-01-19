@@ -205,49 +205,59 @@ export const AuditTrailTimeline = ({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <Card className="glass-card overflow-hidden border-border/50">
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center space-y-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+            <p className="text-sm text-muted-foreground">Loading audit trail...</p>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="glass-card overflow-hidden border-border/50">
+      <CardHeader className="bg-gradient-to-r from-primary/5 via-transparent to-secondary/5">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Audit Trail
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
+                <Shield className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl">Audit Trail</span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="mt-1.5">
               Immutable record of all task-related actions
             </CardDescription>
           </div>
           {showVerification && chainValid !== null && (
-            <Badge className={chainValid 
-              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
-              : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-            }>
-              <Link2 className="h-3 w-3 mr-1" />
+            <Badge className={cn(
+              "px-3 py-1.5 font-medium",
+              chainValid 
+                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800' 
+                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800'
+            )}>
+              <Link2 className="h-3.5 w-3.5 mr-1.5" />
               {chainValid ? 'Chain Verified' : 'Chain Broken'}
             </Badge>
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         {events.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>No audit events recorded yet</p>
+          <div className="text-center py-12 text-muted-foreground">
+            <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+              <Shield className="h-8 w-8 opacity-50" />
+            </div>
+            <p className="text-sm font-medium">No audit events recorded yet</p>
+            <p className="text-xs mt-1">Events will appear as actions are performed</p>
           </div>
         ) : (
           <ScrollArea style={{ maxHeight }} className="pr-4">
             <div className="relative">
               {/* Vertical line */}
-              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-border" />
+              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/50 via-border to-transparent" />
 
               <div className="space-y-4">
                 {events.map((event, index) => (
