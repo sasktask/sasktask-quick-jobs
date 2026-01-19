@@ -557,17 +557,17 @@ const Index = () => {
 
                     {/* Trust indicators */}
                     <div className="flex flex-wrap justify-center gap-8 pt-4">
-                      <div className="flex items-center gap-2.5 bg-white/10 px-4 py-2 rounded-full">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-300" />
-                        <span className="text-white font-medium text-base">Free to sign up</span>
+                      <div className="flex items-center gap-2.5 bg-white/25 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/30 shadow-lg">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-200" />
+                        <span className="text-white font-semibold text-base drop-shadow-md">Free to sign up</span>
                       </div>
-                      <div className="flex items-center gap-2.5 bg-white/10 px-4 py-2 rounded-full">
-                        <Shield className="h-5 w-5 text-blue-300" />
-                        <span className="text-white font-medium text-base">Privacy protected</span>
+                      <div className="flex items-center gap-2.5 bg-white/25 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/30 shadow-lg">
+                        <Shield className="h-5 w-5 text-blue-200" />
+                        <span className="text-white font-semibold text-base drop-shadow-md">Privacy protected</span>
                       </div>
-                      <div className="flex items-center gap-2.5 bg-white/10 px-4 py-2 rounded-full">
-                        <Lock className="h-5 w-5 text-yellow-300" />
-                        <span className="text-white font-medium text-base">Secure & encrypted</span>
+                      <div className="flex items-center gap-2.5 bg-white/25 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/30 shadow-lg">
+                        <Lock className="h-5 w-5 text-yellow-200" />
+                        <span className="text-white font-semibold text-base drop-shadow-md">Secure & encrypted</span>
                       </div>
                     </div>
                   </div>
