@@ -803,25 +803,25 @@ const Auth: React.FC = () => {
       <div className="container mx-auto px-4 pt-32 pb-20">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8 animate-fade-in">
-            <h1 className="text-4xl font-bold mb-2 text-gradient">Welcome to SaskTask</h1>
-            <p className="text-muted-foreground">Your local task marketplace</p>
+            <h1 className="text-4xl font-bold mb-3 text-foreground">Welcome to <span className="text-primary">SaskTask</span></h1>
+            <p className="text-lg font-medium text-foreground/70">Your local task marketplace</p>
           </div>
 
-          <Card className="shadow-2xl border-border">
-            <CardHeader>
+          <Card className="shadow-2xl border-border bg-card">
+            <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-primary" />
-                <CardTitle className="text-2xl">Get Started</CardTitle>
+                <CardTitle className="text-2xl font-bold text-foreground">Get Started</CardTitle>
               </div>
-              <CardDescription>Sign in or create your free account</CardDescription>
+              <CardDescription className="text-base font-medium text-foreground/70">Sign in or create your free account</CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="signin" onClick={clearErrors}>
+                <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50">
+                  <TabsTrigger value="signin" onClick={clearErrors} className="font-semibold text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                     Sign In
                   </TabsTrigger>
-                  <TabsTrigger value="signup" onClick={clearErrors}>
+                  <TabsTrigger value="signup" onClick={clearErrors} className="font-semibold text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                     Sign Up
                   </TabsTrigger>
                 </TabsList>
@@ -838,9 +838,9 @@ const Auth: React.FC = () => {
                   <div className="space-y-4">
                     <form onSubmit={handleSignIn} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="signin-identifier">Email or Phone</Label>
+                        <Label htmlFor="signin-identifier" className="text-sm font-semibold text-foreground">Email or Phone</Label>
                         <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <User className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
                           <Input
                             id="signin-identifier"
                             type="text"
@@ -850,14 +850,14 @@ const Auth: React.FC = () => {
                               setIdentifier(e.target.value);
                               if (formErrors.identifier) clearErrors();
                             }}
-                            className={`pl-10 ${formErrors.identifier ? "border-destructive" : ""}`}
+                            className={`pl-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.identifier ? "border-destructive" : ""}`}
                             required
                             autoComplete="email tel"
                             disabled={!!rateLimitError}
                           />
                         </div>
                         {formErrors.identifier && (
-                          <p className="text-sm text-destructive flex items-center gap-1">
+                          <p className="text-sm font-medium text-destructive flex items-center gap-1">
                             <AlertCircle className="h-3 w-3" />
                             {formErrors.identifier}
                           </p>
@@ -866,18 +866,18 @@ const Auth: React.FC = () => {
 
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <Label htmlFor="signin-password">Password</Label>
+                          <Label htmlFor="signin-password" className="text-sm font-semibold text-foreground">Password</Label>
                           <Button
                             type="button"
                             variant="link"
-                            className="p-0 h-auto text-xs"
+                            className="p-0 h-auto text-sm font-semibold text-primary hover:text-primary/80"
                             onClick={() => setShowForgotPassword(true)}
                           >
                             Forgot password?
                           </Button>
                         </div>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Lock className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
                           <Input
                             id="signin-password"
                             type={showPassword ? "text" : "password"}
@@ -887,7 +887,7 @@ const Auth: React.FC = () => {
                               setPassword(e.target.value);
                               if (formErrors.password) clearErrors();
                             }}
-                            className={`pl-10 pr-10 ${formErrors.password ? "border-destructive" : ""}`}
+                            className={`pl-10 pr-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.password ? "border-destructive" : ""}`}
                             required
                             autoComplete="current-password"
                             disabled={!!rateLimitError}
@@ -896,14 +896,14 @@ const Auth: React.FC = () => {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-foreground/50 hover:text-foreground"
                             onClick={() => setShowPassword((show) => !show)}
                           >
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </Button>
                         </div>
                         {formErrors.password && (
-                          <p className="text-sm text-destructive flex items-center gap-1">
+                          <p className="text-sm font-medium text-destructive flex items-center gap-1">
                             <AlertCircle className="h-3 w-3" />
                             {formErrors.password}
                           </p>
@@ -915,8 +915,9 @@ const Auth: React.FC = () => {
                           id="remember-me"
                           checked={rememberMe}
                           onCheckedChange={(checked) => setRememberMe(!!checked)}
+                          className="border-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         />
-                        <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
+                        <Label htmlFor="remember-me" className="text-sm font-medium text-foreground cursor-pointer">
                           Remember me for 30 days
                         </Label>
                       </div>
@@ -939,11 +940,11 @@ const Auth: React.FC = () => {
                   {/* Signup Form */}
                   <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-firstname">
+                      <Label htmlFor="signup-firstname" className="text-sm font-semibold text-foreground">
                         First Name <span className="text-destructive">*</span>
                       </Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <User className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
                         <Input
                           id="signup-firstname"
                           type="text"
@@ -953,24 +954,24 @@ const Auth: React.FC = () => {
                             setFirstName(e.target.value);
                             if (formErrors.firstName) clearErrors();
                           }}
-                          className={`pl-10 ${formErrors.firstName ? "border-destructive" : ""}`}
+                          className={`pl-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.firstName ? "border-destructive" : ""}`}
                           required
                           autoComplete="given-name"
                         />
                       </div>
                       {formErrors.firstName && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
+                        <p className="text-sm font-medium text-destructive flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
                           {formErrors.firstName}
                         </p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-middlename">
-                        Middle Name <span className="text-muted-foreground text-xs">(optional)</span>
+                      <Label htmlFor="signup-middlename" className="text-sm font-semibold text-foreground">
+                        Middle Name <span className="text-foreground/50 text-xs font-normal">(optional)</span>
                       </Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <User className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
                         <Input
                           id="signup-middlename"
                           type="text"
@@ -980,23 +981,23 @@ const Auth: React.FC = () => {
                             setMiddleName(e.target.value);
                             if (formErrors.middleName) clearErrors();
                           }}
-                          className={`pl-10 ${formErrors.middleName ? "border-destructive" : ""}`}
+                          className={`pl-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.middleName ? "border-destructive" : ""}`}
                           autoComplete="additional-name"
                         />
                       </div>
                       {formErrors.middleName && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
+                        <p className="text-sm font-medium text-destructive flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
                           {formErrors.middleName}
                         </p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-lastname">
+                      <Label htmlFor="signup-lastname" className="text-sm font-semibold text-foreground">
                         Last Name <span className="text-destructive">*</span>
                       </Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <User className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
                         <Input
                           id="signup-lastname"
                           type="text"
@@ -1006,24 +1007,24 @@ const Auth: React.FC = () => {
                             setLastName(e.target.value);
                             if (formErrors.lastName) clearErrors();
                           }}
-                          className={`pl-10 ${formErrors.lastName ? "border-destructive" : ""}`}
+                          className={`pl-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.lastName ? "border-destructive" : ""}`}
                           required
                           autoComplete="family-name"
                         />
                       </div>
                       {formErrors.lastName && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
+                        <p className="text-sm font-medium text-destructive flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
                           {formErrors.lastName}
                         </p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-email">
+                      <Label htmlFor="signup-email" className="text-sm font-semibold text-foreground">
                         Email <span className="text-destructive">*</span>
                       </Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
                         <Input
                           id="signup-email"
                           type="email"
@@ -1033,24 +1034,24 @@ const Auth: React.FC = () => {
                             setEmail(e.target.value.toLowerCase().trim());
                             if (formErrors.email) clearErrors();
                           }}
-                          className={`pl-10 ${formErrors.email ? "border-destructive" : ""}`}
+                          className={`pl-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.email ? "border-destructive" : ""}`}
                           required
                           autoComplete="email"
                         />
                       </div>
                       {formErrors.email && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
+                        <p className="text-sm font-medium text-destructive flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
                           {formErrors.email}
                         </p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-phone">
+                      <Label htmlFor="signup-phone" className="text-sm font-semibold text-foreground">
                         Phone Number <span className="text-destructive">*</span>
                       </Label>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
                         <Input
                           id="signup-phone"
                           type="tel"
@@ -1060,23 +1061,23 @@ const Auth: React.FC = () => {
                             setPhone(e.target.value);
                             if (formErrors.phone) clearErrors();
                           }}
-                          className={`pl-10 ${formErrors.phone ? "border-destructive" : ""}`}
+                          className={`pl-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.phone ? "border-destructive" : ""}`}
                           autoComplete="tel"
                           required
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground">Include country code (e.g., +1 for Canada/US)</p>
+                      <p className="text-xs font-medium text-foreground/60">Include country code (e.g., +1 for Canada/US)</p>
                       {formErrors.phone && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
+                        <p className="text-sm font-medium text-destructive flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
                           {formErrors.phone}
                         </p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-password">Password</Label>
+                      <Label htmlFor="signup-password" className="text-sm font-semibold text-foreground">Password <span className="text-destructive">*</span></Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
                         <Input
                           id="signup-password"
                           type={showPassword ? "text" : "password"}
@@ -1086,7 +1087,7 @@ const Auth: React.FC = () => {
                             setPassword(e.target.value);
                             if (formErrors.password) clearErrors();
                           }}
-                          className={`pl-10 pr-10 ${formErrors.password ? "border-destructive" : ""}`}
+                          className={`pl-10 pr-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.password ? "border-destructive" : ""}`}
                           required
                           autoComplete="new-password"
                         />
@@ -1094,7 +1095,7 @@ const Auth: React.FC = () => {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-foreground/50 hover:text-foreground"
                           onClick={() => setShowPassword((show) => !show)}
                           tabIndex={-1}
                         >
@@ -1112,15 +1113,15 @@ const Auth: React.FC = () => {
                               />
                             ))}
                           </div>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs font-medium text-foreground/70">
                             Password strength:{" "}
                             <span
                               className={
                                 passwordStrength.score >= 5
-                                  ? "text-green-600"
+                                  ? "text-green-600 font-semibold"
                                   : passwordStrength.score >= 3
-                                    ? "text-yellow-600"
-                                    : "text-destructive"
+                                    ? "text-yellow-600 font-semibold"
+                                    : "text-destructive font-semibold"
                               }
                             >
                               {passwordStrength.label}
@@ -1128,8 +1129,8 @@ const Auth: React.FC = () => {
                           </p>
                         </div>
                       )}
-                      {formErrors.password && <p className="text-sm text-destructive">{formErrors.password}</p>}
-                      <ul className="text-xs text-muted-foreground space-y-1 mt-2">
+                      {formErrors.password && <p className="text-sm font-medium text-destructive">{formErrors.password}</p>}
+                      <ul className="text-xs font-medium text-foreground/60 space-y-1 mt-2">
                         <li className={`flex items-center gap-1 ${password.length >= 8 ? "text-green-600" : ""}`}>
                           {password.length >= 8 ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
                           At least 8 characters
@@ -1159,9 +1160,9 @@ const Auth: React.FC = () => {
                       </ul>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                      <Label htmlFor="signup-confirm-password" className="text-sm font-semibold text-foreground">Confirm Password <span className="text-destructive">*</span></Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
                         <Input
                           id="signup-confirm-password"
                           type={showConfirmPassword ? "text" : "password"}
@@ -1171,7 +1172,7 @@ const Auth: React.FC = () => {
                             setConfirmPassword(e.target.value);
                             if (formErrors.confirmPassword) clearErrors();
                           }}
-                          className={`pl-10 pr-10 ${formErrors.confirmPassword ? "border-destructive" : ""}`}
+                          className={`pl-10 pr-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.confirmPassword ? "border-destructive" : ""}`}
                           required
                           autoComplete="new-password"
                         />
@@ -1179,7 +1180,7 @@ const Auth: React.FC = () => {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-foreground/50 hover:text-foreground"
                           onClick={() => setShowConfirmPassword((show) => !show)}
                           tabIndex={-1}
                         >
@@ -1187,16 +1188,16 @@ const Auth: React.FC = () => {
                         </Button>
                       </div>
                       {formErrors.confirmPassword && (
-                        <p className="text-sm text-destructive">{formErrors.confirmPassword}</p>
+                        <p className="text-sm font-medium text-destructive">{formErrors.confirmPassword}</p>
                       )}
                       {confirmPassword && password === confirmPassword && (
-                        <p className="text-sm text-green-600 flex items-center gap-1">
+                        <p className="text-sm font-medium text-green-600 flex items-center gap-1">
                           <Check className="h-3 w-3" /> Passwords match
                         </p>
                       )}
                     </div>
                     <div className="space-y-3">
-                      <Label>I want to:</Label>
+                      <Label className="text-sm font-semibold text-foreground">I want to:</Label>
                       <div className="auth-role">
                         <div className="radio-input">
                           <label className="label" htmlFor="task_doer">
@@ -1213,8 +1214,8 @@ const Auth: React.FC = () => {
                                 <Wrench className="h-5 w-5 text-primary" />
                               </div>
                               <div className="flex flex-col">
-                                <span className="font-semibold">Find Tasks & Earn Money</span>
-                                <span className="text-sm text-muted-foreground">
+                                <span className="font-semibold text-foreground">Find Tasks & Earn Money</span>
+                                <span className="text-sm font-medium text-foreground/60">
                                   Browse and complete tasks posted by others
                                 </span>
                               </div>
@@ -1235,8 +1236,8 @@ const Auth: React.FC = () => {
                                 <Briefcase className="h-5 w-5 text-primary" />
                               </div>
                               <div className="flex flex-col">
-                                <span className="font-semibold">Post Tasks & Get Help</span>
-                                <span className="text-sm text-muted-foreground">
+                                <span className="font-semibold text-foreground">Post Tasks & Get Help</span>
+                                <span className="text-sm font-medium text-foreground/60">
                                   Hire local taskers to help with your needs
                                 </span>
                               </div>
@@ -1257,8 +1258,8 @@ const Auth: React.FC = () => {
                                 <Users className="h-5 w-5 text-primary" />
                               </div>
                               <div className="flex flex-col">
-                                <span className="font-semibold">Both - Do & Post Tasks</span>
-                                <span className="text-sm text-muted-foreground">
+                                <span className="font-semibold text-foreground">Both - Do & Post Tasks</span>
+                                <span className="text-sm font-medium text-foreground/60">
                                   Earn money and hire help whenever you need
                                 </span>
                               </div>
@@ -1280,13 +1281,13 @@ const Auth: React.FC = () => {
                             setTermsAccepted(!!checked);
                             if (formErrors.termsAccepted) clearErrors();
                           }}
-                          className="mt-1"
+                          className="mt-1 border-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         />
-                        <Label htmlFor="terms-accept" className="cursor-pointer text-sm leading-relaxed">
+                        <Label htmlFor="terms-accept" className="cursor-pointer text-sm font-medium leading-relaxed text-foreground">
                           I agree to the{" "}
                           <a
                             href="/terms"
-                            className="text-primary hover:underline font-medium"
+                            className="text-primary hover:underline font-semibold"
                             target="_blank"
                             rel="noopener noreferrer"
                           >
@@ -1295,7 +1296,7 @@ const Auth: React.FC = () => {
                           and{" "}
                           <a
                             href="/privacy"
-                            className="text-primary hover:underline font-medium"
+                            className="text-primary hover:underline font-semibold"
                             target="_blank"
                             rel="noopener noreferrer"
                           >
@@ -1305,7 +1306,7 @@ const Auth: React.FC = () => {
                         </Label>
                       </div>
                       {formErrors.termsAccepted && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
+                        <p className="text-sm font-medium text-destructive flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
                           {formErrors.termsAccepted}
                         </p>
@@ -1330,9 +1331,9 @@ const Auth: React.FC = () => {
             </CardContent>
           </Card>
 
-          <p className="text-center mt-6 text-sm text-muted-foreground">
+          <p className="text-center mt-6 text-sm font-medium text-foreground/70">
             Need help?{" "}
-            <a href="/contact" className="text-primary hover:underline">
+            <a href="/contact" className="text-primary hover:underline font-semibold">
               Contact Support
             </a>
           </p>
