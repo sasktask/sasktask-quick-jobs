@@ -6,7 +6,7 @@ import { OWNER_USER_ID } from "@/lib/constants";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AdminSidebar } from "./AdminSidebar";
-import { Loader2 } from "lucide-react";
+import { Loader2, Shield } from "lucide-react";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -49,8 +49,14 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="text-center">
+          <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Shield className="h-8 w-8 text-primary-foreground" />
+          </div>
+          <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+          <p className="text-sm text-muted-foreground mt-2">Verifying access...</p>
+        </div>
       </div>
     );
   }
@@ -60,14 +66,16 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-primary/5">
       <Navbar />
-      <div className="flex pt-16">
+      <div className="flex flex-1 pt-16">
         <AdminSidebar />
-        <main className="flex-1 min-h-[calc(100vh-4rem)]">
-          <div className="p-6 lg:p-8">
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold">{title}</h1>
+        <main className="flex-1 p-6 lg:p-8 overflow-auto">
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                {title}
+              </h1>
               {description && (
                 <p className="text-muted-foreground mt-1">{description}</p>
               )}
