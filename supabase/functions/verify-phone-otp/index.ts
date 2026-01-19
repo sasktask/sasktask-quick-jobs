@@ -9,7 +9,8 @@ const corsHeaders = {
 interface VerifyPhoneOTPRequest {
   phone: string;
   code: string;
-  userId: string;
+  userId?: string | null;
+  email?: string | null;
   verificationId?: string;
 }
 
@@ -24,11 +25,11 @@ serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { phone, code, userId, verificationId }: VerifyPhoneOTPRequest = await req.json();
+    const { phone, code, userId, email, verificationId }: VerifyPhoneOTPRequest = await req.json();
 
-    if (!phone || !code || !userId) {
+    if (!phone || !code || (!userId && !email)) {
       return new Response(
-        JSON.stringify({ error: "Phone, code, and user ID are required" }),
+        JSON.stringify({ error: "Phone, code, and user identifier (userId or email) are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -38,10 +39,15 @@ serve(async (req: Request) => {
       .from("phone_verifications")
       .select("*")
       .eq("phone", phone)
-      .eq("user_id", userId)
       .is("verified_at", null)
       .order("created_at", { ascending: false })
       .limit(1);
+
+    if (userId) {
+      query = query.eq("user_id", userId);
+    } else if (email) {
+      query = query.eq("pending_email", email);
+    }
 
     if (verificationId) {
       query = supabase
@@ -49,8 +55,13 @@ serve(async (req: Request) => {
         .select("*")
         .eq("id", verificationId)
         .eq("phone", phone)
-        .eq("user_id", userId)
         .is("verified_at", null);
+
+      if (userId) {
+        query = query.eq("user_id", userId);
+      } else if (email) {
+        query = query.eq("pending_email", email);
+      }
     }
 
     const { data: verification, error: fetchError } = await query.maybeSingle();
@@ -114,18 +125,20 @@ serve(async (req: Request) => {
       );
     }
 
-    // Update user profile with verified phone
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({ 
-        phone,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", userId);
+    // Update user profile with verified phone if userId is provided (post-signup flows)
+    if (userId) {
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ 
+          phone,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", userId);
 
-    if (profileError) {
-      console.error("Profile update error:", profileError);
-      // Don't fail the verification, just log the error
+      if (profileError) {
+        console.error("Profile update error:", profileError);
+        // Don't fail the verification, just log the error
+      }
     }
 
     return new Response(

@@ -8,13 +8,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Phone, RefreshCw, Shield, CheckCircle } from "lucide-react";
 
 interface PhoneVerificationProps {
-  userId: string;
+  userId?: string;
+  email?: string;
   initialPhone?: string;
   onVerified: (phone: string) => void;
 }
 
 export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   userId,
+  email,
   initialPhone = "",
   onVerified,
 }) => {
@@ -73,10 +75,15 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
 
     setIsSending(true);
     try {
+      if (!userId && !email) {
+        throw new Error("Missing user identifier for phone verification.");
+      }
+
       const { data, error } = await supabase.functions.invoke("send-phone-otp", {
         body: {
           phone: `+1${digits}`,
-          userId
+          userId,
+          email,
         },
       });
 
@@ -117,11 +124,16 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
     try {
       const digits = getDigitsOnly(phone);
 
+      if (!userId && !email) {
+        throw new Error("Missing user identifier for phone verification.");
+      }
+
       const { data, error } = await supabase.functions.invoke("verify-phone-otp", {
         body: {
           phone: `+1${digits}`,
           code: otp,
           userId,
+          email,
           verificationId,
         },
       });

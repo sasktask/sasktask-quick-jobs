@@ -542,13 +542,13 @@ const Index = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
-                      <Link to="/auth?tab=signup">
+                      <Link to="/auth">
                         <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/95 shadow-2xl text-lg font-bold h-16 px-10 gap-3 transition-all hover:scale-105">
                           Create Free Account
                           <ArrowRight className="h-5 w-5" />
                         </Button>
                       </Link>
-                      <Link to="/auth?tab=signin">
+                      <Link to="/auth?mode=signin">
                         <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white/15 hover:bg-white/25 border-2 border-white/50 text-white font-bold shadow-xl text-lg h-16 px-10 transition-all hover:scale-105">
                           Sign In
                         </Button>

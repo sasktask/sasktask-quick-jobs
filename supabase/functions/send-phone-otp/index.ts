@@ -10,7 +10,8 @@ const corsHeaders = {
 
 interface SendPhoneOTPRequest {
   phone: string;
-  userId: string;
+  userId?: string | null;
+  email?: string | null;
 }
 
 const generateOTP = () => {
@@ -79,11 +80,11 @@ serve(async (req: Request) => {
       normalizedProxies["https_proxy"] ||
       httpProxy;
 
-    const { phone, userId }: SendPhoneOTPRequest = await req.json();
+    const { phone, userId, email }: SendPhoneOTPRequest = await req.json();
 
-    if (!phone || !userId) {
+    if (!phone || (!userId && !email)) {
       return new Response(
-        JSON.stringify({ error: "Phone number and user ID are required" }),
+        JSON.stringify({ error: "Phone number and user identifier (userId or email) are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -102,7 +103,7 @@ serve(async (req: Request) => {
       .from("profiles")
       .select("id")
       .eq("phone", phone)
-      .neq("id", userId)
+      .neq("id", userId || "00000000-0000-0000-0000-000000000000")
       .maybeSingle();
 
     if (profileCheckError) {
@@ -123,9 +124,10 @@ serve(async (req: Request) => {
     // Also block if another user has a verified record for this phone
     const { data: existingVerification, error: verificationCheckError } = await supabase
       .from("phone_verifications")
-      .select("user_id, verified_at")
+      .select("user_id, verified_at, pending_email")
       .eq("phone", phone)
-      .neq("user_id", userId)
+      .neq("user_id", userId || "00000000-0000-0000-0000-000000000000")
+      .neq("pending_email", email || "___none___")
       .not("verified_at", "is", null)
       .maybeSingle();
 
@@ -184,7 +186,8 @@ serve(async (req: Request) => {
       .from("phone_verifications")
       .insert({
         phone,
-        user_id: userId,
+        user_id: userId || null,
+        pending_email: userId ? null : email,
         code: otp,
         expires_at: expiresAt,
         ip_address: clientIP,

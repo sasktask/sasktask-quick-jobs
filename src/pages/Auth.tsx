@@ -1,18 +1,16 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
-import { SignupOTPVerification } from "@/components/SignupOTPVerification";
+import { PhoneVerification } from "@/components/PhoneVerification";
 import { z } from "zod";
 import {
   Eye,
@@ -25,12 +23,10 @@ import {
   AlertCircle,
   Lock,
   User,
-  Phone,
   Briefcase,
   Wrench,
   Users,
 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Email validation schema
 const emailSchema = z
@@ -43,30 +39,38 @@ const emailSchema = z
 // Phone validation (may be unused but included for isPhone helper)
 const phoneSchema = z.string().regex(/^\+?[1-9]\d{6,14}$/, "Please enter a valid phone number (e.g., +1234567890)");
 
-// Sign in validation
-const signInSchema = z.object({
-  email: emailSchema,
-  password: z.string().min(1, "Password is required"),
-});
+// Password validation
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character");
 
-// Sign up validation with strong password requirements
-const signUpSchema = z.object({
+// Signup step schemas
+const step1Schema = z.object({
   firstName: z.string().trim().min(2, "First name must be at least 2 characters").max(50, "First name is too long"),
   middleName: z.string().trim().max(50, "Middle name is too long").optional().or(z.literal("")),
   lastName: z.string().trim().min(2, "Last name must be at least 2 characters").max(50, "Last name is too long"),
   email: emailSchema,
+  dateOfBirth: z.string().min(1, "Date of birth is required"),
+});
+
+const step2Schema = z.object({
+  role: z.enum(["task_giver", "task_doer", "both"]),
+});
+
+const step3Schema = z.object({
+  password: passwordSchema,
+  confirmPassword: passwordSchema,
+});
+
+const step4Schema = z.object({
   phone: z
     .string()
     .regex(/^\+?[1-9]\d{6,14}$/, "Phone number is required (e.g., +1234567890)")
     .min(1, "Phone number is required"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
-  role: z.enum(["task_giver", "task_doer", "both"]),
   termsAccepted: z.literal(true, {
     errorMap: () => ({ message: "You must accept the terms and conditions" }),
   }),
@@ -245,92 +249,55 @@ const recordAttempt = (success: boolean) => {
 
 const Auth: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const isPasswordReset = searchParams.get("reset") === "true";
-  const defaultTab = searchParams.get("tab") === "signup" ? "signup" : "signin";
-  const [activeTab, setActiveTab] = useState(defaultTab);
-
+  const mode = searchParams.get("mode") === "signin" ? "signin" : "signup";
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [middleName, setMiddleName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [role, setRole] = useState<"task_giver" | "task_doer" | "both">("task_doer");
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [showNewPassword, setShowNewPassword] = useState(isPasswordReset);
-  const [newPassword, setNewPassword] = useState("");
-  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
-
-  // OTP verification state for signup
-  const [showOTPVerification, setShowOTPVerification] = useState(false);
-  const [pendingSignupData, setPendingSignupData] = useState<{
-    email: string;
-    password: string;
-    fullName: string;
-    firstName: string;
-    middleName: string | null;
-    lastName: string;
-    phone: string;
-    role: string;
-    wantsBothRoles: boolean;
-  } | null>(null);
-
-  // Unified identifier (email or phone)
-  const [identifier, setIdentifier] = useState("");
-
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const passwordStrength = getPasswordStrength(password);
+  // Step state
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [emailVerificationId, setEmailVerificationId] = useState<string | null>(null);
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [role, setRole] = useState<"task_giver" | "task_doer" | "both">("task_doer");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // Helper to detect if input is email or phone
+  // Password visibility
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Sign-in state
+  const [signInEmail, setSignInEmail] = useState("");
+  const [signInPassword, setSignInPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+
+  const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
+
   const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  const isPhone = (value: string) => /^\+?[1-9]\d{6,14}$/.test(value);
-
-  const clearErrors = () => {
-    setFormErrors({});
-  };
+  const clearErrors = () => setFormErrors({});
 
   // Auth state onAuthStateChange + session check
   useEffect(() => {
-    // Subscribe to auth state
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session) {
-        setTimeout(async () => {
-          try {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("profile_completion")
-              .eq("id", session.user.id)
-              .single();
-
-            if (!profile || (profile.profile_completion ?? 0) < 80) {
-              navigate("/onboarding");
-            } else {
-              navigate("/dashboard");
-            }
-          } catch {
-            navigate("/dashboard");
-          }
-        }, 0);
-      }
-      if (event === "PASSWORD_RECOVERY") {
-        setShowNewPassword(true);
+        navigate("/dashboard");
       }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && !isPasswordReset) {
+      if (session && mode === "signin") {
         navigate("/dashboard");
       }
     });
@@ -338,70 +305,161 @@ const Auth: React.FC = () => {
     return () => {
       subscription?.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, isPasswordReset]);
+  }, [navigate, mode]);
 
-  // Sign up handler - now sends to OTP verification
-  const handleSignUp = async (e: React.FormEvent) => {
-    // console.log("click!");
-    e.preventDefault();
+  // Step helpers
+  const validateStep1 = () => {
+    const validation = step1Schema.safeParse({
+      firstName,
+      middleName: middleName || "",
+      lastName,
+      email,
+    });
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        const field = err.path[0] as string;
+        errors[field] = err.message;
+      });
+      setFormErrors(errors);
+      return null;
+    }
+    return validation.data;
+  };
+
+  const validateStep2 = () => {
+    const validation = step2Schema.safeParse({ role });
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        const field = err.path[0] as string;
+        errors[field] = err.message;
+      });
+      setFormErrors(errors);
+      return null;
+    }
+    return validation.data;
+  };
+
+  const validateStep3 = () => {
+    const validation = step3Schema.safeParse({ password, confirmPassword });
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        const field = err.path[0] as string;
+        errors[field] = err.message;
+      });
+      setFormErrors(errors);
+      return null;
+    }
+    if (validation.data.password !== validation.data.confirmPassword) {
+      setFormErrors({ confirmPassword: "Passwords do not match" });
+      return null;
+    }
+    return validation.data;
+  };
+
+  const validateStep4 = () => {
+    const validation = step4Schema.safeParse({ phone, termsAccepted });
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        const field = err.path[0] as string;
+        errors[field] = err.message;
+      });
+      setFormErrors(errors);
+      return null;
+    }
+    return validation.data;
+  };
+
+  const checkEmailExists = async (emailToCheck: string) => {
+    const { data: existing } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", emailToCheck)
+      .maybeSingle();
+    return !!existing;
+  };
+
+  const sendEmailOTP = async (emailToSend: string) => {
+    const { data, error } = await supabase.functions.invoke("send-signup-otp", {
+      body: { email: emailToSend },
+    });
+    if (error) {
+      throw new Error(data?.error || error.message || "Failed to send verification code");
+    }
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+    if (data?.verificationId) {
+      setEmailVerificationId(data.verificationId);
+    }
+  };
+
+  const handleNext = async () => {
     clearErrors();
-    setIsLoading(true);
-
-    try {
-      if (password !== confirmPassword) {
-        setFormErrors({ confirmPassword: "Passwords do not match" });
-        setIsLoading(false);
-        return;
-      }
-      const validation = signUpSchema.safeParse({
-        firstName,
-        middleName: middleName || undefined,
-        lastName,
-        email,
-        phone,
-        password,
-        role,
-        termsAccepted,
-      });
-
-      if (!validation.success) {
-        const errors: Record<string, string> = {};
-        validation.error.errors.forEach((err) => {
-          const field = err.path[0] as string;
-          errors[field] = err.message;
+    if (step === 1) {
+      const validated = validateStep1();
+      if (!validated) return;
+      setIsLoading(true);
+      try {
+        const exists = await checkEmailExists(validated.email);
+        if (exists) {
+          toast({
+            title: "Account exists",
+            description: "This email is already registered. Please sign in.",
+            variant: "destructive",
+          });
+          navigate("/auth?mode=signin");
+          return;
+        }
+        await sendEmailOTP(validated.email);
+        setEmailVerified(false);
+        setStep(2);
+      } catch (err: any) {
+        toast({
+          title: "Email verification failed",
+          description: err?.message || "Unable to send verification code",
+          variant: "destructive",
         });
-        setFormErrors(errors);
+      } finally {
         setIsLoading(false);
-        return;
       }
+    } else if (step === 2) {
+      const validated = validateStep2();
+      if (!validated) return;
+      setStep(3);
+    } else if (step === 3) {
+      const validated = validateStep3();
+      if (!validated) return;
+      setStep(4);
+    }
+  };
 
-      // Construct full name from parts
-      const fullName = [validation.data.firstName, validation.data.middleName, validation.data.lastName]
-        .filter(Boolean)
-        .join(" ");
-
-      const primaryRole = validation.data.role === "both" ? "task_giver" : validation.data.role;
-      const wantsBothRoles = validation.data.role === "both";
-
-      // Store signup data and show OTP verification
-      setPendingSignupData({
-        email: validation.data.email,
-        password: validation.data.password,
-        fullName,
-        firstName: validation.data.firstName,
-        middleName: validation.data.middleName || null,
-        lastName: validation.data.lastName,
-        phone: validation.data.phone,
-        role: primaryRole,
-        wantsBothRoles,
+  const handleVerifyEmail = async (code: string) => {
+    if (!code || code.length !== 6) return;
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-signup-otp", {
+        body: {
+          email,
+          code,
+          verificationId: emailVerificationId,
+        },
       });
-      setShowOTPVerification(true);
-    } catch (error: any) {
-      const errorMessage = error instanceof Error ? error.message : "Unable to proceed. Please try again.";
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Verification failed");
+      setEmailVerified(true);
       toast({
-        title: "Error",
-        description: errorMessage,
+        title: "Email verified",
+        description: "Continue to role selection",
+      });
+      setStep(2);
+    } catch (err: any) {
+      toast({
+        title: "Verification failed",
+        description: err?.message || "Invalid or expired code. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -409,127 +467,106 @@ const Auth: React.FC = () => {
     }
   };
 
-  // Handle successful OTP verification
-  const handleOTPVerified = () => {
-    // Reset state
-    setShowOTPVerification(false);
-    setPendingSignupData(null);
-    // Navigation will be handled by onAuthStateChange
-  };
-
-  // Handle going back from OTP verification
-  const handleOTPBack = () => {
-    setShowOTPVerification(false);
-    // Keep the signup data so user doesn't have to re-enter
-  };
-
-  // Sign in handler
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignIn = async () => {
     clearErrors();
-    setRateLimitError(null);
+    setIsSigningIn(true);
+    try {
+      const validation = emailSchema.safeParse(signInEmail.trim());
+      if (!validation.success) {
+        setFormErrors({ signInEmail: validation.error.errors[0].message });
+        return;
+      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email: validation.data,
+        password: signInPassword,
+      });
+      if (error) throw error;
+      toast({ title: "Welcome back!", description: "Signing you in..." });
+    } catch (err: any) {
+      toast({
+        title: "Sign in failed",
+        description: err?.message || "Unable to sign in. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
 
-    // Check rate limiting
-    const { allowed, remainingTime } = checkRateLimit();
-    if (!allowed) {
-      setRateLimitError(`Too many failed attempts. Please try again in ${remainingTime} minutes.`);
+  const handleCreateAccount = async () => {
+    clearErrors();
+    const validated = validateStep4();
+    if (!validated) return;
+    if (!emailVerified) {
+      toast({
+        title: "Email not verified",
+        description: "Please verify your email before continuing.",
+        variant: "destructive",
+      });
+      setStep(1);
+      return;
+    }
+    if (!phoneVerified) {
+      toast({
+        title: "Phone not verified",
+        description: "Please verify your phone before creating your account.",
+        variant: "destructive",
+      });
       return;
     }
 
     setIsLoading(true);
-
     try {
-      const trimmedIdentifier = identifier.trim();
-      const detectedType = isEmail(trimmedIdentifier) ? "email" : isPhone(trimmedIdentifier) ? "phone" : null;
+      const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ");
+      const primaryRole = role === "both" ? "task_giver" : role;
+      const wantsBothRoles = role === "both";
 
-      if (!detectedType) {
-        setFormErrors({
-          identifier: "Please enter a valid email address or phone number",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      if (detectedType === "phone") {
-        toast({
-          title: "Phone login coming soon",
-          description: "Please use your email address for now.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      const validation = signInSchema.safeParse({
-        email: trimmedIdentifier,
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
         password,
+        options: {
+          data: {
+            full_name: fullName,
+            first_name: firstName,
+            middle_name: middleName || null,
+            last_name: lastName,
+            phone,
+            role: primaryRole,
+            wants_both_roles: wantsBothRoles,
+            email_verified: true,
+            phone_verified: true,
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
       });
 
-      if (!validation.success) {
-        const errors: Record<string, string> = {};
-        validation.error.errors.forEach((err) => {
-          const field = err.path[0] as string;
-          if (field === "email") {
-            errors["identifier"] = err.message;
-          } else {
-            errors[field] = err.message;
-          }
+      if (signUpError) throw signUpError;
+
+      if (signUpData?.user) {
+        toast({
+          title: "Account created!",
+          description: "Welcome to SaskTask. Signing you in...",
         });
-        setFormErrors(errors);
-        setIsLoading(false);
-        return;
-      }
-
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: validation.data.email,
-        password: validation.data.password,
-      });
-
-      if (authError) {
-        recordAttempt(false);
-
-        if (
-          authError.message &&
-          typeof authError.message === "string" &&
-          authError.message.includes("Invalid login credentials")
-        ) {
-          setFormErrors({
-            password: "Invalid email or password. Please check your credentials.",
-          });
-          setIsLoading(false);
-          return;
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (signInError) {
+          console.error("Auto sign-in failed:", signInError);
         }
-        if (
-          authError.message &&
-          typeof authError.message === "string" &&
-          authError.message.includes("Email not confirmed")
-        ) {
-          setFormErrors({
-            identifier: "Please verify your email before signing in. Check your inbox.",
-          });
-          setIsLoading(false);
-          return;
-        }
-        throw authError;
+        navigate("/dashboard");
       }
-
-      recordAttempt(true);
+    } catch (err: any) {
       toast({
-        title: "Welcome back!",
-        description: "Signing you in...",
-      });
-      // Redirect handled by onAuthStateChange
-    } catch (error: any) {
-      const errorMessage = error instanceof Error ? error.message : "Unable to sign in. Please try again.";
-      toast({
-        title: "Sign in failed",
-        description: errorMessage,
+        title: "Signup failed",
+        description: err?.message || "Unable to create your account.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
 
   // Password reset update handler
   const handlePasswordUpdate = async (e: React.FormEvent) => {
@@ -583,208 +620,72 @@ const Auth: React.FC = () => {
     }
   };
 
-  // Forgot password handler
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearErrors();
-    setIsLoading(true);
+  // (Sign-in reset flows omitted in the wizard refactor)
 
-    try {
-      const emailValidation = emailSchema.safeParse(resetEmail);
-      if (!emailValidation.success) {
-        setFormErrors({
-          resetEmail: emailValidation.error.errors[0].message,
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/auth?reset=true`,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Check your email",
-        description: "We've sent you a password reset link.",
-      });
-
-      setShowForgotPassword(false);
-    } catch (error: any) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to send reset email";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Password Reset View
-  if (showNewPassword) {
+  // Dedicated sign-in page when mode=signin
+  if (mode === "signin") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
         <SEOHead
-          title="Set New Password - SaskTask"
-          description="Set a new password for your SaskTask account"
-          url="/auth"
+          title="Sign In - SaskTask"
+          description="Sign in to your SaskTask account"
+          url="/auth?mode=signin"
         />
         <Navbar />
-
-        <div className="container mx-auto px-4 pt-32 pb-20">
-          <div className="max-w-md mx-auto">
-            <Card className="shadow-2xl border-border">
-              <CardHeader className="text-center">
-                <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Shield className="h-8 w-8 text-primary" />
-                </div>
-                <CardTitle className="text-2xl">Set New Password</CardTitle>
-                <CardDescription>Enter your new password below</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handlePasswordUpdate} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password">New Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="new-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter new password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className={formErrors.newPassword ? "border-destructive" : ""}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowPassword((show) => !show)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                    {formErrors.newPassword && <p className="text-sm text-destructive">{formErrors.newPassword}</p>}
-                    <p className="text-xs text-muted-foreground">
-                      Must be 8+ characters with uppercase, lowercase, number, and special character
-                    </p>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading} variant="hero">
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
-                      </>
-                    ) : (
-                      "Update Password"
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Forgot Password View
-  if (showForgotPassword) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
-        <style>{roleStyles}</style>
-        <SEOHead title="Reset Password - SaskTask" description="Reset your SaskTask account password" url="/auth" />
-        <Navbar />
-
-        <div className="container mx-auto px-4 pt-32 pb-20">
-          <div className="max-w-md mx-auto">
-            <Card className="shadow-2xl border-border">
-              <CardHeader>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-fit mb-2"
-                  onClick={() => {
-                    setShowForgotPassword(false);
-                    clearErrors();
-                  }}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Login
+        <div className="container mx-auto px-4 pt-24 pb-16 max-w-xl">
+          <Card className="shadow-2xl border border-border/60 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+              <CardDescription>Use your email and password to continue</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={signInEmail}
+                  onChange={(e) => setSignInEmail(e.target.value.trim())}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                />
+                {formErrors.signInEmail && <p className="text-sm text-destructive">{formErrors.signInEmail}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Password</Label>
+                <Input
+                  type="password"
+                  value={signInPassword}
+                  onChange={(e) => setSignInPassword(e.target.value)}
+                  placeholder="Your password"
+                  autoComplete="current-password"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="signin-remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(!!checked)}
+                />
+                <Label htmlFor="signin-remember" className="text-sm text-foreground/80">Remember me</Label>
+              </div>
+              <Button className="w-full" onClick={handleSignIn} disabled={isSigningIn}>
+                {isSigningIn ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
+              </Button>
+              <div className="text-center text-sm text-foreground/70">
+                New to SaskTask?{" "}
+                <Button variant="link" className="px-1" onClick={() => navigate("/auth")}>
+                  Create an account
                 </Button>
-                <CardTitle className="text-2xl">Reset Password</CardTitle>
-                <CardDescription>Enter your email to receive a password reset link</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleForgotPassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reset-email">Email Address</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="reset-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={resetEmail}
-                        onChange={(e) => {
-                          setResetEmail(e.target.value);
-                          if (formErrors.resetEmail) clearErrors();
-                        }}
-                        className={`pl-10 ${formErrors.resetEmail ? "border-destructive" : ""}`}
-                        required
-                      />
-                    </div>
-                    {formErrors.resetEmail && <p className="text-sm text-destructive">{formErrors.resetEmail}</p>}
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading} variant="hero">
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      "Send Reset Link"
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // OTP Verification View for Signup
-  if (showOTPVerification && pendingSignupData) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
-        <style>{roleStyles}</style>
-        <SEOHead
-          title="Verify Your Email - SaskTask"
-          description="Verify your email address to complete your SaskTask registration"
-          url="/auth"
-        />
-        <Navbar />
-
-        <div className="container mx-auto px-4 pt-32 pb-20">
-          <div className="max-w-md mx-auto">
-            <div className="text-center mb-8 animate-fade-in">
-              <h1 className="text-4xl font-bold mb-2 text-gradient">Almost There!</h1>
-              <p className="text-muted-foreground">Verify your email to complete registration</p>
-            </div>
-
-            <SignupOTPVerification
-              email={pendingSignupData.email}
-              signupData={pendingSignupData}
-              onVerified={handleOTPVerified}
-              onBack={handleOTPBack}
-            />
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -794,481 +695,260 @@ const Auth: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
       <style>{roleStyles}</style>
       <SEOHead
-        title="Sign In or Sign Up - SaskTask"
-        description="Create your SaskTask account or sign in to find local help or earn money completing tasks in Saskatchewan"
+        title="Get Started - SaskTask"
+        description="Create your SaskTask account or sign in to find local help or earn money completing tasks."
         url="/auth"
       />
       <Navbar />
 
-      <div className="container mx-auto px-4 pt-32 pb-20">
-        <div className="max-w-md mx-auto">
-          <div className="text-center mb-8 animate-fade-in">
-            <h1 className="text-4xl font-bold mb-3 text-foreground">Welcome to <span className="text-primary">SaskTask</span></h1>
-            <p className="text-lg font-medium text-foreground/70">Your local task marketplace</p>
-          </div>
+      <div className="container mx-auto px-4 pt-24 pb-16 max-w-4xl">
+        <div className="flex flex-col gap-6 md:flex-row md:items-start">
 
-          <Card className="shadow-2xl border-border bg-card">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <CardTitle className="text-2xl font-bold text-foreground">Get Started</CardTitle>
-              </div>
-              <CardDescription className="text-base font-medium text-foreground/70">Sign in or create your free account</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50">
-                  <TabsTrigger value="signin" onClick={clearErrors} className="font-semibold text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
-                    Sign In
-                  </TabsTrigger>
-                  <TabsTrigger value="signup" onClick={clearErrors} className="font-semibold text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
-                    Sign Up
-                  </TabsTrigger>
-                </TabsList>
+          {/* Right: Signup Wizard */}
+          <div className="md:w-full">
+            <Card className="shadow-2xl border-border bg-card/80 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-2xl font-bold">Create your SaskTask account</CardTitle>
+                <CardDescription>4 steps to get started: email → role → password → phone</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Stepper indicator */}
+                <div className="flex items-center gap-3">
+                  {[1, 2, 3, 4].map((s) => (
+                    <div key={s} className="flex items-center gap-2">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${s <= step ? "bg-primary text-primary-foreground" : "bg-muted text-foreground/50"
+                          }`}
+                      >
+                        {s}
+                      </div>
+                      {s < 4 && <div className={`h-[2px] w-8 ${s < step ? "bg-primary" : "bg-muted"}`} />}
+                    </div>
+                  ))}
+                </div>
 
-                <TabsContent value="signin">
-                  {rateLimitError && (
-                    <Alert variant="destructive" className="mb-4">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{rateLimitError}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  {/* Credentials Form */}
+                {step === 1 && (
                   <div className="space-y-4">
-                    <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="signin-identifier" className="text-sm font-semibold text-foreground">Email or Phone</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
-                          <Input
-                            id="signin-identifier"
-                            type="text"
-                            placeholder="you@example.com or +1234567890"
-                            value={identifier}
-                            onChange={(e) => {
-                              setIdentifier(e.target.value);
-                              if (formErrors.identifier) clearErrors();
-                            }}
-                            className={`pl-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.identifier ? "border-destructive" : ""}`}
-                            required
-                            autoComplete="email tel"
-                            disabled={!!rateLimitError}
-                          />
-                        </div>
-                        {formErrors.identifier && (
-                          <p className="text-sm font-medium text-destructive flex items-center gap-1">
-                            <AlertCircle className="h-3 w-3" />
-                            {formErrors.identifier}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <Label htmlFor="signin-password" className="text-sm font-semibold text-foreground">Password</Label>
-                          <Button
-                            type="button"
-                            variant="link"
-                            className="p-0 h-auto text-sm font-semibold text-primary hover:text-primary/80"
-                            onClick={() => setShowForgotPassword(true)}
-                          >
-                            Forgot password?
-                          </Button>
-                        </div>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
-                          <Input
-                            id="signin-password"
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Enter your password"
-                            value={password}
-                            onChange={(e) => {
-                              setPassword(e.target.value);
-                              if (formErrors.password) clearErrors();
-                            }}
-                            className={`pl-10 pr-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.password ? "border-destructive" : ""}`}
-                            required
-                            autoComplete="current-password"
-                            disabled={!!rateLimitError}
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-foreground/50 hover:text-foreground"
-                            onClick={() => setShowPassword((show) => !show)}
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                        {formErrors.password && (
-                          <p className="text-sm font-medium text-destructive flex items-center gap-1">
-                            <AlertCircle className="h-3 w-3" />
-                            {formErrors.password}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="remember-me"
-                          checked={rememberMe}
-                          onCheckedChange={(checked) => setRememberMe(!!checked)}
-                          className="border-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                        />
-                        <Label htmlFor="remember-me" className="text-sm font-medium text-foreground cursor-pointer">
-                          Remember me for 30 days
-                        </Label>
-                      </div>
-
-                      <Button type="submit" className="w-full" disabled={isLoading || !!rateLimitError} variant="hero">
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Signing in...
-                          </>
-                        ) : (
-                          "Sign In"
-                        )}
-                      </Button>
-                    </form>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="signup">
-                  {/* Signup Form */}
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-firstname" className="text-sm font-semibold text-foreground">
-                        First Name <span className="text-destructive">*</span>
-                      </Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
+                        <Label>First Name</Label>
                         <Input
-                          id="signup-firstname"
-                          type="text"
-                          placeholder="John"
                           value={firstName}
-                          onChange={(e) => {
-                            setFirstName(e.target.value);
-                            if (formErrors.firstName) clearErrors();
-                          }}
-                          className={`pl-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.firstName ? "border-destructive" : ""}`}
-                          required
-                          autoComplete="given-name"
+                          onChange={(e) => setFirstName(e.target.value)}
+                          placeholder="John"
                         />
+                        {formErrors.firstName && <p className="text-sm text-destructive">{formErrors.firstName}</p>}
                       </div>
-                      {formErrors.firstName && (
-                        <p className="text-sm font-medium text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {formErrors.firstName}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-middlename" className="text-sm font-semibold text-foreground">
-                        Middle Name <span className="text-foreground/50 text-xs font-normal">(optional)</span>
-                      </Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
+                      <div className="space-y-2">
+                        <Label>Last Name</Label>
                         <Input
-                          id="signup-middlename"
-                          type="text"
-                          placeholder="Robert"
-                          value={middleName}
-                          onChange={(e) => {
-                            setMiddleName(e.target.value);
-                            if (formErrors.middleName) clearErrors();
-                          }}
-                          className={`pl-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.middleName ? "border-destructive" : ""}`}
-                          autoComplete="additional-name"
-                        />
-                      </div>
-                      {formErrors.middleName && (
-                        <p className="text-sm font-medium text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {formErrors.middleName}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-lastname" className="text-sm font-semibold text-foreground">
-                        Last Name <span className="text-destructive">*</span>
-                      </Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
-                        <Input
-                          id="signup-lastname"
-                          type="text"
-                          placeholder="Doe"
                           value={lastName}
-                          onChange={(e) => {
-                            setLastName(e.target.value);
-                            if (formErrors.lastName) clearErrors();
-                          }}
-                          className={`pl-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.lastName ? "border-destructive" : ""}`}
-                          required
-                          autoComplete="family-name"
+                          onChange={(e) => setLastName(e.target.value)}
+                          placeholder="Doe"
                         />
+                        {formErrors.lastName && <p className="text-sm text-destructive">{formErrors.lastName}</p>}
                       </div>
-                      {formErrors.lastName && (
-                        <p className="text-sm font-medium text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {formErrors.lastName}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email" className="text-sm font-semibold text-foreground">
-                        Email <span className="text-destructive">*</span>
-                      </Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
+                      <div className="space-y-2">
+                        <Label>Middle Name (optional)</Label>
                         <Input
-                          id="signup-email"
-                          type="email"
-                          placeholder="you@example.com"
+                          value={middleName}
+                          onChange={(e) => setMiddleName(e.target.value)}
+                          placeholder="A."
+                        />
+                        {formErrors.middleName && <p className="text-sm text-destructive">{formErrors.middleName}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input
                           value={email}
-                          onChange={(e) => {
-                            setEmail(e.target.value.toLowerCase().trim());
-                            if (formErrors.email) clearErrors();
-                          }}
-                          className={`pl-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.email ? "border-destructive" : ""}`}
-                          required
+                          onChange={(e) => setEmail(e.target.value.trim().toLowerCase())}
+                          placeholder="you@example.com"
+                          type="email"
                           autoComplete="email"
                         />
+                        {formErrors.email && <p className="text-sm text-destructive">{formErrors.email}</p>}
                       </div>
-                      {formErrors.email && (
-                        <p className="text-sm font-medium text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {formErrors.email}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-phone" className="text-sm font-semibold text-foreground">
-                        Phone Number <span className="text-destructive">*</span>
-                      </Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
+                      <div className="space-y-2">
+                        <Label>Date of Birth</Label>
                         <Input
-                          id="signup-phone"
-                          type="tel"
-                          placeholder="+1234567890"
-                          value={phone}
-                          onChange={(e) => {
-                            setPhone(e.target.value);
-                            if (formErrors.phone) clearErrors();
-                          }}
-                          className={`pl-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.phone ? "border-destructive" : ""}`}
-                          autoComplete="tel"
-                          required
+                          type="date"
+                          value={dateOfBirth}
+                          onChange={(e) => setDateOfBirth(e.target.value)}
                         />
+                        {formErrors.dateOfBirth && <p className="text-sm text-destructive">{formErrors.dateOfBirth}</p>}
                       </div>
-                      <p className="text-xs font-medium text-foreground/60">Include country code (e.g., +1 for Canada/US)</p>
-                      {formErrors.phone && (
-                        <p className="text-sm font-medium text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {formErrors.phone}
-                        </p>
-                      )}
                     </div>
+                    <Button onClick={handleNext} disabled={isLoading} className="w-full">
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Sending code...
+                        </>
+                      ) : (
+                        "Send email code & continue"
+                      )}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">We’ll send a 6-digit code to verify your email before continuing.</p>
+                    <div className="mt-2">
+                      <Label>Already have an account?</Label>{" "}
+                      <Button variant="link" className="px-1" onClick={() => navigate("/auth?mode=signin")}>
+                        Sign in
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {step === 2 && (
+                  <div className="space-y-4">
+                    <Label className="text-sm font-semibold text-foreground">Select your role</Label>
+                    <div className="auth-role">
+                      <div className="radio-input">
+                        <label className="label" htmlFor="task_doer_step">
+                          <input
+                            id="task_doer_step"
+                            type="radio"
+                            name="user-role-step"
+                            value="task_doer"
+                            checked={role === "task_doer"}
+                            onChange={() => setRole("task_doer")}
+                          />
+                          <div className="text flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Wrench className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-foreground">Find Tasks & Earn Money</span>
+                              <span className="text-sm font-medium text-foreground/60">
+                                Browse and complete tasks posted by others
+                              </span>
+                            </div>
+                          </div>
+                        </label>
+
+                        <label className="label" htmlFor="task_giver_step">
+                          <input
+                            id="task_giver_step"
+                            type="radio"
+                            name="user-role-step"
+                            value="task_giver"
+                            checked={role === "task_giver"}
+                            onChange={() => setRole("task_giver")}
+                          />
+                          <div className="text flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Briefcase className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-foreground">Post Tasks & Get Help</span>
+                              <span className="text-sm font-medium text-foreground/60">
+                                Hire local taskers to help with your needs
+                              </span>
+                            </div>
+                          </div>
+                        </label>
+
+                        <label className="label" htmlFor="both_step">
+                          <input
+                            id="both_step"
+                            type="radio"
+                            name="user-role-step"
+                            value="both"
+                            checked={role === "both"}
+                            onChange={() => setRole("both")}
+                          />
+                          <div className="text flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                              <Users className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-foreground">Both - Do & Post Tasks</span>
+                              <span className="text-sm font-medium text-foreground/60">
+                                Earn money and hire help whenever you need
+                              </span>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    {formErrors.role && <p className="text-sm text-destructive">{formErrors.role}</p>}
+                    <div className="flex justify-between gap-3">
+                      <Button variant="outline" onClick={() => setStep(1)}>
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back
+                      </Button>
+                      <Button onClick={handleNext}>Continue</Button>
+                    </div>
+                  </div>
+                )}
+
+                {step === 3 && (
+                  <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-password" className="text-sm font-semibold text-foreground">Password <span className="text-destructive">*</span></Label>
+                      <Label>Password</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
                         <Input
-                          id="signup-password"
                           type={showPassword ? "text" : "password"}
-                          placeholder="Create a strong password"
                           value={password}
-                          onChange={(e) => {
-                            setPassword(e.target.value);
-                            if (formErrors.password) clearErrors();
-                          }}
-                          className={`pl-10 pr-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.password ? "border-destructive" : ""}`}
-                          required
+                          onChange={(e) => setPassword(e.target.value)}
                           autoComplete="new-password"
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-foreground/50 hover:text-foreground"
-                          onClick={() => setShowPassword((show) => !show)}
-                          tabIndex={-1}
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowPassword((s) => !s)}
                         >
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
-                      {password && (
-                        <div className="space-y-1">
-                          <div className="flex gap-1">
-                            {[...Array(6)].map((_, i) => (
-                              <div
-                                key={i}
-                                className={`h-1 flex-1 rounded ${i < passwordStrength.score ? passwordStrength.color : "bg-muted"
-                                  }`}
-                              />
-                            ))}
-                          </div>
-                          <p className="text-xs font-medium text-foreground/70">
-                            Password strength:{" "}
-                            <span
-                              className={
-                                passwordStrength.score >= 5
-                                  ? "text-green-600 font-semibold"
-                                  : passwordStrength.score >= 3
-                                    ? "text-yellow-600 font-semibold"
-                                    : "text-destructive font-semibold"
-                              }
-                            >
-                              {passwordStrength.label}
-                            </span>
-                          </p>
-                        </div>
-                      )}
-                      {formErrors.password && <p className="text-sm font-medium text-destructive">{formErrors.password}</p>}
-                      <ul className="text-xs font-medium text-foreground/60 space-y-1 mt-2">
-                        <li className={`flex items-center gap-1 ${password.length >= 8 ? "text-green-600" : ""}`}>
-                          {password.length >= 8 ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                          At least 8 characters
-                        </li>
-                        <li className={`flex items-center gap-1 ${/[A-Z]/.test(password) ? "text-green-600" : ""}`}>
-                          {/[A-Z]/.test(password) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                          One uppercase letter
-                        </li>
-                        <li className={`flex items-center gap-1 ${/[a-z]/.test(password) ? "text-green-600" : ""}`}>
-                          {/[a-z]/.test(password) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                          One lowercase letter
-                        </li>
-                        <li className={`flex items-center gap-1 ${/[0-9]/.test(password) ? "text-green-600" : ""}`}>
-                          {/[0-9]/.test(password) ? <Check className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                          One number
-                        </li>
-                        <li
-                          className={`flex items-center gap-1 ${/[^A-Za-z0-9]/.test(password) ? "text-green-600" : ""}`}
-                        >
-                          {/[^A-Za-z0-9]/.test(password) ? (
-                            <Check className="h-3 w-3" />
-                          ) : (
-                            <AlertCircle className="h-3 w-3" />
-                          )}
-                          One special character
-                        </li>
-                      </ul>
+                      {formErrors.password && <p className="text-sm text-destructive">{formErrors.password}</p>}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-confirm-password" className="text-sm font-semibold text-foreground">Confirm Password <span className="text-destructive">*</span></Label>
+                      <Label>Confirm Password</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-foreground/50" />
                         <Input
-                          id="signup-confirm-password"
                           type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Confirm your password"
                           value={confirmPassword}
-                          onChange={(e) => {
-                            setConfirmPassword(e.target.value);
-                            if (formErrors.confirmPassword) clearErrors();
-                          }}
-                          className={`pl-10 pr-10 bg-background border-border text-foreground placeholder:text-foreground/40 font-medium ${formErrors.confirmPassword ? "border-destructive" : ""}`}
-                          required
+                          onChange={(e) => setConfirmPassword(e.target.value)}
                           autoComplete="new-password"
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-foreground/50 hover:text-foreground"
-                          onClick={() => setShowConfirmPassword((show) => !show)}
-                          tabIndex={-1}
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowConfirmPassword((s) => !s)}
                         >
                           {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
-                      {formErrors.confirmPassword && (
-                        <p className="text-sm font-medium text-destructive">{formErrors.confirmPassword}</p>
-                      )}
-                      {confirmPassword && password === confirmPassword && (
-                        <p className="text-sm font-medium text-green-600 flex items-center gap-1">
-                          <Check className="h-3 w-3" /> Passwords match
-                        </p>
-                      )}
+                      {formErrors.confirmPassword && <p className="text-sm text-destructive">{formErrors.confirmPassword}</p>}
                     </div>
-                    <div className="space-y-3">
-                      <Label className="text-sm font-semibold text-foreground">I want to:</Label>
-                      <div className="auth-role">
-                        <div className="radio-input">
-                          <label className="label" htmlFor="task_doer">
-                            <input
-                              id="task_doer"
-                              type="radio"
-                              name="user-role"
-                              value="task_doer"
-                              checked={role === "task_doer"}
-                              onChange={() => setRole("task_doer")}
-                            />
-                            <div className="text flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Wrench className="h-5 w-5 text-primary" />
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-foreground">Find Tasks & Earn Money</span>
-                                <span className="text-sm font-medium text-foreground/60">
-                                  Browse and complete tasks posted by others
-                                </span>
-                              </div>
-                            </div>
-                          </label>
-
-                          <label className="label" htmlFor="task_giver">
-                            <input
-                              id="task_giver"
-                              type="radio"
-                              name="user-role"
-                              value="task_giver"
-                              checked={role === "task_giver"}
-                              onChange={() => setRole("task_giver")}
-                            />
-                            <div className="text flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Briefcase className="h-5 w-5 text-primary" />
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-foreground">Post Tasks & Get Help</span>
-                                <span className="text-sm font-medium text-foreground/60">
-                                  Hire local taskers to help with your needs
-                                </span>
-                              </div>
-                            </div>
-                          </label>
-
-                          <label className="label" htmlFor="both">
-                            <input
-                              id="both"
-                              type="radio"
-                              name="user-role"
-                              value="both"
-                              checked={role === "both"}
-                              onChange={() => setRole("both")}
-                            />
-                            <div className="text flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                                <Users className="h-5 w-5 text-primary" />
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-foreground">Both - Do & Post Tasks</span>
-                                <span className="text-sm font-medium text-foreground/60">
-                                  Earn money and hire help whenever you need
-                                </span>
-                              </div>
-                            </div>
-                          </label>
-                        </div>
-                      </div>
+                    <div className="flex justify-between gap-3">
+                      <Button variant="outline" onClick={() => setStep(2)}>
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back
+                      </Button>
+                      <Button onClick={handleNext}>Continue</Button>
                     </div>
+                  </div>
+                )}
 
+                {step === 4 && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Phone Number</Label>
+                      <PhoneVerification
+                        email={email}
+                        initialPhone={phone}
+                        onVerified={(verifiedPhone) => {
+                          setPhone(verifiedPhone);
+                          setPhoneVerified(true);
+                        }}
+                      />
+                      {formErrors.phone && <p className="text-sm text-destructive">{formErrors.phone}</p>}
+                    </div>
                     <div className="space-y-3">
                       <div
                         className={`flex items-start space-x-3 p-4 rounded-lg border ${formErrors.termsAccepted ? "border-destructive bg-destructive/5" : "border-border"
@@ -1281,28 +961,18 @@ const Auth: React.FC = () => {
                             setTermsAccepted(!!checked);
                             if (formErrors.termsAccepted) clearErrors();
                           }}
-                          className="mt-1 border-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          className="mt-1"
                         />
-                        <Label htmlFor="terms-accept" className="cursor-pointer text-sm font-medium leading-relaxed text-foreground">
+                        <Label htmlFor="terms-accept" className="cursor-pointer text-sm leading-relaxed text-foreground">
                           I agree to the{" "}
-                          <a
-                            href="/terms"
-                            className="text-primary hover:underline font-semibold"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
+                          <a href="/terms" className="text-primary hover:underline font-semibold" target="_blank" rel="noopener noreferrer">
                             Terms of Service
                           </a>{" "}
                           and{" "}
-                          <a
-                            href="/privacy"
-                            className="text-primary hover:underline font-semibold"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
+                          <a href="/privacy" className="text-primary hover:underline font-semibold" target="_blank" rel="noopener noreferrer">
                             Privacy Policy
                           </a>
-                          . I understand that SaskTask requires identity verification for safety.
+                          .
                         </Label>
                       </div>
                       {formErrors.termsAccepted && (
@@ -1312,31 +982,27 @@ const Auth: React.FC = () => {
                         </p>
                       )}
                     </div>
-                    <Button type="submit" className="w-full" disabled={isLoading} variant="hero">
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Creating account...
-                        </>
-                      ) : (
-                        <>
-                          <User className="h-4 w-4 mr-2" />
-                          Create Account
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-
-          <p className="text-center mt-6 text-sm font-medium text-foreground/70">
-            Need help?{" "}
-            <a href="/contact" className="text-primary hover:underline font-semibold">
-              Contact Support
-            </a>
-          </p>
+                    <div className="flex justify-between gap-3">
+                      <Button variant="outline" onClick={() => setStep(3)}>
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back
+                      </Button>
+                      <Button onClick={handleCreateAccount} disabled={isLoading}>
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Creating account...
+                          </>
+                        ) : (
+                          "Create account"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
