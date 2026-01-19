@@ -8,54 +8,54 @@
   :root {
     /* Crystal Clear Glass Theme */
     --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    --foreground: 222 47% 8%;
     
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 222 47% 8%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 222 47% 8%;
     
     /* Vibrant teal-emerald primary */
-    --primary: 168 80% 42%;
+    --primary: 168 80% 38%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 168 85% 52%;
+    --primary-glow: 168 85% 48%;
     --primary-muted: 168 40% 95%;
     
     /* Deep ocean blue secondary */
-    --secondary: 215 90% 55%;
+    --secondary: 215 90% 50%;
     --secondary-foreground: 0 0% 100%;
     --secondary-muted: 215 40% 95%;
     
     /* Coral accent */
-    --accent: 12 90% 62%;
+    --accent: 12 90% 58%;
     --accent-foreground: 0 0% 100%;
     
     /* Status colors */
-    --success: 152 76% 40%;
+    --success: 152 76% 36%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 38 92% 45%;
     --warning-foreground: 0 0% 0%;
-    --info: 199 89% 48%;
+    --info: 199 89% 42%;
     --info-foreground: 0 0% 100%;
     
     --muted: 210 25% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 215 20% 35%;
     
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84% 55%;
+    --destructive-foreground: 0 0% 100%;
     
-    --border: 210 20% 90%;
-    --input: 210 20% 92%;
-    --ring: 168 80% 42%;
+    --border: 210 20% 85%;
+    --input: 210 20% 90%;
+    --ring: 168 80% 38%;
     
     --radius: 1rem;
     
     /* Crystal Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(168 80% 42%), hsl(168 85% 52%));
-    --gradient-secondary: linear-gradient(135deg, hsl(215 90% 55%), hsl(215 90% 65%));
-    --gradient-accent: linear-gradient(135deg, hsl(12 90% 62%), hsl(12 90% 72%));
-    --gradient-hero: linear-gradient(135deg, hsl(168 80% 42%) 0%, hsl(215 90% 55%) 50%, hsl(12 90% 62%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(168 80% 38%), hsl(168 85% 48%));
+    --gradient-secondary: linear-gradient(135deg, hsl(215 90% 50%), hsl(215 90% 60%));
+    --gradient-accent: linear-gradient(135deg, hsl(12 90% 58%), hsl(12 90% 68%));
+    --gradient-hero: linear-gradient(135deg, hsl(168 80% 38%) 0%, hsl(215 90% 50%) 50%, hsl(12 90% 58%) 100%);
     --gradient-hero-subtle: linear-gradient(135deg, hsl(168 80% 97%) 0%, hsl(215 90% 98%) 50%, hsl(12 90% 98%) 100%);
     --gradient-mesh: radial-gradient(at 40% 20%, hsl(168 80% 96%) 0px, transparent 50%), radial-gradient(at 80% 0%, hsl(215 90% 96%) 0px, transparent 50%), radial-gradient(at 0% 50%, hsl(12 90% 97%) 0px, transparent 50%), radial-gradient(at 80% 50%, hsl(168 80% 98%) 0px, transparent 50%), radial-gradient(at 0% 100%, hsl(215 90% 96%) 0px, transparent 50%);
     --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 20% 98%));
@@ -63,34 +63,34 @@
     --gradient-glass-strong: linear-gradient(135deg, hsl(0 0% 100% / 0.95), hsl(0 0% 100% / 0.85));
     
     /* Premium Shadows */
-    --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.03);
-    --shadow-sm: 0 4px 12px -2px hsl(168 80% 42% / 0.08), 0 2px 4px -2px hsl(0 0% 0% / 0.04);
-    --shadow-md: 0 12px 32px -8px hsl(168 80% 42% / 0.12), 0 4px 8px -4px hsl(0 0% 0% / 0.06);
-    --shadow-lg: 0 24px 56px -12px hsl(168 80% 42% / 0.15), 0 8px 16px -8px hsl(0 0% 0% / 0.08);
-    --shadow-xl: 0 40px 80px -20px hsl(168 80% 42% / 0.18), 0 16px 32px -16px hsl(0 0% 0% / 0.1);
-    --shadow-glow: 0 0 60px hsl(168 85% 52% / 0.25), 0 0 30px hsl(168 85% 52% / 0.15);
-    --shadow-glow-lg: 0 0 100px hsl(168 85% 52% / 0.35), 0 0 50px hsl(168 85% 52% / 0.2);
-    --shadow-colored: 0 20px 50px -15px hsl(168 80% 42% / 0.3);
-    --shadow-glass: 0 8px 32px 0 hsl(215 90% 55% / 0.1), inset 0 1px 1px hsl(0 0% 100% / 0.5);
+    --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 4px 12px -2px hsl(168 80% 38% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.06);
+    --shadow-md: 0 12px 32px -8px hsl(168 80% 38% / 0.14), 0 4px 8px -4px hsl(0 0% 0% / 0.08);
+    --shadow-lg: 0 24px 56px -12px hsl(168 80% 38% / 0.18), 0 8px 16px -8px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 40px 80px -20px hsl(168 80% 38% / 0.22), 0 16px 32px -16px hsl(0 0% 0% / 0.12);
+    --shadow-glow: 0 0 60px hsl(168 85% 48% / 0.3), 0 0 30px hsl(168 85% 48% / 0.2);
+    --shadow-glow-lg: 0 0 100px hsl(168 85% 48% / 0.4), 0 0 50px hsl(168 85% 48% / 0.25);
+    --shadow-colored: 0 20px 50px -15px hsl(168 80% 38% / 0.35);
+    --shadow-glass: 0 8px 32px 0 hsl(215 90% 50% / 0.12), inset 0 1px 1px hsl(0 0% 100% / 0.5);
     
     /* Glass Variables */
-    --glass-bg: hsl(0 0% 100% / 0.75);
-    --glass-bg-strong: hsl(0 0% 100% / 0.9);
-    --glass-border: hsl(0 0% 100% / 0.5);
-    --glass-border-strong: hsl(0 0% 100% / 0.8);
+    --glass-bg: hsl(0 0% 100% / 0.8);
+    --glass-bg-strong: hsl(0 0% 100% / 0.92);
+    --glass-border: hsl(210 20% 80% / 0.6);
+    --glass-border-strong: hsl(210 20% 75% / 0.8);
     --glass-blur: 24px;
     --glass-blur-strong: 40px;
   }
   
   .dark {
     --background: 222 47% 5%;
-    --foreground: 210 40% 98%;
+    --foreground: 210 40% 96%;
     
     --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
+    --card-foreground: 210 40% 96%;
     
     --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover-foreground: 210 40% 96%;
     
     --primary: 168 80% 50%;
     --primary-foreground: 0 0% 100%;
@@ -104,21 +104,21 @@
     --accent: 12 90% 65%;
     --accent-foreground: 0 0% 100%;
     
-    --success: 152 76% 46%;
+    --success: 152 76% 50%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 55%;
     --warning-foreground: 0 0% 0%;
-    --info: 199 89% 55%;
+    --info: 199 89% 58%;
     --info-foreground: 0 0% 100%;
     
     --muted: 217 33% 12%;
-    --muted-foreground: 215 20% 65%;
+    --muted-foreground: 215 20% 70%;
     
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 0 0% 100%;
     
-    --border: 217 33% 16%;
-    --input: 217 33% 16%;
+    --border: 217 33% 20%;
+    --input: 217 33% 18%;
     --ring: 168 80% 50%;
     
     /* Dark mode gradients */
@@ -143,10 +143,10 @@
     --shadow-glass: 0 8px 32px 0 hsl(0 0% 0% / 0.3), inset 0 1px 1px hsl(0 0% 100% / 0.1);
     
     /* Dark glass */
-    --glass-bg: hsl(222 47% 10% / 0.75);
-    --glass-bg-strong: hsl(222 47% 12% / 0.9);
-    --glass-border: hsl(222 47% 20% / 0.5);
-    --glass-border-strong: hsl(222 47% 25% / 0.8);
+    --glass-bg: hsl(222 47% 10% / 0.8);
+    --glass-bg-strong: hsl(222 47% 12% / 0.92);
+    --glass-border: hsl(222 47% 25% / 0.6);
+    --glass-border-strong: hsl(222 47% 30% / 0.8);
   }
 }
 
@@ -160,6 +160,13 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-feature-settings: 'cv11', 'ss01', 'cv01';
     text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Ensure all text has proper contrast */
+  p, span, div, li, a, label {
+    @apply text-foreground;
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -167,11 +174,17 @@
     font-weight: 700;
     letter-spacing: -0.025em;
     line-height: 1.2;
+    @apply text-foreground;
   }
   
   h1 { @apply text-4xl md:text-5xl lg:text-6xl; }
   h2 { @apply text-3xl md:text-4xl; }
   h3 { @apply text-2xl md:text-3xl; }
+  
+  /* Better muted text visibility */
+  .text-muted-foreground {
+    color: hsl(var(--muted-foreground));
+  }
 }
 
 @layer components {
