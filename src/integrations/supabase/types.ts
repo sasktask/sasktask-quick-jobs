@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_trail_events: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          event_category: string
+          event_data: Json | null
+          event_hash: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          location_data: Json | null
+          previous_hash: string | null
+          task_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          event_category: string
+          event_data?: Json | null
+          event_hash?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          location_data?: Json | null
+          previous_hash?: string | null
+          task_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          event_category?: string
+          event_data?: Json | null
+          event_hash?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          location_data?: Json | null
+          previous_hash?: string | null
+          task_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_trail_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_trail_events_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       availability_slots: {
         Row: {
           created_at: string
@@ -287,6 +350,69 @@ export type Database = {
           },
         ]
       }
+      checklist_completions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          booking_id: string
+          checklist_id: string
+          completed_at: string | null
+          completed_by: string
+          id: string
+          notes: string | null
+          photo_url: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          status: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          booking_id: string
+          checklist_id: string
+          completed_at?: string | null
+          completed_by: string
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          booking_id?: string
+          checklist_id?: string
+          completed_at?: string | null
+          completed_by?: string
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_completions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_completions_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "task_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_submissions: {
         Row: {
           created_at: string | null
@@ -310,6 +436,65 @@ export type Database = {
           submitted_at?: string | null
         }
         Relationships: []
+      }
+      dispute_analysis: {
+        Row: {
+          ai_model: string | null
+          analysis_type: string
+          confidence_score: number | null
+          created_at: string | null
+          dispute_id: string
+          evidence_summary: Json | null
+          id: string
+          inconsistencies: Json | null
+          reasoning: string | null
+          recommendation: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_score: number | null
+          suggested_resolution: string | null
+        }
+        Insert: {
+          ai_model?: string | null
+          analysis_type: string
+          confidence_score?: number | null
+          created_at?: string | null
+          dispute_id: string
+          evidence_summary?: Json | null
+          id?: string
+          inconsistencies?: Json | null
+          reasoning?: string | null
+          recommendation?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number | null
+          suggested_resolution?: string | null
+        }
+        Update: {
+          ai_model?: string | null
+          analysis_type?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          dispute_id?: string
+          evidence_summary?: Json | null
+          id?: string
+          inconsistencies?: Json | null
+          reasoning?: string | null
+          recommendation?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number | null
+          suggested_resolution?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispute_analysis_dispute_id_fkey"
+            columns: ["dispute_id"]
+            isOneToOne: false
+            referencedRelation: "disputes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dispute_evidence: {
         Row: {
@@ -1794,6 +1979,119 @@ export type Database = {
           },
         ]
       }
+      task_checkins: {
+        Row: {
+          booking_id: string
+          checkin_type: string
+          created_at: string | null
+          device_info: Json | null
+          id: string
+          latitude: number | null
+          location_accuracy: number | null
+          location_address: string | null
+          longitude: number | null
+          notes: string | null
+          photo_url: string | null
+          task_id: string
+          user_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          booking_id: string
+          checkin_type: string
+          created_at?: string | null
+          device_info?: Json | null
+          id?: string
+          latitude?: number | null
+          location_accuracy?: number | null
+          location_address?: string | null
+          longitude?: number | null
+          notes?: string | null
+          photo_url?: string | null
+          task_id: string
+          user_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          booking_id?: string
+          checkin_type?: string
+          created_at?: string | null
+          device_info?: Json | null
+          id?: string
+          latitude?: number | null
+          location_accuracy?: number | null
+          location_address?: string | null
+          longitude?: number | null
+          notes?: string | null
+          photo_url?: string | null
+          task_id?: string
+          user_id?: string
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_checkins_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_checkins_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_checklists: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          display_order: number | null
+          id: string
+          requires_giver_approval: boolean | null
+          requires_photo: boolean | null
+          task_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          requires_giver_approval?: boolean | null
+          requires_photo?: boolean | null
+          task_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          requires_giver_approval?: boolean | null
+          requires_photo?: boolean | null
+          task_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_checklists_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_insurance: {
         Row: {
           coverage_amount: number
@@ -3079,6 +3377,19 @@ export type Database = {
       is_booking_participant: {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
+      }
+      log_audit_event: {
+        Args: {
+          p_booking_id: string
+          p_event_category: string
+          p_event_data?: Json
+          p_event_type: string
+          p_ip_address?: string
+          p_location_data?: Json
+          p_task_id: string
+          p_user_id: string
+        }
+        Returns: string
       }
     }
     Enums: {

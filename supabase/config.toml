@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.help-chatbot]
 verify_jwt = false
+
+[functions.analyze-dispute]
+verify_jwt = true
