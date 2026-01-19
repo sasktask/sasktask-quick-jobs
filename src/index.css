@@ -55,7 +55,7 @@
     --gradient-primary: linear-gradient(135deg, hsl(168 80% 38%), hsl(168 85% 48%));
     --gradient-secondary: linear-gradient(135deg, hsl(215 90% 50%), hsl(215 90% 60%));
     --gradient-accent: linear-gradient(135deg, hsl(12 90% 58%), hsl(12 90% 68%));
-    --gradient-hero: linear-gradient(135deg, hsl(168 80% 38%) 0%, hsl(215 90% 50%) 50%, hsl(12 90% 58%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(168 80% 30%) 0%, hsl(215 90% 40%) 50%, hsl(168 80% 35%) 100%);
     --gradient-hero-subtle: linear-gradient(135deg, hsl(168 80% 97%) 0%, hsl(215 90% 98%) 50%, hsl(12 90% 98%) 100%);
     --gradient-mesh: radial-gradient(at 40% 20%, hsl(168 80% 96%) 0px, transparent 50%), radial-gradient(at 80% 0%, hsl(215 90% 96%) 0px, transparent 50%), radial-gradient(at 0% 50%, hsl(12 90% 97%) 0px, transparent 50%), radial-gradient(at 80% 50%, hsl(168 80% 98%) 0px, transparent 50%), radial-gradient(at 0% 100%, hsl(215 90% 96%) 0px, transparent 50%);
     --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 20% 98%));
@@ -665,10 +665,11 @@
   }
   
   .text-gradient-hero {
-    background: var(--gradient-hero);
+    background: linear-gradient(135deg, hsl(168 80% 28%) 0%, hsl(215 90% 35%) 50%, hsl(168 80% 30%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    filter: drop-shadow(0 2px 4px hsl(0 0% 0% / 0.1));
   }
   
   .text-gradient-secondary {
