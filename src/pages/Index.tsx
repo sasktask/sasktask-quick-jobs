@@ -525,47 +525,49 @@ const Index = () => {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
-                <CardContent className="p-8 md:p-16 relative z-10">
-                  <div className="max-w-3xl mx-auto text-center">
-                    <div className="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full mb-6">
-                      <Zap className="h-4 w-4 text-yellow-300" />
-                      <span className="text-white/90 text-sm font-medium">Join thousands of Saskatchewan users</span>
+                <CardContent className="p-10 md:p-20 relative z-10">
+                  <div className="max-w-3xl mx-auto text-center space-y-8">
+                    <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/20">
+                      <Zap className="h-5 w-5 text-yellow-300" />
+                      <span className="text-white text-sm font-semibold tracking-wide">Join thousands of Saskatchewan users</span>
                     </div>
 
-                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-                      Ready to Get Started?
-                    </h2>
-                    <p className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl mx-auto">
-                      Create your free account and discover a trusted community of local professionals
-                    </p>
+                    <div className="space-y-4">
+                      <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight drop-shadow-lg">
+                        Ready to Get Started?
+                      </h2>
+                      <p className="text-xl md:text-2xl text-white font-medium max-w-2xl mx-auto leading-relaxed opacity-95">
+                        Create your free account and discover a trusted community of local professionals
+                      </p>
+                    </div>
 
-                    <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
+                    <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
                       <Link to="/auth?tab=signup">
-                        <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 shadow-xl text-lg h-14 px-8 gap-2">
+                        <Button size="lg" className="w-full sm:w-auto bg-white text-primary hover:bg-white/95 shadow-2xl text-lg font-bold h-16 px-10 gap-3 transition-all hover:scale-105">
                           Create Free Account
                           <ArrowRight className="h-5 w-5" />
                         </Button>
                       </Link>
                       <Link to="/auth?tab=signin">
-                        <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white/10 hover:bg-white/20 border-white/30 text-white shadow-xl text-lg h-14 px-8">
+                        <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white/15 hover:bg-white/25 border-2 border-white/50 text-white font-bold shadow-xl text-lg h-16 px-10 transition-all hover:scale-105">
                           Sign In
                         </Button>
                       </Link>
                     </div>
 
                     {/* Trust indicators */}
-                    <div className="flex flex-wrap justify-center gap-6 text-white/70 text-sm">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                        <span>Free to sign up</span>
+                    <div className="flex flex-wrap justify-center gap-8 pt-4">
+                      <div className="flex items-center gap-2.5 bg-white/10 px-4 py-2 rounded-full">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+                        <span className="text-white font-medium text-base">Free to sign up</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-blue-300" />
-                        <span>Privacy protected</span>
+                      <div className="flex items-center gap-2.5 bg-white/10 px-4 py-2 rounded-full">
+                        <Shield className="h-5 w-5 text-blue-300" />
+                        <span className="text-white font-medium text-base">Privacy protected</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Lock className="h-4 w-4 text-yellow-300" />
-                        <span>Secure & encrypted</span>
+                      <div className="flex items-center gap-2.5 bg-white/10 px-4 py-2 rounded-full">
+                        <Lock className="h-5 w-5 text-yellow-300" />
+                        <span className="text-white font-medium text-base">Secure & encrypted</span>
                       </div>
                     </div>
                   </div>
