@@ -1201,7 +1201,7 @@ export type Database = {
           id: string
           ip_address: string | null
           phone: string
-          user_id: string
+          user_id: string | null
           verified_at: string | null
         }
         Insert: {
@@ -1212,7 +1212,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           phone: string
-          user_id: string
+          user_id?: string | null
           verified_at?: string | null
         }
         Update: {
@@ -1223,7 +1223,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           phone?: string
-          user_id?: string
+          user_id?: string | null
           verified_at?: string | null
         }
         Relationships: []
