@@ -12,6 +12,7 @@ interface PhoneVerificationProps {
   email?: string;
   initialPhone?: string;
   onVerified: (phone: string) => void;
+  onPhoneChange?: (phone: string) => void;
 }
 
 export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
@@ -19,6 +20,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   email,
   initialPhone = "",
   onVerified,
+  onPhoneChange,
 }) => {
   const [phone, setPhone] = useState(initialPhone);
   const [showOTP, setShowOTP] = useState(false);
@@ -54,6 +56,10 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
     // Reset verification if phone changes
     if (isVerified) {
       setIsVerified(false);
+    }
+    const digits = getDigitsOnly(formatted);
+    if (onPhoneChange) {
+      onPhoneChange(digits ? `+1${digits}` : "");
     }
   };
 
@@ -149,7 +155,11 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
         title: "Phone verified!",
         description: "Your phone number has been verified successfully.",
       });
-      onVerified(`+1${digits}`);
+      const normalized = `+1${digits}`;
+      onVerified(normalized);
+      if (onPhoneChange) {
+        onPhoneChange(normalized);
+      }
     } catch (error: any) {
       console.error("Verification failed:", error);
       toast({

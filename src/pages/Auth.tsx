@@ -265,6 +265,8 @@ const Auth: React.FC = () => {
   const [emailVerificationId, setEmailVerificationId] = useState<string | null>(null);
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
+  const [emailCode, setEmailCode] = useState("");
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
   const [role, setRole] = useState<"task_giver" | "task_doer" | "both">("task_doer");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -314,6 +316,7 @@ const Auth: React.FC = () => {
       middleName: middleName || "",
       lastName,
       email,
+      dateOfBirth,
     });
     if (!validation.success) {
       const errors: Record<string, string> = {};
@@ -383,6 +386,16 @@ const Auth: React.FC = () => {
   };
 
   const sendEmailOTP = async (emailToSend: string) => {
+    const exists = await checkEmailExists(emailToSend);
+    if (exists) {
+      toast({
+        title: "Account exists",
+        description: "This email is already registered. Please sign in.",
+        variant: "destructive",
+      });
+      navigate("/auth?mode=signin");
+      return;
+    }
     const { data, error } = await supabase.functions.invoke("send-signup-otp", {
       body: { email: emailToSend },
     });
@@ -394,6 +407,10 @@ const Auth: React.FC = () => {
     }
     if (data?.verificationId) {
       setEmailVerificationId(data.verificationId);
+      toast({
+        title: "Verification code sent",
+        description: `We've sent a 6-digit code to ${emailToSend}`,
+      });
     }
   };
 
@@ -402,30 +419,15 @@ const Auth: React.FC = () => {
     if (step === 1) {
       const validated = validateStep1();
       if (!validated) return;
-      setIsLoading(true);
-      try {
-        const exists = await checkEmailExists(validated.email);
-        if (exists) {
-          toast({
-            title: "Account exists",
-            description: "This email is already registered. Please sign in.",
-            variant: "destructive",
-          });
-          navigate("/auth?mode=signin");
-          return;
-        }
-        await sendEmailOTP(validated.email);
-        setEmailVerified(false);
-        setStep(2);
-      } catch (err: any) {
+      if (!emailVerified) {
         toast({
-          title: "Email verification failed",
-          description: err?.message || "Unable to send verification code",
+          title: "Verify your email",
+          description: "Enter the 6-digit code sent to your email before continuing.",
           variant: "destructive",
         });
-      } finally {
-        setIsLoading(false);
+        return;
       }
+      setStep(2);
     } else if (step === 2) {
       const validated = validateStep2();
       if (!validated) return;
@@ -437,14 +439,22 @@ const Auth: React.FC = () => {
     }
   };
 
-  const handleVerifyEmail = async (code: string) => {
-    if (!code || code.length !== 6) return;
-    setIsLoading(true);
+  const handleVerifyEmail = async (code?: string) => {
+    const otp = (code || emailCode).trim();
+    if (otp.length !== 6) {
+      toast({
+        title: "Invalid code",
+        description: "Enter the 6-digit code sent to your email.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsVerifyingEmail(true);
     try {
       const { data, error } = await supabase.functions.invoke("verify-signup-otp", {
         body: {
           email,
-          code,
+          code: otp,
           verificationId: emailVerificationId,
         },
       });
@@ -463,7 +473,7 @@ const Auth: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsVerifyingEmail(false);
     }
   };
 
@@ -530,6 +540,7 @@ const Auth: React.FC = () => {
             first_name: firstName,
             middle_name: middleName || null,
             last_name: lastName,
+            date_of_birth: dateOfBirth || null,
             phone,
             role: primaryRole,
             wants_both_roles: wantsBothRoles,
@@ -778,17 +789,62 @@ const Auth: React.FC = () => {
                         {formErrors.dateOfBirth && <p className="text-sm text-destructive">{formErrors.dateOfBirth}</p>}
                       </div>
                     </div>
-                    <Button onClick={handleNext} disabled={isLoading} className="w-full">
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Sending code...
-                        </>
-                      ) : (
-                        "Send email code & continue"
-                      )}
-                    </Button>
-                    <p className="text-xs text-muted-foreground">We’ll send a 6-digit code to verify your email before continuing.</p>
+                    <div className="space-y-3">
+                      <Label>Verification code</Label>
+                      <Input
+                        value={emailCode}
+                        onChange={(e) => setEmailCode(e.target.value)}
+                        placeholder="Enter 6-digit code"
+                        maxLength={6}
+                      />
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={isLoading}
+                          onClick={async () => {
+                            const validated = validateStep1();
+                            if (!validated) return;
+                            setIsLoading(true);
+                            try {
+                              await sendEmailOTP(validated.email);
+                            } catch (err: any) {
+                              toast({
+                                title: "Email verification failed",
+                                description: err?.message || "Unable to send verification code",
+                                variant: "destructive",
+                              });
+                            } finally {
+                              setIsLoading(false);
+                            }
+                          }}
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Sending code...
+                            </>
+                          ) : (
+                            "Send / Resend code"
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          disabled={isVerifyingEmail}
+                          onClick={() => handleVerifyEmail(emailCode)}
+                        >
+                          {isVerifyingEmail ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Verifying...
+                            </>
+                          ) : (
+                            "Verify & continue"
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">We’ll send a 6-digit code to verify your email before continuing.</p>
+                    </div>
                     <div className="mt-2">
                       <Label>Already have an account?</Label>{" "}
                       <Button variant="link" className="px-1" onClick={() => navigate("/auth?mode=signin")}>
@@ -942,6 +998,10 @@ const Auth: React.FC = () => {
                       <PhoneVerification
                         email={email}
                         initialPhone={phone}
+                        onPhoneChange={(p) => {
+                          setPhone(p);
+                          setPhoneVerified(false);
+                        }}
                         onVerified={(verifiedPhone) => {
                           setPhone(verifiedPhone);
                           setPhoneVerified(true);
