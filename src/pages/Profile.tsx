@@ -18,6 +18,7 @@ import { BadgeShowcase } from "@/components/BadgeShowcase";
 import { ProfileStrengthMeter } from "@/components/ProfileStrengthMeter";
 import { ProfileTips } from "@/components/ProfileTips";
 import { ProfileHeader, ProfileStatsCard, ProfileQuickActions, ProfileNavTabs } from "@/components/profile";
+import { CertificateManager } from "@/components/CertificateManager";
 import {
   Loader2, Shield, Clock, Settings, CreditCard, Lock, User,
   ShieldCheck, AlertCircle, Camera, FileCheck, CheckCircle2, XCircle,
@@ -626,8 +627,9 @@ const Profile = () => {
               </TabsContent>
 
               {/* Badges Tab */}
-              <TabsContent value="badges" className="mt-6">
+              <TabsContent value="badges" className="mt-6 space-y-6">
                 {userId && <BadgeShowcase userId={userId} />}
+                {userId && <CertificateManager userId={userId} isOwnProfile={true} />}
               </TabsContent>
 
               {/* Settings Tab */}

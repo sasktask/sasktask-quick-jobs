@@ -16,6 +16,7 @@ import { SkillsShowcase } from "@/components/SkillsShowcase";
 import { VerificationBadges } from "@/components/VerificationBadges";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { ReviewSection } from "@/components/ReviewSection";
+import { CertificateManager } from "@/components/CertificateManager";
 
 
 export default function PublicProfile() {
@@ -326,6 +327,14 @@ export default function PublicProfile() {
               </CardContent>
             </Card>
           )}
+
+          {/* Certificates Section */}
+          <div className="mb-8">
+            <CertificateManager
+              userId={id!}
+              isOwnProfile={currentUserId === id}
+            />
+          </div>
 
           {/* Portfolio Section */}
           <div className="mb-8">
