@@ -420,11 +420,19 @@ const Auth: React.FC = () => {
       const validated = validateStep1();
       if (!validated) return;
       if (!emailVerified) {
-        toast({
-          title: "Verify your email",
-          description: "Enter the 6-digit code sent to your email before continuing.",
-          variant: "destructive",
-        });
+        // If code is present, try to verify automatically
+        if (emailCode.trim().length === 6) {
+          await handleVerifyEmail(emailCode);
+          if (emailVerified) {
+            setStep(2);
+          }
+        } else {
+          toast({
+            title: "Verify your email",
+            description: "Enter the 6-digit code sent to your email before continuing.",
+            variant: "destructive",
+          });
+        }
         return;
       }
       setStep(2);
