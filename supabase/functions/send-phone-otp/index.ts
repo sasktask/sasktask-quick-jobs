@@ -207,8 +207,8 @@ serve(async (req: Request) => {
     if (!accountSid || !authToken || !fromNumber) {
       console.error("Twilio not configured: missing SID/token/from number");
       return new Response(
-        JSON.stringify({ error: "SMS sending not configured. Missing Twilio credentials." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "SMS sending not configured. Please contact support." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } else {
       const twilioClient = twilio(accountSid, authToken);
@@ -223,8 +223,8 @@ serve(async (req: Request) => {
       } catch (twilioError: any) {
         console.error("Twilio send failed:", twilioError?.message || twilioError);
         return new Response(
-          JSON.stringify({ error: twilioError?.message || "Twilio send failed" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: twilioError?.message || "Twilio send failed. Please use a different number or try again." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }
