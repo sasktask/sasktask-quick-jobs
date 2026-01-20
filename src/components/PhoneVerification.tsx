@@ -12,6 +12,7 @@ interface PhoneVerificationProps {
   email?: string;
   initialPhone?: string;
   onVerified: (phone: string) => void;
+  error?: string;
   onPhoneChange?: (phone: string) => void;
 }
 
@@ -20,6 +21,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   email,
   initialPhone = "",
   onVerified,
+  error,
   onPhoneChange,
 }) => {
   const [phone, setPhone] = useState(initialPhone);
@@ -183,7 +185,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   if (isVerified) {
     return (
       <div className="space-y-3">
-        <Label>Phone Number *</Label>
+        <Label>Phone Number</Label>
         <div className="flex items-center gap-3 p-4 border border-primary/30 bg-primary/5 rounded-lg">
           <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
           <div className="flex-1">
@@ -210,7 +212,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        <Label htmlFor="phone">Phone Number *</Label>
+        <Label htmlFor="phone">Phone Number</Label>
         <div className="flex gap-2">
           <div className="flex items-center px-3 bg-muted rounded-md border border-input">
             <span className="text-sm text-muted-foreground">+1</span>
@@ -225,6 +227,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
             className="flex-1"
           />
         </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
         <p className="text-xs text-muted-foreground">
           Canadian phone number required for identity verification
         </p>

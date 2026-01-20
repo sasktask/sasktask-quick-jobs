@@ -1002,10 +1002,10 @@ const Auth: React.FC = () => {
                 {step === 4 && (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Phone Number</Label>
                       <PhoneVerification
                         email={email}
                         initialPhone={phone}
+                        error={formErrors.phone ? "Phone number is required" : undefined}
                         onPhoneChange={(p) => {
                           setPhone(p);
                           setPhoneVerified(false);
@@ -1015,7 +1015,6 @@ const Auth: React.FC = () => {
                           setPhoneVerified(true);
                         }}
                       />
-                      {formErrors.phone && <p className="text-sm text-destructive">{formErrors.phone}</p>}
                     </div>
                     <div className="space-y-3">
                       <div
