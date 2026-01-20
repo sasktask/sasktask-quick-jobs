@@ -129,7 +129,7 @@ serve(async (req: Request) => {
     if (userId) {
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ 
+        .update({
           phone,
           updated_at: new Date().toISOString()
         })
@@ -142,13 +142,13 @@ serve(async (req: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
-        message: "Phone number verified successfully" 
+        message: "Phone number verified successfully"
       }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       }
     );
 

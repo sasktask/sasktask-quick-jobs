@@ -98,12 +98,15 @@ serve(async (req: Request) => {
       );
     }
 
+    const normalizedUserId = userId || "00000000-0000-0000-0000-000000000000";
+    const pendingEmail = email || null;
+
     // Reject if phone is already verified/claimed by another user
     const { data: existingProfile } = await supabase
       .from("profiles")
       .select("id")
       .eq("phone", phone)
-      .neq("id", userId || "00000000-0000-0000-0000-000000000000")
+      .neq("id", normalizedUserId)
       .maybeSingle();
 
     if (existingProfile) {
@@ -116,9 +119,10 @@ serve(async (req: Request) => {
     // Also block if another user has a verified record for this phone
     const { data: existingVerification } = await supabase
       .from("phone_verifications")
-      .select("user_id, verified_at")
+      .select("user_id, verified_at, pending_email")
       .eq("phone", phone)
-      .neq("user_id", userId || "00000000-0000-0000-0000-000000000000")
+      .neq("user_id", normalizedUserId)
+      .neq("pending_email", pendingEmail || "___none___")
       .not("verified_at", "is", null)
       .maybeSingle();
 
@@ -170,6 +174,7 @@ serve(async (req: Request) => {
       .insert({
         phone,
         user_id: userId || null,
+        pending_email: userId ? null : pendingEmail,
         code: otp,
         expires_at: expiresAt,
         ip_address: clientIP,
