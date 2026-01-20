@@ -302,8 +302,6 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  const fromNumber = (import.meta as any).env?.VITE_TWILIO_FROM_NUMBER;
-                  console.log("PhoneVerification resend clicked. From number:", fromNumber || "not set in VITE_TWILIO_FROM_NUMBER");
                   sendOTP();
                 }}
                 disabled={isSending}
