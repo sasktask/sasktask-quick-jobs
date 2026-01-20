@@ -99,20 +99,12 @@ serve(async (req: Request) => {
     }
 
     // Reject if phone is already verified/claimed by another user
-    const { data: existingProfile, error: profileCheckError } = await supabase
+    const { data: existingProfile } = await supabase
       .from("profiles")
       .select("id")
       .eq("phone", phone)
       .neq("id", userId || "00000000-0000-0000-0000-000000000000")
       .maybeSingle();
-
-    if (profileCheckError) {
-      console.error("Profile check error:", profileCheckError);
-      return new Response(
-        JSON.stringify({ error: "Unable to verify phone ownership. Please try again." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     if (existingProfile) {
       return new Response(
@@ -122,22 +114,13 @@ serve(async (req: Request) => {
     }
 
     // Also block if another user has a verified record for this phone
-    const { data: existingVerification, error: verificationCheckError } = await supabase
+    const { data: existingVerification } = await supabase
       .from("phone_verifications")
-      .select("user_id, verified_at, pending_email")
+      .select("user_id, verified_at")
       .eq("phone", phone)
       .neq("user_id", userId || "00000000-0000-0000-0000-000000000000")
-      .neq("pending_email", email || "___none___")
       .not("verified_at", "is", null)
       .maybeSingle();
-
-    if (verificationCheckError) {
-      console.error("Verification ownership check error:", verificationCheckError);
-      return new Response(
-        JSON.stringify({ error: "Unable to verify phone ownership. Please try again." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     if (existingVerification) {
       return new Response(
@@ -187,7 +170,6 @@ serve(async (req: Request) => {
       .insert({
         phone,
         user_id: userId || null,
-        pending_email: userId ? null : email,
         code: otp,
         expires_at: expiresAt,
         ip_address: clientIP,
