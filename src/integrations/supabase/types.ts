@@ -1200,6 +1200,7 @@ export type Database = {
           expires_at: string
           id: string
           ip_address: string | null
+          pending_email: string | null
           phone: string
           user_id: string | null
           verified_at: string | null
@@ -1211,6 +1212,7 @@ export type Database = {
           expires_at: string
           id?: string
           ip_address?: string | null
+          pending_email?: string | null
           phone: string
           user_id?: string | null
           verified_at?: string | null
@@ -1222,6 +1224,7 @@ export type Database = {
           expires_at?: string
           id?: string
           ip_address?: string | null
+          pending_email?: string | null
           phone?: string
           user_id?: string | null
           verified_at?: string | null
