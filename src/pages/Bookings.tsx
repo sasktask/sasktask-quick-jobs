@@ -16,6 +16,8 @@ import { DisputeDialog } from "@/components/DisputeDialog";
 import { MilestoneManager } from "@/components/MilestoneManager";
 import { EnhancedReviewForm } from "@/components/EnhancedReviewForm";
 import { PaymentEscrow } from "@/components/PaymentEscrow";
+import { EnhancedEscrowCard } from "@/components/EnhancedEscrowCard";
+import { EnhancedEvidenceUpload } from "@/components/EnhancedEvidenceUpload";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, Shield, Star, Phone, MapPin, Ban, AlertCircle, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -447,6 +449,52 @@ const Bookings = () => {
                                 milestones={booking.milestones}
                                 onPaymentComplete={checkUserAndFetchBookings}
                               />
+
+                              {/* Enhanced Escrow Visualization */}
+                              {booking.payment && (
+                                <EnhancedEscrowCard
+                                  amount={booking.tasks?.pay_amount || 0}
+                                  status={booking.payment?.escrow_status === "released" ? "released" : 
+                                          booking.payment?.escrow_status === "held" ? "held" : 
+                                          booking.payment?.escrow_status === "refunded" ? "refunded" :
+                                          booking.payment?.status === "disputed" ? "disputed" : "pending"}
+                                  platformFee={booking.payment?.platform_fee || 0}
+                                  payoutAmount={booking.payment?.payout_amount || 0}
+                                  taxDeducted={booking.payment?.tax_deducted || 0}
+                                  isTaskGiver={userRole === "task_giver"}
+                                  milestones={booking.milestones?.map((m: any) => ({
+                                    id: m.id,
+                                    title: m.title,
+                                    amount: m.amount,
+                                    status: m.status,
+                                    dueDate: m.due_date
+                                  })) || []}
+                                  onRelease={() => {
+                                    setSelectedBooking(booking);
+                                    setShowPayment(true);
+                                  }}
+                                  onDispute={() => {
+                                    setSelectedBooking(booking);
+                                    setShowDispute(true);
+                                  }}
+                                />
+                              )}
+
+                              {/* Evidence Upload for Task Doers */}
+                              {userRole === "task_doer" && (booking.status === "in_progress" || booking.status === "accepted") && (
+                                <EnhancedEvidenceUpload
+                                  bookingId={booking.id}
+                                  taskId={booking.tasks?.id}
+                                  onUploadComplete={checkUserAndFetchBookings}
+                                  evidenceType="completion"
+                                  title="Upload Work Evidence"
+                                  description="Document your work with photos or videos"
+                                  taskLocation={booking.tasks?.latitude && booking.tasks?.longitude ? {
+                                    latitude: booking.tasks.latitude,
+                                    longitude: booking.tasks.longitude
+                                  } : null}
+                                />
+                              )}
 
                               {/* Show Review Form after completion */}
                               {booking.status === "completed" && booking.tasks?.status === "completed" && !showReview && (

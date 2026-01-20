@@ -90,7 +90,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
               Task
             </span>
           </Link>
-          
+
           <div className="flex items-center gap-2">
             <div className="hidden lg:flex items-center gap-1">
               {/* Explore Dropdown - Only visible when logged in */}
@@ -217,7 +217,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
             <div className="flex items-center gap-1">
               {user && <UserIdSearch />}
               {user && <NotificationCenter userId={user.id} />}
-              
+
               {/* Theme Toggle */}
               <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="rounded-full">
                 {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -322,7 +322,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                       Become a Tasker
                     </Button>
                   </Link>
-                  <Link to="/auth?tab=signin">
+                  <Link to="/auth?mode=signin">
                     <Button variant="outline" size="sm" className="font-medium">
                       {t('signIn')}
                     </Button>

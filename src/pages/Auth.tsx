@@ -1007,8 +1007,12 @@ const Auth: React.FC = () => {
                         initialPhone={phone}
                         error={formErrors.phone ? "Phone number is required" : undefined}
                         onPhoneChange={(p) => {
-                          setPhone(p);
-                          setPhoneVerified(false);
+                          setPhone((prev) => {
+                            if (prev !== p) {
+                              setPhoneVerified(false);
+                            }
+                            return p;
+                          });
                         }}
                         onVerified={(verifiedPhone) => {
                           setPhone(verifiedPhone);

@@ -19,6 +19,7 @@ import { z } from "zod";
 import { TaskTemplateManager } from "@/components/TaskTemplateManager";
 import { getCategoryTitles } from "@/lib/categories";
 import { PhoneVerification } from "@/components/PhoneVerification";
+import { InstantTaskerMatching } from "@/components/InstantTaskerMatching";
 
 // Full validation for publishing
 const taskSchema = z.object({
@@ -733,7 +734,25 @@ const PostTask = () => {
                 </div>
               </div>
 
-              {/* Expiration Date */}
+              {/* Instant Tasker Matching - Show for urgent tasks with location */}
+              {formData.priority === "urgent" && formData.latitude && formData.longitude && (
+                <InstantTaskerMatching
+                  taskCategory={formData.category}
+                  taskLocation={
+                    formData.latitude && formData.longitude
+                      ? { latitude: formData.latitude, longitude: formData.longitude }
+                      : null
+                  }
+                  onSelectTasker={(taskerId) => {
+                    toast({
+                      title: "Tasker Selected",
+                      description: "Once you post your task, this tasker will be notified first."
+                    });
+                  }}
+                  isUrgent={true}
+                />
+              )}
+
               <div className="space-y-4 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
                 <div className="flex items-start gap-3">
                   <Clock className="h-5 w-5 text-amber-600 mt-0.5" />

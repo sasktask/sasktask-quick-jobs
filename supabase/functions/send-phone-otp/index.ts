@@ -98,21 +98,16 @@ serve(async (req: Request) => {
       );
     }
 
+    const normalizedUserId = userId || "00000000-0000-0000-0000-000000000000";
+    const pendingEmail = email || null;
+
     // Reject if phone is already verified/claimed by another user
-    const { data: existingProfile, error: profileCheckError } = await supabase
+    const { data: existingProfile } = await supabase
       .from("profiles")
       .select("id")
       .eq("phone", phone)
-      .neq("id", userId || "00000000-0000-0000-0000-000000000000")
+      .neq("id", normalizedUserId)
       .maybeSingle();
-
-    if (profileCheckError) {
-      console.error("Profile check error:", profileCheckError);
-      return new Response(
-        JSON.stringify({ error: "Unable to verify phone ownership. Please try again." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     if (existingProfile) {
       return new Response(
@@ -122,22 +117,14 @@ serve(async (req: Request) => {
     }
 
     // Also block if another user has a verified record for this phone
-    const { data: existingVerification, error: verificationCheckError } = await supabase
+    const { data: existingVerification } = await supabase
       .from("phone_verifications")
       .select("user_id, verified_at, pending_email")
       .eq("phone", phone)
-      .neq("user_id", userId || "00000000-0000-0000-0000-000000000000")
-      .neq("pending_email", email || "___none___")
+      .neq("user_id", normalizedUserId)
+      .neq("pending_email", pendingEmail || "___none___")
       .not("verified_at", "is", null)
       .maybeSingle();
-
-    if (verificationCheckError) {
-      console.error("Verification ownership check error:", verificationCheckError);
-      return new Response(
-        JSON.stringify({ error: "Unable to verify phone ownership. Please try again." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     if (existingVerification) {
       return new Response(
@@ -187,7 +174,7 @@ serve(async (req: Request) => {
       .insert({
         phone,
         user_id: userId || null,
-        pending_email: userId ? null : email,
+        pending_email: userId ? null : pendingEmail,
         code: otp,
         expires_at: expiresAt,
         ip_address: clientIP,
@@ -207,8 +194,8 @@ serve(async (req: Request) => {
     if (!accountSid || !authToken || !fromNumber) {
       console.error("Twilio not configured: missing SID/token/from number");
       return new Response(
-        JSON.stringify({ error: "SMS sending not configured. Missing Twilio credentials." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "SMS sending not configured. Please contact support." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } else {
       const twilioClient = twilio(accountSid, authToken);
@@ -223,8 +210,8 @@ serve(async (req: Request) => {
       } catch (twilioError: any) {
         console.error("Twilio send failed:", twilioError?.message || twilioError);
         return new Response(
-          JSON.stringify({ error: twilioError?.message || "Twilio send failed" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: twilioError?.message || "Twilio send failed. Please use a different number or try again." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     }

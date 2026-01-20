@@ -350,6 +350,57 @@ export type Database = {
           },
         ]
       }
+      certificates: {
+        Row: {
+          certificate_number: string | null
+          created_at: string
+          document_url: string | null
+          expiry_date: string | null
+          id: string
+          is_public: boolean | null
+          issue_date: string | null
+          issuing_organization: string
+          name: string
+          status: string | null
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          certificate_number?: string | null
+          created_at?: string
+          document_url?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_public?: boolean | null
+          issue_date?: string | null
+          issuing_organization: string
+          name: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          certificate_number?: string | null
+          created_at?: string
+          document_url?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_public?: boolean | null
+          issue_date?: string | null
+          issuing_organization?: string
+          name?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       checklist_completions: {
         Row: {
           approved_at: string | null
@@ -1200,8 +1251,9 @@ export type Database = {
           expires_at: string
           id: string
           ip_address: string | null
+          pending_email: string | null
           phone: string
-          user_id: string
+          user_id: string | null
           verified_at: string | null
         }
         Insert: {
@@ -1211,8 +1263,9 @@ export type Database = {
           expires_at: string
           id?: string
           ip_address?: string | null
+          pending_email?: string | null
           phone: string
-          user_id: string
+          user_id?: string | null
           verified_at?: string | null
         }
         Update: {
@@ -1222,8 +1275,9 @@ export type Database = {
           expires_at?: string
           id?: string
           ip_address?: string | null
+          pending_email?: string | null
           phone?: string
-          user_id?: string
+          user_id?: string | null
           verified_at?: string | null
         }
         Relationships: []
