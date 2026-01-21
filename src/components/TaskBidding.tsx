@@ -419,7 +419,7 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
   return (
     <div className="space-y-6">
       {/* Bidding Section for Task Doers */}
-      {isTaskDoer && !isTaskGiver && (
+      {/* {isTaskDoer && !isTaskGiver && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -492,7 +492,7 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
             </div>
           </CardContent>
         </Card>
-      )}
+      )} */}
 
       {/* Bids List */}
       {bids.length > 0 && (
