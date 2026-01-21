@@ -19,6 +19,7 @@ import { ProfileStrengthMeter } from "@/components/ProfileStrengthMeter";
 import { ProfileTips } from "@/components/ProfileTips";
 import { ProfileHeader, ProfileStatsCard, ProfileQuickActions, ProfileNavTabs } from "@/components/profile";
 import { CertificateManager } from "@/components/CertificateManager";
+import { DeleteAccountDialog } from "@/components/account/DeleteAccountDialog";
 import {
   Loader2, Shield, Clock, Settings, CreditCard, Lock, User,
   ShieldCheck, AlertCircle, Camera, FileCheck, CheckCircle2, XCircle,
@@ -64,6 +65,7 @@ const Profile = () => {
   const [trustScore, setTrustScore] = useState<number>(50);
   const [verification, setVerification] = useState<VerificationStatus | null>(null);
   const [activeTab, setActiveTab] = useState("basic");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     checkUserAndLoadProfile();
@@ -702,8 +704,20 @@ const Profile = () => {
                         <p className="text-sm text-muted-foreground mb-4">
                           Permanently delete your account and all data. This cannot be undone.
                         </p>
-                        <Button variant="destructive" size="sm">Delete Account</Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => setShowDeleteDialog(true)}
+                        >
+                          Delete Account
+                        </Button>
                       </div>
+
+                      <DeleteAccountDialog
+                        open={showDeleteDialog}
+                        onOpenChange={setShowDeleteDialog}
+                        user={profile}
+                      />
                     </div>
                   </CardContent>
                 </Card>
