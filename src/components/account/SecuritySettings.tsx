@@ -11,21 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Loader2, Trash2, Key, Eye, EyeOff, Check, X, Bell, Shield } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { SecurityOverview } from "./SecurityOverview";
 import { LoginHistory } from "./LoginHistory";
+import { DeleteAccountDialog } from "./DeleteAccountDialog";
 // Strong password schema matching signup requirements
 const passwordSchema = z.object({
   newPassword: z.string()
@@ -65,7 +55,7 @@ interface SecuritySettingsProps {
 export const SecuritySettings = ({ user }: SecuritySettingsProps) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordValue, setPasswordValue] = useState("");
@@ -124,26 +114,6 @@ export const SecuritySettings = ({ user }: SecuritySettingsProps) => {
       toast.error(error.message || "Failed to update password. Please try again.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    setDeleting(true);
-    try {
-      // Note: In production, implement a proper account deletion function
-      // that handles cleanup of all related data (tasks, bookings, messages, etc.)
-      
-      // For now, we sign out and notify the user to contact support
-      toast.info("Account deletion requested. Please contact support at support@sasktask.com to complete the deletion process. We'll help ensure all your data is properly removed.");
-      
-      // Sign out the user
-      await supabase.auth.signOut();
-      navigate("/");
-    } catch (error: any) {
-      console.error("Error during account deletion:", error);
-      toast.error("Failed to process account deletion. Please contact support.");
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -352,41 +322,19 @@ export const SecuritySettings = ({ user }: SecuritySettingsProps) => {
               </ul>
             </div>
 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={deleting}>
-                  {deleting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete My Account
-                    </>
-                  )}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete your account and remove all your
-                    data from our servers. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAccount}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Delete Account
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Button 
+              variant="destructive" 
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete My Account
+            </Button>
+
+            <DeleteAccountDialog
+              open={showDeleteDialog}
+              onOpenChange={setShowDeleteDialog}
+              user={{ id: user.id, email: user.email }}
+            />
           </div>
         </CardContent>
       </Card>
