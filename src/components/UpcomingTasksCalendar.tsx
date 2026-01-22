@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Calendar, 
-  ChevronLeft, 
-  ChevronRight, 
-  Clock, 
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
   MapPin,
   ArrowRight
 } from "lucide-react";
@@ -69,7 +69,7 @@ export function UpcomingTasksCalendar({ userId, userRole }: UpcomingTasksCalenda
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   const getTasksForDate = (date: Date) => {
-    return tasks.filter(task => 
+    return tasks.filter(task =>
       task.scheduled_date && isSameDay(new Date(task.scheduled_date), date)
     );
   };
@@ -113,9 +113,9 @@ export function UpcomingTasksCalendar({ userId, userRole }: UpcomingTasksCalenda
             Upcoming Tasks
           </CardTitle>
           <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-8 w-8"
               onClick={() => navigateWeek("prev")}
             >
@@ -124,9 +124,9 @@ export function UpcomingTasksCalendar({ userId, userRole }: UpcomingTasksCalenda
             <span className="text-sm text-muted-foreground min-w-[100px] text-center">
               {format(weekStart, "MMM yyyy")}
             </span>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-8 w-8"
               onClick={() => navigateWeek("next")}
             >
@@ -135,7 +135,7 @@ export function UpcomingTasksCalendar({ userId, userRole }: UpcomingTasksCalenda
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {/* Week view */}
         <div className="grid grid-cols-7 gap-1">
@@ -143,15 +143,15 @@ export function UpcomingTasksCalendar({ userId, userRole }: UpcomingTasksCalenda
             const dayTasks = getTasksForDate(date);
             const isSelected = isSameDay(date, selectedDate);
             const hasTask = dayTasks.length > 0;
-            
+
             return (
               <button
                 key={date.toISOString()}
                 onClick={() => setSelectedDate(date)}
                 className={cn(
                   "flex flex-col items-center p-2 rounded-lg transition-all",
-                  isSelected 
-                    ? "bg-primary text-primary-foreground" 
+                  isSelected
+                    ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted",
                   isToday(date) && !isSelected && "ring-2 ring-primary/50"
                 )}
@@ -176,7 +176,7 @@ export function UpcomingTasksCalendar({ userId, userRole }: UpcomingTasksCalenda
           <p className="text-sm font-medium text-muted-foreground">
             {getDateLabel(selectedDate)}
           </p>
-          
+
           {tasksForSelectedDate.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
               <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -190,8 +190,8 @@ export function UpcomingTasksCalendar({ userId, userRole }: UpcomingTasksCalenda
           ) : (
             <div className="space-y-2">
               {tasksForSelectedDate.map((task) => (
-                <Link 
-                  key={task.id} 
+                <Link
+                  key={task.id}
                   to={`/task/${task.id}`}
                   className="block"
                 >
