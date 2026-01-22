@@ -18,8 +18,8 @@ export default function Terms() {
               <FileText className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-4xl font-bold mb-4">Terms of Service</h1>
-            <p className="text-muted-foreground">Last updated: December 15, 2024</p>
-            <p className="text-sm text-muted-foreground mt-2">Effective Date: December 15, 2024</p>
+            <p className="text-muted-foreground">Last updated: January 15, 2026</p>
+            <p className="text-sm text-muted-foreground mt-2">Effective Date: January 15, 2026</p>
           </div>
 
           <div className="prose prose-lg max-w-none space-y-8">
