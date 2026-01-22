@@ -29,6 +29,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Install from "./pages/Install";
 import AdminVerification from "./pages/AdminVerification";
+import AdminCertificates from "./pages/AdminCertificates";
 import AdminDisputes from "./pages/AdminDisputes";
 import AdminFraud from "./pages/AdminFraud";
 import AdminUsers from "./pages/AdminUsers";
@@ -55,6 +56,7 @@ import Payouts from "./pages/Payouts";
 import Checkout from "./pages/Checkout";
 import Notifications from "./pages/Notifications";
 import Services from "./pages/Services";
+import InstantWork from "./pages/InstantWork";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import { MobileBottomNav } from "./components/MobileBottomNav";
@@ -106,6 +108,7 @@ const App = () => (
               <Route path="/map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />
               <Route path="/faq" element={<ProtectedRoute><FAQ /></ProtectedRoute>} />
               <Route path="/admin/verify-users" element={<ProtectedRoute><AdminVerification /></ProtectedRoute>} />
+              <Route path="/admin/certificates" element={<ProtectedRoute><AdminCertificates /></ProtectedRoute>} />
               <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
               <Route path="/admin/disputes" element={<ProtectedRoute><AdminDisputes /></ProtectedRoute>} />
               <Route path="/admin/fraud" element={<ProtectedRoute><AdminFraud /></ProtectedRoute>} />
@@ -124,6 +127,7 @@ const App = () => (
               <Route path="/payment-cancelled" element={<ProtectedRoute><PaymentCancelled /></ProtectedRoute>} />
               <Route path="/payouts" element={<ProtectedRoute><Payouts /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+              <Route path="/instant-work" element={<ProtectedRoute><InstantWork /></ProtectedRoute>} />
               <Route path="/tiffin" element={<Navigate to="/browse?category=Tiffin+Services" replace />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

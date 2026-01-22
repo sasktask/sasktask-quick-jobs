@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Users, Shield } from "lucide-react";
+import { Users, Shield, Award, AlertTriangle, CreditCard, ShieldCheck } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const navItems = [
@@ -9,6 +9,30 @@ const navItems = [
     href: "/admin/dashboard",
     icon: Users,
     description: "View & control users",
+  },
+  {
+    title: "Verify Users",
+    href: "/admin/verify-users",
+    icon: ShieldCheck,
+    description: "ID & background checks",
+  },
+  {
+    title: "Certificates",
+    href: "/admin/certificates",
+    icon: Award,
+    description: "Review certifications",
+  },
+  {
+    title: "Disputes",
+    href: "/admin/disputes",
+    icon: AlertTriangle,
+    description: "Resolve conflicts",
+  },
+  {
+    title: "Payments",
+    href: "/admin/payments",
+    icon: CreditCard,
+    description: "Payment management",
   },
 ];
 
@@ -24,14 +48,14 @@ export function AdminSidebar() {
           </div>
           <div>
             <h2 className="text-lg font-bold">Admin Panel</h2>
-            <p className="text-xs text-muted-foreground">User Control</p>
+            <p className="text-xs text-muted-foreground">Management Console</p>
           </div>
         </div>
       </div>
       <ScrollArea className="flex-1 p-4">
         <nav className="space-y-2">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.href || location.pathname === "/admin/users";
+            const isActive = location.pathname === item.href;
 
             return (
               <Link

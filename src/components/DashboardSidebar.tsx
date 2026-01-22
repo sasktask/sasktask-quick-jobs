@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Award,
   Shield,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -95,6 +96,13 @@ export function DashboardSidebar({
       href: "/messages",
       icon: MessageSquare,
       badge: unreadMessages > 0 ? unreadMessages : null,
+    },
+    {
+      title: "Instant Work",
+      href: "/instant-work",
+      icon: Zap,
+      badge: null,
+      highlight: true,
     },
   ];
 
