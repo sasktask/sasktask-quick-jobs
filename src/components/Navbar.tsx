@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Menu, ShieldCheck, Globe, Sun, Moon, User, Settings, LogOut, ChevronDown, Briefcase, MessageSquare, LayoutDashboard, ClipboardList, Search, Users, Trophy, Layers, Sparkles, Truck, Wrench, Leaf, Dog, Baby, Heart, Package, Plug, PaintBucket, Hammer } from "lucide-react";
+import { Menu, ShieldCheck, Globe, Sun, Moon, User, Settings, LogOut, ChevronDown, Briefcase, MessageSquare, LayoutDashboard, ClipboardList, Search, Users, Trophy, Layers, Sparkles, Truck, Wrench, Leaf, Dog, Baby, Heart, Package, Plug, PaintBucket, Hammer, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/sasktask-logo.png";
@@ -172,6 +172,16 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </Badge>
                     )}
+                  </Button>
+
+                  {/* Instant Work Button */}
+                  <Button 
+                    variant="ghost" 
+                    className="gap-1 font-medium text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50" 
+                    onClick={() => navigate("/instant-work")}
+                  >
+                    <Zap className="h-4 w-4" />
+                    Instant
                   </Button>
 
                   {/* Admin Dropdown - Owner Only */}
