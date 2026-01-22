@@ -35,8 +35,10 @@ export const PaymentVerification = ({ userId, onVerified, showCard = true }: Pay
 
       if (error) throw error;
 
-      setIsVerified(!!profile?.payment_verified);
-      setWalletBalance(profile?.wallet_balance || 0);
+      // Type assertion for new columns not yet in types
+      const profileData = profile as any;
+      setIsVerified(!!profileData?.payment_verified);
+      setWalletBalance(profileData?.wallet_balance || 0);
     } catch (error) {
       console.error("Error checking payment verification:", error);
     } finally {
@@ -57,7 +59,7 @@ export const PaymentVerification = ({ userId, onVerified, showCard = true }: Pay
             payment_verified: true,
             payment_verified_at: new Date().toISOString(),
             wallet_balance: walletBalance - VERIFICATION_AMOUNT
-          })
+          } as any)
           .eq("id", userId);
 
         if (updateError) throw updateError;
@@ -122,7 +124,7 @@ export const PaymentVerification = ({ userId, onVerified, showCard = true }: Pay
         .update({
           payment_verified: true,
           payment_verified_at: new Date().toISOString()
-        })
+        } as any)
         .eq("id", userId);
 
       if (error) throw error;
@@ -273,7 +275,9 @@ export const usePaymentVerification = (userId: string | null) => {
           .maybeSingle();
 
         if (error) throw error;
-        setIsVerified(!!data?.payment_verified);
+        // Type assertion for new column
+        const profileData = data as any;
+        setIsVerified(!!profileData?.payment_verified);
       } catch (error) {
         console.error("Error checking payment verification:", error);
       } finally {
