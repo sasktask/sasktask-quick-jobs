@@ -6,6 +6,7 @@ import { BadgeCheck, Camera, MapPin, Calendar, Shield, Upload, Hash, Copy, Check
 import { format } from "date-fns";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { VerificationStatusIndicator } from "@/components/VerificationStatusIndicator";
 
 interface ProfileHeaderProps {
   profile: any;
@@ -137,17 +138,11 @@ export const ProfileHeader = ({
             )}
           </div>
 
-          {/* Role and Verification Badges */}
+          {/* Role Badge */}
           <div className="flex flex-wrap gap-2 pt-1">
             <Badge variant="secondary" className="capitalize font-medium">
               {userRole?.replace("_", " ") || "Member"}
             </Badge>
-            {verification?.id_verified && (
-              <Badge className="bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/15">
-                <Shield className="h-3 w-3 mr-1" />
-                ID Verified
-              </Badge>
-            )}
             {verification?.background_check_status === 'verified' && (
               <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/15">
                 <BadgeCheck className="h-3 w-3 mr-1" />
@@ -161,6 +156,13 @@ export const ProfileHeader = ({
               </Badge>
             )}
           </div>
+
+          {/* Verification Status Indicator */}
+          {profile?.id && (
+            <div className="pt-2">
+              <VerificationStatusIndicator userId={profile.id} onlyBadges />
+            </div>
+          )}
 
           {/* Bio */}
           {profile?.bio && (
