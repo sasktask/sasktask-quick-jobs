@@ -54,6 +54,15 @@ export const Footer = () => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
               <li><Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/cookies" className="hover:text-primary transition-colors">Cookie Policy</Link></li>
+              <li><Link to="/community-guidelines" className="hover:text-primary transition-colors">Community Guidelines</Link></li>
+              <li><Link to="/contractor-agreement" className="hover:text-primary transition-colors">Contractor Agreement</Link></li>
+              <li><Link to="/safety" className="hover:text-primary transition-colors">Safety Guidelines</Link></li>
+              <li><Link to="/refund-policy" className="hover:text-primary transition-colors">Refund Policy</Link></li>
+              <li><Link to="/dispute-resolution" className="hover:text-primary transition-colors">Dispute Resolution</Link></li>
+              <li><Link to="/copyright" className="hover:text-primary transition-colors">Copyright & DMCA</Link></li>
+              <li><Link to="/accessibility" className="hover:text-primary transition-colors">Accessibility</Link></li>
+              <li><Link to="/saskatchewan-compliance" className="hover:text-primary transition-colors">SK Compliance</Link></li>
             </ul>
           </div>
         </div>
@@ -63,7 +72,7 @@ export const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             {/* Copyright */}
             <p className="text-sm text-muted-foreground">
-              © 2025 SaskTask. All rights reserved.
+              © 2026 SaskTask. All rights reserved.
             </p>
 
             {/* Social Media */}

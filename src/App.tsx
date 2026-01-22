@@ -27,6 +27,15 @@ import NotFound from "./pages/NotFound";
 import FAQ from "./pages/FAQ";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import CookiePolicy from "./pages/CookiePolicy";
+import AccessibilityStatement from "./pages/AccessibilityStatement";
+import CommunityGuidelines from "./pages/CommunityGuidelines";
+import IndependentContractorAgreement from "./pages/IndependentContractorAgreement";
+import SafetyGuidelines from "./pages/SafetyGuidelines";
+import RefundPolicy from "./pages/RefundPolicy";
+import CopyrightDMCA from "./pages/CopyrightDMCA";
+import DisputeResolution from "./pages/DisputeResolution";
+import SaskatchewanCompliance from "./pages/SaskatchewanCompliance";
 import Install from "./pages/Install";
 import AdminVerification from "./pages/AdminVerification";
 import AdminCertificates from "./pages/AdminCertificates";
@@ -60,6 +69,7 @@ import InstantWork from "./pages/InstantWork";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import { MobileBottomNav } from "./components/MobileBottomNav";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +82,7 @@ const App = () => (
           <Sonner />
           <NotificationPermissionPrompt />
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <ScrollToTop />
             <MobileBottomNav />
             <AIAssistantWidget />
             <Routes>
@@ -80,6 +91,15 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
+              <Route path="/cookies" element={<CookiePolicy />} />
+              <Route path="/accessibility" element={<AccessibilityStatement />} />
+              <Route path="/community-guidelines" element={<CommunityGuidelines />} />
+              <Route path="/contractor-agreement" element={<IndependentContractorAgreement />} />
+              <Route path="/safety" element={<SafetyGuidelines />} />
+              <Route path="/refund-policy" element={<RefundPolicy />} />
+              <Route path="/copyright" element={<CopyrightDMCA />} />
+              <Route path="/dispute-resolution" element={<DisputeResolution />} />
+              <Route path="/saskatchewan-compliance" element={<SaskatchewanCompliance />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
