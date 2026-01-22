@@ -38,6 +38,8 @@ import {
   UserCheck,
   Clock,
   AlertTriangle,
+  Crown,
+  UserMinus,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -58,6 +60,8 @@ interface UserRole {
   role: "task_giver" | "task_doer" | "admin";
 }
 
+type ActionType = "verify" | "message" | "ban" | "grant_admin" | "revoke_admin" | null;
+
 export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
@@ -66,7 +70,7 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [actionDialog, setActionDialog] = useState<{
-    type: "verify" | "message" | "ban" | null;
+    type: ActionType;
     user: User | null;
   }>({ type: null, user: null });
   const [messageContent, setMessageContent] = useState("");
@@ -112,6 +116,70 @@ export default function AdminDashboard() {
 
   const getUserRole = (userId: string) => {
     return userRoles.find(r => r.user_id === userId)?.role || "user";
+  };
+
+  const isUserAdmin = (userId: string) => {
+    return userRoles.some(r => r.user_id === userId && r.role === "admin");
+  };
+
+  const handleGrantAdmin = async () => {
+    if (!actionDialog.user) return;
+    try {
+      const { error } = await supabase.from("user_roles").insert({
+        user_id: actionDialog.user.id,
+        role: "admin",
+      });
+
+      if (error) {
+        if (error.code === "23505") {
+          toast.error("User already has admin role");
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      await supabase.from("notifications").insert({
+        user_id: actionDialog.user.id,
+        title: "Admin Access Granted",
+        message: "You have been granted admin access to the platform.",
+        type: "account",
+      });
+
+      toast.success("Admin role granted successfully");
+      loadData();
+      setActionDialog({ type: null, user: null });
+    } catch (error: any) {
+      console.error("Error granting admin:", error);
+      toast.error("Failed to grant admin role");
+    }
+  };
+
+  const handleRevokeAdmin = async () => {
+    if (!actionDialog.user) return;
+    try {
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", actionDialog.user.id)
+        .eq("role", "admin");
+
+      if (error) throw error;
+
+      await supabase.from("notifications").insert({
+        user_id: actionDialog.user.id,
+        title: "Admin Access Revoked",
+        message: "Your admin access has been revoked.",
+        type: "account",
+      });
+
+      toast.success("Admin role revoked successfully");
+      loadData();
+      setActionDialog({ type: null, user: null });
+    } catch (error: any) {
+      console.error("Error revoking admin:", error);
+      toast.error("Failed to revoke admin role");
+    }
   };
 
   const handleVerifyUser = async () => {
@@ -322,6 +390,7 @@ export default function AdminDashboard() {
                 {filteredUsers.map((user) => {
                   const role = getUserRole(user.id);
                   const isBanned = user.availability_status === "banned";
+                  const hasAdminRole = isUserAdmin(user.id);
 
                   return (
                     <div
@@ -348,6 +417,9 @@ export default function AdminDashboard() {
                             {user.verified_by_admin && (
                               <ShieldCheck className="h-4 w-4 text-green-500" />
                             )}
+                            {hasAdminRole && (
+                              <Crown className="h-4 w-4 text-yellow-500" />
+                            )}
                             {isBanned && (
                               <Badge variant="destructive" className="text-xs">Banned</Badge>
                             )}
@@ -358,6 +430,9 @@ export default function AdminDashboard() {
                               <Badge variant="outline" className="text-xs">{user.user_id_number}</Badge>
                             )}
                             <Badge variant="secondary" className="text-xs capitalize">{role.replace('_', ' ')}</Badge>
+                            {hasAdminRole && (
+                              <Badge className="text-xs bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-500/30">Admin</Badge>
+                            )}
                             {user.created_at && (
                               <span className="text-xs text-muted-foreground">
                                 Joined {format(new Date(user.created_at), "MMM d, yyyy")}
@@ -367,7 +442,28 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {/* Admin Role Management */}
+                        {hasAdminRole ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setActionDialog({ type: "revoke_admin", user })}
+                            className="gap-1 text-yellow-600 hover:text-yellow-700 border-yellow-500/30"
+                          >
+                            <UserMinus className="h-3 w-3" /> Revoke Admin
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setActionDialog({ type: "grant_admin", user })}
+                            className="gap-1 text-yellow-600 hover:text-yellow-700 border-yellow-500/30"
+                          >
+                            <Crown className="h-3 w-3" /> Grant Admin
+                          </Button>
+                        )}
+                        
                         {!user.verified_by_admin && !isBanned && (
                           <Button
                             size="sm"
@@ -511,6 +607,60 @@ export default function AdminDashboard() {
               </Button>
               <Button variant="destructive" onClick={handleBanUser}>
                 <Ban className="h-4 w-4 mr-2" /> Ban User
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Grant Admin Dialog */}
+        <Dialog open={actionDialog.type === "grant_admin"} onOpenChange={() => setActionDialog({ type: null, user: null })}>
+          <DialogContent className="glass-dialog">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-yellow-600">
+                <Crown className="h-5 w-5" /> Grant Admin Access
+              </DialogTitle>
+              <DialogDescription>
+                Grant admin access to {actionDialog.user?.full_name || actionDialog.user?.email}?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-muted-foreground">
+                This user will have full access to the admin dashboard and can manage other users, including granting/revoking admin roles.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setActionDialog({ type: null, user: null })}>
+                Cancel
+              </Button>
+              <Button onClick={handleGrantAdmin} className="bg-yellow-600 hover:bg-yellow-700 text-white">
+                <Crown className="h-4 w-4 mr-2" /> Grant Admin
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Revoke Admin Dialog */}
+        <Dialog open={actionDialog.type === "revoke_admin"} onOpenChange={() => setActionDialog({ type: null, user: null })}>
+          <DialogContent className="glass-dialog">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-yellow-600">
+                <UserMinus className="h-5 w-5" /> Revoke Admin Access
+              </DialogTitle>
+              <DialogDescription>
+                Revoke admin access from {actionDialog.user?.full_name || actionDialog.user?.email}?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-muted-foreground">
+                This user will lose access to the admin dashboard and will no longer be able to manage other users.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setActionDialog({ type: null, user: null })}>
+                Cancel
+              </Button>
+              <Button onClick={handleRevokeAdmin} variant="destructive">
+                <UserMinus className="h-4 w-4 mr-2" /> Revoke Admin
               </Button>
             </DialogFooter>
           </DialogContent>
