@@ -14,7 +14,8 @@ import {
   XCircle, 
   Loader2,
   ChevronRight,
-  Award
+  Award,
+  Mail
 } from "lucide-react";
 
 interface VerificationStatusIndicatorProps {
@@ -25,6 +26,7 @@ interface VerificationStatusIndicatorProps {
 }
 
 interface VerificationStatus {
+  emailVerified: boolean;
   paymentVerified: boolean;
   idVerified: boolean;
   phoneVerified: boolean;
@@ -47,6 +49,10 @@ export const VerificationStatusIndicator = ({
 
   const fetchVerificationStatus = async () => {
     try {
+      // Get current session to check email confirmation
+      const { data: { session } } = await supabase.auth.getSession();
+      const emailVerified = !!session?.user?.email_confirmed_at;
+
       // Fetch payment verification from profiles
       const { data: profile } = await supabase
         .from("profiles")
@@ -74,6 +80,7 @@ export const VerificationStatusIndicator = ({
       }
 
       setStatus({
+        emailVerified,
         paymentVerified: !!(profile as any)?.payment_verified,
         idVerified: !!verification?.id_verified,
         phoneVerified
@@ -96,6 +103,14 @@ export const VerificationStatusIndicator = ({
   if (!status) return null;
 
   const verifications = [
+    { 
+      key: 'email', 
+      label: 'Email', 
+      verified: status.emailVerified, 
+      icon: Mail,
+      description: 'Email address verified',
+      link: '/account?tab=security'
+    },
     { 
       key: 'payment', 
       label: 'Payment', 
@@ -332,6 +347,10 @@ export const useVerificationStatus = (userId: string | null) => {
 
     const fetchStatus = async () => {
       try {
+        // Get current session to check email confirmation
+        const { data: { session } } = await supabase.auth.getSession();
+        const emailVerified = !!session?.user?.email_confirmed_at;
+
         const { data: profile } = await supabase
           .from("profiles")
           .select("payment_verified, phone")
@@ -356,6 +375,7 @@ export const useVerificationStatus = (userId: string | null) => {
         }
 
         setStatus({
+          emailVerified,
           paymentVerified: !!(profile as any)?.payment_verified,
           idVerified: !!verification?.id_verified,
           phoneVerified
@@ -373,6 +393,6 @@ export const useVerificationStatus = (userId: string | null) => {
   return { 
     ...status, 
     isLoading,
-    isFullyVerified: status ? status.paymentVerified && status.idVerified && status.phoneVerified : false
+    isFullyVerified: status ? status.emailVerified && status.paymentVerified && status.idVerified && status.phoneVerified : false
   };
 };
