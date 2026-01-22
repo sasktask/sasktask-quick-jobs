@@ -17,6 +17,7 @@ import { VerificationBadges } from "@/components/VerificationBadges";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
 import { ReviewSection } from "@/components/ReviewSection";
 import { CertificateManager } from "@/components/CertificateManager";
+import { VerificationStatusIndicator } from "@/components/VerificationStatusIndicator";
 
 
 export default function PublicProfile() {
@@ -138,6 +139,11 @@ export default function PublicProfile() {
                       rating={profile.rating}
                       totalReviews={profile.total_reviews}
                     />
+                  </div>
+
+                  {/* Verification Status Badges */}
+                  <div className="mb-3">
+                    <VerificationStatusIndicator userId={id!} onlyBadges />
                   </div>
 
                   {profile.city && (
