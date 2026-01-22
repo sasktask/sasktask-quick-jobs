@@ -19,6 +19,7 @@ import { ProfileStrengthMeter } from "@/components/ProfileStrengthMeter";
 import { ProfileTips } from "@/components/ProfileTips";
 import { ProfileHeader, ProfileStatsCard, ProfileQuickActions, ProfileNavTabs } from "@/components/profile";
 import { CertificateManager } from "@/components/CertificateManager";
+import { VerificationStatusIndicator } from "@/components/VerificationStatusIndicator";
 import { DeleteAccountDialog } from "@/components/account/DeleteAccountDialog";
 import {
   Loader2, Shield, Clock, Settings, CreditCard, Lock, User,
@@ -299,6 +300,11 @@ const Profile = () => {
 
             {/* Quick Actions */}
             <ProfileQuickActions userId={userId} userRole={userRole} />
+
+            {/* Verification Status Card */}
+            {userId && (
+              <VerificationStatusIndicator userId={userId} />
+            )}
 
             {/* Profile Strength - Desktop */}
             <div className="hidden lg:block">

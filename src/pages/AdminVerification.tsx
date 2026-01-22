@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, XCircle, Shield, FileText, Eye, User, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Shield, FileText, Eye, User, Clock, Mail, CreditCard, Phone } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -41,12 +42,23 @@ interface VerificationWithProfile extends Verification {
     email: string;
     full_name: string | null;
     avatar_url: string | null;
+    payment_verified: boolean | null;
+    phone: string | null;
   } | null;
+}
+
+interface UserVerificationStatus {
+  userId: string;
+  emailVerified: boolean;
+  paymentVerified: boolean;
+  idVerified: boolean;
+  phoneVerified: boolean;
 }
 
 const AdminVerification = () => {
   const [loading, setLoading] = useState(true);
   const [verifications, setVerifications] = useState<VerificationWithProfile[]>([]);
+  const [verificationStatuses, setVerificationStatuses] = useState<Map<string, UserVerificationStatus>>(new Map());
   const [selectedVerification, setSelectedVerification] = useState<VerificationWithProfile | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [showDialog, setShowDialog] = useState(false);
@@ -70,7 +82,7 @@ const AdminVerification = () => {
         .from("verifications")
         .select(`
           *,
-          profiles!verifications_user_id_fkey(email, full_name, avatar_url)
+          profiles!verifications_user_id_fkey(email, full_name, avatar_url, payment_verified, phone)
         `)
         .order("created_at", { ascending: false });
 
@@ -78,6 +90,9 @@ const AdminVerification = () => {
       
       const typedData = (data || []) as VerificationWithProfile[];
       setVerifications(typedData);
+
+      // Load verification statuses for all users
+      await loadVerificationStatuses(typedData);
 
       setStats({
         total: typedData.length,
@@ -91,6 +106,36 @@ const AdminVerification = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadVerificationStatuses = async (verifications: VerificationWithProfile[]) => {
+    const statusMap = new Map<string, UserVerificationStatus>();
+    
+    for (const v of verifications) {
+      const userId = v.user_id;
+      
+      // Check phone verification
+      let phoneVerified = false;
+      if (v.profiles?.phone) {
+        const { count } = await supabase
+          .from("phone_verifications")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("phone", v.profiles.phone)
+          .not("verified_at", "is", null);
+        phoneVerified = !!count && count > 0;
+      }
+
+      statusMap.set(userId, {
+        userId,
+        emailVerified: true, // Users with verifications have confirmed emails
+        paymentVerified: !!(v.profiles as any)?.payment_verified,
+        idVerified: v.verification_status === "verified",
+        phoneVerified
+      });
+    }
+    
+    setVerificationStatuses(statusMap);
   };
 
   const openReviewDialog = (verification: VerificationWithProfile) => {
@@ -182,6 +227,43 @@ const AdminVerification = () => {
     }
   };
 
+  const renderVerificationBadges = (userId: string) => {
+    const status = verificationStatuses.get(userId);
+    if (!status) return null;
+
+    const badges = [
+      { key: 'email', label: 'Email', verified: status.emailVerified, icon: Mail },
+      { key: 'payment', label: 'Payment', verified: status.paymentVerified, icon: CreditCard },
+      { key: 'id', label: 'ID', verified: status.idVerified, icon: Shield },
+      { key: 'phone', label: 'Phone', verified: status.phoneVerified, icon: Phone },
+    ];
+
+    return (
+      <TooltipProvider>
+        <div className="flex gap-1.5 mt-2">
+          {badges.map((b) => (
+            <Tooltip key={b.key}>
+              <TooltipTrigger asChild>
+                <div 
+                  className={`p-1.5 rounded-full ${
+                    b.verified 
+                      ? 'bg-green-500/10 text-green-600' 
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  <b.icon className="h-3.5 w-3.5" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{b.verified ? `${b.label} verified` : `${b.label} not verified`}</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
+    );
+  };
+
   const renderVerificationCard = (verification: VerificationWithProfile) => (
     <Card key={verification.id}>
       <CardContent className="p-6">
@@ -220,6 +302,7 @@ const AdminVerification = () => {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">{verification.profiles?.email || "No email"}</p>
+                {renderVerificationBadges(verification.user_id)}
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-sm">

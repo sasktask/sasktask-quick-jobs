@@ -1393,6 +1393,8 @@ export type Database = {
           longitude: number | null
           minimum_balance_met: boolean | null
           on_time_rate: number | null
+          payment_verified: boolean | null
+          payment_verified_at: string | null
           phone: string | null
           preferred_categories: string[] | null
           profile_completion: number | null
@@ -1448,6 +1450,8 @@ export type Database = {
           longitude?: number | null
           minimum_balance_met?: boolean | null
           on_time_rate?: number | null
+          payment_verified?: boolean | null
+          payment_verified_at?: string | null
           phone?: string | null
           preferred_categories?: string[] | null
           profile_completion?: number | null
@@ -1503,6 +1507,8 @@ export type Database = {
           longitude?: number | null
           minimum_balance_met?: boolean | null
           on_time_rate?: number | null
+          payment_verified?: boolean | null
+          payment_verified_at?: string | null
           phone?: string | null
           preferred_categories?: string[] | null
           profile_completion?: number | null

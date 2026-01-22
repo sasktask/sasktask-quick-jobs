@@ -9,7 +9,9 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { StripeSetupGuide } from "./StripeSetupGuide";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
+const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+// Only initialize Stripe when a publishable key is provided to avoid runtime IntegrationError
+const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
 const AddPaymentMethodForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const stripe = useStripe();
@@ -157,10 +159,10 @@ export const PaymentMethodManager = () => {
               </CardTitle>
               <CardDescription>Manage your credit and debit cards</CardDescription>
             </div>
-            <Button 
-              onClick={() => setShowAddForm(!showAddForm)} 
+            <Button
+              onClick={() => setShowAddForm(!showAddForm)}
               size="sm"
-              disabled={!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY}
+              disabled={!publishableKey}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Card
@@ -168,65 +170,65 @@ export const PaymentMethodManager = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-        {showAddForm && (
-          <Elements stripe={stripePromise}>
-            <AddPaymentMethodForm
-              onSuccess={() => {
-                setShowAddForm(false);
-                fetchPaymentMethods();
-              }}
-            />
-          </Elements>
-        )}
+          {showAddForm && stripePromise && (
+            <Elements stripe={stripePromise}>
+              <AddPaymentMethodForm
+                onSuccess={() => {
+                  setShowAddForm(false);
+                  fetchPaymentMethods();
+                }}
+              />
+            </Elements>
+          )}
 
-        {paymentMethods.length === 0 && !showAddForm && (
-          <div className="text-center py-8 text-muted-foreground">
-            <CreditCard className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>No payment methods saved</p>
-            <p className="text-sm">Add a card to make payments easier</p>
-          </div>
-        )}
-
-        <div className="space-y-3">
-          {paymentMethods.map((method) => (
-            <div
-              key={method.id}
-              className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <CreditCard className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-semibold">
-                    Payment Method
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Securely stored via Stripe
-                  </p>
-                </div>
-                {method.is_default && (
-                  <Badge variant="secondary">Default</Badge>
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleDelete(method.id)}
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
+          {paymentMethods.length === 0 && !showAddForm && (
+            <div className="text-center py-8 text-muted-foreground">
+              <CreditCard className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>No payment methods saved</p>
+              <p className="text-sm">Add a card to make payments easier</p>
             </div>
-          ))}
-        </div>
+          )}
 
-        <div className="flex items-start gap-2 p-3 bg-muted/30 rounded-lg text-sm">
-          <Shield className="h-4 w-4 text-primary mt-0.5" />
-          <p className="text-muted-foreground">
-            Your payment information is securely stored and encrypted by Stripe. 
-            We never store your full card details.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="space-y-3">
+            {paymentMethods.map((method) => (
+              <div
+                key={method.id}
+                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-semibold">
+                      Payment Method
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Securely stored via Stripe
+                    </p>
+                  </div>
+                  {method.is_default && (
+                    <Badge variant="secondary">Default</Badge>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(method.id)}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-start gap-2 p-3 bg-muted/30 rounded-lg text-sm">
+            <Shield className="h-4 w-4 text-primary mt-0.5" />
+            <p className="text-muted-foreground">
+              Your payment information is securely stored and encrypted by Stripe.
+              We never store your full card details.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </>
   );
 };
