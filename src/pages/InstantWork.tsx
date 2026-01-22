@@ -304,11 +304,9 @@ export default function InstantWork() {
                   <DoerArrivingCard
                     requestId={activeRequest.id}
                     doer={matchedDoer}
-                    giverLocation={{
-                      latitude: activeRequest.latitude,
-                      longitude: activeRequest.longitude
-                    }}
-                    estimatedArrival={activeRequest.estimated_arrival}
+                    taskTitle={activeRequest.title}
+                    taskCategory={activeRequest.category}
+                    estimatedArrival={Number(activeRequest.estimated_arrival) || 10}
                     onCancel={handleCancelRequest}
                     onMessage={() => navigate('/messages')}
                   />
