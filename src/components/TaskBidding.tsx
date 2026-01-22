@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Gavel, User, Clock, Check, X, DollarSign, MessageSquare } from "lucide-react";
+import { Loader2, Gavel, User, Clock, Check, X, DollarSign, MessageSquare, Shield, AlertTriangle } from "lucide-react";
 import { z } from "zod";
 import { PhoneVerification } from "@/components/PhoneVerification";
 
@@ -57,6 +58,7 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
   const [showBidForm, setShowBidForm] = useState(false);
   const [showPhoneVerification, setShowPhoneVerification] = useState(false);
   const [currentUserPhone, setCurrentUserPhone] = useState<string | null>(null);
+  const [isIdVerified, setIsIdVerified] = useState<boolean | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -119,6 +121,16 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
         .eq("id", currentUserId)
         .maybeSingle();
       setCurrentUserPhone(profile?.phone || null);
+
+      // Check ID verification status for task doers
+      if (userRole === "task_doer") {
+        const { data: verification } = await supabase
+          .from("verifications")
+          .select("id_verified")
+          .eq("user_id", currentUserId)
+          .maybeSingle();
+        setIsIdVerified(!!verification?.id_verified);
+      }
 
       if (userBid) {
         setBidAmount(userBid.bid_amount.toString());
@@ -610,12 +622,37 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
         </Card>
       )}
 
-      {/* No bids message - clickable for task doers */}
+      {/* ID Verification Required for Task Doers */}
+      {isTaskDoer && !isTaskGiver && isIdVerified === false && (
+        <Card className="border-amber-500/50">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-full bg-amber-100 dark:bg-amber-950">
+                <Shield className="h-6 w-6 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg mb-1">ID Verification Required</h3>
+                <p className="text-muted-foreground mb-4">
+                  To place bids on tasks, you need to verify your identity first. This helps build trust with task givers.
+                </p>
+                <Button asChild>
+                  <Link to="/verification">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Complete ID Verification
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No bids message - clickable for task doers (only if ID verified) */}
       {bids.length === 0 && !showBidForm && (
         <Card
-          className={isTaskDoer && !isTaskGiver ? "cursor-pointer hover:border-primary/50 transition-colors" : ""}
+          className={isTaskDoer && !isTaskGiver && isIdVerified ? "cursor-pointer hover:border-primary/50 transition-colors" : ""}
           onClick={() => {
-            if (isTaskDoer && !isTaskGiver) {
+            if (isTaskDoer && !isTaskGiver && isIdVerified) {
               setShowBidForm(true);
             }
           }}
@@ -623,17 +660,17 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
           <CardContent className="p-8 text-center">
             <Gavel className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <p className="text-muted-foreground">
-              No bids yet. {isTaskDoer && !isTaskGiver ? "Be the first to submit a proposal!" : ""}
+              No bids yet. {isTaskDoer && !isTaskGiver && isIdVerified ? "Be the first to submit a proposal!" : ""}
             </p>
-            {isTaskDoer && !isTaskGiver && (
+            {isTaskDoer && !isTaskGiver && isIdVerified && (
               <p className="text-sm text-primary mt-2">Click here to place your bid</p>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* Inline Bid Form when triggered from empty state */}
-      {bids.length === 0 && showBidForm && isTaskDoer && !isTaskGiver && (
+      {/* Inline Bid Form when triggered from empty state - only if ID verified */}
+      {bids.length === 0 && showBidForm && isTaskDoer && !isTaskGiver && isIdVerified && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
             <CardDescription>

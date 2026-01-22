@@ -20,7 +20,7 @@ import { TaskTemplateManager } from "@/components/TaskTemplateManager";
 import { getCategoryTitles } from "@/lib/categories";
 import { PhoneVerification } from "@/components/PhoneVerification";
 import { InstantTaskerMatching } from "@/components/InstantTaskerMatching";
-
+import { PaymentVerification, usePaymentVerification } from "@/components/PaymentVerification";
 // Full validation for publishing
 const taskSchema = z.object({
   title: z.string().trim().min(5, "Title must be at least 5 characters").max(200, "Title too long"),
@@ -54,6 +54,9 @@ const PostTask = () => {
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Payment verification check
+  const { isPaymentVerified, isLoading: isPaymentCheckLoading } = usePaymentVerification(userId);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -442,14 +445,25 @@ const PostTask = () => {
           )}
         </div>
 
-        {/* Task Templates */}
-        <div className="mb-6">
-          <TaskTemplateManager
-            onSelectTemplate={handleSelectTemplate}
-            currentFormData={formData}
-          />
-        </div>
+        {/* Payment Verification Check */}
+        {userId && !isPaymentCheckLoading && !isPaymentVerified && (
+          <div className="mb-6">
+            <PaymentVerification userId={userId} onVerified={() => window.location.reload()} />
+          </div>
+        )}
 
+        {/* Task Templates - only show if payment verified */}
+        {isPaymentVerified && (
+          <div className="mb-6">
+            <TaskTemplateManager
+              onSelectTemplate={handleSelectTemplate}
+              currentFormData={formData}
+            />
+          </div>
+        )}
+
+        {/* Only show form if payment is verified */}
+        {isPaymentVerified && (
         <Card className="border-border">
           <CardHeader>
             <CardTitle>Task Details</CardTitle>
@@ -842,6 +856,7 @@ const PostTask = () => {
             </form>
           </CardContent>
         </Card>
+        )}
       </div>
       <Dialog open={showPhoneVerification} onOpenChange={setShowPhoneVerification}>
         <DialogContent className="sm:max-w-md">
