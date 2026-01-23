@@ -57,8 +57,8 @@ serve(async (req) => {
     const amount = body.amount;
     logStep("Request body", { amount });
 
-    if (!amount || amount < 10) {
-      throw new Error("Minimum deposit is $10");
+    if (!amount || amount < 2) {
+      throw new Error("Minimum deposit is $2");
     }
 
     const stripe = new Stripe(stripeKey, {
