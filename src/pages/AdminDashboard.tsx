@@ -53,6 +53,7 @@ interface User {
   is_online: boolean | null;
   availability_status: string | null;
   user_id_number: string | null;
+  last_seen: string | null;
 }
 
 interface UserRole {
@@ -85,11 +86,19 @@ export default function AdminDashboard() {
     loadData();
   }, []);
 
+  // Check if user was active within the last 5 minutes
+  const isRecentlyActive = (lastSeen: string | null): boolean => {
+    if (!lastSeen) return false;
+    const lastSeenDate = new Date(lastSeen);
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    return lastSeenDate > fiveMinutesAgo;
+  };
+
   const loadData = async () => {
     setRefreshing(true);
     try {
       const [usersRes, rolesRes] = await Promise.all([
-        supabase.from("profiles").select("id, email, full_name, avatar_url, created_at, verified_by_admin, is_online, availability_status, user_id_number").order("created_at", { ascending: false }),
+        supabase.from("profiles").select("id, email, full_name, avatar_url, created_at, verified_by_admin, is_online, availability_status, user_id_number, last_seen").order("created_at", { ascending: false }),
         supabase.from("user_roles").select("user_id, role"),
       ]);
 
@@ -99,11 +108,16 @@ export default function AdminDashboard() {
       setUsers(usersData);
       setUserRoles(rolesRes.data || []);
 
+      // Count online users based on last_seen within 5 minutes OR is_online flag
+      const onlineCount = usersData.filter(u => 
+        u.is_online === true || isRecentlyActive(u.last_seen)
+      ).length;
+
       setStats({
         total: usersData.length,
         verified: usersData.filter(u => u.verified_by_admin).length,
         unverified: usersData.filter(u => !u.verified_by_admin).length,
-        online: usersData.filter(u => u.is_online).length,
+        online: onlineCount,
       });
     } catch (error: any) {
       console.error("Error loading data:", error);
@@ -281,7 +295,7 @@ export default function AdminDashboard() {
       statusFilter === "all" ||
       (statusFilter === "verified" && u.verified_by_admin) ||
       (statusFilter === "unverified" && !u.verified_by_admin) ||
-      (statusFilter === "online" && u.is_online) ||
+      (statusFilter === "online" && (u.is_online || isRecentlyActive(u.last_seen))) ||
       (statusFilter === "banned" && u.availability_status === "banned");
 
     return matchesSearch && matchesStatus;
@@ -407,7 +421,7 @@ export default function AdminDashboard() {
                               {user.full_name?.charAt(0) || user.email?.charAt(0) || "?"}
                             </AvatarFallback>
                           </Avatar>
-                          {user.is_online && (
+                          {(user.is_online || isRecentlyActive(user.last_seen)) && (
                             <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-emerald-500 rounded-full border-2 border-background" />
                           )}
                         </div>
