@@ -114,22 +114,29 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
       const userBid = typedBids.find(b => b.bidder_id === currentUserId);
       setMyBid(userBid || null);
 
-      // Load current user's phone for verification checks
+      // Load current user's phone and admin verification status
       const { data: profile } = await supabase
         .from("profiles")
-        .select("phone")
+        .select("phone, verified_by_admin")
         .eq("id", currentUserId)
         .maybeSingle();
       setCurrentUserPhone(profile?.phone || null);
 
+      // Check if admin verified - if so, they bypass ID verification
+      const isAdminVerified = !!(profile as any)?.verified_by_admin;
+
       // Check ID verification status for task doers
       if (userRole === "task_doer") {
-        const { data: verification } = await supabase
-          .from("verifications")
-          .select("id_verified")
-          .eq("user_id", currentUserId)
-          .maybeSingle();
-        setIsIdVerified(!!verification?.id_verified);
+        if (isAdminVerified) {
+          setIsIdVerified(true);
+        } else {
+          const { data: verification } = await supabase
+            .from("verifications")
+            .select("id_verified")
+            .eq("user_id", currentUserId)
+            .maybeSingle();
+          setIsIdVerified(!!verification?.id_verified);
+        }
       }
 
       if (userBid) {
