@@ -30,6 +30,26 @@ serve(async (req) => {
       throw new Error("Missing required parameters");
     }
 
+    // First, verify the authenticated user is the payer of this payment
+    const { data: payment, error: fetchError } = await supabaseClient
+      .from("payments")
+      .select("payer_id, booking_id")
+      .eq("payment_intent_id", paymentIntentId)
+      .single();
+
+    if (fetchError || !payment) {
+      throw new Error("Payment not found");
+    }
+
+    if (payment.payer_id !== user.id) {
+      throw new Error("Unauthorized: You are not the payer of this payment");
+    }
+
+    // Verify booking ID matches
+    if (payment.booking_id !== bookingId) {
+      throw new Error("Booking ID mismatch");
+    }
+
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
@@ -41,7 +61,7 @@ serve(async (req) => {
       throw new Error("Payment has not been completed yet");
     }
 
-    // Update payment record
+    // Update payment record - now safe because we verified ownership
     const { error: paymentError } = await supabaseClient
       .from("payments")
       .update({
@@ -49,7 +69,8 @@ serve(async (req) => {
         paid_at: new Date().toISOString(),
         transaction_id: paymentIntent.id,
       })
-      .eq("payment_intent_id", paymentIntentId);
+      .eq("payment_intent_id", paymentIntentId)
+      .eq("payer_id", user.id); // Additional safety constraint
 
     if (paymentError) throw paymentError;
 

@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
+import DOMPurify from 'dompurify';
 
 interface Payment {
   id: string;
@@ -138,16 +139,23 @@ export function PaymentHistory({ userId, limit = 10, showHeader = true }: Paymen
       if (error) throw error;
       if (!data?.html) throw new Error('Failed to generate invoice');
 
-      // Create a new window with the invoice HTML and trigger print
+      // Sanitize HTML content before rendering to prevent XSS
+      const sanitizedHtml = DOMPurify.sanitize(data.html, {
+        WHOLE_DOCUMENT: true,
+        ALLOWED_TAGS: ['html', 'head', 'body', 'meta', 'title', 'style', 'div', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'p', 'h1', 'h2', 'h3', 'span', 'strong', 'br'],
+        ALLOWED_ATTR: ['class', 'style', 'charset', 'name', 'content'],
+      });
+
+      // Create a new window with the sanitized invoice HTML and trigger print
       const printWindow = window.open('', '_blank');
       if (printWindow) {
-        printWindow.document.write(data.html);
+        printWindow.document.write(sanitizedHtml);
         printWindow.document.close();
         
         // Add print functionality
         printWindow.onload = () => {
           const printBtn = printWindow.document.createElement('button');
-          printBtn.innerHTML = '🖨️ Print / Save as PDF';
+          printBtn.textContent = '🖨️ Print / Save as PDF';
           printBtn.style.cssText = 'position:fixed;top:10px;right:10px;padding:12px 24px;background:#2563eb;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;z-index:1000;';
           printBtn.onclick = () => printWindow.print();
           printWindow.document.body.appendChild(printBtn);
