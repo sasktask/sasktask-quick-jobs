@@ -53,12 +53,15 @@ export const VerificationStatusIndicator = ({
       const { data: { session } } = await supabase.auth.getSession();
       const emailVerified = !!session?.user?.email_confirmed_at;
 
-      // Fetch payment verification from profiles
+      // Fetch payment verification and admin verification from profiles
       const { data: profile } = await supabase
         .from("profiles")
-        .select("payment_verified, phone")
+        .select("payment_verified, phone, verified_by_admin")
         .eq("id", userId)
         .maybeSingle();
+
+      // If admin verified, all verifications are considered complete
+      const isAdminVerified = !!(profile as any)?.verified_by_admin;
 
       // Fetch ID verification
       const { data: verification } = await supabase
@@ -79,11 +82,12 @@ export const VerificationStatusIndicator = ({
         phoneVerified = !!count && count > 0;
       }
 
+      // Admin verification unlocks all verifications
       setStatus({
-        emailVerified,
-        paymentVerified: !!(profile as any)?.payment_verified,
-        idVerified: !!verification?.id_verified,
-        phoneVerified
+        emailVerified: isAdminVerified || emailVerified,
+        paymentVerified: isAdminVerified || !!(profile as any)?.payment_verified,
+        idVerified: isAdminVerified || !!verification?.id_verified,
+        phoneVerified: isAdminVerified || phoneVerified
       });
     } catch (error) {
       console.error("Error fetching verification status:", error);
@@ -353,9 +357,12 @@ export const useVerificationStatus = (userId: string | null) => {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("payment_verified, phone")
+          .select("payment_verified, phone, verified_by_admin")
           .eq("id", userId)
           .maybeSingle();
+
+        // If admin verified, all verifications are considered complete
+        const isAdminVerified = !!(profile as any)?.verified_by_admin;
 
         const { data: verification } = await supabase
           .from("verifications")
@@ -374,11 +381,12 @@ export const useVerificationStatus = (userId: string | null) => {
           phoneVerified = !!count && count > 0;
         }
 
+        // Admin verification unlocks all verifications
         setStatus({
-          emailVerified,
-          paymentVerified: !!(profile as any)?.payment_verified,
-          idVerified: !!verification?.id_verified,
-          phoneVerified
+          emailVerified: isAdminVerified || emailVerified,
+          paymentVerified: isAdminVerified || !!(profile as any)?.payment_verified,
+          idVerified: isAdminVerified || !!verification?.id_verified,
+          phoneVerified: isAdminVerified || phoneVerified
         });
       } catch (error) {
         console.error("Error fetching verification status:", error);

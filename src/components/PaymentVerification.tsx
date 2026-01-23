@@ -29,7 +29,7 @@ export const PaymentVerification = ({ userId, onVerified, showCard = true }: Pay
     try {
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("payment_verified, wallet_balance")
+        .select("payment_verified, wallet_balance, verified_by_admin")
         .eq("id", userId)
         .maybeSingle();
 
@@ -37,7 +37,9 @@ export const PaymentVerification = ({ userId, onVerified, showCard = true }: Pay
 
       // Type assertion for new columns not yet in types
       const profileData = profile as any;
-      setIsVerified(!!profileData?.payment_verified);
+      // Admin verification unlocks payment verification
+      const isAdminVerified = !!profileData?.verified_by_admin;
+      setIsVerified(isAdminVerified || !!profileData?.payment_verified);
       setWalletBalance(profileData?.wallet_balance || 0);
     } catch (error) {
       console.error("Error checking payment verification:", error);
@@ -270,14 +272,16 @@ export const usePaymentVerification = (userId: string | null) => {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("payment_verified")
+          .select("payment_verified, verified_by_admin")
           .eq("id", userId)
           .maybeSingle();
 
         if (error) throw error;
         // Type assertion for new column
         const profileData = data as any;
-        setIsVerified(!!profileData?.payment_verified);
+        // Admin verification unlocks payment verification
+        const isAdminVerified = !!profileData?.verified_by_admin;
+        setIsVerified(isAdminVerified || !!profileData?.payment_verified);
       } catch (error) {
         console.error("Error checking payment verification:", error);
       } finally {
