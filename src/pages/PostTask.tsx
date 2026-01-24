@@ -21,6 +21,7 @@ import { getCategoryTitles } from "@/lib/categories";
 import { PhoneVerification } from "@/components/PhoneVerification";
 import { InstantTaskerMatching } from "@/components/InstantTaskerMatching";
 import { PaymentVerification, usePaymentVerification } from "@/components/PaymentVerification";
+import { TaskScheduler } from "@/components/scheduling";
 // Full validation for publishing
 const taskSchema = z.object({
   title: z.string().trim().min(5, "Title must be at least 5 characters").max(200, "Title too long"),
@@ -665,17 +666,34 @@ const PostTask = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="scheduled_date">Scheduled Date</Label>
-                <Input
-                  id="scheduled_date"
-                  type="datetime-local"
-                  value={formData.scheduled_date}
-                  onChange={(e) => handleFormChange({ scheduled_date: e.target.value })}
-                  min={new Date().toISOString().slice(0, 16)}
+                <Label>Schedule Your Task</Label>
+                <TaskScheduler
+                  selectedDate={formData.scheduled_date ? new Date(formData.scheduled_date) : undefined}
+                  selectedTime={formData.scheduled_date ? formData.scheduled_date.split('T')[1]?.slice(0, 5) || "" : ""}
+                  onDateChange={(date) => {
+                    if (date) {
+                      const currentTime = formData.scheduled_date?.split('T')[1]?.slice(0, 5) || "09:00";
+                      const dateStr = date.toISOString().split('T')[0];
+                      handleFormChange({ scheduled_date: `${dateStr}T${currentTime}` });
+                    } else {
+                      handleFormChange({ scheduled_date: "" });
+                    }
+                  }}
+                  onTimeChange={(time) => {
+                    if (formData.scheduled_date) {
+                      const dateStr = formData.scheduled_date.split('T')[0];
+                      handleFormChange({ scheduled_date: `${dateStr}T${time}` });
+                    } else {
+                      const today = new Date().toISOString().split('T')[0];
+                      handleFormChange({ scheduled_date: `${today}T${time}` });
+                    }
+                  }}
+                  category={formData.category}
+                  location={formData.latitude && formData.longitude 
+                    ? { lat: formData.latitude, lng: formData.longitude }
+                    : null
+                  }
                 />
-                <p className="text-xs text-muted-foreground">
-                  Schedule for tomorrow or later to book in advance
-                </p>
               </div>
 
               {/* Deposit Info - Show when future date is selected */}

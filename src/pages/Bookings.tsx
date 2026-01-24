@@ -19,7 +19,8 @@ import { PaymentEscrow } from "@/components/PaymentEscrow";
 import { EnhancedEscrowCard } from "@/components/EnhancedEscrowCard";
 import { EnhancedEvidenceUpload } from "@/components/EnhancedEvidenceUpload";
 import { BadgeDisplay } from "@/components/BadgeDisplay";
-import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, Shield, Star, Phone, MapPin, Ban, AlertCircle, AlertTriangle } from "lucide-react";
+import { BookingCalendar } from "@/components/scheduling";
+import { Briefcase, Clock, CheckCircle, XCircle, MessageSquare, DollarSign, Shield, Star, Phone, MapPin, Ban, AlertCircle, AlertTriangle, Calendar } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Bookings = () => {
@@ -268,6 +269,16 @@ const Bookings = () => {
               : "Track your task applications"}
           </p>
         </div>
+
+        {/* Calendar View */}
+        {currentUserId && (
+          <div className="mb-8">
+            <BookingCalendar 
+              userId={currentUserId} 
+              userRole={userRole}
+            />
+          </div>
+        )}
 
         <Tabs defaultValue="all" className="space-y-6">
           <TabsList className="grid w-full grid-cols-6">

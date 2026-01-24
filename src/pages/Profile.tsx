@@ -21,6 +21,7 @@ import { ProfileHeader, ProfileStatsCard, ProfileQuickActions, ProfileNavTabs } 
 import { CertificateManager } from "@/components/CertificateManager";
 import { VerificationStatusIndicator } from "@/components/VerificationStatusIndicator";
 import { DeleteAccountDialog } from "@/components/account/DeleteAccountDialog";
+import { AvailabilityManager } from "@/components/scheduling";
 import {
   Loader2, Shield, Clock, Settings, CreditCard, Lock, User,
   ShieldCheck, AlertCircle, Camera, FileCheck, CheckCircle2, XCircle,
@@ -639,6 +640,23 @@ const Profile = () => {
                 {userId && <BadgeShowcase userId={userId} />}
                 {userId && <CertificateManager userId={userId} isOwnProfile={true} />}
               </TabsContent>
+
+              {/* Availability Tab - For Task Doers */}
+              {(userRole === "task_doer" || userRole === "both") && (
+                <TabsContent value="availability" className="mt-6">
+                  {userId && (
+                    <AvailabilityManager 
+                      userId={userId}
+                      onSave={() => {
+                        toast({
+                          title: "Availability updated",
+                          description: "Task Givers can now see your schedule.",
+                        });
+                      }}
+                    />
+                  )}
+                </TabsContent>
+              )}
 
               {/* Settings Tab */}
               <TabsContent value="settings" className="mt-6">

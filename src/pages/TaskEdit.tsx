@@ -12,9 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Loader2, Save, Send, CheckCircle } from "lucide-react";
+import { Loader2, Save, Send, CheckCircle, Repeat } from "lucide-react";
 import { z } from "zod";
 import { SEOHead } from "@/components/SEOHead";
+import { RecurringTaskForm } from "@/components/scheduling";
 
 const taskSchema = z.object({
   title: z.string().trim().min(5, "Title must be at least 5 characters").max(200, "Title too long"),
@@ -38,6 +39,12 @@ const TaskEdit = () => {
   const [taskStatus, setTaskStatus] = useState<string>("open");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [recurrence, setRecurrence] = useState<{
+    frequency: string;
+    start_date: string;
+    end_date: string | null;
+    is_active: boolean;
+  } | null>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -132,6 +139,17 @@ const TaskEdit = () => {
         tools_provided: task.tools_provided || false,
         tools_description: task.tools_description || ""
       });
+
+      // Fetch recurring task data if exists
+      const { data: recurringData } = await supabase
+        .from("recurring_tasks")
+        .select("frequency, start_date, end_date, is_active")
+        .eq("task_id", id)
+        .maybeSingle();
+
+      if (recurringData) {
+        setRecurrence(recurringData);
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -599,6 +617,23 @@ const TaskEdit = () => {
             </form>
           </CardContent>
         </Card>
+
+        {/* Recurring Task Settings - Only show for published tasks */}
+        {taskStatus !== "draft" && id && (
+          <div className="mt-6">
+            <RecurringTaskForm
+              taskId={id}
+              taskTitle={formData.title}
+              initialRecurrence={recurrence}
+              onSave={() => {
+                toast({
+                  title: "Recurrence updated",
+                  description: "Your recurring task settings have been saved.",
+                });
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <Footer />

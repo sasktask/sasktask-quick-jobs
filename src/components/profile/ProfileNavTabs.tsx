@@ -6,7 +6,8 @@ import {
   Settings, 
   CreditCard, 
   Lock,
-  Briefcase
+  Briefcase,
+  Calendar
 } from "lucide-react";
 
 interface ProfileNavTabsProps {
@@ -16,17 +17,28 @@ interface ProfileNavTabsProps {
 }
 
 export const ProfileNavTabs = ({ userRole, defaultValue = "basic", onValueChange }: ProfileNavTabsProps) => {
-  const tabs = [
+  const baseTabs = [
     { value: "basic", label: "Profile", icon: User, mobileLabel: "Profile" },
     { value: "verification", label: "Verification", icon: ShieldCheck, mobileLabel: "Verify" },
     { value: "badges", label: "Badges", icon: Trophy, mobileLabel: "Badges" },
+  ];
+  
+  // Add availability tab for Task Doers
+  const availabilityTab = userRole === "task_doer" || userRole === "both" 
+    ? [{ value: "availability", label: "Availability", icon: Calendar, mobileLabel: "Schedule" }]
+    : [];
+  
+  const endTabs = [
     { value: "settings", label: "Advanced", icon: Settings, mobileLabel: "Settings" },
     { value: "payments", label: userRole === "task_giver" ? "Payment" : "Payout", icon: CreditCard, mobileLabel: "Pay" },
     { value: "security", label: "Security", icon: Lock, mobileLabel: "Security" },
   ];
+  
+  const tabs = [...baseTabs, ...availabilityTab, ...endTabs];
+  const gridCols = tabs.length <= 6 ? "grid-cols-3 sm:grid-cols-6" : "grid-cols-4 sm:grid-cols-7";
 
   return (
-    <TabsList className="w-full h-auto p-1.5 bg-muted/50 rounded-xl grid grid-cols-3 sm:grid-cols-6 gap-1">
+    <TabsList className={`w-full h-auto p-1.5 bg-muted/50 rounded-xl grid ${gridCols} gap-1`}>
       {tabs.map((tab) => (
         <TabsTrigger
           key={tab.value}
