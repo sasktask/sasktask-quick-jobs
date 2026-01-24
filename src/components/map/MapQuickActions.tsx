@@ -1,26 +1,7 @@
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  Crosshair,
-  Compass,
-  Layers,
-  Maximize2,
-  Minus,
-  Plus,
-  RotateCcw,
-  Map,
-  Satellite,
-  Mountain,
-  Grid3X3,
-  Navigation,
-} from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Crosshair, Compass, Layers, Maximize2, Minus, Plus, RotateCcw, Map, Satellite, Mountain, Grid3X3, Navigation } from 'lucide-react';
 import { motion } from 'framer-motion';
-
 interface MapQuickActionsProps {
   onCenterLocation: () => void;
   onZoomIn: () => void;
@@ -32,13 +13,19 @@ interface MapQuickActionsProps {
   hasUserLocation: boolean;
   className?: string;
 }
-
-const MAP_STYLES = [
-  { id: 'streets-v12', label: 'Streets', icon: Map },
-  { id: 'satellite-streets-v12', label: 'Satellite', icon: Satellite },
-  { id: 'outdoors-v12', label: 'Outdoors', icon: Mountain },
-];
-
+const MAP_STYLES = [{
+  id: 'streets-v12',
+  label: 'Streets',
+  icon: Map
+}, {
+  id: 'satellite-streets-v12',
+  label: 'Satellite',
+  icon: Satellite
+}, {
+  id: 'outdoors-v12',
+  label: 'Outdoors',
+  icon: Mountain
+}];
 export function MapQuickActions({
   onCenterLocation,
   onZoomIn,
@@ -48,24 +35,20 @@ export function MapQuickActions({
   onStyleChange,
   currentStyle,
   hasUserLocation,
-  className,
+  className
 }: MapQuickActionsProps) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className={`flex flex-col gap-1 ${className}`}
-    >
+  return <motion.div initial={{
+    opacity: 0,
+    scale: 0.9
+  }} animate={{
+    opacity: 1,
+    scale: 1
+  }} className={`flex flex-col gap-1 ${className}`}>
       <TooltipProvider delayDuration={300}>
         {/* Explorer Toggle */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="bg-background/90 backdrop-blur-sm shadow-lg h-10 w-10"
-              onClick={onToggleExplorer}
-            >
+            <Button variant="secondary" size="icon" className="backdrop-blur-sm shadow-lg h-10 w-10 bg-primary" onClick={onToggleExplorer}>
               <Compass className="h-5 w-5" />
             </Button>
           </TooltipTrigger>
@@ -78,33 +61,21 @@ export function MapQuickActions({
         <div className="h-px bg-border my-1" />
 
         {/* Center on Location */}
-        {hasUserLocation && (
-          <Tooltip>
+        {hasUserLocation && <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="bg-background/90 backdrop-blur-sm shadow-lg h-10 w-10"
-                onClick={onCenterLocation}
-              >
+              <Button variant="secondary" size="icon" className="backdrop-blur-sm shadow-lg h-10 w-10 bg-primary" onClick={onCenterLocation}>
                 <Crosshair className="h-5 w-5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="left">
               <p>Center on my location</p>
             </TooltipContent>
-          </Tooltip>
-        )}
+          </Tooltip>}
 
         {/* Zoom Controls */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="bg-background/90 backdrop-blur-sm shadow-lg h-10 w-10"
-              onClick={onZoomIn}
-            >
+            <Button variant="secondary" size="icon" className="backdrop-blur-sm shadow-lg h-10 w-10 bg-primary" onClick={onZoomIn}>
               <Plus className="h-5 w-5" />
             </Button>
           </TooltipTrigger>
@@ -115,12 +86,7 @@ export function MapQuickActions({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="bg-background/90 backdrop-blur-sm shadow-lg h-10 w-10"
-              onClick={onZoomOut}
-            >
+            <Button variant="secondary" size="icon" className="backdrop-blur-sm shadow-lg h-10 w-10 bg-primary" onClick={onZoomOut}>
               <Minus className="h-5 w-5" />
             </Button>
           </TooltipTrigger>
@@ -132,12 +98,7 @@ export function MapQuickActions({
         {/* Reset View */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="bg-background/90 backdrop-blur-sm shadow-lg h-10 w-10"
-              onClick={onResetView}
-            >
+            <Button variant="secondary" size="icon" className="backdrop-blur-sm shadow-lg h-10 w-10 bg-primary" onClick={onResetView}>
               <RotateCcw className="h-5 w-5" />
             </Button>
           </TooltipTrigger>
@@ -150,26 +111,16 @@ export function MapQuickActions({
         <div className="h-px bg-border my-1" />
 
         {/* Map Styles */}
-        {MAP_STYLES.map((style) => (
-          <Tooltip key={style.id}>
+        {MAP_STYLES.map(style => <Tooltip key={style.id}>
             <TooltipTrigger asChild>
-              <Button
-                variant={currentStyle.includes(style.id) ? 'default' : 'secondary'}
-                size="icon"
-                className={`backdrop-blur-sm shadow-lg h-10 w-10 ${
-                  currentStyle.includes(style.id) ? '' : 'bg-background/90'
-                }`}
-                onClick={() => onStyleChange(`mapbox://styles/mapbox/${style.id}`)}
-              >
+              <Button variant={currentStyle.includes(style.id) ? 'default' : 'secondary'} size="icon" className={`backdrop-blur-sm shadow-lg h-10 w-10 ${currentStyle.includes(style.id) ? '' : 'bg-background/90'}`} onClick={() => onStyleChange(`mapbox://styles/mapbox/${style.id}`)}>
                 <style.icon className="h-5 w-5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="left">
               <p>{style.label}</p>
             </TooltipContent>
-          </Tooltip>
-        ))}
+          </Tooltip>)}
       </TooltipProvider>
-    </motion.div>
-  );
+    </motion.div>;
 }
