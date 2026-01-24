@@ -15,12 +15,21 @@ import {
   Layers,
   Route,
   Sparkles,
-  Zap
+  Zap,
+  Compass,
+  Fullscreen,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { timeEstimateLabels, TimeEstimate } from '@/lib/categories';
 import { MapRoutePanel } from '@/components/map/MapRoutePanel';
 import { MapDrawSelection } from '@/components/map/MapDrawSelection';
+import { MapExplorerPanel } from '@/components/map/MapExplorerPanel';
+import { MapTaskPreview } from '@/components/map/MapTaskPreview';
+import { MapWeatherWidget } from '@/components/map/MapWeatherWidget';
+import { MapQuickActions } from '@/components/map/MapQuickActions';
+import { MapStatsOverlay } from '@/components/map/MapStatsOverlay';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Task {
@@ -34,6 +43,7 @@ interface Task {
   longitude?: number;
   estimated_duration?: number;
   priority?: string;
+  created_at?: string;
 }
 
 interface UserLocation {
@@ -54,6 +64,7 @@ interface TaskClusterMapProps {
   showHeatmap?: boolean;
   recentlyAddedIds?: string[];
   onTaskSelect?: (task: Task | null) => void;
+  isConnected?: boolean;
 }
 
 const SASKATCHEWAN_CENTER: [number, number] = [-106.4509, 52.9399];
@@ -86,6 +97,7 @@ export function TaskClusterMap({
   showHeatmap = false,
   recentlyAddedIds = [],
   onTaskSelect,
+  isConnected = false,
 }: TaskClusterMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -93,10 +105,14 @@ export function TaskClusterMap({
   const taskMarkersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showRoutePanel, setShowRoutePanel] = useState(false);
+  const [showExplorer, setShowExplorer] = useState(false);
   const [hoveredCluster, setHoveredCluster] = useState<{ count: number; x: number; y: number } | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [selectionBounds, setSelectionBounds] = useState<[number, number, number, number] | null>(null);
+  const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/streets-v12');
+  const [is3DEnabled, setIs3DEnabled] = useState(false);
+  const [savedTasks, setSavedTasks] = useState<string[]>([]);
   const navigate = useNavigate();
 
   const getTimeEstimate = (duration: number | undefined): TimeEstimate => {
@@ -135,6 +151,47 @@ export function TaskClusterMap({
       });
     }
   }, [userLocation]);
+
+  const handleZoomIn = useCallback(() => {
+    if (map.current) {
+      map.current.zoomIn({ duration: 300 });
+    }
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    if (map.current) {
+      map.current.zoomOut({ duration: 300 });
+    }
+  }, []);
+
+  const handleResetView = useCallback(() => {
+    if (map.current) {
+      map.current.flyTo({
+        center: userLocation ? [userLocation.longitude, userLocation.latitude] : SASKATCHEWAN_CENTER,
+        zoom: userLocation ? 11 : 5,
+        pitch: 0,
+        bearing: 0,
+        duration: 1000,
+      });
+    }
+  }, [userLocation]);
+
+  const handleStyleChange = useCallback((style: string) => {
+    if (map.current) {
+      setMapStyle(style);
+      map.current.setStyle(style);
+    }
+  }, []);
+
+  const handleLocationSelect = useCallback((lat: number, lng: number, zoom?: number) => {
+    if (map.current) {
+      map.current.flyTo({
+        center: [lng, lat],
+        zoom: zoom || 14,
+        duration: 1000,
+      });
+    }
+  }, []);
 
   const handleTaskClick = useCallback((task: Task) => {
     setSelectedTask(task);
@@ -184,6 +241,28 @@ export function TaskClusterMap({
     }
   }, [mapLoaded]);
 
+  const toggleSaveTask = useCallback((taskId: string) => {
+    setSavedTasks(prev => 
+      prev.includes(taskId) 
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    );
+  }, []);
+
+  // Calculate distance for selected task
+  const getTaskDistance = useCallback((task: Task) => {
+    if (!userLocation || !task.latitude || !task.longitude) return undefined;
+    
+    const R = 6371;
+    const dLat = (task.latitude - userLocation.latitude) * Math.PI / 180;
+    const dLon = (task.longitude - userLocation.longitude) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(userLocation.latitude * Math.PI / 180) * Math.cos(task.latitude * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }, [userLocation]);
+
   // Initialize map
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
@@ -192,7 +271,7 @@ export function TaskClusterMap({
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
+      style: mapStyle,
       center: userLocation ? [userLocation.longitude, userLocation.latitude] : SASKATCHEWAN_CENTER,
       zoom: userLocation ? 11 : 5,
       pitch: 0,
@@ -367,7 +446,8 @@ export function TaskClusterMap({
             latitude: props.latitude,
             longitude: props.longitude,
             estimated_duration: props.estimated_duration,
-            priority: props.priority
+            priority: props.priority,
+            created_at: props.created_at,
           });
         }
       });
@@ -467,7 +547,7 @@ export function TaskClusterMap({
 
   if (isLoading) {
     return (
-      <div className="w-full h-[500px] rounded-xl bg-muted flex items-center justify-center">
+      <div className="w-full h-[600px] rounded-xl bg-muted flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
           <p className="text-sm text-muted-foreground mt-2">Loading map...</p>
@@ -478,7 +558,7 @@ export function TaskClusterMap({
 
   if (!mapboxToken) {
     return (
-      <div className="w-full h-[500px] rounded-xl bg-muted flex items-center justify-center">
+      <div className="w-full h-[600px] rounded-xl bg-muted flex items-center justify-center">
         <div className="text-center p-6">
           <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">Map Loading...</h3>
@@ -492,7 +572,7 @@ export function TaskClusterMap({
   }
 
   return (
-    <div className="relative w-full h-[500px] rounded-xl overflow-hidden border border-border shadow-lg">
+    <div className="relative w-full h-[600px] rounded-xl overflow-hidden border border-border shadow-lg">
       <div ref={mapContainer} className="absolute inset-0" />
       
       {/* Draw Selection Controls */}
@@ -538,39 +618,40 @@ export function TaskClusterMap({
         )}
       </AnimatePresence>
 
-      {/* Info badges */}
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-        <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm shadow-lg">
-          <Layers className="h-3 w-3 mr-1" />
-          {tasks.filter(t => t.latitude && t.longitude).length} tasks
-        </Badge>
-        {userLocation && (
-          <Badge variant="secondary" className="bg-blue-500/90 text-white backdrop-blur-sm shadow-lg">
-            <Navigation className="h-3 w-3 mr-1" />
-            {radiusKm}km radius
-          </Badge>
-        )}
-        {recentlyAddedIds.length > 0 && (
-          <Badge className="bg-green-500/90 text-white backdrop-blur-sm shadow-lg animate-pulse">
-            <Sparkles className="h-3 w-3 mr-1" />
-            {recentlyAddedIds.length} new
-          </Badge>
-        )}
-      </div>
+      {/* Stats Overlay - Top Left */}
+      <MapStatsOverlay
+        tasks={tasks}
+        radiusKm={radiusKm}
+        isConnected={isConnected}
+        className="absolute top-4 left-4 z-10 w-80"
+      />
 
-      {/* Center button */}
-      {userLocation && (
-        <div className="absolute top-4 right-24 z-10">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={centerOnUserLocation}
-            className="bg-background/90 backdrop-blur-sm shadow-lg gap-1"
-          >
-            <Crosshair className="h-4 w-4" />
-            Center
-          </Button>
-        </div>
+      {/* Weather Widget - Bottom Left */}
+      <MapWeatherWidget
+        latitude={userLocation?.latitude}
+        longitude={userLocation?.longitude}
+        className="absolute bottom-24 left-4 z-10"
+      />
+
+      {/* Quick Actions - Right Side */}
+      <MapQuickActions
+        onCenterLocation={centerOnUserLocation}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onResetView={handleResetView}
+        onToggleExplorer={() => setShowExplorer(true)}
+        onStyleChange={handleStyleChange}
+        currentStyle={mapStyle}
+        hasUserLocation={!!userLocation}
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-10"
+      />
+
+      {/* Recently Added Badge */}
+      {recentlyAddedIds.length > 0 && (
+        <Badge className="absolute top-4 right-20 bg-green-500/90 text-white backdrop-blur-sm shadow-lg animate-pulse z-10">
+          <Sparkles className="h-3 w-3 mr-1" />
+          {recentlyAddedIds.length} new
+        </Badge>
       )}
 
       {/* Route Panel */}
@@ -589,76 +670,30 @@ export function TaskClusterMap({
         />
       )}
 
-      {/* Selected task popup */}
+      {/* Enhanced Task Preview */}
       <AnimatePresence>
         {selectedTask && !showRoutePanel && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-4 left-4 right-4 z-10 max-w-md mx-auto"
-          >
-            <Card className="bg-background/95 backdrop-blur-sm shadow-xl border-border">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-lg truncate">{selectedTask.title}</h3>
-                      {selectedTask.priority === 'urgent' && (
-                        <Badge className="bg-red-500 shrink-0">
-                          <Zap className="h-3 w-3 mr-1" />
-                          Urgent
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <MapPin className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{selectedTask.location}</span>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon" className="shrink-0" onClick={() => setSelectedTask(null)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{selectedTask.description}</p>
-                
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
-                  <Badge variant="default" className="bg-primary">
-                    <DollarSign className="h-3 w-3 mr-1" />${selectedTask.pay_amount}
-                  </Badge>
-                  <Badge variant="secondary">{selectedTask.category}</Badge>
-                  {selectedTask.estimated_duration && (
-                    <Badge variant="outline" className={timeEstimateLabels[getTimeEstimate(selectedTask.estimated_duration)].color}>
-                      <Clock className="h-3 w-3 mr-1" />
-                      {timeEstimateLabels[getTimeEstimate(selectedTask.estimated_duration)].label}
-                    </Badge>
-                  )}
-                </div>
-                
-                <div className="flex gap-2 mt-4">
-                  {userLocation && selectedTask.latitude && selectedTask.longitude && (
-                    <Button 
-                      variant="outline"
-                      className="flex-1 gap-1.5"
-                      onClick={() => setShowRoutePanel(true)}
-                    >
-                      <Route className="h-4 w-4" />
-                      Directions
-                    </Button>
-                  )}
-                  <Button 
-                    className="flex-1" 
-                    onClick={() => navigate(`/task/${selectedTask.id}`)}
-                  >
-                    View Details
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <MapTaskPreview
+            task={selectedTask}
+            distance={getTaskDistance(selectedTask)}
+            userLocation={userLocation}
+            onClose={() => setSelectedTask(null)}
+            onShowRoute={() => setShowRoutePanel(true)}
+            isSaved={savedTasks.includes(selectedTask.id)}
+            onToggleSave={() => toggleSaveTask(selectedTask.id)}
+          />
         )}
       </AnimatePresence>
+
+      {/* Explorer Panel */}
+      <MapExplorerPanel
+        tasks={tasks}
+        userLocation={userLocation}
+        onTaskSelect={handleTaskClick}
+        onLocationSelect={handleLocationSelect}
+        isOpen={showExplorer}
+        onOpenChange={setShowExplorer}
+      />
     </div>
   );
 }
