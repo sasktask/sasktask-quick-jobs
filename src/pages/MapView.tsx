@@ -4,7 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { TaskClusterMap } from "@/components/TaskClusterMap";
-import { MapCategoryFilter } from "@/components/map/MapCategoryFilter";
+import { 
+  MapCategoryFilter, 
+  MapTrafficLayer, 
+  Map3DControls, 
+  MapHeatmapLayer 
+} from "@/components/map";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMapRealtime } from "@/hooks/useMapRealtime";
-import { MapPin, List, Loader2, Navigation, Target, Flame, Wifi, WifiOff, Sparkles, DollarSign } from "lucide-react";
+import { MapPin, List, Loader2, Navigation, Target, Flame, Wifi, WifiOff, Sparkles, DollarSign, Car, Box } from "lucide-react";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { calculateDistance } from "@/lib/distance";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,7 +46,9 @@ export default function MapView() {
   const [mapboxToken, setMapboxToken] = useState<string>("");
   const [radiusKm, setRadiusKm] = useState(50);
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showTraffic, setShowTraffic] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [mapInstance, setMapInstance] = useState<any>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { location: userLocation, isLoading: locationLoading, error: locationError, requestLocation } = useUserLocation();
@@ -243,6 +250,16 @@ export default function MapView() {
                 onCheckedChange={setShowHeatmap}
               />
             </div>
+
+            {/* Traffic toggle */}
+            <MapTrafficLayer
+              map={mapInstance}
+              isEnabled={showTraffic}
+              onToggle={setShowTraffic}
+            />
+
+            {/* 3D Controls */}
+            <Map3DControls map={mapInstance} />
             
             <Button variant="outline" onClick={() => navigate("/browse")}>
               <List className="h-4 w-4 mr-2" />
@@ -355,6 +372,7 @@ export default function MapView() {
           recentlyAddedIds={recentlyAddedIds}
           onTaskSelect={setSelectedTask}
           isConnected={isConnected}
+          onMapReady={setMapInstance}
         />
 
         {/* Tasks without location */}

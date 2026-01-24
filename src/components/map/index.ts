@@ -6,3 +6,8 @@ export { MapTaskPreview } from './MapTaskPreview';
 export { MapWeatherWidget } from './MapWeatherWidget';
 export { MapQuickActions } from './MapQuickActions';
 export { MapStatsOverlay } from './MapStatsOverlay';
+export { LiveDoerTracker } from './LiveDoerTracker';
+export { MapGPSCheckin } from './MapGPSCheckin';
+export { MapTrafficLayer } from './MapTrafficLayer';
+export { Map3DControls } from './Map3DControls';
+export { MapHeatmapLayer } from './MapHeatmapLayer';

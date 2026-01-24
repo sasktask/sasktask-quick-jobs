@@ -65,6 +65,7 @@ interface TaskClusterMapProps {
   recentlyAddedIds?: string[];
   onTaskSelect?: (task: Task | null) => void;
   isConnected?: boolean;
+  onMapReady?: (map: mapboxgl.Map | null) => void;
 }
 
 const SASKATCHEWAN_CENTER: [number, number] = [-106.4509, 52.9399];
@@ -98,6 +99,7 @@ export function TaskClusterMap({
   recentlyAddedIds = [],
   onTaskSelect,
   isConnected = false,
+  onMapReady,
 }: TaskClusterMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -282,14 +284,18 @@ export function TaskClusterMap({
     map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
     map.current.addControl(new mapboxgl.ScaleControl(), 'bottom-left');
 
-    map.current.on('load', () => setMapLoaded(true));
+    map.current.on('load', () => {
+      setMapLoaded(true);
+      onMapReady?.(map.current);
+    });
 
     return () => {
       userMarkerRef.current?.remove();
       taskMarkersRef.current.forEach(marker => marker.remove());
+      onMapReady?.(null);
       map.current?.remove();
     };
-  }, [mapboxToken]);
+  }, [mapboxToken, onMapReady]);
 
   // Add clustering and heatmap layers
   useEffect(() => {
