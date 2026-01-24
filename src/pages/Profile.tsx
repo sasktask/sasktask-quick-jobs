@@ -299,7 +299,13 @@ const Profile = () => {
             <ProfileStatsCard profile={profile} trustScore={trustScore} />
 
             {/* Quick Actions */}
-            <ProfileQuickActions userId={userId} userRole={userRole} />
+            <ProfileQuickActions 
+              userId={userId} 
+              userRole={userRole} 
+              profile={profile}
+              verification={verification}
+              trustScore={trustScore}
+            />
 
             {/* Verification Status Card */}
             {userId && (
