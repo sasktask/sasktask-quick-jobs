@@ -69,7 +69,6 @@ interface NavigationPanelProps {
     longitude: number;
   } | null;
   mapboxToken: string;
-  onRouteCalculated?: (route: RouteInfo | null, mode: string) => void;
   onStepHover?: (stepIndex: number | null) => void;
 }
 
@@ -125,7 +124,6 @@ export function NavigationPanel({
   destination,
   origin,
   mapboxToken,
-  onRouteCalculated,
   onStepHover,
 }: NavigationPanelProps) {
   const [selectedMode, setSelectedMode] = useState<TravelMode>('driving');
@@ -196,11 +194,6 @@ export function NavigationPanel({
       ]);
       
       setRoutes({ driving, walking, cycling });
-      
-      // Notify parent of selected route
-      if (driving) {
-        onRouteCalculated?.(driving, 'driving');
-      }
     } catch (err) {
       console.error('Route calculation error:', err);
     } finally {
@@ -210,7 +203,6 @@ export function NavigationPanel({
 
   const handleModeChange = (mode: TravelMode) => {
     setSelectedMode(mode);
-    onRouteCalculated?.(routes[mode], mode);
   };
 
   const formatDuration = (seconds: number): string => {
@@ -277,11 +269,11 @@ export function NavigationPanel({
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -320 }}
+      initial={{ opacity: 0, x: 320 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -320 }}
+      exit={{ opacity: 0, x: 320 }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-      className="absolute top-4 left-4 bottom-4 z-30 w-[340px] flex flex-col"
+      className="absolute top-4 right-4 bottom-4 z-30 w-[340px] flex flex-col"
     >
       <Card className="flex-1 flex flex-col bg-background/95 backdrop-blur-md shadow-2xl border-border overflow-hidden">
         {/* Header */}

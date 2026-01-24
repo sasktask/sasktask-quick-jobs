@@ -11,6 +11,7 @@ import {
   MapHeatmapLayer,
   MapLocationSearch,
   NavigationPanel,
+  MultiRouteLayer,
 } from "@/components/map";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -202,66 +203,15 @@ export default function MapView() {
     setShowNavigation(true);
   };
 
-  // Handle route calculated - draw on map
-  const handleRouteCalculated = (route: any, mode: string) => {
-    if (!mapInstance || !route?.geometry) return;
-
-    // Remove existing route layer
-    if (mapInstance.getSource('navigation-route')) {
-      mapInstance.removeLayer('navigation-route-line');
-      mapInstance.removeSource('navigation-route');
-    }
-
-    // Add route to map
-    mapInstance.addSource('navigation-route', {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        properties: {},
-        geometry: route.geometry,
-      },
-    });
-
-    const color = mode === 'driving' ? '#3b82f6' : mode === 'walking' ? '#22c55e' : '#f97316';
-
-    mapInstance.addLayer({
-      id: 'navigation-route-line',
-      type: 'line',
-      source: 'navigation-route',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': color,
-        'line-width': 5,
-        'line-opacity': 0.8,
-      },
-    });
-
-    // Fit map to route
-    if (route.geometry.coordinates.length > 0) {
-      const bounds = route.geometry.coordinates.reduce(
-        (bounds: any, coord: number[]) => bounds.extend(coord),
-        new mapInstance.constructor.LngLatBounds(
-          route.geometry.coordinates[0],
-          route.geometry.coordinates[0]
-        )
-      );
-      mapInstance.fitBounds(bounds, { padding: 80, duration: 1000 });
-    }
+  // Handle route mode change (for navigation panel)
+  const handleModeChange = (mode: string) => {
+    console.log('Travel mode changed to:', mode);
   };
 
   // Close navigation and clean up
   const handleCloseNavigation = () => {
     setShowNavigation(false);
     setNavigationDestination(null);
-    
-    // Remove route from map
-    if (mapInstance?.getSource('navigation-route')) {
-      mapInstance.removeLayer('navigation-route-line');
-      mapInstance.removeSource('navigation-route');
-    }
   };
 
   if (isLoading) {
@@ -505,7 +455,18 @@ export default function MapView() {
             onMapReady={setMapInstance}
           />
 
-          {/* Navigation Panel Overlay */}
+          {/* Multi-Route Layer - shows colored routes like Google Maps */}
+          <MultiRouteLayer
+            map={mapInstance}
+            mapboxToken={mapboxToken}
+            origin={userLocation}
+            destination={navigationDestination}
+            isOpen={showNavigation}
+            onClose={handleCloseNavigation}
+            onModeChange={handleModeChange}
+          />
+
+          {/* Navigation Panel with turn-by-turn */}
           <AnimatePresence>
             {showNavigation && (
               <NavigationPanel
@@ -518,7 +479,6 @@ export default function MapView() {
                   longitude: userLocation.longitude,
                 } : null}
                 mapboxToken={mapboxToken}
-                onRouteCalculated={handleRouteCalculated}
               />
             )}
           </AnimatePresence>
