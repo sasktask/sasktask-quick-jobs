@@ -12,3 +12,4 @@ export { MapTrafficLayer } from './MapTrafficLayer';
 export { Map3DControls } from './Map3DControls';
 export { MapHeatmapLayer } from './MapHeatmapLayer';
 export { MapLocationSearch } from './MapLocationSearch';
+export { NavigationPanel } from './NavigationPanel';

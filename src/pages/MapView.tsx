@@ -10,6 +10,7 @@ import {
   Map3DControls, 
   MapHeatmapLayer,
   MapLocationSearch,
+  NavigationPanel,
 } from "@/components/map";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMapRealtime } from "@/hooks/useMapRealtime";
-import { MapPin, List, Loader2, Navigation, Target, Flame, Wifi, WifiOff, Sparkles, DollarSign, Car, Box } from "lucide-react";
+import { MapPin, List, Loader2, Navigation, Target, Flame, Wifi, WifiOff, Sparkles, DollarSign, Car, Box, Route } from "lucide-react";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { calculateDistance } from "@/lib/distance";
 import { motion, AnimatePresence } from "framer-motion";
@@ -50,6 +51,13 @@ export default function MapView() {
   const [showTraffic, setShowTraffic] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [mapInstance, setMapInstance] = useState<any>(null);
+  const [showNavigation, setShowNavigation] = useState(false);
+  const [navigationDestination, setNavigationDestination] = useState<{
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { location: userLocation, isLoading: locationLoading, error: locationError, requestLocation } = useUserLocation();
@@ -185,6 +193,74 @@ export default function MapView() {
           description: `Navigating to ${placeName}`,
         });
       }
+    }
+  };
+
+  // Handle getting directions to a location
+  const handleGetDirections = (destination: { name: string; address: string; latitude: number; longitude: number }) => {
+    setNavigationDestination(destination);
+    setShowNavigation(true);
+  };
+
+  // Handle route calculated - draw on map
+  const handleRouteCalculated = (route: any, mode: string) => {
+    if (!mapInstance || !route?.geometry) return;
+
+    // Remove existing route layer
+    if (mapInstance.getSource('navigation-route')) {
+      mapInstance.removeLayer('navigation-route-line');
+      mapInstance.removeSource('navigation-route');
+    }
+
+    // Add route to map
+    mapInstance.addSource('navigation-route', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: route.geometry,
+      },
+    });
+
+    const color = mode === 'driving' ? '#3b82f6' : mode === 'walking' ? '#22c55e' : '#f97316';
+
+    mapInstance.addLayer({
+      id: 'navigation-route-line',
+      type: 'line',
+      source: 'navigation-route',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      },
+      paint: {
+        'line-color': color,
+        'line-width': 5,
+        'line-opacity': 0.8,
+      },
+    });
+
+    // Fit map to route
+    if (route.geometry.coordinates.length > 0) {
+      const bounds = route.geometry.coordinates.reduce(
+        (bounds: any, coord: number[]) => bounds.extend(coord),
+        new mapInstance.constructor.LngLatBounds(
+          route.geometry.coordinates[0],
+          route.geometry.coordinates[0]
+        )
+      );
+      mapInstance.fitBounds(bounds, { padding: 80, duration: 1000 });
+    }
+  };
+
+  // Close navigation and clean up
+  const handleCloseNavigation = () => {
+    setShowNavigation(false);
+    setNavigationDestination(null);
+    
+    // Remove route from map
+    if (mapInstance?.getSource('navigation-route')) {
+      mapInstance.removeLayer('navigation-route-line');
+      mapInstance.removeSource('navigation-route');
     }
   };
 
@@ -388,19 +464,65 @@ export default function MapView() {
           )}
         </AnimatePresence>
 
-        {/* Map */}
-        <TaskClusterMap 
-          tasks={filteredTasks} 
-          mapboxToken={mapboxToken}
-          isLoading={isLoading}
-          userLocation={userLocation}
-          radiusKm={radiusKm}
-          showHeatmap={showHeatmap}
-          recentlyAddedIds={recentlyAddedIds}
-          onTaskSelect={setSelectedTask}
-          isConnected={isConnected}
-          onMapReady={setMapInstance}
-        />
+        {/* Map Container with Navigation Panel */}
+        <div className="relative">
+          <TaskClusterMap 
+            tasks={filteredTasks} 
+            mapboxToken={mapboxToken}
+            isLoading={isLoading}
+            userLocation={userLocation}
+            radiusKm={radiusKm}
+            showHeatmap={showHeatmap}
+            recentlyAddedIds={recentlyAddedIds}
+            onTaskSelect={(task) => {
+              setSelectedTask(task);
+              // Show get directions option when task is selected
+              if (task && task.latitude && task.longitude) {
+                toast({
+                  title: task.title,
+                  description: (
+                    <div className="flex flex-col gap-2 mt-2">
+                      <p className="text-sm">{task.location}</p>
+                      <Button 
+                        size="sm" 
+                        className="gap-2 w-full"
+                        onClick={() => handleGetDirections({
+                          name: task.title,
+                          address: task.location,
+                          latitude: task.latitude!,
+                          longitude: task.longitude!,
+                        })}
+                      >
+                        <Route className="h-4 w-4" />
+                        Get Directions
+                      </Button>
+                    </div>
+                  ),
+                });
+              }
+            }}
+            isConnected={isConnected}
+            onMapReady={setMapInstance}
+          />
+
+          {/* Navigation Panel Overlay */}
+          <AnimatePresence>
+            {showNavigation && (
+              <NavigationPanel
+                isOpen={showNavigation}
+                onClose={handleCloseNavigation}
+                destination={navigationDestination}
+                origin={userLocation ? {
+                  name: 'Your Location',
+                  latitude: userLocation.latitude,
+                  longitude: userLocation.longitude,
+                } : null}
+                mapboxToken={mapboxToken}
+                onRouteCalculated={handleRouteCalculated}
+              />
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Tasks without location */}
         {tasksWithoutLocation.length > 0 && (
