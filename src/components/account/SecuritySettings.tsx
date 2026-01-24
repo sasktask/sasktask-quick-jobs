@@ -17,6 +17,7 @@ import { SecurityOverview } from "./SecurityOverview";
 import { LoginHistory } from "./LoginHistory";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
 import { BiometricSettings } from "./BiometricSettings";
+import { SessionTimeoutSettings } from "./SessionTimeoutSettings";
 
 // Strong password schema matching signup requirements
 const passwordSchema = z.object({
@@ -146,6 +147,9 @@ export const SecuritySettings = ({ user }: SecuritySettingsProps) => {
 
       {/* Biometric Authentication */}
       <BiometricSettings userId={user.id} />
+
+      {/* Session Timeout Settings */}
+      <SessionTimeoutSettings userId={user.id} />
 
       {/* Login History */}
       <LoginHistory userId={user.id} />
