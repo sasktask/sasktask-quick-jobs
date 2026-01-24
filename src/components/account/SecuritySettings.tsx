@@ -18,6 +18,7 @@ import { LoginHistory } from "./LoginHistory";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
 import { BiometricSettings } from "./BiometricSettings";
 import { SessionTimeoutSettings } from "./SessionTimeoutSettings";
+import { DataExportSettings } from "./DataExportSettings";
 
 // Strong password schema matching signup requirements
 const passwordSchema = z.object({
@@ -150,6 +151,9 @@ export const SecuritySettings = ({ user }: SecuritySettingsProps) => {
 
       {/* Session Timeout Settings */}
       <SessionTimeoutSettings userId={user.id} />
+
+      {/* Data Export (GDPR) */}
+      <DataExportSettings userId={user.id} />
 
       {/* Login History */}
       <LoginHistory userId={user.id} />
