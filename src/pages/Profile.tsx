@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { BadgeShowcase } from "@/components/BadgeShowcase";
 import { ProfileStrengthMeter } from "@/components/ProfileStrengthMeter";
 import { ProfileTips } from "@/components/ProfileTips";
-import { ProfileHeader, ProfileStatsCard, ProfileQuickActions, ProfileNavTabs } from "@/components/profile";
+import { ProfileHeader, ProfileStatsCard, ProfileQuickActions, ProfileNavTabs, EnhancedSecurityDashboard, ProfileActivityTimeline, PrivacySettings, TwoFactorSetup } from "@/components/profile";
 import { CertificateManager } from "@/components/CertificateManager";
 import { VerificationStatusIndicator } from "@/components/VerificationStatusIndicator";
 import { DeleteAccountDialog } from "@/components/account/DeleteAccountDialog";
@@ -655,78 +655,50 @@ const Profile = () => {
               </TabsContent>
 
               {/* Security Tab */}
-              <TabsContent value="security" className="mt-6">
-                <Card className="border-border">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Lock className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle>Security & Privacy</CardTitle>
-                        <CardDescription>Manage your account security and privacy settings</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/30 transition-colors">
-                      <div>
-                        <h4 className="font-semibold mb-1">Email Notifications</h4>
-                        <p className="text-sm text-muted-foreground">Receive updates about tasks and bookings</p>
-                      </div>
-                      <Badge variant="secondary">Enabled</Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/30 transition-colors">
-                      <div>
-                        <h4 className="font-semibold mb-1">Two-Factor Authentication</h4>
-                        <p className="text-sm text-muted-foreground">Add extra security to your account</p>
-                      </div>
-                      <Button variant="outline" size="sm">Setup</Button>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/30 transition-colors">
-                      <div>
-                        <h4 className="font-semibold mb-1">Profile Visibility</h4>
-                        <p className="text-sm text-muted-foreground">Control who can see your profile</p>
-                      </div>
-                      <Badge>Public</Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/30 transition-colors">
-                      <div>
-                        <h4 className="font-semibold mb-1">Data Export</h4>
-                        <p className="text-sm text-muted-foreground">Download a copy of your data</p>
-                      </div>
-                      <Button variant="outline" size="sm">Export</Button>
-                    </div>
-
-                    <Separator className="my-6" />
-
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-destructive">Danger Zone</h4>
-                      <div className="p-4 border border-destructive/30 rounded-lg bg-destructive/5">
-                        <h5 className="font-semibold mb-2">Delete Account</h5>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Permanently delete your account and all data. This cannot be undone.
-                        </p>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => setShowDeleteDialog(true)}
-                        >
-                          Delete Account
-                        </Button>
-                      </div>
-
-                      <DeleteAccountDialog
-                        open={showDeleteDialog}
-                        onOpenChange={setShowDeleteDialog}
-                        user={profile}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+              <TabsContent value="security" className="mt-6 space-y-6">
+                {userId && (
+                  <>
+                    <EnhancedSecurityDashboard userId={userId} />
+                    <TwoFactorSetup userId={userId} />
+                    <PrivacySettings userId={userId} profile={profile} onUpdate={checkUserAndLoadProfile} />
+                    <ProfileActivityTimeline userId={userId} />
+                    
+                    {/* Danger Zone */}
+                    <Card className="border-destructive/30">
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-destructive/10">
+                            <Lock className="h-5 w-5 text-destructive" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-destructive">Danger Zone</CardTitle>
+                            <CardDescription>Irreversible account actions</CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="p-4 border border-destructive/30 rounded-lg bg-destructive/5">
+                          <h5 className="font-semibold mb-2">Delete Account</h5>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Permanently delete your account and all data. This cannot be undone.
+                          </p>
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => setShowDeleteDialog(true)}
+                          >
+                            Delete Account
+                          </Button>
+                        </div>
+                        <DeleteAccountDialog
+                          open={showDeleteDialog}
+                          onOpenChange={setShowDeleteDialog}
+                          user={profile}
+                        />
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
               </TabsContent>
             </Tabs>
           </div>
