@@ -1,5 +1,6 @@
 export { MapRoutePanel } from './MapRoutePanel';
 export { MapCategoryFilter } from './MapCategoryFilter';
+export { MultiRouteLayer } from './MultiRouteLayer';
 export { MapDrawSelection } from './MapDrawSelection';
 export { MapExplorerPanel } from './MapExplorerPanel';
 export { MapTaskPreview } from './MapTaskPreview';
