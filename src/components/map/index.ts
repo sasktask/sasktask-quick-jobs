@@ -14,3 +14,5 @@ export { Map3DControls } from './Map3DControls';
 export { MapHeatmapLayer } from './MapHeatmapLayer';
 export { MapLocationSearch } from './MapLocationSearch';
 export { NavigationPanel } from './NavigationPanel';
+export { MapTaskMarker, createTaskPopupHTML } from './MapTaskMarker';
+export { AddressDisplay } from './AddressDisplay';
