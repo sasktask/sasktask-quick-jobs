@@ -11,3 +11,4 @@ export { MapGPSCheckin } from './MapGPSCheckin';
 export { MapTrafficLayer } from './MapTrafficLayer';
 export { Map3DControls } from './Map3DControls';
 export { MapHeatmapLayer } from './MapHeatmapLayer';
+export { MapLocationSearch } from './MapLocationSearch';

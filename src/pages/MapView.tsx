@@ -8,7 +8,8 @@ import {
   MapCategoryFilter, 
   MapTrafficLayer, 
   Map3DControls, 
-  MapHeatmapLayer 
+  MapHeatmapLayer,
+  MapLocationSearch,
 } from "@/components/map";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -168,6 +169,25 @@ export default function MapView() {
   const avgPay = tasksWithLocation.length > 0 ? Math.round(totalValue / tasksWithLocation.length) : 0;
   const urgentCount = tasksWithLocation.filter(t => t.priority === 'urgent').length;
 
+  // Handle location search selection
+  const handleLocationSelect = (lat: number, lng: number, zoom?: number, placeName?: string) => {
+    if (mapInstance) {
+      mapInstance.flyTo({
+        center: [lng, lat],
+        zoom: zoom || 14,
+        duration: 1500,
+        essential: true,
+      });
+      
+      if (placeName) {
+        toast({
+          title: "Location Found",
+          description: `Navigating to ${placeName}`,
+        });
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -209,6 +229,13 @@ export default function MapView() {
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
+            {/* Advanced Location Search */}
+            <MapLocationSearch
+              onLocationSelect={handleLocationSelect}
+              userLocation={userLocation}
+              className="w-[200px] lg:w-[280px]"
+            />
+
             {/* Location button */}
             <Button 
               variant={userLocation ? "default" : "outline"}
