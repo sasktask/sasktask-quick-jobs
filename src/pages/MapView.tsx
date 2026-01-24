@@ -1,21 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { TaskClusterMap } from "@/components/TaskClusterMap";
+import { MapCategoryFilter } from "@/components/map/MapCategoryFilter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, List, Filter, Loader2, Navigation, Target, Flame } from "lucide-react";
-import { getCategoryTitles } from "@/lib/categories";
+import { useMapRealtime } from "@/hooks/useMapRealtime";
+import { MapPin, List, Loader2, Navigation, Target, Flame, Wifi, WifiOff, Sparkles, DollarSign } from "lucide-react";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { calculateDistance } from "@/lib/distance";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Task {
   id: string;
@@ -31,17 +32,23 @@ interface Task {
 }
 
 export default function MapView() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [initialTasks, setInitialTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [minPay, setMinPay] = useState<number | undefined>();
+  const [showUrgentOnly, setShowUrgentOnly] = useState(false);
   const [mapboxToken, setMapboxToken] = useState<string>("");
   const [radiusKm, setRadiusKm] = useState(50);
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { location: userLocation, isLoading: locationLoading, error: locationError, requestLocation } = useUserLocation();
   
-  const categories = getCategoryTitles();
+  // Real-time updates
+  const { tasks: realtimeTasks, isConnected, getRecentlyAddedIds } = useMapRealtime(initialTasks);
+  const recentlyAddedIds = getRecentlyAddedIds();
 
   useEffect(() => {
     fetchMapboxToken();
@@ -88,7 +95,7 @@ export default function MapView() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setTasks(data || []);
+      setInitialTasks(data || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -100,15 +107,39 @@ export default function MapView() {
     }
   };
 
-  // Filter by category first
-  const categoryFilteredTasks = categoryFilter === "all" 
-    ? tasks 
-    : tasks.filter(t => t.category === categoryFilter);
+  // Apply all filters
+  const filteredTasks = useMemo(() => {
+    let result = realtimeTasks;
 
-  // Then filter by radius if user location is available
-  const filteredTasks = userLocation 
-    ? categoryFilteredTasks.filter(task => {
-        if (!task.latitude || !task.longitude) return true; // Keep tasks without location
+    // Category filter
+    if (categoryFilter !== "all") {
+      result = result.filter(t => t.category === categoryFilter);
+    }
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(t => 
+        t.title.toLowerCase().includes(query) ||
+        t.description?.toLowerCase().includes(query) ||
+        t.location.toLowerCase().includes(query)
+      );
+    }
+
+    // Min pay filter
+    if (minPay) {
+      result = result.filter(t => t.pay_amount >= minPay);
+    }
+
+    // Urgent only filter
+    if (showUrgentOnly) {
+      result = result.filter(t => t.priority === 'urgent');
+    }
+
+    // Radius filter
+    if (userLocation) {
+      result = result.filter(task => {
+        if (!task.latitude || !task.longitude) return true;
         const distance = calculateDistance(
           userLocation.latitude,
           userLocation.longitude,
@@ -116,16 +147,19 @@ export default function MapView() {
           task.longitude
         );
         return distance <= radiusKm;
-      })
-    : categoryFilteredTasks;
+      });
+    }
+
+    return result;
+  }, [realtimeTasks, categoryFilter, searchQuery, minPay, showUrgentOnly, userLocation, radiusKm]);
 
   const tasksWithLocation = filteredTasks.filter(t => t.latitude && t.longitude);
   const tasksWithoutLocation = filteredTasks.filter(t => !t.latitude || !t.longitude);
   
-  // Count tasks within radius for stats
-  const tasksInRadius = userLocation 
-    ? tasksWithLocation.length 
-    : tasksWithLocation.length;
+  // Calculate stats
+  const totalValue = tasksWithLocation.reduce((sum, t) => sum + t.pay_amount, 0);
+  const avgPay = tasksWithLocation.length > 0 ? Math.round(totalValue / tasksWithLocation.length) : 0;
+  const urgentCount = tasksWithLocation.filter(t => t.priority === 'urgent').length;
 
   if (isLoading) {
     return (
@@ -150,14 +184,20 @@ export default function MapView() {
       
       <div className="container mx-auto px-4 pt-24 pb-20">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
               <MapPin className="h-8 w-8 text-primary" />
               Map View
+              {isConnected && (
+                <Badge variant="outline" className="gap-1 text-green-500 border-green-500/50">
+                  <Wifi className="h-3 w-3" />
+                  Live
+                </Badge>
+              )}
             </h1>
             <p className="text-muted-foreground">
-              Find tasks near you in Saskatchewan
+              Find tasks near you with real-time updates
             </p>
           </div>
           
@@ -177,7 +217,7 @@ export default function MapView() {
               {userLocation ? "Location On" : "Use My Location"}
             </Button>
 
-            {/* Radius slider - only show when location is available */}
+            {/* Radius slider */}
             {userLocation && (
               <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
                 <Target className="h-4 w-4 text-muted-foreground" />
@@ -203,19 +243,6 @@ export default function MapView() {
                 onCheckedChange={setShowHeatmap}
               />
             </div>
-
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             
             <Button variant="outline" onClick={() => navigate("/browse")}>
               <List className="h-4 w-4 mr-2" />
@@ -232,6 +259,21 @@ export default function MapView() {
           </div>
         )}
 
+        {/* Category Filter */}
+        <div className="mb-6">
+          <MapCategoryFilter
+            selectedCategory={categoryFilter}
+            onCategoryChange={setCategoryFilter}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            minPay={minPay}
+            onMinPayChange={setMinPay}
+            showUrgentOnly={showUrgentOnly}
+            onUrgentOnlyChange={setShowUrgentOnly}
+            totalResults={filteredTasks.length}
+          />
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card className="border-border">
@@ -240,13 +282,38 @@ export default function MapView() {
                 <MapPin className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{tasksInRadius}</p>
+                <p className="text-2xl font-bold">{tasksWithLocation.length}</p>
                 <p className="text-xs text-muted-foreground">
                   {userLocation ? `Within ${radiusKm}km` : "On Map"}
                 </p>
               </div>
             </CardContent>
           </Card>
+          
+          <Card className="border-border">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">${avgPay}</p>
+                <p className="text-xs text-muted-foreground">Avg Pay</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{urgentCount}</p>
+                <p className="text-xs text-muted-foreground">Urgent Tasks</p>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="border-border">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
@@ -258,20 +325,24 @@ export default function MapView() {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-border col-span-2">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <Filter className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{filteredTasks.length}</p>
-                <p className="text-xs text-muted-foreground">
-                  {categoryFilter === "all" ? "Total Open Tasks" : `${categoryFilter} Tasks`}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
         </div>
+
+        {/* New tasks notification */}
+        <AnimatePresence>
+          {recentlyAddedIds.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-4"
+            >
+              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 animate-pulse" />
+                <span>{recentlyAddedIds.length} new task{recentlyAddedIds.length > 1 ? 's' : ''} just added!</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Map */}
         <TaskClusterMap 
@@ -281,6 +352,8 @@ export default function MapView() {
           userLocation={userLocation}
           radiusKm={radiusKm}
           showHeatmap={showHeatmap}
+          recentlyAddedIds={recentlyAddedIds}
+          onTaskSelect={setSelectedTask}
         />
 
         {/* Tasks without location */}
@@ -292,23 +365,34 @@ export default function MapView() {
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {tasksWithoutLocation.slice(0, 6).map(task => (
-                <Card 
-                  key={task.id} 
-                  className="border-border hover:shadow-lg transition-all cursor-pointer"
-                  onClick={() => navigate(`/task/${task.id}`)}
+                <motion.div
+                  key={task.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ y: -2 }}
                 >
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold truncate">{task.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {task.location}
-                    </p>
-                    <div className="flex items-center gap-2 mt-3">
-                      <Badge variant="default">${task.pay_amount}</Badge>
-                      <Badge variant="secondary">{task.category}</Badge>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <Card 
+                    className="border-border hover:shadow-lg transition-all cursor-pointer"
+                    onClick={() => navigate(`/task/${task.id}`)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold truncate">{task.title}</h3>
+                        {task.priority === 'urgent' && (
+                          <Badge className="bg-red-500 shrink-0 text-xs">Urgent</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {task.location}
+                      </p>
+                      <div className="flex items-center gap-2 mt-3">
+                        <Badge variant="default">${task.pay_amount}</Badge>
+                        <Badge variant="secondary">{task.category}</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               ))}
             </div>
             {tasksWithoutLocation.length > 6 && (
