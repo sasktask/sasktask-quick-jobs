@@ -26,10 +26,10 @@ const handler = async (req: Request): Promise<Response> => {
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
       console.error("RESEND_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Email service not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const resend = new Resend(resendApiKey);
@@ -41,10 +41,10 @@ const handler = async (req: Request): Promise<Response> => {
     const { userId, email }: SendDeleteOTPRequest = await req.json();
 
     if (!userId || !email) {
-      return new Response(
-        JSON.stringify({ error: "User ID and email are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "User ID and email are required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Verify the user exists and email matches
@@ -56,17 +56,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (profileError || !profile) {
       console.error("Profile lookup error:", profileError);
-      return new Response(
-        JSON.stringify({ error: "User not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "User not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (profile.email.toLowerCase() !== email.toLowerCase()) {
-      return new Response(
-        JSON.stringify({ error: "Email does not match account" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Email does not match account" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Rate limiting: Check for recent deletion OTP requests (max 3 per hour)
@@ -78,10 +78,10 @@ const handler = async (req: Request): Promise<Response> => {
       .gte("created_at", oneHourAgo);
 
     if (recentRequests && recentRequests >= 3) {
-      return new Response(
-        JSON.stringify({ error: "Too many deletion requests. Please try again later." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Too many deletion requests. Please try again later." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Invalidate any existing unused codes
@@ -96,8 +96,7 @@ const handler = async (req: Request): Promise<Response> => {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 minutes
 
     // Get client IP
-    const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0] || 
-                      req.headers.get("x-real-ip") || "unknown";
+    const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "unknown";
 
     // Store verification record
     const { data: verification, error: insertError } = await supabase
@@ -114,16 +113,16 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (insertError) {
       console.error("Failed to store verification:", insertError);
-      return new Response(
-        JSON.stringify({ error: "Failed to generate verification code" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Failed to generate verification code" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Send OTP via email
     const userName = profile.full_name || "SaskTask User";
     const emailResponse = await resend.emails.send({
-      from: "SaskTask <security@sasktask.com>",
+      from: "SaskTask <onboarding@sasktask.com>",
       to: [email],
       subject: "⚠️ Account Deletion Verification - SaskTask",
       html: `
@@ -182,29 +181,28 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (emailResponse.error) {
       console.error("Failed to send email:", emailResponse.error);
-      return new Response(
-        JSON.stringify({ error: "Failed to send verification email" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Failed to send verification email" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     console.log("Account deletion OTP sent to:", email);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         verificationId: verification.id,
-        message: "Verification code sent to your email" 
+        message: "Verification code sent to your email",
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-
   } catch (error: any) {
     console.error("Error in send-delete-account-otp:", error);
-    return new Response(
-      JSON.stringify({ error: error.message || "Failed to send verification code" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: error.message || "Failed to send verification code" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 };
 
