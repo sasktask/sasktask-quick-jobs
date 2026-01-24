@@ -354,6 +354,7 @@ export default function MapView() {
           showHeatmap={showHeatmap}
           recentlyAddedIds={recentlyAddedIds}
           onTaskSelect={setSelectedTask}
+          isConnected={isConnected}
         />
 
         {/* Tasks without location */}
