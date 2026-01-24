@@ -299,9 +299,9 @@ const Profile = () => {
             <ProfileStatsCard profile={profile} trustScore={trustScore} />
 
             {/* Quick Actions */}
-            <ProfileQuickActions 
-              userId={userId} 
-              userRole={userRole} 
+            <ProfileQuickActions
+              userId={userId}
+              userRole={userRole}
               profile={profile}
               verification={verification}
               trustScore={trustScore}
@@ -370,6 +370,7 @@ const Profile = () => {
                             type="tel"
                             placeholder="+1 (555) 000-0000"
                             value={formData.phone}
+                            disabled
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           />
                         </div>
@@ -668,7 +669,7 @@ const Profile = () => {
                     <TwoFactorSetup userId={userId} />
                     <PrivacySettings userId={userId} profile={profile} onUpdate={checkUserAndLoadProfile} />
                     <ProfileActivityTimeline userId={userId} />
-                    
+
                     {/* Danger Zone */}
                     <Card className="border-destructive/30">
                       <CardHeader className="pb-4">
@@ -688,8 +689,8 @@ const Profile = () => {
                           <p className="text-sm text-muted-foreground mb-4">
                             Permanently delete your account and all data. This cannot be undone.
                           </p>
-                          <Button 
-                            variant="destructive" 
+                          <Button
+                            variant="destructive"
                             size="sm"
                             onClick={() => setShowDeleteDialog(true)}
                           >

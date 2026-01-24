@@ -44,6 +44,9 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
     resolver: zodResolver(profileSchema),
   });
 
+  // Prefer profile flag if present; fall back to auth metadata
+  const isPhoneVerified = Boolean((profile as any)?.phone_verified ?? user?.user_metadata?.phone_verified);
+
   useEffect(() => {
     loadProfile();
   }, [user]);
@@ -82,7 +85,6 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
     try {
       const updateData: any = {
         full_name: data.full_name,
-        phone: data.phone,
         city: data.city,
         bio: data.bio,
         website: data.website || null,
@@ -90,6 +92,11 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
         twitter: data.twitter || null,
         facebook: data.facebook || null,
       };
+
+      // Do not allow changing phone once verified
+      if (!isPhoneVerified) {
+        updateData.phone = data.phone;
+      }
 
       // Parse skills if provided
       if (data.skills) {
@@ -201,7 +208,7 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
         imageSrc={imageToCrop}
         onCropComplete={handleCropComplete}
       />
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
@@ -210,192 +217,199 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-        {/* Avatar Section */}
-        <div className="flex items-center gap-6">
-          <Avatar className="h-24 w-24">
-            <AvatarImage src={avatarUrl} alt="Profile" />
-            <AvatarFallback>
-              <User className="h-12 w-12" />
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <Label htmlFor="avatar-upload" className="cursor-pointer">
-              <div className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
-                {uploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4" />
-                )}
-                Upload Photo
-              </div>
-            </Label>
-            <Input
-              id="avatar-upload"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarUpload}
-              disabled={uploading}
-            />
-            <p className="text-xs text-muted-foreground mt-2">
-              JPG, PNG or GIF. Max 5MB.
-            </p>
-          </div>
-        </div>
-
-        {/* Profile Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={user.email}
-              disabled
-              className="bg-muted"
-            />
-            <p className="text-xs text-muted-foreground">
-              Email cannot be changed
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Full Name</Label>
-            <Input
-              id="full_name"
-              {...register("full_name")}
-              placeholder="Your full name"
-            />
-            {errors.full_name && (
-              <p className="text-sm text-destructive">{errors.full_name.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
-              id="phone"
-              {...register("phone")}
-              placeholder="+1 (555) 123-4567"
-            />
-            {errors.phone && (
-              <p className="text-sm text-destructive">{errors.phone.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="city">City / Location</Label>
-            <Input
-              id="city"
-              {...register("city")}
-              placeholder="e.g., Saskatoon, SK"
-            />
-            {errors.city && (
-              <p className="text-sm text-destructive">{errors.city.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="bio">Short Bio</Label>
-            <textarea
-              id="bio"
-              {...register("bio")}
-              placeholder="Tell us about yourself..."
-              className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              maxLength={500}
-            />
-            {errors.bio && (
-              <p className="text-sm text-destructive">{errors.bio.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="skills">Skills (comma-separated)</Label>
-            <Input
-              id="skills"
-              {...register("skills")}
-              placeholder="e.g., Plumbing, Electrical, Moving"
-            />
-            {errors.skills && (
-              <p className="text-sm text-destructive">{errors.skills.message}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              List your skills to help clients find you
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="hourly_rate">Hourly Rate (CAD)</Label>
-            <Input
-              id="hourly_rate"
-              type="number"
-              {...register("hourly_rate")}
-              placeholder="e.g., 25"
-              min="0"
-              step="0.01"
-            />
-            {errors.hourly_rate && (
-              <p className="text-sm text-destructive">{errors.hourly_rate.message}</p>
-            )}
-          </div>
-
-          <div className="border-t pt-6 space-y-4">
-            <h3 className="text-lg font-semibold">Social Media & Links</h3>
-            
-            <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
+          {/* Avatar Section */}
+          <div className="flex items-center gap-6">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={avatarUrl} alt="Profile" />
+              <AvatarFallback>
+                <User className="h-12 w-12" />
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <Label htmlFor="avatar-upload" className="cursor-pointer">
+                <div className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  Upload Photo
+                </div>
+              </Label>
               <Input
-                id="website"
-                type="url"
-                {...register("website")}
-                placeholder="https://yourwebsite.com"
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+                disabled={uploading}
               />
-              {errors.website && (
-                <p className="text-sm text-destructive">{errors.website.message}</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                JPG, PNG or GIF. Max 5MB.
+              </p>
+            </div>
+          </div>
+
+          {/* Profile Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={user.email}
+                disabled
+                className="bg-muted"
+              />
+              <p className="text-xs text-muted-foreground">
+                Email cannot be changed
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Full Name</Label>
+              <Input
+                id="full_name"
+                {...register("full_name")}
+                placeholder="Your full name"
+              />
+              {errors.full_name && (
+                <p className="text-sm text-destructive">{errors.full_name.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="linkedin">LinkedIn Profile</Label>
+              <Label htmlFor="phone">Phone Number</Label>
               <Input
-                id="linkedin"
-                {...register("linkedin")}
-                placeholder="https://linkedin.com/in/yourprofile"
+                id="phone"
+                {...register("phone")}
+                placeholder="+1 (555) 123-4567"
+                disabled={isPhoneVerified}
+                className={isPhoneVerified ? "bg-muted/70 cursor-not-allowed" : ""}
               />
+              {errors.phone && (
+                <p className="text-sm text-destructive">{errors.phone.message}</p>
+              )}
+              {isPhoneVerified && (
+                <p className="text-xs text-muted-foreground">
+                  Phone number is locked after verification.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="twitter">Twitter / X Profile</Label>
+              <Label htmlFor="city">City / Location</Label>
               <Input
-                id="twitter"
-                {...register("twitter")}
-                placeholder="https://twitter.com/yourhandle"
+                id="city"
+                {...register("city")}
+                placeholder="e.g., Saskatoon, SK"
               />
+              {errors.city && (
+                <p className="text-sm text-destructive">{errors.city.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="facebook">Facebook Profile</Label>
-              <Input
-                id="facebook"
-                {...register("facebook")}
-                placeholder="https://facebook.com/yourprofile"
+              <Label htmlFor="bio">Short Bio</Label>
+              <textarea
+                id="bio"
+                {...register("bio")}
+                placeholder="Tell us about yourself..."
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                maxLength={500}
               />
+              {errors.bio && (
+                <p className="text-sm text-destructive">{errors.bio.message}</p>
+              )}
             </div>
-          </div>
 
-          <Button type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            <div className="space-y-2">
+              <Label htmlFor="skills">Skills (comma-separated)</Label>
+              <Input
+                id="skills"
+                {...register("skills")}
+                placeholder="e.g., Plumbing, Electrical, Moving"
+              />
+              {errors.skills && (
+                <p className="text-sm text-destructive">{errors.skills.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                List your skills to help clients find you
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="hourly_rate">Hourly Rate (CAD)</Label>
+              <Input
+                id="hourly_rate"
+                type="number"
+                {...register("hourly_rate")}
+                placeholder="e.g., 25"
+                min="0"
+                step="0.01"
+              />
+              {errors.hourly_rate && (
+                <p className="text-sm text-destructive">{errors.hourly_rate.message}</p>
+              )}
+            </div>
+
+            <div className="border-t pt-6 space-y-4">
+              <h3 className="text-lg font-semibold">Social Media & Links</h3>
+
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  type="url"
+                  {...register("website")}
+                  placeholder="https://yourwebsite.com"
+                />
+                {errors.website && (
+                  <p className="text-sm text-destructive">{errors.website.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="linkedin">LinkedIn Profile</Label>
+                <Input
+                  id="linkedin"
+                  {...register("linkedin")}
+                  placeholder="https://linkedin.com/in/yourprofile"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="twitter">Twitter / X Profile</Label>
+                <Input
+                  id="twitter"
+                  {...register("twitter")}
+                  placeholder="https://twitter.com/yourhandle"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="facebook">Facebook Profile</Label>
+                <Input
+                  id="facebook"
+                  {...register("facebook")}
+                  placeholder="https://facebook.com/yourprofile"
+                />
+              </div>
+            </div>
+
+            <Button type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </>
   );
 };
