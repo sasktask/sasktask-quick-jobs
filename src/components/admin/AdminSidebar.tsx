@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Users, Shield, Award, AlertTriangle, CreditCard, ShieldCheck, BarChart3, UserSearch } from "lucide-react";
+import { Users, Shield, Award, AlertTriangle, CreditCard, ShieldCheck, BarChart3, UserSearch, Receipt } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const navItems = [
@@ -45,6 +45,12 @@ const navItems = [
     href: "/admin/payments",
     icon: CreditCard,
     description: "Payment management",
+  },
+  {
+    title: "Tax Settings",
+    href: "/admin/tax-settings",
+    icon: Receipt,
+    description: "Saskatchewan tax rates",
   },
 ];
 
