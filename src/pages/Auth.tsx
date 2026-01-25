@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import { PhoneVerification } from "@/components/PhoneVerification";
+import { SignupProgressBar, WelcomeAnimation, GoogleSignInButton, SignupStepInfo } from "@/components/auth";
+import { motion, AnimatePresence } from "framer-motion";
 import { z } from "zod";
 import {
   Eye,
@@ -26,7 +28,12 @@ import {
   Briefcase,
   Wrench,
   Users,
+  Calendar,
+  CheckCircle2,
 } from "lucide-react";
+
+// Minimum age requirement
+const MIN_AGE = 18;
 
 // Email validation schema
 const emailSchema = z
@@ -36,9 +43,6 @@ const emailSchema = z
   .email("Please enter a valid email address")
   .max(255, "Email is too long");
 
-// Phone validation (may be unused but included for isPhone helper)
-const phoneSchema = z.string().regex(/^\+?[1-9]\d{6,14}$/, "Please enter a valid phone number (e.g., +1234567890)");
-
 // Password validation
 const passwordSchema = z
   .string()
@@ -47,6 +51,18 @@ const passwordSchema = z
   .regex(/[a-z]/, "Password must contain at least one lowercase letter")
   .regex(/[0-9]/, "Password must contain at least one number")
   .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character");
+
+// Age validation helper
+const validateAge = (dateOfBirth: string): { valid: boolean; age: number } => {
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return { valid: age >= MIN_AGE, age };
+};
 
 // Signup step schemas
 const step1Schema = z.object({
@@ -254,8 +270,13 @@ const Auth: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Refs for autofocus
+  const firstNameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   // Step state
   const [firstName, setFirstName] = useState("");
@@ -283,10 +304,46 @@ const Auth: React.FC = () => {
   const [signInPassword, setSignInPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
+  // Real-time validation states
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
+
+  // Real-time password match check
+  const passwordsMatch = useMemo(() => {
+    if (!confirmPassword) return null;
+    return password === confirmPassword;
+  }, [password, confirmPassword]);
 
   const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   const clearErrors = () => setFormErrors({});
+
+  // Mark field as touched for real-time validation
+  const handleBlur = (field: string) => {
+    setTouchedFields((prev) => ({ ...prev, [field]: true }));
+  };
+
+  // Real-time validation for email
+  const emailError = useMemo(() => {
+    if (!touchedFields.email || !email) return null;
+    const result = emailSchema.safeParse(email);
+    return result.success ? null : result.error.errors[0].message;
+  }, [email, touchedFields.email]);
+
+  // Real-time age validation
+  const ageValidation = useMemo(() => {
+    if (!dateOfBirth) return null;
+    return validateAge(dateOfBirth);
+  }, [dateOfBirth]);
+
+  // Autofocus on step change
+  useEffect(() => {
+    if (step === 1 && firstNameRef.current) {
+      firstNameRef.current.focus();
+    } else if (step === 3 && passwordRef.current) {
+      passwordRef.current.focus();
+    }
+  }, [step]);
 
   // Auth state onAuthStateChange + session check
   useEffect(() => {
@@ -327,6 +384,14 @@ const Auth: React.FC = () => {
       setFormErrors(errors);
       return null;
     }
+
+    // Age validation
+    const { valid, age } = validateAge(dateOfBirth);
+    if (!valid) {
+      setFormErrors({ dateOfBirth: `You must be at least ${MIN_AGE} years old to use SaskTask. You are ${age} years old.` });
+      return null;
+    }
+
     return validation.data;
   };
 
@@ -420,7 +485,6 @@ const Auth: React.FC = () => {
       const validated = validateStep1();
       if (!validated) return;
       if (!emailVerified) {
-        // If code is present, try to verify automatically
         if (emailCode.trim().length === 6) {
           await handleVerifyEmail(emailCode);
           if (emailVerified) {
@@ -562,10 +626,10 @@ const Auth: React.FC = () => {
       if (signUpError) throw signUpError;
 
       if (signUpData?.user) {
-        toast({
-          title: "Account created!",
-          description: "Welcome to SaskTask. Signing you in...",
-        });
+        // Show welcome animation
+        setShowWelcome(true);
+
+        // Auto sign-in
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -573,7 +637,6 @@ const Auth: React.FC = () => {
         if (signInError) {
           console.error("Auto sign-in failed:", signInError);
         }
-        navigate("/dashboard");
       }
     } catch (err: any) {
       toast({
@@ -586,60 +649,10 @@ const Auth: React.FC = () => {
     }
   };
 
-
-  // Password reset update handler
-  const handlePasswordUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearErrors();
-    setIsLoading(true);
-
-    try {
-      const passwordValidation = signUpSchema.shape.password.safeParse(newPassword);
-      if (!passwordValidation.success) {
-        setFormErrors({
-          newPassword: passwordValidation.error.errors[0].message,
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (error) {
-        // Handle specific error cases
-        if (error.message && (error.message.includes("same") || error.message.includes("different from the old"))) {
-          setFormErrors({
-            newPassword: "New password must be different from your current password",
-          });
-          setIsLoading(false);
-          return;
-        }
-        throw error;
-      }
-
-      toast({
-        title: "Password updated!",
-        description: "Your password has been successfully changed.",
-      });
-
-      setShowNewPassword(false);
-      setNewPassword("");
-      navigate("/dashboard");
-    } catch (error: any) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to update password";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // (Sign-in reset flows omitted in the wizard refactor)
+  const handleWelcomeComplete = useCallback(() => {
+    setShowWelcome(false);
+    navigate("/dashboard");
+  }, [navigate]);
 
   // Dedicated sign-in page when mode=signin
   if (mode === "signin") {
@@ -651,60 +664,79 @@ const Auth: React.FC = () => {
           url="/auth?mode=signin"
         />
         <Navbar />
-        <div className="container mx-auto px-4 pt-24 pb-16 max-w-xl">
-          <Card className="shadow-2xl border border-border/60 bg-card/80 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-              <CardDescription>Use your email and password to continue</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={signInEmail}
-                  onChange={(e) => setSignInEmail(e.target.value.trim())}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                />
-                {formErrors.signInEmail && <p className="text-sm text-destructive">{formErrors.signInEmail}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label>Password</Label>
-                <Input
-                  type="password"
-                  value={signInPassword}
-                  onChange={(e) => setSignInPassword(e.target.value)}
-                  placeholder="Your password"
-                  autoComplete="current-password"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="signin-remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(!!checked)}
-                />
-                <Label htmlFor="signin-remember" className="text-sm text-foreground/80">Remember me</Label>
-              </div>
-              <Button className="w-full" onClick={handleSignIn} disabled={isSigningIn}>
-                {isSigningIn ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
-              <div className="text-center text-sm text-foreground/70">
-                New to SaskTask?{" "}
-                <Button variant="link" className="px-1" onClick={() => navigate("/auth")}>
-                  Create an account
+        <div className="container mx-auto px-4 pt-24 pb-16 max-w-md">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Card className="shadow-2xl border border-border/60 bg-card/80 backdrop-blur-sm">
+              <CardHeader className="text-center pb-2">
+                <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+                <CardDescription>Sign in to continue to SaskTask</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Google Sign In */}
+                <GoogleSignInButton mode="signin" />
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={signInEmail}
+                    onChange={(e) => setSignInEmail(e.target.value.trim())}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                  />
+                  {formErrors.signInEmail && <p className="text-sm text-destructive">{formErrors.signInEmail}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label>Password</Label>
+                  <Input
+                    type="password"
+                    value={signInPassword}
+                    onChange={(e) => setSignInPassword(e.target.value)}
+                    placeholder="Your password"
+                    autoComplete="current-password"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="signin-remember"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(!!checked)}
+                  />
+                  <Label htmlFor="signin-remember" className="text-sm text-foreground/80">Remember me</Label>
+                </div>
+                <Button className="w-full h-12" onClick={handleSignIn} disabled={isSigningIn}>
+                  {isSigningIn ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="text-center text-sm text-foreground/70">
+                  New to SaskTask?{" "}
+                  <Button variant="link" className="px-1" onClick={() => navigate("/auth")}>
+                    Create an account
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </div>
     );
@@ -720,359 +752,566 @@ const Auth: React.FC = () => {
       />
       <Navbar />
 
+      {/* Welcome Animation Overlay */}
+      <WelcomeAnimation
+        isVisible={showWelcome}
+        userName={firstName}
+        onComplete={handleWelcomeComplete}
+      />
+
       <div className="container mx-auto px-4 pt-24 pb-16 max-w-4xl">
-        <div className="flex flex-col gap-6 md:flex-row md:items-start">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          {/* Left: Step Info (desktop) */}
+          <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
+            <div className="sticky top-24 space-y-4">
+              <SignupStepInfo step={step} />
+
+              {/* Quick stats */}
+              <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                <h4 className="font-semibold text-sm text-foreground mb-3">Why join SaskTask?</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <span>Trusted by 10,000+ users</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <span>Secure payments & escrow</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <span>Verified taskers</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
 
           {/* Right: Signup Wizard */}
-          <div className="md:w-full">
-            <Card className="shadow-2xl border-border bg-card/80 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-2xl font-bold">Create your SaskTask account</CardTitle>
-                <CardDescription>4 steps to get started: email → role → password → phone</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Stepper indicator */}
-                <div className="flex items-center gap-3">
-                  {[1, 2, 3, 4].map((s) => (
-                    <div key={s} className="flex items-center gap-2">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${s <= step ? "bg-primary text-primary-foreground" : "bg-muted text-foreground/50"
-                          }`}
+          <div className="flex-1 max-w-xl mx-auto lg:mx-0">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Card className="shadow-2xl border-border bg-card/80 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-2xl font-bold">Create your SaskTask account</CardTitle>
+                  <CardDescription>Join thousands of people getting things done</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Google Sign Up */}
+                  <GoogleSignInButton mode="signup" />
+
+                  {/* Divider */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">Or sign up with email</span>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <SignupProgressBar currentStep={step} />
+
+                  {/* Step info (mobile) */}
+                  <div className="lg:hidden">
+                    <SignupStepInfo step={step} />
+                  </div>
+
+                  <AnimatePresence mode="wait">
+                    {step === 1 && (
+                      <motion.div
+                        key="step1"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                        className="space-y-4"
                       >
-                        {s}
-                      </div>
-                      {s < 4 && <div className={`h-[2px] w-8 ${s < step ? "bg-primary" : "bg-muted"}`} />}
-                    </div>
-                  ))}
-                </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>First Name *</Label>
+                            <Input
+                              ref={firstNameRef}
+                              value={firstName}
+                              onChange={(e) => setFirstName(e.target.value)}
+                              onBlur={() => handleBlur("firstName")}
+                              placeholder="John"
+                              className={formErrors.firstName ? "border-destructive" : ""}
+                            />
+                            {formErrors.firstName && <p className="text-sm text-destructive">{formErrors.firstName}</p>}
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Last Name *</Label>
+                            <Input
+                              value={lastName}
+                              onChange={(e) => setLastName(e.target.value)}
+                              onBlur={() => handleBlur("lastName")}
+                              placeholder="Doe"
+                              className={formErrors.lastName ? "border-destructive" : ""}
+                            />
+                            {formErrors.lastName && <p className="text-sm text-destructive">{formErrors.lastName}</p>}
+                          </div>
+                        </div>
 
-                {step === 1 && (
-                  <div className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>First Name</Label>
-                        <Input
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          placeholder="John"
-                        />
-                        {formErrors.firstName && <p className="text-sm text-destructive">{formErrors.firstName}</p>}
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Last Name</Label>
-                        <Input
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          placeholder="Doe"
-                        />
-                        {formErrors.lastName && <p className="text-sm text-destructive">{formErrors.lastName}</p>}
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Middle Name (optional)</Label>
-                        <Input
-                          value={middleName}
-                          onChange={(e) => setMiddleName(e.target.value)}
-                          placeholder="A."
-                        />
-                        {formErrors.middleName && <p className="text-sm text-destructive">{formErrors.middleName}</p>}
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Email</Label>
-                        <Input
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value.trim().toLowerCase())}
-                          placeholder="you@example.com"
-                          type="email"
-                          autoComplete="email"
-                        />
-                        {formErrors.email && <p className="text-sm text-destructive">{formErrors.email}</p>}
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Date of Birth</Label>
-                        <Input
-                          type="date"
-                          value={dateOfBirth}
-                          onChange={(e) => setDateOfBirth(e.target.value)}
-                        />
-                        {formErrors.dateOfBirth && <p className="text-sm text-destructive">{formErrors.dateOfBirth}</p>}
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <Label>Verification code</Label>
-                      <Input
-                        value={emailCode}
-                        onChange={(e) => setEmailCode(e.target.value)}
-                        placeholder="Enter 6-digit code"
-                        maxLength={6}
-                      />
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={isLoading}
-                          onClick={async () => {
-                            const validated = validateStep1();
-                            if (!validated) return;
-                            setIsLoading(true);
-                            try {
-                              await sendEmailOTP(validated.email);
-                            } catch (err: any) {
-                              toast({
-                                title: "Email verification failed",
-                                description: err?.message || "Unable to send verification code",
-                                variant: "destructive",
-                              });
-                            } finally {
-                              setIsLoading(false);
-                            }
-                          }}
-                        >
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Sending code...
-                            </>
-                          ) : (
-                            "Send / Resend code"
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Middle Name <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                            <Input
+                              value={middleName}
+                              onChange={(e) => setMiddleName(e.target.value)}
+                              placeholder="A."
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              Date of Birth *
+                            </Label>
+                            <Input
+                              type="date"
+                              value={dateOfBirth}
+                              onChange={(e) => setDateOfBirth(e.target.value)}
+                              max={new Date().toISOString().split("T")[0]}
+                              className={formErrors.dateOfBirth ? "border-destructive" : ""}
+                            />
+                            {formErrors.dateOfBirth && <p className="text-sm text-destructive">{formErrors.dateOfBirth}</p>}
+                            {ageValidation && !ageValidation.valid && !formErrors.dateOfBirth && (
+                              <p className="text-sm text-destructive flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                You must be {MIN_AGE}+ to use SaskTask
+                              </p>
+                            )}
+                            {ageValidation && ageValidation.valid && (
+                              <p className="text-sm text-green-600 flex items-center gap-1">
+                                <Check className="w-3 h-3" />
+                                Age verified ({ageValidation.age} years old)
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <Mail className="w-4 h-4" />
+                            Email *
+                          </Label>
+                          <Input
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value.trim().toLowerCase())}
+                            onBlur={() => handleBlur("email")}
+                            placeholder="you@example.com"
+                            type="email"
+                            autoComplete="email"
+                            className={formErrors.email || emailError ? "border-destructive" : emailVerified ? "border-green-500" : ""}
+                          />
+                          {(formErrors.email || emailError) && (
+                            <p className="text-sm text-destructive">{formErrors.email || emailError}</p>
                           )}
-                        </Button>
-                        <Button
-                          type="button"
-                          disabled={isVerifyingEmail}
-                          onClick={() => handleVerifyEmail(emailCode)}
-                        >
-                          {isVerifyingEmail ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Verifying...
-                            </>
-                          ) : (
-                            "Verify & continue"
+                          {emailVerified && (
+                            <p className="text-sm text-green-600 flex items-center gap-1">
+                              <Check className="w-3 h-3" />
+                              Email verified
+                            </p>
                           )}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">We’ll send a 6-digit code to verify your email before continuing.</p>
-                    </div>
-                    <div className="mt-2">
-                      <Label>Already have an account?</Label>{" "}
-                      <Button variant="link" className="px-1" onClick={() => navigate("/auth?mode=signin")}>
-                        Sign in
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                        </div>
 
-                {step === 2 && (
-                  <div className="space-y-4">
-                    <Label className="text-sm font-semibold text-foreground">Select your role</Label>
-                    <div className="auth-role">
-                      <div className="radio-input">
-                        <label className="label" htmlFor="task_doer_step">
-                          <input
-                            id="task_doer_step"
-                            type="radio"
-                            name="user-role-step"
-                            value="task_doer"
-                            checked={role === "task_doer"}
-                            onChange={() => setRole("task_doer")}
-                          />
-                          <div className="text flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Wrench className="h-5 w-5 text-primary" />
+                        {!emailVerified && (
+                          <div className="space-y-3 p-4 rounded-lg bg-muted/50 border border-border">
+                            <Label>Verification Code</Label>
+                            <Input
+                              value={emailCode}
+                              onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                              placeholder="Enter 6-digit code"
+                              maxLength={6}
+                              className="text-center text-lg tracking-widest font-mono"
+                            />
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="flex-1"
+                                disabled={isLoading || !email || !!emailError}
+                                onClick={async () => {
+                                  const validated = validateStep1();
+                                  if (!validated) return;
+                                  setIsLoading(true);
+                                  try {
+                                    await sendEmailOTP(validated.email);
+                                  } catch (err: any) {
+                                    toast({
+                                      title: "Email verification failed",
+                                      description: err?.message || "Unable to send verification code",
+                                      variant: "destructive",
+                                    });
+                                  } finally {
+                                    setIsLoading(false);
+                                  }
+                                }}
+                              >
+                                {isLoading ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Sending...
+                                  </>
+                                ) : (
+                                  "Send / Resend Code"
+                                )}
+                              </Button>
+                              <Button
+                                type="button"
+                                className="flex-1"
+                                disabled={isVerifyingEmail || emailCode.length !== 6}
+                                onClick={() => handleVerifyEmail(emailCode)}
+                              >
+                                {isVerifyingEmail ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Verifying...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Check className="h-4 w-4 mr-2" />
+                                    Verify
+                                  </>
+                                )}
+                              </Button>
                             </div>
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-foreground">Find Tasks & Earn Money</span>
-                              <span className="text-sm font-medium text-foreground/60">
-                                Browse and complete tasks posted by others
-                              </span>
-                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              We'll send a 6-digit code to verify your email.
+                            </p>
                           </div>
-                        </label>
-
-                        <label className="label" htmlFor="task_giver_step">
-                          <input
-                            id="task_giver_step"
-                            type="radio"
-                            name="user-role-step"
-                            value="task_giver"
-                            checked={role === "task_giver"}
-                            onChange={() => setRole("task_giver")}
-                          />
-                          <div className="text flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Briefcase className="h-5 w-5 text-primary" />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-foreground">Post Tasks & Get Help</span>
-                              <span className="text-sm font-medium text-foreground/60">
-                                Hire local taskers to help with your needs
-                              </span>
-                            </div>
-                          </div>
-                        </label>
-
-                        <label className="label" htmlFor="both_step">
-                          <input
-                            id="both_step"
-                            type="radio"
-                            name="user-role-step"
-                            value="both"
-                            checked={role === "both"}
-                            onChange={() => setRole("both")}
-                          />
-                          <div className="text flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                              <Users className="h-5 w-5 text-primary" />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-foreground">Both - Do & Post Tasks</span>
-                              <span className="text-sm font-medium text-foreground/60">
-                                Earn money and hire help whenever you need
-                              </span>
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-                    {formErrors.role && <p className="text-sm text-destructive">{formErrors.role}</p>}
-                    <div className="flex justify-between gap-3">
-                      <Button variant="outline" onClick={() => setStep(1)}>
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back
-                      </Button>
-                      <Button onClick={handleNext}>Continue</Button>
-                    </div>
-                  </div>
-                )}
-
-                {step === 3 && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Password</Label>
-                      <div className="relative">
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          autoComplete="new-password"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowPassword((s) => !s)}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                      {formErrors.password && <p className="text-sm text-destructive">{formErrors.password}</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Confirm Password</Label>
-                      <div className="relative">
-                        <Input
-                          type={showConfirmPassword ? "text" : "password"}
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          autoComplete="new-password"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowConfirmPassword((s) => !s)}
-                        >
-                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                      {formErrors.confirmPassword && <p className="text-sm text-destructive">{formErrors.confirmPassword}</p>}
-                    </div>
-                    <div className="flex justify-between gap-3">
-                      <Button variant="outline" onClick={() => setStep(2)}>
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back
-                      </Button>
-                      <Button onClick={handleNext}>Continue</Button>
-                    </div>
-                  </div>
-                )}
-
-                {step === 4 && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <PhoneVerification
-                        email={email}
-                        initialPhone={phone}
-                        error={formErrors.phone ? "Phone number is required" : undefined}
-                        onPhoneChange={(p) => {
-                          setPhone((prev) => {
-                            if (prev !== p) {
-                              setPhoneVerified(false);
-                            }
-                            return p;
-                          });
-                        }}
-                        onVerified={(verifiedPhone) => {
-                          setPhone(verifiedPhone);
-                          setPhoneVerified(true);
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-3">
-                      <div
-                        className={`flex items-start space-x-3 p-4 rounded-lg border ${formErrors.termsAccepted ? "border-destructive bg-destructive/5" : "border-border"
-                          }`}
-                      >
-                        <Checkbox
-                          id="terms-accept"
-                          checked={termsAccepted}
-                          onCheckedChange={(checked) => {
-                            setTermsAccepted(!!checked);
-                            if (formErrors.termsAccepted) clearErrors();
-                          }}
-                          className="mt-1"
-                        />
-                        <Label htmlFor="terms-accept" className="cursor-pointer text-sm leading-relaxed text-foreground">
-                          I agree to the{" "}
-                          <a href="/terms" className="text-primary hover:underline font-semibold" target="_blank" rel="noopener noreferrer">
-                            Terms of Service
-                          </a>{" "}
-                          and{" "}
-                          <a href="/privacy" className="text-primary hover:underline font-semibold" target="_blank" rel="noopener noreferrer">
-                            Privacy Policy
-                          </a>
-                          .
-                        </Label>
-                      </div>
-                      {formErrors.termsAccepted && (
-                        <p className="text-sm font-medium text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {formErrors.termsAccepted}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex justify-between gap-3">
-                      <Button variant="outline" onClick={() => setStep(3)}>
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back
-                      </Button>
-                      <Button onClick={handleCreateAccount} disabled={isLoading}>
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Creating account...
-                          </>
-                        ) : (
-                          "Create account"
                         )}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+
+                        <div className="pt-2 flex items-center justify-between">
+                          <p className="text-sm text-muted-foreground">
+                            Already have an account?{" "}
+                            <Button variant="link" className="px-1 h-auto" onClick={() => navigate("/auth?mode=signin")}>
+                              Sign in
+                            </Button>
+                          </p>
+                          <Button onClick={handleNext} disabled={!emailVerified}>
+                            Continue
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {step === 2 && (
+                      <motion.div
+                        key="step2"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                        className="space-y-4"
+                      >
+                        <Label className="text-sm font-semibold text-foreground">Select your role</Label>
+                        <div className="auth-role">
+                          <div className="radio-input">
+                            <label className="label" htmlFor="task_doer_step">
+                              <input
+                                id="task_doer_step"
+                                type="radio"
+                                name="user-role-step"
+                                value="task_doer"
+                                checked={role === "task_doer"}
+                                onChange={() => setRole("task_doer")}
+                              />
+                              <div className="text flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <Wrench className="h-5 w-5 text-primary" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="font-semibold text-foreground">Find Tasks & Earn Money</span>
+                                  <span className="text-sm font-medium text-foreground/60">
+                                    Browse and complete tasks posted by others
+                                  </span>
+                                </div>
+                              </div>
+                            </label>
+
+                            <label className="label" htmlFor="task_giver_step">
+                              <input
+                                id="task_giver_step"
+                                type="radio"
+                                name="user-role-step"
+                                value="task_giver"
+                                checked={role === "task_giver"}
+                                onChange={() => setRole("task_giver")}
+                              />
+                              <div className="text flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <Briefcase className="h-5 w-5 text-primary" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="font-semibold text-foreground">Post Tasks & Get Help</span>
+                                  <span className="text-sm font-medium text-foreground/60">
+                                    Hire local taskers to help with your needs
+                                  </span>
+                                </div>
+                              </div>
+                            </label>
+
+                            <label className="label" htmlFor="both_step">
+                              <input
+                                id="both_step"
+                                type="radio"
+                                name="user-role-step"
+                                value="both"
+                                checked={role === "both"}
+                                onChange={() => setRole("both")}
+                              />
+                              <div className="text flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                                  <Users className="h-5 w-5 text-primary" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="font-semibold text-foreground">Both - Do & Post Tasks</span>
+                                  <span className="text-sm font-medium text-foreground/60">
+                                    Earn money and hire help whenever you need
+                                  </span>
+                                </div>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+                        {formErrors.role && <p className="text-sm text-destructive">{formErrors.role}</p>}
+                        <div className="flex justify-between gap-3 pt-2">
+                          <Button variant="outline" onClick={() => setStep(1)}>
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Back
+                          </Button>
+                          <Button onClick={handleNext}>Continue</Button>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {step === 3 && (
+                      <motion.div
+                        key="step3"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                        className="space-y-4"
+                      >
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <Lock className="w-4 h-4" />
+                            Create Password
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              ref={passwordRef}
+                              type={showPassword ? "text" : "password"}
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              autoComplete="new-password"
+                              className={formErrors.password ? "border-destructive pr-10" : "pr-10"}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                              onClick={() => setShowPassword((s) => !s)}
+                            >
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                          {formErrors.password && <p className="text-sm text-destructive">{formErrors.password}</p>}
+
+                          {/* Password strength indicator */}
+                          {password && (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                  <motion.div
+                                    className={`h-full ${passwordStrength.color}`}
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${(passwordStrength.score / 6) * 100}%` }}
+                                    transition={{ duration: 0.3 }}
+                                  />
+                                </div>
+                                <span className={`text-xs font-medium ${
+                                  passwordStrength.label === "Strong" ? "text-green-500" :
+                                  passwordStrength.label === "Medium" ? "text-yellow-500" : "text-destructive"
+                                }`}>
+                                  {passwordStrength.label}
+                                </span>
+                              </div>
+                              <ul className="text-xs text-muted-foreground space-y-1">
+                                <li className={password.length >= 8 ? "text-green-500" : ""}>
+                                  {password.length >= 8 ? "✓" : "○"} At least 8 characters
+                                </li>
+                                <li className={/[A-Z]/.test(password) ? "text-green-500" : ""}>
+                                  {/[A-Z]/.test(password) ? "✓" : "○"} One uppercase letter
+                                </li>
+                                <li className={/[a-z]/.test(password) ? "text-green-500" : ""}>
+                                  {/[a-z]/.test(password) ? "✓" : "○"} One lowercase letter
+                                </li>
+                                <li className={/[0-9]/.test(password) ? "text-green-500" : ""}>
+                                  {/[0-9]/.test(password) ? "✓" : "○"} One number
+                                </li>
+                                <li className={/[^A-Za-z0-9]/.test(password) ? "text-green-500" : ""}>
+                                  {/[^A-Za-z0-9]/.test(password) ? "✓" : "○"} One special character
+                                </li>
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Confirm Password</Label>
+                          <div className="relative">
+                            <Input
+                              type={showConfirmPassword ? "text" : "password"}
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              autoComplete="new-password"
+                              className={`pr-10 ${
+                                formErrors.confirmPassword ? "border-destructive" :
+                                passwordsMatch === true ? "border-green-500" :
+                                passwordsMatch === false ? "border-destructive" : ""
+                              }`}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                              onClick={() => setShowConfirmPassword((s) => !s)}
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                          {formErrors.confirmPassword && (
+                            <p className="text-sm text-destructive">{formErrors.confirmPassword}</p>
+                          )}
+                          {passwordsMatch === true && (
+                            <p className="text-sm text-green-600 flex items-center gap-1">
+                              <Check className="w-3 h-3" />
+                              Passwords match
+                            </p>
+                          )}
+                          {passwordsMatch === false && !formErrors.confirmPassword && (
+                            <p className="text-sm text-destructive flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3" />
+                              Passwords do not match
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex justify-between gap-3 pt-2">
+                          <Button variant="outline" onClick={() => setStep(2)}>
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Back
+                          </Button>
+                          <Button onClick={handleNext} disabled={!passwordsMatch}>
+                            Continue
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {step === 4 && (
+                      <motion.div
+                        key="step4"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                        className="space-y-4"
+                      >
+                        <div className="space-y-2">
+                          <PhoneVerification
+                            email={email}
+                            initialPhone={phone}
+                            error={formErrors.phone ? "Phone number is required" : undefined}
+                            onPhoneChange={(p) => {
+                              setPhone((prev) => {
+                                if (prev !== p) {
+                                  setPhoneVerified(false);
+                                }
+                                return p;
+                              });
+                            }}
+                            onVerified={(verifiedPhone) => {
+                              setPhone(verifiedPhone);
+                              setPhoneVerified(true);
+                            }}
+                          />
+                        </div>
+
+                        <div className="space-y-3">
+                          <div
+                            className={`flex items-start space-x-3 p-4 rounded-lg border transition-colors ${
+                              formErrors.termsAccepted
+                                ? "border-destructive bg-destructive/5"
+                                : termsAccepted
+                                  ? "border-green-500/50 bg-green-500/5"
+                                  : "border-border"
+                            }`}
+                          >
+                            <Checkbox
+                              id="terms-accept"
+                              checked={termsAccepted}
+                              onCheckedChange={(checked) => {
+                                setTermsAccepted(!!checked);
+                                if (formErrors.termsAccepted) clearErrors();
+                              }}
+                              className="mt-1"
+                            />
+                            <Label htmlFor="terms-accept" className="cursor-pointer text-sm leading-relaxed text-foreground">
+                              I agree to the{" "}
+                              <a href="/terms" className="text-primary hover:underline font-semibold" target="_blank" rel="noopener noreferrer">
+                                Terms of Service
+                              </a>{" "}
+                              and{" "}
+                              <a href="/privacy" className="text-primary hover:underline font-semibold" target="_blank" rel="noopener noreferrer">
+                                Privacy Policy
+                              </a>
+                              .
+                            </Label>
+                          </div>
+                          {formErrors.termsAccepted && (
+                            <p className="text-sm font-medium text-destructive flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              {formErrors.termsAccepted}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex justify-between gap-3 pt-2">
+                          <Button variant="outline" onClick={() => setStep(3)}>
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Back
+                          </Button>
+                          <Button
+                            onClick={handleCreateAccount}
+                            disabled={isLoading || !phoneVerified || !termsAccepted}
+                            className="min-w-[140px]"
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Creating...
+                              </>
+                            ) : (
+                              "Create Account"
+                            )}
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         </div>
       </div>
