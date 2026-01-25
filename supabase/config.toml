@@ -119,3 +119,9 @@ verify_jwt = true
 
 [functions.smart-task-matching]
 verify_jwt = true
+
+[functions.create-billing-portal]
+verify_jwt = true
+
+[functions.generate-totp-secret]
+verify_jwt = true
