@@ -22,6 +22,7 @@ import {
   Award,
   Shield,
   Zap,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -145,6 +146,16 @@ export function DashboardSidebar({
       title: "Leaderboard",
       href: "/leaderboard",
       icon: Trophy,
+    },
+    {
+      title: "Achievements",
+      href: "/achievements",
+      icon: Award,
+    },
+    {
+      title: "Referrals",
+      href: "/referrals",
+      icon: Gift,
     },
   ];
 

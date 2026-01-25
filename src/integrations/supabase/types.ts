@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string
+          icon: string
+          id: string
+          is_active: boolean | null
+          name: string
+          requirement_type: string
+          requirement_value: number
+          reward_type: string | null
+          reward_value: number | null
+          tier: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description: string
+          icon: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          requirement_type: string
+          requirement_value: number
+          reward_type?: string | null
+          reward_value?: number | null
+          tier: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          requirement_type?: string
+          requirement_value?: number
+          reward_type?: string | null
+          reward_value?: number | null
+          tier?: string
+        }
+        Relationships: []
+      }
       audit_trail_events: {
         Row: {
           booking_id: string | null
@@ -1869,6 +1914,102 @@ export type Database = {
           },
         ]
       }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          reward_amount: number | null
+          updated_at: string | null
+          user_id: string
+          uses_count: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          reward_amount?: number | null
+          updated_at?: string | null
+          user_id: string
+          uses_count?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          reward_amount?: number | null
+          updated_at?: string | null
+          user_id?: string
+          uses_count?: number | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          qualifying_task_id: string | null
+          referral_code_id: string | null
+          referred_id: string
+          referred_reward: number | null
+          referred_rewarded_at: string | null
+          referrer_id: string
+          referrer_reward: number | null
+          referrer_rewarded_at: string | null
+          status: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          qualifying_task_id?: string | null
+          referral_code_id?: string | null
+          referred_id: string
+          referred_reward?: number | null
+          referred_rewarded_at?: string | null
+          referrer_id: string
+          referrer_reward?: number | null
+          referrer_rewarded_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          qualifying_task_id?: string | null
+          referral_code_id?: string | null
+          referred_id?: string
+          referred_reward?: number | null
+          referred_rewarded_at?: string | null
+          referrer_id?: string
+          referrer_reward?: number | null
+          referrer_rewarded_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_qualifying_task_id_fkey"
+            columns: ["qualifying_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referral_code_id_fkey"
+            columns: ["referral_code_id"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reminders: {
         Row: {
           booking_id: string | null
@@ -2173,6 +2314,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      smart_match_logs: {
+        Row: {
+          action_taken: string | null
+          created_at: string | null
+          id: string
+          match_reasons: Json | null
+          match_score: number | null
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string | null
+          id?: string
+          match_reasons?: Json | null
+          match_score?: number | null
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string | null
+          id?: string
+          match_reasons?: Json | null
+          match_score?: number | null
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_match_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sms_logs: {
         Row: {
@@ -3248,6 +3427,47 @@ export type Database = {
           },
         ]
       }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          claimed_at: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          progress: number | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          progress?: number | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          progress?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_activity_logs: {
         Row: {
           activity_type: string
@@ -3308,6 +3528,57 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           wallet_balance?: number | null
+        }
+        Relationships: []
+      }
+      user_match_preferences: {
+        Row: {
+          ai_matching_enabled: boolean | null
+          availability_hours: Json | null
+          created_at: string | null
+          id: string
+          last_match_at: string | null
+          notification_preferences: Json | null
+          preferred_categories: string[] | null
+          preferred_distance_km: number | null
+          preferred_price_max: number | null
+          preferred_price_min: number | null
+          preferred_task_types: string[] | null
+          skill_keywords: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_matching_enabled?: boolean | null
+          availability_hours?: Json | null
+          created_at?: string | null
+          id?: string
+          last_match_at?: string | null
+          notification_preferences?: Json | null
+          preferred_categories?: string[] | null
+          preferred_distance_km?: number | null
+          preferred_price_max?: number | null
+          preferred_price_min?: number | null
+          preferred_task_types?: string[] | null
+          skill_keywords?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_matching_enabled?: boolean | null
+          availability_hours?: Json | null
+          created_at?: string | null
+          id?: string
+          last_match_at?: string | null
+          notification_preferences?: Json | null
+          preferred_categories?: string[] | null
+          preferred_distance_km?: number | null
+          preferred_price_max?: number | null
+          preferred_price_min?: number | null
+          preferred_task_types?: string[] | null
+          skill_keywords?: string[] | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -3845,6 +4116,25 @@ export type Database = {
         Args: { p_ip_address: string; p_user_id: string }
         Returns: boolean
       }
+      check_user_achievements: {
+        Args: { p_user_id: string }
+        Returns: {
+          achievement_id: string
+          claimed_at: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          progress: number | null
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "user_achievements"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       cleanup_expired_otp_codes: { Args: never; Returns: undefined }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
       cleanup_expired_signup_verifications: { Args: never; Returns: undefined }
@@ -3878,8 +4168,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      generate_referral_code: { Args: never; Returns: string }
       generate_user_id_number: {
         Args: { p_role: string; p_wants_both?: boolean }
+        Returns: string
+      }
+      get_or_create_referral_code: {
+        Args: { p_user_id: string }
         Returns: string
       }
       get_user_leaderboard_rank: {
@@ -3925,6 +4220,10 @@ export type Database = {
           payment_id: string
           released: boolean
         }[]
+      }
+      process_referral: {
+        Args: { p_code: string; p_referred_id: string }
+        Returns: boolean
       }
     }
     Enums: {

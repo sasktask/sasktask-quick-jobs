@@ -27,6 +27,7 @@ import { TaskCalendar } from "@/components/calendar";
 import { QuickRebook } from "@/components/QuickRebook";
 import { ProfileCompletionNudge } from "@/components/auth";
 import { LiveAvailabilityWidget, OnlineStatusBar } from "@/components/instant";
+import { SmartMatchingCard } from "@/components/SmartMatchingCard";
 
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
@@ -530,6 +531,11 @@ const Dashboard = () => {
                 {/* Task Calendar */}
                 {user?.id && (
                   <TaskCalendar userId={user.id} userRole={userRole} />
+                )}
+
+                {/* AI-Powered Smart Matching for Task Doers */}
+                {isTaskDoer && user?.id && (
+                  <SmartMatchingCard userId={user.id} />
                 )}
 
                 {/* AI-Powered Recommendations for Task Doers */}
