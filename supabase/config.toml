@@ -94,10 +94,10 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.export-user-data]
-verify_jwt = false
+verify_jwt = true
 
 [functions.initiate-background-check]
-verify_jwt = false
+verify_jwt = true
 
 [functions.process-auto-releases]
 verify_jwt = false
@@ -125,3 +125,34 @@ verify_jwt = true
 
 [functions.generate-totp-secret]
 verify_jwt = true
+
+# Missing functions - now added with proper security settings
+[functions.confirm-payment]
+verify_jwt = true
+
+[functions.create-payment-intent]
+verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true
+
+[functions.send-delete-account-otp]
+verify_jwt = true
+
+[functions.send-phone-otp]
+verify_jwt = false
+
+[functions.verify-phone-otp]
+verify_jwt = false
+
+[functions.create-instant-request]
+verify_jwt = true
+
+[functions.respond-instant-request]
+verify_jwt = true
+
+[functions.verify-certificate]
+verify_jwt = true
+
+[functions.get-weather]
+verify_jwt = false
