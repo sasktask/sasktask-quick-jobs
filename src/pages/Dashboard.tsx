@@ -25,6 +25,7 @@ import { EnhancedActivityFeed } from "@/components/EnhancedActivityFeed";
 import { QuickActionsFAB } from "@/components/QuickActionsFAB";
 import { UpcomingTasksCalendar } from "@/components/UpcomingTasksCalendar";
 import { QuickRebook } from "@/components/QuickRebook";
+import { ProfileCompletionNudge } from "@/components/auth";
 
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
@@ -411,6 +412,17 @@ const Dashboard = () => {
             <div className="mb-6">
               <QuickStatsBar profile={profile} stats={stats} badgeCount={badgeCount} />
             </div>
+
+            {/* Profile Completion Nudge */}
+            {profile && (
+              <div className="mb-6">
+                <ProfileCompletionNudge
+                  profile={profile}
+                  userRole={userRole as "task_giver" | "task_doer" | "both"}
+                  variant="card"
+                />
+              </div>
+            )}
 
             {/* Verification Prompt for Task Doers */}
             {isTaskDoer && !isVerified && (
