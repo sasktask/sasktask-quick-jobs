@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Shield, Scale, AlertTriangle, Check, Loader2 } from "lucide-react";
+import { FileText, Shield, Scale, AlertTriangle, Check, Loader2, Gavel, HardHat, Ban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -20,11 +20,14 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
   const [ageVerified, setAgeVerified] = useState(false);
   const [conductAccepted, setConductAccepted] = useState(false);
   const [liabilityAccepted, setLiabilityAccepted] = useState(false);
+  const [arbitrationAccepted, setArbitrationAccepted] = useState(false);
+  const [indemnificationAccepted, setIndemnificationAccepted] = useState(false);
+  const [safetyAccepted, setSafetyAccepted] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const allAccepted = termsAccepted && privacyAccepted && ageVerified && conductAccepted && liabilityAccepted;
+  const allAccepted = termsAccepted && privacyAccepted && ageVerified && conductAccepted && liabilityAccepted && arbitrationAccepted && indemnificationAccepted && safetyAccepted;
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
@@ -54,6 +57,28 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
         .select("id")
         .eq("user_id", user.id)
         .single();
+
+      // Log to audit trail for legal compliance
+      await supabase.from("audit_trail_events").insert({
+        user_id: user.id,
+        event_type: "terms_accepted",
+        event_category: "legal",
+        event_data: {
+          terms_version: "2026-01-25",
+          acceptances: {
+            terms_of_service: termsAccepted,
+            privacy_policy: privacyAccepted,
+            age_verification: ageVerified,
+            user_conduct: conductAccepted,
+            liability_waiver: liabilityAccepted,
+            arbitration_agreement: arbitrationAccepted,
+            indemnification: indemnificationAccepted,
+            safety_guidelines: safetyAccepted,
+          },
+          user_role: userRole,
+          accepted_at: new Date().toISOString(),
+        },
+      });
 
       if (existingVerification) {
         // Update existing record
@@ -188,33 +213,63 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
             {/* Prohibited Activities */}
             <section>
               <h3 className="font-semibold text-base sm:text-lg flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 flex-shrink-0" />
+                <Ban className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 flex-shrink-0" />
                 <span>Prohibited Activities</span>
               </h3>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                No illegal tasks, payment circumvention, harassment, fraud, or multiple accounts.
+                No illegal tasks, payment circumvention, harassment, fraud, or multiple accounts. Violations result in permanent ban.
+              </p>
+            </section>
+
+            <Separator />
+
+            {/* Safety Guidelines */}
+            <section className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 sm:p-4">
+              <h3 className="font-semibold text-sm sm:text-base mb-1 text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                <HardHat className="w-4 h-4" />
+                Safety & Insurance Requirements
+              </h3>
+              <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+                Task Doers must maintain appropriate insurance. Certain tasks require WCB Saskatchewan coverage. Users are responsible for their own safety.
               </p>
             </section>
 
             <Separator />
 
             {/* Liability */}
+            <section className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-3 sm:p-4">
+              <h3 className="font-semibold text-sm sm:text-base mb-1 text-red-800 dark:text-red-200 flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                Limitation of Liability
+              </h3>
+              <p className="text-xs sm:text-sm text-red-700 dark:text-red-300">
+                SaskTask is a platform only. We are NOT liable for: task quality, user conduct, injuries, property damage, or any losses. Services provided "AS IS" without warranties.
+              </p>
+            </section>
+
+            <Separator />
+
+            {/* Indemnification */}
             <section>
-              <h3 className="font-semibold text-base sm:text-lg mb-2">Limitation of Liability</h3>
+              <h3 className="font-semibold text-base sm:text-lg flex items-center gap-2 mb-2">
+                <Gavel className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+                <span>Indemnification</span>
+              </h3>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                SaskTask connects users but does not guarantee task quality or safety. The platform is provided "as is."
+                You agree to defend and hold harmless SaskTask from any claims, damages, or expenses arising from your use of the platform or violation of these terms.
               </p>
             </section>
 
             <Separator />
 
             {/* Arbitration */}
-            <section className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 sm:p-4">
-              <h3 className="font-semibold text-sm sm:text-base mb-1 text-amber-800 dark:text-amber-200">
-                Arbitration Agreement
+            <section className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-400 dark:border-amber-600 rounded-lg p-3 sm:p-4">
+              <h3 className="font-semibold text-sm sm:text-base mb-1 text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                <Scale className="w-4 h-4" />
+                BINDING ARBITRATION & CLASS ACTION WAIVER
               </h3>
               <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-300">
-                <strong>IMPORTANT:</strong> Disputes will be resolved through binding arbitration in Saskatchewan. You waive class action rights.
+                <strong>⚠️ IMPORTANT:</strong> By accepting, you agree that ALL disputes will be resolved through BINDING ARBITRATION under Saskatchewan law. You WAIVE your right to participate in class actions, have disputes decided by a jury, or bring claims in court except as permitted by law.
               </p>
             </section>
 
@@ -311,7 +366,46 @@ export function TermsAcceptanceDialog({ open, onAccepted, userRole }: TermsAccep
                 className="mt-0.5"
               />
               <label htmlFor="liability" className="text-xs sm:text-sm leading-tight cursor-pointer">
-                I accept the <strong>Liability & Arbitration</strong> terms
+                I accept the <strong>Limitation of Liability</strong>
+              </label>
+            </div>
+
+            <div className="flex items-start space-x-2 sm:space-x-3">
+              <Checkbox 
+                id="arbitration" 
+                checked={arbitrationAccepted}
+                onCheckedChange={(checked) => setArbitrationAccepted(checked === true)}
+                disabled={!hasScrolledToBottom}
+                className="mt-0.5"
+              />
+              <label htmlFor="arbitration" className="text-xs sm:text-sm leading-tight cursor-pointer text-amber-700 dark:text-amber-400">
+                I agree to <strong>Binding Arbitration</strong> and waive class action rights
+              </label>
+            </div>
+
+            <div className="flex items-start space-x-2 sm:space-x-3">
+              <Checkbox 
+                id="indemnification" 
+                checked={indemnificationAccepted}
+                onCheckedChange={(checked) => setIndemnificationAccepted(checked === true)}
+                disabled={!hasScrolledToBottom}
+                className="mt-0.5"
+              />
+              <label htmlFor="indemnification" className="text-xs sm:text-sm leading-tight cursor-pointer">
+                I agree to <strong>Indemnify SaskTask</strong>
+              </label>
+            </div>
+
+            <div className="flex items-start space-x-2 sm:space-x-3">
+              <Checkbox 
+                id="safety" 
+                checked={safetyAccepted}
+                onCheckedChange={(checked) => setSafetyAccepted(checked === true)}
+                disabled={!hasScrolledToBottom}
+                className="mt-0.5"
+              />
+              <label htmlFor="safety" className="text-xs sm:text-sm leading-tight cursor-pointer">
+                I acknowledge the <strong>Safety Guidelines</strong> and insurance requirements
               </label>
             </div>
           </div>
