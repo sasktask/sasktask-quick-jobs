@@ -813,6 +813,93 @@ export type Database = {
           },
         ]
       }
+      doer_live_availability: {
+        Row: {
+          accepts_instant_requests: boolean | null
+          app_version: string | null
+          battery_level: number | null
+          created_at: string | null
+          current_latitude: number | null
+          current_longitude: number | null
+          current_task_id: string | null
+          device_info: Json | null
+          heading: number | null
+          id: string
+          is_available: boolean
+          is_charging: boolean | null
+          last_location_update: string | null
+          last_ping: string | null
+          location_accuracy: number | null
+          max_distance_km: number | null
+          network_type: string | null
+          preferred_categories: string[] | null
+          speed: number | null
+          status: string
+          today_online_seconds: number | null
+          today_tasks_completed: number | null
+          total_online_seconds: number | null
+          updated_at: string | null
+          user_id: string
+          went_online_at: string | null
+        }
+        Insert: {
+          accepts_instant_requests?: boolean | null
+          app_version?: string | null
+          battery_level?: number | null
+          created_at?: string | null
+          current_latitude?: number | null
+          current_longitude?: number | null
+          current_task_id?: string | null
+          device_info?: Json | null
+          heading?: number | null
+          id?: string
+          is_available?: boolean
+          is_charging?: boolean | null
+          last_location_update?: string | null
+          last_ping?: string | null
+          location_accuracy?: number | null
+          max_distance_km?: number | null
+          network_type?: string | null
+          preferred_categories?: string[] | null
+          speed?: number | null
+          status?: string
+          today_online_seconds?: number | null
+          today_tasks_completed?: number | null
+          total_online_seconds?: number | null
+          updated_at?: string | null
+          user_id: string
+          went_online_at?: string | null
+        }
+        Update: {
+          accepts_instant_requests?: boolean | null
+          app_version?: string | null
+          battery_level?: number | null
+          created_at?: string | null
+          current_latitude?: number | null
+          current_longitude?: number | null
+          current_task_id?: string | null
+          device_info?: Json | null
+          heading?: number | null
+          id?: string
+          is_available?: boolean
+          is_charging?: boolean | null
+          last_location_update?: string | null
+          last_ping?: string | null
+          location_accuracy?: number | null
+          max_distance_km?: number | null
+          network_type?: string | null
+          preferred_categories?: string[] | null
+          speed?: number | null
+          status?: string
+          today_online_seconds?: number | null
+          today_tasks_completed?: number | null
+          total_online_seconds?: number | null
+          updated_at?: string | null
+          user_id?: string
+          went_online_at?: string | null
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string | null
@@ -3687,6 +3774,26 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      find_nearby_doers: {
+        Args: {
+          p_category?: string
+          p_exclude_user_id?: string
+          p_latitude: number
+          p_longitude: number
+          p_radius_km?: number
+        }
+        Returns: {
+          avatar_url: string
+          distance_km: number
+          eta_minutes: number
+          full_name: string
+          last_ping: string
+          rating: number
+          status: string
+          total_reviews: number
+          user_id: string
+        }[]
       }
       generate_user_id_number: {
         Args: { p_role: string; p_wants_both?: boolean }
