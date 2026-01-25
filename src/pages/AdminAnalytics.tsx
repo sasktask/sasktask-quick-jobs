@@ -17,9 +17,10 @@ import {
   TrendingUp, TrendingDown, Users, DollarSign, CheckCircle, Clock,
   AlertTriangle, Gavel, Target, Activity, RefreshCw, Calendar,
   ArrowUpRight, ArrowDownRight, Percent, CreditCard, UserCheck, 
-  FileText, ShieldAlert, Zap
+  FileText, ShieldAlert, Zap, Server
 } from "lucide-react";
 import { format, subDays, startOfDay, eachDayOfInterval, parseISO } from "date-fns";
+import BackendHealthDashboard from "@/components/admin/BackendHealthDashboard";
 
 const COLORS = {
   primary: 'hsl(var(--primary))',
@@ -439,11 +440,14 @@ export default function AdminAnalytics() {
 
         {/* Charts Section */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
+            <TabsTrigger value="backend" className="flex items-center gap-1">
+              <Server className="h-3 w-3" /> Backend
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -752,10 +756,14 @@ export default function AdminAnalytics() {
                     </AreaChart>
                   ) : (
                     <div className="h-full flex items-center justify-center text-muted-foreground">No revenue data available</div>
-                  )}
+              )}
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="backend" className="space-y-6">
+            <BackendHealthDashboard />
           </TabsContent>
         </Tabs>
       </AdminLayout>
