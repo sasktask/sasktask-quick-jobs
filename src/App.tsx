@@ -46,6 +46,7 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminPayments from "./pages/AdminPayments";
 import Analytics from "./pages/Analytics";
 import ReferralProgram from "./pages/ReferralProgram";
+import Achievements from "./pages/Achievements";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import RSSFeed from "./pages/RSSFeed";
@@ -145,6 +146,7 @@ const App = () => (
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
               <Route path="/referrals" element={<ProtectedRoute><ReferralProgram /></ProtectedRoute>} />
+              <Route path="/achievements" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
               <Route path="/help" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
               <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
