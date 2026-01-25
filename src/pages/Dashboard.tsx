@@ -26,6 +26,7 @@ import { QuickActionsFAB } from "@/components/QuickActionsFAB";
 import { UpcomingTasksCalendar } from "@/components/UpcomingTasksCalendar";
 import { QuickRebook } from "@/components/QuickRebook";
 import { ProfileCompletionNudge } from "@/components/auth";
+import { LiveAvailabilityWidget, OnlineStatusBar } from "@/components/instant";
 
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
@@ -706,6 +707,16 @@ const Dashboard = () => {
           <Footer />
         </main>
       </div>
+      
+      {/* Online Status Bar for Task Doers */}
+      {isTaskDoer && user?.id && (
+        <OnlineStatusBar userId={user.id} />
+      )}
+      
+      {/* Live Availability Widget for Task Doers */}
+      {isTaskDoer && user?.id && (
+        <LiveAvailabilityWidget userId={user.id} />
+      )}
       
       {/* Quick Actions FAB */}
       <QuickActionsFAB userRole={userRole} />
