@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
+import { lazy, Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -70,6 +71,7 @@ import InstantWork from "./pages/InstantWork";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminBackgroundChecks from "./pages/AdminBackgroundChecks";
+import AdminTaxSettings from "./pages/AdminTaxSettings";
 import { MobileBottomNav } from "./components/MobileBottomNav";
 import { ScrollToTop } from "./components/ScrollToTop";
 
@@ -138,6 +140,7 @@ const App = () => (
               <Route path="/admin/payments" element={<ProtectedRoute><AdminPayments /></ProtectedRoute>} />
               <Route path="/admin/analytics" element={<ProtectedRoute><AdminAnalytics /></ProtectedRoute>} />
               <Route path="/admin/background-checks" element={<ProtectedRoute><AdminBackgroundChecks /></ProtectedRoute>} />
+              <Route path="/admin/tax-settings" element={<ProtectedRoute><AdminTaxSettings /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
               <Route path="/referrals" element={<ProtectedRoute><ReferralProgram /></ProtectedRoute>} />

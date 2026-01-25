@@ -2609,6 +2609,117 @@ export type Database = {
           },
         ]
       }
+      tax_calculations: {
+        Row: {
+          booking_id: string | null
+          contractor_withholding: number | null
+          created_at: string | null
+          gross_amount: number
+          gst_amount: number | null
+          id: string
+          net_amount: number
+          payment_id: string | null
+          province: string | null
+          pst_amount: number | null
+          tax_breakdown: Json | null
+          tax_year: number | null
+          total_tax: number
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          contractor_withholding?: number | null
+          created_at?: string | null
+          gross_amount: number
+          gst_amount?: number | null
+          id?: string
+          net_amount: number
+          payment_id?: string | null
+          province?: string | null
+          pst_amount?: number | null
+          tax_breakdown?: Json | null
+          tax_year?: number | null
+          total_tax: number
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          contractor_withholding?: number | null
+          created_at?: string | null
+          gross_amount?: number
+          gst_amount?: number | null
+          id?: string
+          net_amount?: number
+          payment_id?: string | null
+          province?: string | null
+          pst_amount?: number | null
+          tax_breakdown?: Json | null
+          tax_year?: number | null
+          total_tax?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_calculations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_calculations_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_configurations: {
+        Row: {
+          applies_to: string | null
+          created_at: string | null
+          description: string | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          is_active: boolean | null
+          province: string
+          rate: number
+          tax_type: string
+          threshold_amount: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          applies_to?: string | null
+          created_at?: string | null
+          description?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          is_active?: boolean | null
+          province?: string
+          rate: number
+          tax_type: string
+          threshold_amount?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          applies_to?: string | null
+          created_at?: string | null
+          description?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          is_active?: boolean | null
+          province?: string
+          rate?: number
+          tax_type?: string
+          threshold_amount?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       tiffin_menus: {
         Row: {
           available_days: number[] | null
@@ -3554,6 +3665,10 @@ export type Database = {
       calculate_reputation_score: {
         Args: { p_user_id: string }
         Returns: number
+      }
+      calculate_saskatchewan_tax: {
+        Args: { p_gross_amount: number; p_is_contractor_payout?: boolean }
+        Returns: Json
       }
       calculate_trust_score: { Args: { p_user_id: string }; Returns: number }
       check_suspicious_login: {
