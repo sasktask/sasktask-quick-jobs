@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Users, Shield, Award, AlertTriangle, CreditCard, ShieldCheck, BarChart3, Activity } from "lucide-react";
+import { Users, Shield, Award, AlertTriangle, CreditCard, ShieldCheck, BarChart3, UserSearch } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const navItems = [
@@ -21,6 +21,12 @@ const navItems = [
     href: "/admin/verify-users",
     icon: ShieldCheck,
     description: "ID & background checks",
+  },
+  {
+    title: "Background Checks",
+    href: "/admin/background-checks",
+    icon: UserSearch,
+    description: "Criminal & ID verification",
   },
   {
     title: "Certificates",
