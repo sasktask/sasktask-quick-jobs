@@ -4,6 +4,7 @@ import {
   Briefcase,
   Search,
   ClipboardList,
+  CalendarDays,
   MessageSquare,
   User,
   Settings,
@@ -129,6 +130,11 @@ export function DashboardSidebar({
       title: "Find Taskers",
       href: "/find-taskers",
       icon: Users,
+    },
+    {
+      title: "Calendar",
+      href: "/calendar",
+      icon: CalendarDays,
     },
     {
       title: "Map View",
