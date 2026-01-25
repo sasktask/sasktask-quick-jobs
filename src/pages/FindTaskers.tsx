@@ -1,243 +1,250 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { SEOHead } from "@/components/SEOHead";
+import { CategoryTaskerBrowse } from "@/components/tasker";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Star, MapPin, Shield, Loader2, Award, TrendingUp } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { 
+  Users, TrendingUp, Award, Star, Briefcase, 
+  Sparkles, ArrowRight, MapPin
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function FindTaskers() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [taskers, setTaskers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const [stats, setStats] = useState({
+    totalTaskers: 0,
+    verifiedTaskers: 0,
+    averageRating: 0,
+    totalTasksCompleted: 0,
+  });
+
+  const categoryParam = searchParams.get("category") || undefined;
 
   useEffect(() => {
-    fetchTaskers();
+    fetchStats();
   }, []);
 
-  const fetchTaskers = async () => {
+  const fetchStats = async () => {
     try {
-      setIsLoading(true);
+      // Get total task doers count
+      const { count: totalCount } = await supabase
+        .from("user_roles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "task_doer");
 
-      // Fetch task doers with complete profiles, ordered by reputation_score
-      const { data: taskDoers, error } = await supabase
+      // Get verified count
+      const { count: verifiedCount } = await supabase
+        .from("verifications")
+        .select("*", { count: "exact", head: true })
+        .eq("verification_status", "verified");
+
+      // Get average rating
+      const { data: ratingData } = await supabase
         .from("profiles")
-        .select("*")
-        .not("full_name", "is", null)
-        .not("full_name", "eq", "")
-        .order("reputation_score", { ascending: false })
-        .order("rating", { ascending: false })
-        .order("trust_score", { ascending: false });
+        .select("rating")
+        .not("rating", "is", null)
+        .gt("rating", 0);
 
-      if (error) throw error;
+      const avgRating = ratingData?.length 
+        ? ratingData.reduce((sum, p) => sum + (p.rating || 0), 0) / ratingData.length 
+        : 0;
 
-      // Filter verified task doers with complete data and get badge counts
-      const verifiedTaskers = await Promise.all(
-        (taskDoers || []).map(async (tasker) => {
-          // Check if user has task_doer role
-          const { data: roleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", tasker.id)
-            .eq("role", "task_doer")
-            .maybeSingle();
+      // Get total completed tasks
+      const { data: completedData } = await supabase
+        .from("profiles")
+        .select("completed_tasks")
+        .not("completed_tasks", "is", null);
 
-          if (!roleData) return null;
+      const totalCompleted = completedData?.reduce((sum, p) => sum + (p.completed_tasks || 0), 0) || 0;
 
-          // Get verification status
-          const { data: verification } = await supabase
-            .from("verifications")
-            .select("verification_status, id_verified, background_check_status, has_insurance")
-            .eq("user_id", tasker.id)
-            .maybeSingle();
-
-          // Only include verified users
-          if (verification?.verification_status !== "verified") return null;
-
-          // Get badge count for display
-          const { count: badgeCount } = await supabase
-            .from("badges")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", tasker.id);
-
-          return {
-            ...tasker,
-            verifications: verification,
-            badgeCount: badgeCount || 0
-          };
-        })
-      );
-
-      // Remove nulls - already sorted by reputation_score from DB
-      const filtered = verifiedTaskers.filter((tasker) => tasker !== null);
-
-      setTaskers(filtered);
-    } catch (error: any) {
-      console.error("Error fetching taskers:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load taskers",
-        variant: "destructive",
+      setStats({
+        totalTaskers: totalCount || 0,
+        verifiedTaskers: verifiedCount || 0,
+        averageRating: avgRating,
+        totalTasksCompleted: totalCompleted,
       });
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching stats:", error);
     }
   };
 
-  const filteredTaskers = taskers.filter((tasker) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      tasker.full_name?.toLowerCase().includes(query) ||
-      tasker.skills?.some((skill: string) => skill.toLowerCase().includes(query)) ||
-      tasker.bio?.toLowerCase().includes(query)
-    );
-  });
-
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 pt-32 pb-20">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl lg:text-5xl font-bold mb-4">
-            Find <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Verified Taskers</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Browse skilled professionals in Saskatchewan ready to help with your tasks
-          </p>
-        </div>
+    <>
+      <SEOHead
+        title="Find Trusted Taskers - SaskTask"
+        description="Browse and hire verified taskers in Saskatchewan. Filter by category, hourly rate, and ratings to find the perfect help for your task."
+      />
 
-        {/* Search Bar */}
-        <div className="max-w-3xl mx-auto mb-12">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search by skill, location, or name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-14 text-lg"
-            />
-            <Button className="absolute right-2 top-2 h-10" variant="hero">
-              Search
-            </Button>
-          </div>
-        </div>
-
-        {/* Taskers Grid */}
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          </div>
-        ) : filteredTaskers.length === 0 ? (
-          <div className="text-center py-12">
-            <Shield className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h3 className="text-xl font-semibold mb-2">No verified taskers found</h3>
-            <p className="text-muted-foreground">
-              {searchQuery ? "Try adjusting your search" : "Check back later for verified professionals"}
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        
+        <div className="container mx-auto px-4 pt-28 pb-20">
+          {/* Hero Section */}
+          <div className="text-center mb-12">
+            <Badge variant="secondary" className="mb-4">
+              <Users className="h-3.5 w-3.5 mr-1" />
+              TaskRabbit-Style Marketplace
+            </Badge>
+            <h1 className="text-4xl lg:text-5xl font-bold mb-4">
+              Find <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Trusted Taskers</span>
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+              Browse skilled professionals by category, compare rates, read reviews, and hire instantly
             </p>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTaskers.map((tasker) => (
-              <Card 
-                key={tasker.id} 
-                className="hover:shadow-lg transition-all duration-300 border-border group cursor-pointer"
-                onClick={() => navigate(`/profile/${tasker.id}`)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4 mb-4">
-                    <Avatar className="h-20 w-20 border-2 border-primary/20 group-hover:border-primary/50 transition-colors">
-                      <AvatarImage
-                        src={tasker.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${tasker.full_name}`}
-                        alt={tasker.full_name}
-                      />
-                      <AvatarFallback className="text-2xl">{tasker.full_name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-bold truncate">{tasker.full_name}</h3>
-                        {tasker.verifications?.verification_status === "verified" && (
-                          <Shield className="h-5 w-5 text-primary shrink-0" />
-                        )}
-                      </div>
-                      {tasker.rating > 0 && (
-                        <div className="flex items-center gap-1 mb-2">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          <span className="font-semibold">{tasker.rating.toFixed(1)}</span>
-                          <span className="text-muted-foreground text-sm">
-                            ({tasker.total_reviews} reviews)
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant="secondary" className="text-xs">
-                          {tasker.completed_tasks || 0} tasks
-                        </Badge>
-                        {tasker.badgeCount > 0 && (
-                          <Badge variant="outline" className="text-xs border-primary/50 text-primary">
-                            <Award className="h-3 w-3 mr-1" />
-                            {tasker.badgeCount} badges
-                          </Badge>
-                        )}
-                        {tasker.reputation_score > 70 && (
-                          <Badge variant="default" className="text-xs bg-gradient-to-r from-primary to-secondary">
-                            <TrendingUp className="h-3 w-3 mr-1" />
-                            Top Rated
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
 
-                  {tasker.bio && (
-                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{tasker.bio}</p>
-                  )}
-
-                  <div className="space-y-3">
-                    {tasker.skills && tasker.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {tasker.skills.slice(0, 3).map((skill: string, idx: number) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                        {tasker.skills.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{tasker.skills.length - 3} more
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-
-                    {tasker.hourly_rate && (
-                      <div className="flex items-center justify-between pt-3 border-t border-border">
-                        <span className="text-sm text-muted-foreground">Hourly Rate</span>
-                        <span className="font-bold text-lg text-primary">${tasker.hourly_rate}</span>
-                      </div>
-                    )}
-
-                    <Button className="w-full" variant="hero">
-                      View Profile & Reviews
-                    </Button>
-                  </div>
+            {/* Stats Bar */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+              <Card className="bg-card/50 border-primary/10">
+                <CardContent className="p-4 text-center">
+                  <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
+                  <p className="text-2xl font-bold">{stats.totalTaskers}</p>
+                  <p className="text-xs text-muted-foreground">Total Taskers</p>
                 </CardContent>
               </Card>
-            ))}
+              <Card className="bg-card/50 border-primary/10">
+                <CardContent className="p-4 text-center">
+                  <Award className="h-6 w-6 mx-auto mb-2 text-green-500" />
+                  <p className="text-2xl font-bold">{stats.verifiedTaskers}</p>
+                  <p className="text-xs text-muted-foreground">Verified</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/50 border-primary/10">
+                <CardContent className="p-4 text-center">
+                  <Star className="h-6 w-6 mx-auto mb-2 text-yellow-500" />
+                  <p className="text-2xl font-bold">{stats.averageRating.toFixed(1)}</p>
+                  <p className="text-xs text-muted-foreground">Avg Rating</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/50 border-primary/10">
+                <CardContent className="p-4 text-center">
+                  <Briefcase className="h-6 w-6 mx-auto mb-2 text-blue-500" />
+                  <p className="text-2xl font-bold">{stats.totalTasksCompleted.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Tasks Done</p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        )}
+
+          {/* Main Content */}
+          <Tabs defaultValue="browse" className="space-y-6">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+              <TabsTrigger value="browse" className="gap-2">
+                <Users className="h-4 w-4" />
+                Browse Taskers
+              </TabsTrigger>
+              <TabsTrigger value="categories" className="gap-2">
+                <TrendingUp className="h-4 w-4" />
+                By Category
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="browse">
+              <CategoryTaskerBrowse initialCategory={categoryParam} />
+            </TabsContent>
+
+            <TabsContent value="categories">
+              <div className="space-y-8">
+                {/* Popular Categories Grid */}
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">Browse by Category</h2>
+                  <p className="text-muted-foreground mb-6">
+                    Click a category to see taskers specializing in that service
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {[
+                      { name: "Cleaning", icon: "🧹", count: "50+" },
+                      { name: "Moving & Delivery", icon: "📦", count: "35+" },
+                      { name: "Handyman Services", icon: "🔧", count: "40+" },
+                      { name: "Yard Work", icon: "🌿", count: "30+" },
+                      { name: "Snow Removal", icon: "❄️", count: "25+" },
+                      { name: "Assembly", icon: "🔩", count: "20+" },
+                      { name: "Pet Care", icon: "🐕", count: "15+" },
+                      { name: "Electrical Work", icon: "⚡", count: "12+" },
+                    ].map((cat) => (
+                      <Card 
+                        key={cat.name}
+                        className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all group"
+                        onClick={() => navigate(`/find-taskers?category=${encodeURIComponent(cat.name)}`)}
+                      >
+                        <CardContent className="p-6 text-center">
+                          <span className="text-4xl mb-3 block">{cat.icon}</span>
+                          <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">
+                            {cat.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">{cat.count} taskers</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CTA */}
+                <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
+                  <CardContent className="p-8 text-center">
+                    <Sparkles className="h-12 w-12 mx-auto mb-4 text-primary" />
+                    <h3 className="text-2xl font-bold mb-2">Can't find what you need?</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Post a task and let taskers come to you with their best offers
+                    </p>
+                    <Button onClick={() => navigate("/post-task")} size="lg" className="gap-2">
+                      Post a Task
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* How It Works */}
+          <div className="mt-16 pt-16 border-t border-border">
+            <h2 className="text-2xl font-bold text-center mb-8">How TaskRabbit-Style Hiring Works</h2>
+            <div className="grid md:grid-cols-4 gap-6">
+              {[
+                {
+                  step: "1",
+                  title: "Browse Taskers",
+                  description: "Filter by category, rate, and ratings to find the right match"
+                },
+                {
+                  step: "2",
+                  title: "View Profiles",
+                  description: "Check reviews, portfolios, and verified credentials"
+                },
+                {
+                  step: "3",
+                  title: "Hire Instantly",
+                  description: "Send a task offer directly or post for bids"
+                },
+                {
+                  step: "4",
+                  title: "Get It Done",
+                  description: "Pay securely through escrow once the task is complete"
+                },
+              ].map((item) => (
+                <Card key={item.step} className="text-center">
+                  <CardContent className="p-6">
+                    <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg mx-auto mb-4">
+                      {item.step}
+                    </div>
+                    <h3 className="font-semibold mb-2">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+        <Footer />
       </div>
-      
-      <Footer />
-    </div>
+    </>
   );
 }
