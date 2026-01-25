@@ -107,3 +107,15 @@ verify_jwt = true
 
 [functions.process-payout]
 verify_jwt = true
+
+[functions.setup-payout-account]
+verify_jwt = true
+
+[functions.backend-health]
+verify_jwt = false
+
+[functions.analytics-aggregator]
+verify_jwt = true
+
+[functions.smart-task-matching]
+verify_jwt = true
