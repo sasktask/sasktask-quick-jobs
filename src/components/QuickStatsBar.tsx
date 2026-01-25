@@ -14,6 +14,7 @@ import {
   ArrowDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useHistoricalTrends } from "@/hooks/useHistoricalTrends";
 
 interface QuickStatsBarProps {
   profile: any;
@@ -25,13 +26,18 @@ interface QuickStatsBarProps {
     unreadMessages: number;
   };
   badgeCount?: number;
+  userId?: string;
 }
 
-export function QuickStatsBar({ profile, stats, badgeCount = 0 }: QuickStatsBarProps) {
-  // Calculate trends (mock data - in real app would compare to previous period)
-  const getTrend = (value: number) => {
-    if (value === 0) return null;
-    return Math.random() > 0.5 ? "up" : "down";
+export function QuickStatsBar({ profile, stats, badgeCount = 0, userId }: QuickStatsBarProps) {
+  const historicalTrends = useHistoricalTrends(userId);
+  
+  // Use real historical data for trends when available
+  const getTrend = (key: 'completedTasks' | 'earnings' | 'bookings') => {
+    if (historicalTrends.loading) return null;
+    const trend = historicalTrends[key];
+    if (!trend) return null;
+    return trend.trend === 'neutral' ? null : trend.trend;
   };
 
   const statItems = [
@@ -63,7 +69,7 @@ export function QuickStatsBar({ profile, stats, badgeCount = 0 }: QuickStatsBarP
       color: "text-green-500",
       bgColor: "bg-green-500/10",
       borderColor: "border-green-500/20",
-      trend: getTrend(profile?.reputation_score || 0),
+      trend: null, // Reputation trend requires profile history which isn't tracked
     },
     {
       label: "Completed",
@@ -73,7 +79,7 @@ export function QuickStatsBar({ profile, stats, badgeCount = 0 }: QuickStatsBarP
       color: "text-emerald-500",
       bgColor: "bg-emerald-500/10",
       borderColor: "border-emerald-500/20",
-      trend: getTrend(stats.completedTasks),
+      trend: getTrend('completedTasks'),
     },
     {
       label: "Pending",
@@ -113,7 +119,7 @@ export function QuickStatsBar({ profile, stats, badgeCount = 0 }: QuickStatsBarP
       color: "text-green-600",
       bgColor: "bg-green-600/10",
       borderColor: "border-green-600/20",
-      trend: getTrend(stats.totalEarnings),
+      trend: getTrend('earnings'),
     },
   ];
 

@@ -79,6 +79,10 @@ interface MapExplorerPanelProps {
   onLocationSelect?: (lat: number, lng: number, zoom?: number) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  on3DBuildingsToggle?: (enabled: boolean) => void;
+  onTrafficLayerToggle?: (enabled: boolean) => void;
+  is3DBuildingsEnabled?: boolean;
+  isTrafficLayerEnabled?: boolean;
 }
 
 const POI_TYPES = [
@@ -97,6 +101,10 @@ export function MapExplorerPanel({
   onLocationSelect,
   isOpen,
   onOpenChange,
+  on3DBuildingsToggle,
+  onTrafficLayerToggle,
+  is3DBuildingsEnabled = false,
+  isTrafficLayerEnabled = false,
 }: MapExplorerPanelProps) {
   const [activeTab, setActiveTab] = useState('nearby');
   const [searchQuery, setSearchQuery] = useState('');
@@ -506,19 +514,29 @@ export function MapExplorerPanel({
                   Map Overlays
                 </h4>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+                  <div 
+                    className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${is3DBuildingsEnabled ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted/50'}`}
+                    onClick={() => on3DBuildingsToggle?.(!is3DBuildingsEnabled)}
+                  >
                     <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4" />
+                      <Building2 className={`h-4 w-4 ${is3DBuildingsEnabled ? 'text-primary' : ''}`} />
                       <span className="text-sm">3D Buildings</span>
                     </div>
-                    <Badge variant="outline">Coming soon</Badge>
+                    <Badge variant={is3DBuildingsEnabled ? "default" : "outline"}>
+                      {is3DBuildingsEnabled ? 'On' : 'Off'}
+                    </Badge>
                   </div>
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+                  <div 
+                    className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${isTrafficLayerEnabled ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted/50'}`}
+                    onClick={() => onTrafficLayerToggle?.(!isTrafficLayerEnabled)}
+                  >
                     <div className="flex items-center gap-2">
-                      <Route className="h-4 w-4" />
+                      <Route className={`h-4 w-4 ${isTrafficLayerEnabled ? 'text-primary' : ''}`} />
                       <span className="text-sm">Traffic Layer</span>
                     </div>
-                    <Badge variant="outline">Coming soon</Badge>
+                    <Badge variant={isTrafficLayerEnabled ? "default" : "outline"}>
+                      {isTrafficLayerEnabled ? 'On' : 'Off'}
+                    </Badge>
                   </div>
                 </div>
               </Card>
