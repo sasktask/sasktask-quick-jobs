@@ -1342,6 +1342,8 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          auto_release_at: string | null
+          auto_release_triggered: boolean | null
           booking_id: string
           created_at: string
           deposit_refund_id: string | null
@@ -1357,8 +1359,11 @@ export type Database = {
           payout_amount: number
           payout_at: string | null
           platform_fee: number
+          release_type: string | null
           released_at: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
+          task_doer_confirmed: boolean | null
+          task_giver_confirmed: boolean | null
           task_id: string
           tax_deducted: number | null
           transaction_id: string | null
@@ -1366,6 +1371,8 @@ export type Database = {
         }
         Insert: {
           amount: number
+          auto_release_at?: string | null
+          auto_release_triggered?: boolean | null
           booking_id: string
           created_at?: string
           deposit_refund_id?: string | null
@@ -1381,8 +1388,11 @@ export type Database = {
           payout_amount: number
           payout_at?: string | null
           platform_fee: number
+          release_type?: string | null
           released_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
+          task_doer_confirmed?: boolean | null
+          task_giver_confirmed?: boolean | null
           task_id: string
           tax_deducted?: number | null
           transaction_id?: string | null
@@ -1390,6 +1400,8 @@ export type Database = {
         }
         Update: {
           amount?: number
+          auto_release_at?: string | null
+          auto_release_triggered?: boolean | null
           booking_id?: string
           created_at?: string
           deposit_refund_id?: string | null
@@ -1405,8 +1417,11 @@ export type Database = {
           payout_amount?: number
           payout_at?: string | null
           platform_fee?: number
+          release_type?: string | null
           released_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
+          task_doer_confirmed?: boolean | null
+          task_giver_confirmed?: boolean | null
           task_id?: string
           tax_deducted?: number | null
           transaction_id?: string | null
@@ -2500,6 +2515,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "task_milestones_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "pending_auto_releases"
+            referencedColumns: ["payment_id"]
+          },
+          {
             foreignKeyName: "task_milestones_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
@@ -2759,6 +2781,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "payments"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_calculations_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "pending_auto_releases"
+            referencedColumns: ["payment_id"]
           },
         ]
       }
@@ -3706,6 +3735,60 @@ export type Database = {
       }
     }
     Views: {
+      pending_auto_releases: {
+        Row: {
+          amount: number | null
+          auto_release_at: string | null
+          booking_id: string | null
+          booking_status: Database["public"]["Enums"]["booking_status"] | null
+          hours_until_release: number | null
+          payee_id: string | null
+          payer_id: string | null
+          payment_id: string | null
+          payout_amount: number | null
+          task_doer_confirmed: boolean | null
+          task_giver_confirmed: boolean | null
+          task_id: string | null
+          task_title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null
@@ -3834,6 +3917,14 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      process_pending_auto_releases: {
+        Args: never
+        Returns: {
+          booking_id: string
+          payment_id: string
+          released: boolean
+        }[]
       }
     }
     Enums: {

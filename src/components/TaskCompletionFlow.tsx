@@ -5,12 +5,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, AlertCircle, Shield, Clock, DollarSign, Heart, Camera, Image } from "lucide-react";
+import { CheckCircle, AlertCircle, Shield, Clock, DollarSign, Heart, Camera, Image, Timer, Zap } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TipDialog } from "@/components/TipDialog";
 import { WorkEvidenceUpload } from "@/components/WorkEvidenceUpload";
 import { EvidenceGallery } from "@/components/EvidenceGallery";
 import { Badge } from "@/components/ui/badge";
+import { SmartEscrowRelease } from "@/components/SmartEscrowRelease";
+import { useAutoReleaseStatus } from "@/hooks/useAutoReleaseStatus";
 interface TaskCompletionFlowProps {
   bookingId: string;
   taskId: string;
@@ -49,6 +51,9 @@ export const TaskCompletionFlow = ({
   const [tipAmount, setTipAmount] = useState(0);
   const [evidenceCount, setEvidenceCount] = useState(0);
   const [showEvidenceUpload, setShowEvidenceUpload] = useState(false);
+  
+  // Auto-release status hook
+  const autoReleaseStatus = useAutoReleaseStatus(bookingId);
   
   const isTaskDoer = currentUserId === taskDoerId;
   const isTaskGiver = currentUserId === taskGiverId;
@@ -386,12 +391,30 @@ export const TaskCompletionFlow = ({
 
     if (bookingStatus === "completed" && paymentStatus?.escrow_status === "held") {
       return (
-        <Alert className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800">
-          <Clock className="h-4 w-4 text-yellow-600" />
-          <AlertDescription className="text-yellow-800 dark:text-yellow-200">
-            ⏳ Waiting for task giver to confirm completion and release your payment of <strong>${taskerPayout}</strong>.
-          </AlertDescription>
-        </Alert>
+        <div className="space-y-4">
+          <Alert className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800">
+            <Timer className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+              ⏳ Waiting for task giver to confirm completion. Payment will auto-release in <strong>{autoReleaseStatus.hoursRemaining ?? 72} hours</strong> if no dispute.
+            </AlertDescription>
+          </Alert>
+          
+          <SmartEscrowRelease
+            bookingId={bookingId}
+            paymentId={autoReleaseStatus.paymentId ?? undefined}
+            currentUserId={currentUserId}
+            taskGiverId={taskGiverId}
+            taskDoerId={taskDoerId}
+            amount={paymentAmount}
+            payoutAmount={parseFloat(taskerPayout)}
+            escrowStatus={paymentStatus?.escrow_status || "held"}
+            autoReleaseAt={autoReleaseStatus.autoReleaseAt}
+            taskGiverConfirmed={autoReleaseStatus.taskGiverConfirmed}
+            taskDoerConfirmed={autoReleaseStatus.taskDoerConfirmed}
+            releaseType={autoReleaseStatus.releaseType}
+            onRelease={onStatusUpdate}
+          />
+        </div>
       );
     }
   }
@@ -422,72 +445,59 @@ export const TaskCompletionFlow = ({
 
     if (bookingStatus === "completed" && paymentStatus?.escrow_status === "held") {
       return (
-        <Card className="border-primary">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-6 w-6 text-primary" />
-              Confirm Completion & Release Payment
-            </CardTitle>
-            <CardDescription>
-              The tasker has marked this task as complete. Review the work evidence and release payment.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800 dark:text-green-200">
-                ✅ Tasker has completed the task and is waiting for your confirmation.
-              </AlertDescription>
-            </Alert>
+        <div className="space-y-4">
+          <Card className="border-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-6 w-6 text-primary" />
+                Task Complete - Review & Release
+              </CardTitle>
+              <CardDescription>
+                The tasker has marked this task as complete. Review the work and release payment.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Quick Release Alert */}
+              {autoReleaseStatus.taskDoerConfirmed && (
+                <Alert className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+                  <Zap className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800 dark:text-green-200">
+                    <strong>Instant Release Available!</strong> Tasker has confirmed. Release now or auto-release {autoReleaseStatus.hoursRemaining ? `in ${autoReleaseStatus.hoursRemaining}h` : "soon"}.
+                  </AlertDescription>
+                </Alert>
+              )}
 
-            {/* Evidence Gallery for Task Giver to Review */}
-            {evidenceCount > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Camera className="h-4 w-4" />
-                  Work Evidence Provided
-                  <Badge variant="secondary">{evidenceCount} file{evidenceCount !== 1 ? 's' : ''}</Badge>
+              {/* Evidence Gallery for Task Giver to Review */}
+              {evidenceCount > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Camera className="h-4 w-4" />
+                    Work Evidence Provided
+                    <Badge variant="secondary">{evidenceCount} file{evidenceCount !== 1 ? 's' : ''}</Badge>
+                  </div>
+                  <EvidenceGallery bookingId={bookingId} title="Review Work Evidence" />
                 </div>
-                <EvidenceGallery bookingId={bookingId} title="Review Work Evidence" />
-              </div>
-            )}
+              )}
+            </CardContent>
+          </Card>
 
-            <div className="p-4 bg-muted/50 rounded-lg border border-border space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Task Amount:</span>
-                <span className="font-semibold">${paymentAmount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Platform Fee (15%):</span>
-                <span>-${platformFee}</span>
-              </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Tax (5% GST):</span>
-                <span>-${tax}</span>
-              </div>
-              <div className="flex justify-between pt-2 border-t border-border">
-                <span className="font-bold">Tasker Will Receive:</span>
-                <span className="text-lg font-bold text-primary">${taskerPayout}</span>
-              </div>
-            </div>
-
-            <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                🔒 <strong>Secure Process:</strong> By confirming, you release the payment from escrow. 
-                The tasker will receive ${taskerPayout} and the task will be marked as complete.
-              </p>
-            </div>
-
-            <Button 
-              onClick={handleConfirmAndRelease}
-              disabled={isProcessing}
-              className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
-              size="lg"
-            >
-              {isProcessing ? "Processing..." : `Confirm & Release $${taskerPayout}`}
-            </Button>
-          </CardContent>
-        </Card>
+          {/* Smart Escrow Release Component */}
+          <SmartEscrowRelease
+            bookingId={bookingId}
+            paymentId={autoReleaseStatus.paymentId ?? undefined}
+            currentUserId={currentUserId}
+            taskGiverId={taskGiverId}
+            taskDoerId={taskDoerId}
+            amount={paymentAmount}
+            payoutAmount={parseFloat(taskerPayout)}
+            escrowStatus={paymentStatus?.escrow_status || "held"}
+            autoReleaseAt={autoReleaseStatus.autoReleaseAt}
+            taskGiverConfirmed={autoReleaseStatus.taskGiverConfirmed}
+            taskDoerConfirmed={autoReleaseStatus.taskDoerConfirmed}
+            releaseType={autoReleaseStatus.releaseType}
+            onRelease={onStatusUpdate}
+          />
+        </div>
       );
     }
   }
