@@ -1,9 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Users, Shield, Award, AlertTriangle, CreditCard, ShieldCheck } from "lucide-react";
+import { Users, Shield, Award, AlertTriangle, CreditCard, ShieldCheck, BarChart3, Activity } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const navItems = [
+  {
+    title: "Analytics",
+    href: "/admin/analytics",
+    icon: BarChart3,
+    description: "Platform metrics & insights",
+  },
   {
     title: "User Management",
     href: "/admin/dashboard",
