@@ -98,3 +98,12 @@ verify_jwt = false
 
 [functions.initiate-background-check]
 verify_jwt = false
+
+[functions.process-auto-releases]
+verify_jwt = false
+
+[functions.auto-capture-payment]
+verify_jwt = true
+
+[functions.process-payout]
+verify_jwt = true
