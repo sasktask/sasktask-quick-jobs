@@ -23,7 +23,7 @@ import { LiveEarningsTicker } from "@/components/LiveEarningsTicker";
 import { ProgressRing } from "@/components/ProgressRing";
 import { EnhancedActivityFeed } from "@/components/EnhancedActivityFeed";
 import { QuickActionsFAB } from "@/components/QuickActionsFAB";
-import { UpcomingTasksCalendar } from "@/components/UpcomingTasksCalendar";
+import { TaskCalendar } from "@/components/calendar";
 import { QuickRebook } from "@/components/QuickRebook";
 import { ProfileCompletionNudge } from "@/components/auth";
 import { LiveAvailabilityWidget, OnlineStatusBar } from "@/components/instant";
@@ -527,9 +527,9 @@ const Dashboard = () => {
                   <QuickRebook userId={user.id} />
                 )}
 
-                {/* Upcoming Tasks Calendar */}
+                {/* Task Calendar */}
                 {user?.id && (
-                  <UpcomingTasksCalendar userId={user.id} userRole={userRole} />
+                  <TaskCalendar userId={user.id} userRole={userRole} />
                 )}
 
                 {/* AI-Powered Recommendations for Task Doers */}
