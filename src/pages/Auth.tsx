@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import { PhoneVerification } from "@/components/PhoneVerification";
-import { SignupProgressBar, WelcomeAnimation, GoogleSignInButton, SignupStepInfo } from "@/components/auth";
+import { SignupProgressBar, WelcomeAnimation, GoogleSignInButton, SignupStepInfo, MagicLinkButton, AppleSignInButton, OnboardingTutorialDialog } from "@/components/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { z } from "zod";
 import {
@@ -271,6 +271,7 @@ const Auth: React.FC = () => {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [showWelcome, setShowWelcome] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -651,6 +652,17 @@ const Auth: React.FC = () => {
 
   const handleWelcomeComplete = useCallback(() => {
     setShowWelcome(false);
+    // Show onboarding tutorial after welcome animation
+    const hasSeenOnboarding = localStorage.getItem("onboarding_completed");
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    } else {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
+
+  const handleOnboardingComplete = useCallback(() => {
+    setShowOnboarding(false);
     navigate("/dashboard");
   }, [navigate]);
 
@@ -676,8 +688,14 @@ const Auth: React.FC = () => {
                 <CardDescription>Sign in to continue to SaskTask</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Google Sign In */}
-                <GoogleSignInButton mode="signin" />
+                {/* Social Sign In Options */}
+                <div className="space-y-3">
+                  <GoogleSignInButton mode="signin" />
+                  <AppleSignInButton mode="signin" />
+                </div>
+
+                {/* Magic Link Option */}
+                <MagicLinkButton mode="signin" />
 
                 {/* Divider */}
                 <div className="relative">
@@ -685,7 +703,7 @@ const Auth: React.FC = () => {
                     <span className="w-full border-t border-border" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+                    <span className="bg-card px-2 text-muted-foreground">Or use password</span>
                   </div>
                 </div>
 
@@ -759,6 +777,14 @@ const Auth: React.FC = () => {
         onComplete={handleWelcomeComplete}
       />
 
+      {/* Onboarding Tutorial Dialog */}
+      <OnboardingTutorialDialog
+        open={showOnboarding}
+        onOpenChange={handleOnboardingComplete}
+        userRole={role === "both" ? "task_doer" : role}
+        userName={firstName}
+      />
+
       <div className="container mx-auto px-4 pt-24 pb-16 max-w-4xl">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
           {/* Left: Step Info (desktop) */}
@@ -800,8 +826,14 @@ const Auth: React.FC = () => {
                   <CardDescription>Join thousands of people getting things done</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Google Sign Up */}
-                  <GoogleSignInButton mode="signup" />
+                  {/* Social Sign Up Options */}
+                  <div className="space-y-3">
+                    <GoogleSignInButton mode="signup" />
+                    <AppleSignInButton mode="signup" />
+                  </div>
+
+                  {/* Magic Link Option */}
+                  <MagicLinkButton mode="signup" />
 
                   {/* Divider */}
                   <div className="relative">
@@ -809,7 +841,7 @@ const Auth: React.FC = () => {
                       <span className="w-full border-t border-border" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">Or sign up with email</span>
+                      <span className="bg-card px-2 text-muted-foreground">Or fill out the form</span>
                     </div>
                   </div>
 
