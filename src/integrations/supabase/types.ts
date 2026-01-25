@@ -110,6 +110,159 @@ export type Database = {
         }
         Relationships: []
       }
+      background_check_consents: {
+        Row: {
+          consent_text: string
+          consent_type: string
+          consent_version: string
+          consented_at: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          ip_address: string | null
+          revoked_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          consent_text: string
+          consent_type: string
+          consent_version: string
+          consented_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          ip_address?: string | null
+          revoked_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          consent_text?: string
+          consent_type?: string
+          consent_version?: string
+          consented_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          ip_address?: string | null
+          revoked_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      background_check_packages: {
+        Row: {
+          check_types: Database["public"]["Enums"]["background_check_type"][]
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_required_for_tasker: boolean | null
+          name: string
+          price_cad: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          check_types: Database["public"]["Enums"]["background_check_type"][]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_required_for_tasker?: boolean | null
+          name: string
+          price_cad?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          check_types?: Database["public"]["Enums"]["background_check_type"][]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_required_for_tasker?: boolean | null
+          name?: string
+          price_cad?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      background_checks: {
+        Row: {
+          check_type: Database["public"]["Enums"]["background_check_type"]
+          completed_at: string | null
+          consent_given: boolean | null
+          consent_given_at: string | null
+          consent_ip_address: string | null
+          created_at: string | null
+          expires_at: string | null
+          flags: Json | null
+          id: string
+          provider: string | null
+          provider_reference_id: string | null
+          provider_response: Json | null
+          requested_at: string | null
+          result_summary: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_level: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["background_check_status"] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          check_type: Database["public"]["Enums"]["background_check_type"]
+          completed_at?: string | null
+          consent_given?: boolean | null
+          consent_given_at?: string | null
+          consent_ip_address?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          flags?: Json | null
+          id?: string
+          provider?: string | null
+          provider_reference_id?: string | null
+          provider_response?: Json | null
+          requested_at?: string | null
+          result_summary?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["background_check_status"] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          check_type?: Database["public"]["Enums"]["background_check_type"]
+          completed_at?: string | null
+          consent_given?: boolean | null
+          consent_given_at?: string | null
+          consent_ip_address?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          flags?: Json | null
+          id?: string
+          provider?: string | null
+          provider_reference_id?: string | null
+          provider_response?: Json | null
+          requested_at?: string | null
+          result_summary?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["background_check_status"] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           badge_level: string | null
@@ -1369,6 +1522,9 @@ export type Database = {
           address: string | null
           availability_status: string | null
           avatar_url: string | null
+          background_check_expires_at: string | null
+          background_check_status: string | null
+          background_check_verified_at: string | null
           bio: string | null
           cancellation_count: number | null
           cancellation_rate: number | null
@@ -1426,6 +1582,9 @@ export type Database = {
           address?: string | null
           availability_status?: string | null
           avatar_url?: string | null
+          background_check_expires_at?: string | null
+          background_check_status?: string | null
+          background_check_verified_at?: string | null
           bio?: string | null
           cancellation_count?: number | null
           cancellation_rate?: number | null
@@ -1483,6 +1642,9 @@ export type Database = {
           address?: string | null
           availability_status?: string | null
           avatar_url?: string | null
+          background_check_expires_at?: string | null
+          background_check_status?: string | null
+          background_check_verified_at?: string | null
           bio?: string | null
           cancellation_count?: number | null
           cancellation_rate?: number | null
@@ -3454,6 +3616,20 @@ export type Database = {
     }
     Enums: {
       app_role: "task_giver" | "task_doer" | "admin"
+      background_check_status:
+        | "pending"
+        | "processing"
+        | "passed"
+        | "failed"
+        | "expired"
+        | "cancelled"
+      background_check_type:
+        | "criminal_record"
+        | "identity_verification"
+        | "employment_history"
+        | "education_verification"
+        | "credit_check"
+        | "reference_check"
       booking_status:
         | "pending"
         | "accepted"
@@ -3599,6 +3775,22 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["task_giver", "task_doer", "admin"],
+      background_check_status: [
+        "pending",
+        "processing",
+        "passed",
+        "failed",
+        "expired",
+        "cancelled",
+      ],
+      background_check_type: [
+        "criminal_record",
+        "identity_verification",
+        "employment_history",
+        "education_verification",
+        "credit_check",
+        "reference_check",
+      ],
       booking_status: [
         "pending",
         "accepted",

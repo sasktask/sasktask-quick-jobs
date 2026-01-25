@@ -69,6 +69,7 @@ import InstantWork from "./pages/InstantWork";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminBackgroundChecks from "./pages/AdminBackgroundChecks";
 import { MobileBottomNav } from "./components/MobileBottomNav";
 import { ScrollToTop } from "./components/ScrollToTop";
 
@@ -136,6 +137,7 @@ const App = () => (
               <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
               <Route path="/admin/payments" element={<ProtectedRoute><AdminPayments /></ProtectedRoute>} />
               <Route path="/admin/analytics" element={<ProtectedRoute><AdminAnalytics /></ProtectedRoute>} />
+              <Route path="/admin/background-checks" element={<ProtectedRoute><AdminBackgroundChecks /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
               <Route path="/referrals" element={<ProtectedRoute><ReferralProgram /></ProtectedRoute>} />
