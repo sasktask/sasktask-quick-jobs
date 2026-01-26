@@ -129,6 +129,7 @@ const App = () => (
               <Route path="/tasks/:id/edit" element={<ProtectedRoute><TaskEdit /></ProtectedRoute>} />
               <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
               <Route path="/become-tasker" element={<ProtectedRoute><BecomeTasker /></ProtectedRoute>} />
+              <Route path="/find-taskers" element={<ProtectedRoute><FindTaskers /></ProtectedRoute>} />
               <Route path="/how-it-works" element={<ProtectedRoute><HowItWorks /></ProtectedRoute>} />
               <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
               <Route path="/map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />
