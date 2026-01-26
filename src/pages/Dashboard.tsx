@@ -28,6 +28,7 @@ import { QuickRebook } from "@/components/QuickRebook";
 import { ProfileCompletionNudge } from "@/components/auth";
 import { LiveAvailabilityWidget, OnlineStatusBar } from "@/components/instant";
 import { SmartMatchingCard } from "@/components/SmartMatchingCard";
+import { HireRequestsPanel, HireRequestStatusTracker } from "@/components/tasker/hire";
 
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
@@ -526,6 +527,16 @@ const Dashboard = () => {
                 {/* Quick Rebook for Task Givers */}
                 {isTaskGiver && user?.id && (
                   <QuickRebook userId={user.id} />
+                )}
+
+                {/* Hire Request Status for Task Givers */}
+                {isTaskGiver && user?.id && (
+                  <HireRequestStatusTracker />
+                )}
+
+                {/* Incoming Hire Requests for Task Doers */}
+                {isTaskDoer && user?.id && (
+                  <HireRequestsPanel />
                 )}
 
                 {/* Task Calendar */}

@@ -123,13 +123,15 @@ export const EnhancedHireWizard = ({ open, onOpenChange, tasker }: EnhancedHireW
       if (taskError) throw taskError;
       setCreatedTaskId(task.id);
 
-      // Step 2: Create a booking directly with this tasker
+      // Step 2: Create a booking directly with this tasker (with hire_amount)
       const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .insert({
           task_id: task.id,
           task_doer_id: tasker.id,
           status: "pending",
+          tasker_decision: "pending",
+          hire_amount: budget.budget,
           message: `Direct hire request: ${taskDetails.title}\n\nEstimated duration: ${budget.estimatedHours} hours\nScheduled: ${schedule.date ? schedule.date.toLocaleDateString() : 'TBD'} (${schedule.timeSlot})\nBudget: $${budget.budget}`,
         })
         .select()

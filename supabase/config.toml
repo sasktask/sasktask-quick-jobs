@@ -156,3 +156,9 @@ verify_jwt = true
 
 [functions.get-weather]
 verify_jwt = false
+
+[functions.hold-escrow-payment]
+verify_jwt = true
+
+[functions.handle-tasker-decision]
+verify_jwt = true
