@@ -128,7 +128,7 @@ export const EnhancedTaskerCard = ({
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-lg font-bold truncate group-hover:text-primary transition-colors">
+                <h3 className="text-lg font-bold truncate text-foreground group-hover:text-primary transition-colors">
                   {tasker.full_name}
                 </h3>
                 {isVerified && (
@@ -141,9 +141,9 @@ export const EnhancedTaskerCard = ({
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex items-center gap-1 bg-yellow-500/10 px-2 py-0.5 rounded-full">
                     <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                    <span className="font-bold text-sm">{tasker.rating.toFixed(1)}</span>
+                    <span className="font-bold text-sm text-foreground">{tasker.rating.toFixed(1)}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-foreground/70">
                     ({tasker.total_reviews || 0} reviews)
                   </span>
                 </div>
@@ -151,7 +151,7 @@ export const EnhancedTaskerCard = ({
 
               {/* Location */}
               {tasker.city && (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1 text-sm text-foreground/70">
                   <MapPin className="h-3.5 w-3.5" />
                   <span>{tasker.city}</span>
                 </div>
@@ -168,7 +168,7 @@ export const EnhancedTaskerCard = ({
 
           {/* Bio */}
           {tasker.bio && (
-            <p className="text-sm text-muted-foreground mb-4 line-clamp-2 group-hover:text-foreground/80 transition-colors">
+            <p className="text-sm text-foreground/70 mb-4 line-clamp-2 group-hover:text-foreground/90 transition-colors">
               {tasker.bio}
             </p>
           )}
@@ -194,27 +194,27 @@ export const EnhancedTaskerCard = ({
           )}
 
           {/* Stats Row */}
-          <div className="grid grid-cols-3 gap-2 mb-4 py-3 border-y border-border/50">
+          <div className="grid grid-cols-3 gap-2 mb-4 py-3 border-y border-border">
             <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+              <div className="flex items-center justify-center gap-1 text-foreground/60 mb-1">
                 <Briefcase className="h-3.5 w-3.5" />
               </div>
-              <p className="font-bold text-sm">{tasker.completed_tasks || 0}</p>
-              <p className="text-xs text-muted-foreground">Tasks</p>
+              <p className="font-bold text-sm text-foreground">{tasker.completed_tasks || 0}</p>
+              <p className="text-xs text-foreground/60 font-medium">Tasks</p>
             </div>
-            <div className="text-center border-x border-border/50">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+            <div className="text-center border-x border-border">
+              <div className="flex items-center justify-center gap-1 text-foreground/60 mb-1">
                 <ThumbsUp className="h-3.5 w-3.5" />
               </div>
-              <p className="font-bold text-sm">{tasker.response_rate || 95}%</p>
-              <p className="text-xs text-muted-foreground">Response</p>
+              <p className="font-bold text-sm text-foreground">{tasker.response_rate || 95}%</p>
+              <p className="text-xs text-foreground/60 font-medium">Response</p>
             </div>
             <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+              <div className="flex items-center justify-center gap-1 text-foreground/60 mb-1">
                 <Award className="h-3.5 w-3.5" />
               </div>
-              <p className="font-bold text-sm">{tasker.badgeCount || 0}</p>
-              <p className="text-xs text-muted-foreground">Badges</p>
+              <p className="font-bold text-sm text-foreground">{tasker.badgeCount || 0}</p>
+              <p className="text-xs text-foreground/60 font-medium">Badges</p>
             </div>
           </div>
 
@@ -247,13 +247,13 @@ export const EnhancedTaskerCard = ({
             <div>
               {tasker.hourly_rate ? (
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  <span className="text-2xl font-bold text-primary">
                     ${tasker.hourly_rate}
                   </span>
-                  <span className="text-sm text-muted-foreground">/hr</span>
+                  <span className="text-sm text-foreground/70 font-medium">/hr</span>
                 </div>
               ) : (
-                <span className="text-sm text-muted-foreground">Contact for rate</span>
+                <span className="text-sm text-foreground/70 font-medium">Contact for rate</span>
               )}
             </div>
 
