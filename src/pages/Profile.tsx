@@ -299,13 +299,13 @@ const Profile = () => {
             <ProfileStatsCard profile={profile} trustScore={trustScore} />
 
             {/* Quick Actions */}
-            <ProfileQuickActions
+            {/* <ProfileQuickActions
               userId={userId}
               userRole={userRole}
               profile={profile}
               verification={verification}
               trustScore={trustScore}
-            />
+            /> */}
 
             {/* Verification Status Card */}
             {userId && (
@@ -668,7 +668,7 @@ const Profile = () => {
                     <EnhancedSecurityDashboard userId={userId} />
                     <TwoFactorSetup userId={userId} />
                     <PrivacySettings userId={userId} profile={profile} onUpdate={checkUserAndLoadProfile} />
-                    <ProfileActivityTimeline userId={userId} />
+                    {/* <ProfileActivityTimeline userId={userId} /> */}
 
                     {/* Danger Zone */}
                     <Card className="border-destructive/30">
