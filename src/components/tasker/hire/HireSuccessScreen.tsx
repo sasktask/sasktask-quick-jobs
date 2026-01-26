@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle, MessageSquare, Calendar, ArrowRight, 
-  PartyPopper, Bell
+  PartyPopper, Bell, Shield, Wallet
 } from "lucide-react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
@@ -17,6 +18,7 @@ interface HireSuccessScreenProps {
   onViewBookings: () => void;
   onMessageTasker: () => void;
   onClose: () => void;
+  escrowAmount?: number;
 }
 
 export const HireSuccessScreen = ({
@@ -24,7 +26,8 @@ export const HireSuccessScreen = ({
   taskTitle,
   onViewBookings,
   onMessageTasker,
-  onClose
+  onClose,
+  escrowAmount
 }: HireSuccessScreenProps) => {
   useEffect(() => {
     // Trigger confetti animation
@@ -99,6 +102,37 @@ export const HireSuccessScreen = ({
         </motion.p>
       </div>
 
+      {/* Escrow Payment Confirmation */}
+      {escrowAmount && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border border-green-200 dark:border-green-800 rounded-xl p-4"
+        >
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Wallet className="h-5 w-5 text-green-600" />
+            <span className="font-semibold text-green-700 dark:text-green-400">
+              Payment Secured in Escrow
+            </span>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Amount Held</span>
+              <span className="font-bold text-lg">${escrowAmount.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Tasker Will Receive</span>
+              <span className="text-green-600 font-medium">${(escrowAmount * 0.85).toFixed(2)}</span>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800 flex items-center justify-center gap-2 text-xs text-green-700 dark:text-green-400">
+            <Shield className="h-3.5 w-3.5" />
+            <span>Released upon task completion</span>
+          </div>
+        </motion.div>
+      )}
+
       {/* Tasker Info */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -116,9 +150,9 @@ export const HireSuccessScreen = ({
           </Avatar>
           <div className="text-left">
             <p className="font-bold text-lg">{tasker.full_name}</p>
-            <p className="text-sm text-muted-foreground">
-              Will be notified of your request
-            </p>
+            <Badge variant="secondary" className="mt-1">
+              Pending Acceptance
+            </Badge>
           </div>
         </div>
 
