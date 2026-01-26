@@ -379,48 +379,60 @@ export type Database = {
           agreed_at: string | null
           completion_evidence_uploaded: boolean | null
           created_at: string | null
+          decided_at: string | null
+          decline_reason: string | null
           deposit_paid: boolean | null
           evidence_count: number | null
           full_payment_at: string | null
           full_payment_paid: boolean | null
+          hire_amount: number | null
           id: string
           message: string | null
           payment_agreed: boolean | null
           status: Database["public"]["Enums"]["booking_status"] | null
           task_doer_id: string
           task_id: string
+          tasker_decision: string | null
           updated_at: string | null
         }
         Insert: {
           agreed_at?: string | null
           completion_evidence_uploaded?: boolean | null
           created_at?: string | null
+          decided_at?: string | null
+          decline_reason?: string | null
           deposit_paid?: boolean | null
           evidence_count?: number | null
           full_payment_at?: string | null
           full_payment_paid?: boolean | null
+          hire_amount?: number | null
           id?: string
           message?: string | null
           payment_agreed?: boolean | null
           status?: Database["public"]["Enums"]["booking_status"] | null
           task_doer_id: string
           task_id: string
+          tasker_decision?: string | null
           updated_at?: string | null
         }
         Update: {
           agreed_at?: string | null
           completion_evidence_uploaded?: boolean | null
           created_at?: string | null
+          decided_at?: string | null
+          decline_reason?: string | null
           deposit_paid?: boolean | null
           evidence_count?: number | null
           full_payment_at?: string | null
           full_payment_paid?: boolean | null
+          hire_amount?: number | null
           id?: string
           message?: string | null
           payment_agreed?: boolean | null
           status?: Database["public"]["Enums"]["booking_status"] | null
           task_doer_id?: string
           task_id?: string
+          tasker_decision?: string | null
           updated_at?: string | null
         }
         Relationships: [
