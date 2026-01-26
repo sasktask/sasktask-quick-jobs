@@ -47,7 +47,7 @@ export const TaskerHeroSection = ({
           >
             <Badge variant="secondary" className="px-4 py-2 text-sm bg-primary/10 border-primary/20">
               <Zap className="h-4 w-4 mr-2 text-primary" />
-              TaskRabbit-Style Marketplace
+              Trusted Local Pros • Instant Hire
             </Badge>
           </motion.div>
 
