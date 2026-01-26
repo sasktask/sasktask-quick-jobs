@@ -56,10 +56,10 @@ export const TaskerHeroSection = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
+            className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground"
           >
             Find Your Perfect{" "}
-            <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+            <span className="text-primary">
               Tasker
             </span>
           </motion.h1>
@@ -69,7 +69,7 @@ export const TaskerHeroSection = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
+            className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto font-medium"
           >
             Browse skilled professionals, compare rates, read reviews, and hire instantly
           </motion.p>
@@ -156,10 +156,10 @@ export const TaskerHeroSection = ({
               transition={{ delay: 0.7 + index * 0.1 }}
               className="group"
             >
-              <div className="bg-card/50 backdrop-blur-sm border border-border hover:border-primary/30 rounded-2xl p-5 text-center transition-all hover:shadow-lg hover:-translate-y-1">
+              <div className="bg-card border border-border hover:border-primary/30 rounded-2xl p-5 text-center transition-all hover:shadow-lg hover:-translate-y-1">
                 <stat.icon className={`h-6 w-6 mx-auto mb-2 ${stat.color} group-hover:scale-110 transition-transform`} />
-                <p className="text-2xl md:text-3xl font-bold">{stat.value}</p>
-                <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+                <p className="text-2xl md:text-3xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-sm text-foreground/70 mt-1 font-medium">{stat.label}</p>
               </div>
             </motion.div>
           ))}
