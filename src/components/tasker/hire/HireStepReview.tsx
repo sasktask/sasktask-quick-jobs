@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,10 +6,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { 
   ArrowLeft, Loader2, CheckCircle, Shield, Star,
   Calendar, Clock, DollarSign, MapPin, FileText,
-  Send, Lock
+  Send, Lock, Wallet, TrendingDown, AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
 
 interface TaskDetailsData {
   title: string;
@@ -65,9 +66,15 @@ export const HireStepReview = ({
 }: HireStepReviewProps) => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToEscrow, setAgreedToEscrow] = useState(false);
+  const { balance, isLoading: walletLoading, refresh } = useWalletBalance();
+
+  useEffect(() => {
+    refresh();
+  }, []);
 
   const platformFee = budget.budget * 0.15;
   const taskerEarnings = budget.budget - platformFee;
+  const balanceAfterHold = Math.max(0, balance - budget.budget);
   const canSubmit = agreedToTerms && agreedToEscrow && !isSubmitting;
 
   return (
@@ -201,6 +208,41 @@ export const HireStepReview = ({
               <span className="text-primary">${taskerEarnings.toFixed(2)}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Wallet Deduction Summary */}
+      <div className="space-y-4">
+        <h4 className="font-semibold flex items-center gap-2">
+          <Wallet className="h-4 w-4 text-primary" />
+          Wallet Deduction
+        </h4>
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Current Balance</span>
+              <span className="font-medium">
+                {walletLoading ? "..." : `$${balance.toFixed(2)}`}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-amber-700 dark:text-amber-400">
+              <span className="text-sm flex items-center gap-2">
+                <TrendingDown className="h-4 w-4" />
+                Escrow Hold
+              </span>
+              <span className="font-bold">-${budget.budget.toFixed(2)}</span>
+            </div>
+            <div className="border-t border-amber-200 dark:border-amber-700 pt-3 flex items-center justify-between">
+              <span className="text-sm font-medium">Balance After</span>
+              <span className="font-bold text-lg">${balanceAfterHold.toFixed(2)}</span>
+            </div>
+          </div>
+          {balance < budget.budget && (
+            <div className="mt-3 pt-3 border-t border-amber-200 dark:border-amber-700 flex items-center gap-2 text-amber-700 dark:text-amber-400 text-xs">
+              <AlertTriangle className="h-4 w-4" />
+              <span>Insufficient funds - please go back and add funds</span>
+            </div>
+          )}
         </div>
       </div>
 

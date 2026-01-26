@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Star, X } from "lucide-react";
-import { FileText, Calendar, DollarSign, CheckCircle } from "lucide-react";
+import { FileText, Calendar, DollarSign, CreditCard, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
@@ -13,6 +13,7 @@ import { HireStepIndicator } from "./HireStepIndicator";
 import { HireStepTaskDetails } from "./HireStepTaskDetails";
 import { HireStepSchedule } from "./HireStepSchedule";
 import { HireStepBudget } from "./HireStepBudget";
+import { HireStepPayment } from "./HireStepPayment";
 import { HireStepReview } from "./HireStepReview";
 import { HireSuccessScreen } from "./HireSuccessScreen";
 
@@ -35,6 +36,7 @@ const steps = [
   { label: "Details", icon: <FileText className="h-4 w-4" /> },
   { label: "Schedule", icon: <Calendar className="h-4 w-4" /> },
   { label: "Budget", icon: <DollarSign className="h-4 w-4" /> },
+  { label: "Payment", icon: <CreditCard className="h-4 w-4" /> },
   { label: "Review", icon: <CheckCircle className="h-4 w-4" /> },
 ];
 
@@ -44,6 +46,8 @@ export const EnhancedHireWizard = ({ open, onOpenChange, tasker }: EnhancedHireW
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [createdTaskId, setCreatedTaskId] = useState<string | null>(null);
+  const [createdBookingId, setCreatedBookingId] = useState<string | null>(null);
 
   // Form data
   const [taskDetails, setTaskDetails] = useState({
@@ -78,6 +82,12 @@ export const EnhancedHireWizard = ({ open, onOpenChange, tasker }: EnhancedHireW
     }
   };
 
+  const handleAddFunds = () => {
+    // Close the wizard and redirect to payments page
+    onOpenChange(false);
+    navigate("/payments");
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
@@ -93,7 +103,7 @@ export const EnhancedHireWizard = ({ open, onOpenChange, tasker }: EnhancedHireW
         return;
       }
 
-      // Create the task
+      // Step 1: Create the task
       const { data: task, error: taskError } = await supabase
         .from("tasks")
         .insert({
@@ -111,46 +121,86 @@ export const EnhancedHireWizard = ({ open, onOpenChange, tasker }: EnhancedHireW
         .single();
 
       if (taskError) throw taskError;
+      setCreatedTaskId(task.id);
 
-      // Create a booking directly with this tasker
-      const { error: bookingError } = await supabase
+      // Step 2: Create a booking directly with this tasker
+      const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .insert({
           task_id: task.id,
           task_doer_id: tasker.id,
           status: "pending",
           message: `Direct hire request: ${taskDetails.title}\n\nEstimated duration: ${budget.estimatedHours} hours\nScheduled: ${schedule.date ? schedule.date.toLocaleDateString() : 'TBD'} (${schedule.timeSlot})\nBudget: $${budget.budget}`,
-        });
+        })
+        .select()
+        .single();
 
       if (bookingError) throw bookingError;
+      setCreatedBookingId(booking.id);
 
-      // Notify the tasker
+      // Step 3: Hold escrow payment from wallet
+      const { data: escrowResult, error: escrowError } = await supabase.functions.invoke(
+        "hold-escrow-payment",
+        {
+          body: {
+            taskId: task.id,
+            bookingId: booking.id,
+            amount: budget.budget,
+            taskDoerId: tasker.id,
+            description: `Escrow hold for: ${taskDetails.title}`,
+          },
+        }
+      );
+
+      if (escrowError) {
+        console.error("Escrow error:", escrowError);
+        // Rollback: delete booking and task
+        await supabase.from("bookings").delete().eq("id", booking.id);
+        await supabase.from("tasks").delete().eq("id", task.id);
+        throw new Error(escrowResult?.error || "Failed to hold payment. Please ensure you have sufficient wallet balance.");
+      }
+
+      // Step 4: Update task status to confirmed (use valid status)
+      await supabase
+        .from("tasks")
+        .update({ status: "in_progress" as const })
+        .eq("id", task.id);
+
+      // Step 5: Notify the tasker
       await supabase
         .from("notifications")
         .insert({
           user_id: tasker.id,
           title: "New Hire Request! 🎉",
-          message: `You've been directly invited to work on: ${taskDetails.title}`,
+          message: `You've been directly invited to work on: ${taskDetails.title}. Payment of $${budget.budget.toFixed(2)} is secured in escrow!`,
           type: "booking",
           link: `/bookings`,
         });
 
-      // Log audit event
+      // Step 6: Log audit event
       await supabase
         .from("audit_trail_events")
         .insert({
           user_id: user.id,
           task_id: task.id,
-          event_type: "task_created",
+          booking_id: booking.id,
+          event_type: "direct_hire_with_escrow",
           event_category: "task",
           event_data: {
             type: "direct_hire",
             tasker_id: tasker.id,
             budget: budget.budget,
+            escrow_held: true,
+            payment_id: escrowResult?.paymentId,
           },
         });
 
       setIsSuccess(true);
+      
+      toast({
+        title: "Hire Request Sent! 🎉",
+        description: `$${budget.budget.toFixed(2)} has been secured in escrow for ${tasker.full_name}`,
+      });
     } catch (error: any) {
       console.error("Error creating hire request:", error);
       toast({
@@ -170,13 +220,19 @@ export const EnhancedHireWizard = ({ open, onOpenChange, tasker }: EnhancedHireW
 
   const handleMessageTasker = () => {
     onOpenChange(false);
-    navigate(`/messages?contact=${tasker.id}`);
+    if (createdBookingId) {
+      navigate(`/chat/${createdBookingId}`);
+    } else {
+      navigate(`/messages?contact=${tasker.id}`);
+    }
   };
 
   const handleClose = () => {
     // Reset state
     setCurrentStep(0);
     setIsSuccess(false);
+    setCreatedTaskId(null);
+    setCreatedBookingId(null);
     setTaskDetails({
       title: "",
       category: tasker.skills?.[0] || "",
@@ -255,6 +311,7 @@ export const EnhancedHireWizard = ({ open, onOpenChange, tasker }: EnhancedHireW
                 onViewBookings={handleViewBookings}
                 onMessageTasker={handleMessageTasker}
                 onClose={handleClose}
+                escrowAmount={budget.budget}
               />
             ) : (
               <>
@@ -285,6 +342,14 @@ export const EnhancedHireWizard = ({ open, onOpenChange, tasker }: EnhancedHireW
                   />
                 )}
                 {currentStep === 3 && (
+                  <HireStepPayment
+                    budget={budget.budget}
+                    onNext={handleNext}
+                    onBack={handleBack}
+                    onAddFunds={handleAddFunds}
+                  />
+                )}
+                {currentStep === 4 && (
                   <HireStepReview
                     taskDetails={taskDetails}
                     schedule={schedule}
