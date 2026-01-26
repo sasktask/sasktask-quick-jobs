@@ -9,7 +9,7 @@ import {
   TaskerCategoryGrid, 
   TaskerFilters,
   EnhancedTaskerCard,
-  QuickHireDialog,
+  EnhancedHireWizard,
   TaskerHowItWorks,
   TaskerFilterValues
 } from "@/components/tasker";
@@ -475,9 +475,9 @@ export default function FindTaskers() {
         <Footer />
       </div>
 
-      {/* Quick Hire Dialog */}
+      {/* Enhanced Hire Wizard */}
       {selectedTasker && (
-        <QuickHireDialog
+        <EnhancedHireWizard
           tasker={selectedTasker}
           open={isHireDialogOpen}
           onOpenChange={(open) => {

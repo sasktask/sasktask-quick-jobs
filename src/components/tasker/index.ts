@@ -7,3 +7,4 @@ export { QuickHireDialog } from './QuickHireDialog';
 export { TaskerHeroSection } from './TaskerHeroSection';
 export { TaskerCategoryGrid } from './TaskerCategoryGrid';
 export { TaskerHowItWorks } from './TaskerHowItWorks';
+export { EnhancedHireWizard } from './hire';
