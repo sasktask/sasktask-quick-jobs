@@ -1,8 +1,8 @@
-# SaskTask Platform Strategy: TaskRabbit + Uber Hybrid
+# SaskTask Platform Strategy: Hybrid On-Demand + Marketplace
 
 ## Executive Summary
 
-SaskTask is evolving into a hybrid platform combining **TaskRabbit's marketplace model** (task posting, bidding, flexible scheduling) with **Uber's instant matching paradigm** (real-time availability, location-based suggestions, estimated arrival times). This document outlines how to implement this vision while leveraging existing infrastructure.
+SaskTask is evolving into a hybrid platform combining **marketplace model** (task posting, bidding, flexible scheduling) with **instant matching paradigm** (real-time availability, location-based suggestions, estimated arrival times). This document outlines how to implement this vision while leveraging existing infrastructure.
 
 ---
 
@@ -56,7 +56,7 @@ SaskTask is evolving into a hybrid platform combining **TaskRabbit's marketplace
 | Fallback to farther doers | ❌ No ranking system | Need: Progressive distance expansion |
 | Auto-accept notifications | ❌ Manual acceptance | Need: Real-time broadcast to nearby doers |
 
-### Scheduled Work (TaskRabbit-like)
+### Scheduled Work (Marketplace)
 | Requirement | Current Status | Gap |
 |-------------|---|---|
 | Task posting | ✅ Fully implemented | ✅ Ready |
@@ -157,7 +157,7 @@ SaskTask is evolving into a hybrid platform combining **TaskRabbit's marketplace
 ---
 
 ### Phase 2: Scheduled Work Enhancement (2 weeks)
-**Goal**: Polish TaskRabbit-like experience for non-instant tasks.
+**Goal**: Polish marketplace experience for non-instant tasks.
 
 #### 2.1 Improved Calendar & Scheduling
 **Files to Create/Modify**:
@@ -570,7 +570,7 @@ Total: ~4 months for full implementation
 
 ## Conclusion
 
-This roadmap transforms SaskTask from a **marketplace platform** into a **hybrid instant + scheduled services platform**. By combining TaskRabbit's structured approach with Uber's real-time capabilities, you create a unique value proposition: **"Get help now or schedule it later."**
+This roadmap transforms SaskTask from a **marketplace platform** into a **hybrid instant + scheduled services platform**. By combining a structured marketplace approach with real-time capabilities, you create a unique value proposition: **"Get help now or schedule it later."**
 
 The phased approach de-risks implementation while maintaining user trust through robust evidence, transparent payments, and fair dispute resolution.
 
