@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,6 +8,7 @@ import { FileText, Calendar, DollarSign, CreditCard, CheckCircle } from "lucide-
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
+import { VerificationGate, useVerificationGate } from "@/components/VerificationGate";
 
 import { HireStepIndicator } from "./HireStepIndicator";
 import { HireStepTaskDetails } from "./HireStepTaskDetails";
@@ -48,6 +49,19 @@ export const EnhancedHireWizard = ({ open, onOpenChange, tasker }: EnhancedHireW
   const [isSuccess, setIsSuccess] = useState(false);
   const [createdTaskId, setCreatedTaskId] = useState<string | null>(null);
   const [createdBookingId, setCreatedBookingId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  
+  // Full verification check for hiring
+  const { isVerified: isFullyVerified, isLoading: isVerificationLoading, status: verificationStatus } = useVerificationGate(currentUserId);
+  
+  // Get current user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
+    getUser();
+  }, []);
 
   // Form data
   const [taskDetails, setTaskDetails] = useState({
@@ -305,6 +319,19 @@ export const EnhancedHireWizard = ({ open, onOpenChange, tasker }: EnhancedHireW
 
         {/* Content */}
         <div className="p-6">
+          {/* Show verification gate if not fully verified */}
+          {!isVerificationLoading && !isFullyVerified && currentUserId && (
+            <VerificationGate 
+              userId={currentUserId} 
+              requiredFor="post_task"
+              showProgress={true}
+            >
+              <div />
+            </VerificationGate>
+          )}
+          
+          {/* Only show wizard content if fully verified */}
+          {isFullyVerified && (
           <AnimatePresence mode="wait">
             {isSuccess ? (
               <HireSuccessScreen
@@ -365,6 +392,7 @@ export const EnhancedHireWizard = ({ open, onOpenChange, tasker }: EnhancedHireW
               </>
             )}
           </AnimatePresence>
+          )}
         </div>
       </DialogContent>
     </Dialog>

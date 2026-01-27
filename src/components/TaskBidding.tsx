@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Gavel, User, Clock, Check, X, DollarSign, MessageSquare, Shield, AlertTriangle } from "lucide-react";
 import { z } from "zod";
 import { PhoneVerification } from "@/components/PhoneVerification";
+import { VerificationGate, useVerificationGate } from "@/components/VerificationGate";
 
 const bidSchema = z.object({
   bid_amount: z.number().positive("Bid amount must be positive").max(100000, "Bid amount too high"),
@@ -64,6 +65,9 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
 
   const isTaskGiver = currentUserId === taskGiverId;
   const isTaskDoer = userRole === "task_doer";
+  
+  // Full verification check for task doers
+  const { isVerified: isFullyVerified, isLoading: isVerificationLoading, status: verificationStatus } = useVerificationGate(currentUserId);
 
   useEffect(() => {
     fetchBids();
@@ -629,37 +633,24 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
         </Card>
       )}
 
-      {/* ID Verification Required for Task Doers */}
-      {isTaskDoer && !isTaskGiver && isIdVerified === false && (
-        <Card className="border-amber-500/50">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-full bg-amber-100 dark:bg-amber-950">
-                <Shield className="h-6 w-6 text-amber-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-1">ID Verification Required</h3>
-                <p className="text-muted-foreground mb-4">
-                  To place bids on tasks, you need to verify your identity first. This helps build trust with task givers.
-                </p>
-                <Button asChild>
-                  <Link to="/verification">
-                    <Shield className="mr-2 h-4 w-4" />
-                    Complete ID Verification
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Full Profile Verification Required for Task Doers */}
+      {isTaskDoer && !isTaskGiver && !isVerificationLoading && !isFullyVerified && (
+        <VerificationGate 
+          userId={currentUserId} 
+          requiredFor="place_bid"
+          showProgress={true}
+        >
+          {/* Won't render - user not verified */}
+          <div />
+        </VerificationGate>
       )}
 
-      {/* No bids message - clickable for task doers (only if ID verified) */}
+      {/* No bids message - clickable for task doers (only if fully verified) */}
       {bids.length === 0 && !showBidForm && (
         <Card
-          className={isTaskDoer && !isTaskGiver && isIdVerified ? "cursor-pointer hover:border-primary/50 transition-colors" : ""}
+          className={isTaskDoer && !isTaskGiver && isFullyVerified ? "cursor-pointer hover:border-primary/50 transition-colors" : ""}
           onClick={() => {
-            if (isTaskDoer && !isTaskGiver && isIdVerified) {
+            if (isTaskDoer && !isTaskGiver && isFullyVerified) {
               setShowBidForm(true);
             }
           }}
@@ -667,17 +658,17 @@ export const TaskBidding = ({ taskId, taskGiverId, currentUserId, userRole, orig
           <CardContent className="p-8 text-center">
             <Gavel className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <p className="text-muted-foreground">
-              No bids yet. {isTaskDoer && !isTaskGiver && isIdVerified ? "Be the first to submit a proposal!" : ""}
+              No bids yet. {isTaskDoer && !isTaskGiver && isFullyVerified ? "Be the first to submit a proposal!" : ""}
             </p>
-            {isTaskDoer && !isTaskGiver && isIdVerified && (
+            {isTaskDoer && !isTaskGiver && isFullyVerified && (
               <p className="text-sm text-primary mt-2">Click here to place your bid</p>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* Inline Bid Form when triggered from empty state - only if ID verified */}
-      {bids.length === 0 && showBidForm && isTaskDoer && !isTaskGiver && isIdVerified && (
+      {/* Inline Bid Form when triggered from empty state - only if fully verified */}
+      {bids.length === 0 && showBidForm && isTaskDoer && !isTaskGiver && isFullyVerified && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
             <CardDescription>
