@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import { PhoneVerification } from "@/components/PhoneVerification";
-import { SignupProgressBar, WelcomeAnimation, GoogleSignInButton, SignupStepInfo, MagicLinkButton, AppleSignInButton, OnboardingTutorialDialog } from "@/components/auth";
+import { SignupProgressBar, WelcomeAnimation, GoogleSignInButton, SignupStepInfo, MagicLinkButton, AppleSignInButton, OnboardingTutorialDialog, ForgotPasswordDialog, AccountRecoveryDialog, SecurePasswordInput, PasswordStrengthIndicator, ResetPasswordForm } from "@/components/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { z } from "zod";
 import {
@@ -265,8 +265,13 @@ const recordAttempt = (success: boolean) => {
 
 const Auth: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const mode = searchParams.get("mode") === "signin" ? "signin" : "signup";
+  const urlMode = searchParams.get("mode");
+  const mode = urlMode === "signin" ? "signin" : urlMode === "reset-password" ? "reset-password" : "signup";
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  
+  // Recovery dialogs state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showAccountRecovery, setShowAccountRecovery] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -666,6 +671,23 @@ const Auth: React.FC = () => {
     navigate("/dashboard");
   }, [navigate]);
 
+  // Password reset page when mode=reset-password
+  if (mode === "reset-password") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+        <SEOHead
+          title="Reset Password - SaskTask"
+          description="Reset your SaskTask account password"
+          url="/auth?mode=reset-password"
+        />
+        <Navbar />
+        <div className="container mx-auto px-4 pt-24 pb-16 max-w-md">
+          <ResetPasswordForm />
+        </div>
+      </div>
+    );
+  }
+
   // Dedicated sign-in page when mode=signin
   if (mode === "signin") {
     return (
@@ -676,6 +698,19 @@ const Auth: React.FC = () => {
           url="/auth?mode=signin"
         />
         <Navbar />
+        
+        {/* Forgot Password Dialog */}
+        <ForgotPasswordDialog
+          open={showForgotPassword}
+          onOpenChange={setShowForgotPassword}
+        />
+        
+        {/* Account Recovery Dialog */}
+        <AccountRecoveryDialog
+          open={showAccountRecovery}
+          onOpenChange={setShowAccountRecovery}
+        />
+        
         <div className="container mx-auto px-4 pt-24 pb-16 max-w-md">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -709,33 +744,50 @@ const Auth: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input
-                    type="email"
-                    value={signInEmail}
-                    onChange={(e) => setSignInEmail(e.target.value.trim())}
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                  />
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      value={signInEmail}
+                      onChange={(e) => setSignInEmail(e.target.value.trim())}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      className="pl-10"
+                    />
+                  </div>
                   {formErrors.signInEmail && <p className="text-sm text-destructive">{formErrors.signInEmail}</p>}
                 </div>
+                
                 <div className="space-y-2">
-                  <Label>Password</Label>
-                  <Input
-                    type="password"
+                  <div className="flex items-center justify-between">
+                    <Label>Password</Label>
+                    <Button
+                      variant="link"
+                      className="px-0 h-auto text-xs text-primary"
+                      onClick={() => setShowForgotPassword(true)}
+                    >
+                      Forgot password?
+                    </Button>
+                  </div>
+                  <SecurePasswordInput
                     value={signInPassword}
-                    onChange={(e) => setSignInPassword(e.target.value)}
+                    onChange={setSignInPassword}
                     placeholder="Your password"
                     autoComplete="current-password"
                   />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="signin-remember"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(!!checked)}
-                  />
-                  <Label htmlFor="signin-remember" className="text-sm text-foreground/80">Remember me</Label>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="signin-remember"
+                      checked={rememberMe}
+                      onCheckedChange={(checked) => setRememberMe(!!checked)}
+                    />
+                    <Label htmlFor="signin-remember" className="text-sm text-foreground/80">Remember me</Label>
+                  </div>
                 </div>
+                
                 <Button className="w-full h-12" onClick={handleSignIn} disabled={isSigningIn}>
                   {isSigningIn ? (
                     <>
@@ -743,9 +795,28 @@ const Auth: React.FC = () => {
                       Signing in...
                     </>
                   ) : (
-                    "Sign In"
+                    <>
+                      <Lock className="h-4 w-4 mr-2" />
+                      Sign In
+                    </>
                   )}
                 </Button>
+                
+                {/* Account Recovery Options */}
+                <div className="pt-2 border-t border-border">
+                  <p className="text-center text-sm text-muted-foreground mb-2">
+                    Having trouble signing in?
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowAccountRecovery(true)}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Recover Account
+                  </Button>
+                </div>
+                
                 <div className="text-center text-sm text-foreground/70">
                   New to SaskTask?{" "}
                   <Button variant="link" className="px-1" onClick={() => navigate("/auth")}>
@@ -1136,94 +1207,31 @@ const Auth: React.FC = () => {
                             <Lock className="w-4 h-4" />
                             Create Password
                           </Label>
-                          <div className="relative">
-                            <Input
-                              ref={passwordRef}
-                              type={showPassword ? "text" : "password"}
-                              value={password}
-                              onChange={(e) => setPassword(e.target.value)}
-                              autoComplete="new-password"
-                              className={formErrors.password ? "border-destructive pr-10" : "pr-10"}
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                              onClick={() => setShowPassword((s) => !s)}
-                            >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </Button>
-                          </div>
-                          {formErrors.password && <p className="text-sm text-destructive">{formErrors.password}</p>}
-
-                          {/* Password strength indicator */}
-                          {password && (
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                                  <motion.div
-                                    className={`h-full ${passwordStrength.color}`}
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${(passwordStrength.score / 6) * 100}%` }}
-                                    transition={{ duration: 0.3 }}
-                                  />
-                                </div>
-                                <span className={`text-xs font-medium ${
-                                  passwordStrength.label === "Strong" ? "text-green-500" :
-                                  passwordStrength.label === "Medium" ? "text-yellow-500" : "text-destructive"
-                                }`}>
-                                  {passwordStrength.label}
-                                </span>
-                              </div>
-                              <ul className="text-xs text-muted-foreground space-y-1">
-                                <li className={password.length >= 8 ? "text-green-500" : ""}>
-                                  {password.length >= 8 ? "✓" : "○"} At least 8 characters
-                                </li>
-                                <li className={/[A-Z]/.test(password) ? "text-green-500" : ""}>
-                                  {/[A-Z]/.test(password) ? "✓" : "○"} One uppercase letter
-                                </li>
-                                <li className={/[a-z]/.test(password) ? "text-green-500" : ""}>
-                                  {/[a-z]/.test(password) ? "✓" : "○"} One lowercase letter
-                                </li>
-                                <li className={/[0-9]/.test(password) ? "text-green-500" : ""}>
-                                  {/[0-9]/.test(password) ? "✓" : "○"} One number
-                                </li>
-                                <li className={/[^A-Za-z0-9]/.test(password) ? "text-green-500" : ""}>
-                                  {/[^A-Za-z0-9]/.test(password) ? "✓" : "○"} One special character
-                                </li>
-                              </ul>
-                            </div>
-                          )}
+                          <SecurePasswordInput
+                            value={password}
+                            onChange={setPassword}
+                            placeholder="Create a strong password"
+                            autoComplete="new-password"
+                            error={formErrors.password}
+                          />
                         </div>
+
+                        {/* Enhanced Password strength indicator */}
+                        <PasswordStrengthIndicator password={password} showRequirements={true} />
 
                         <div className="space-y-2">
                           <Label>Confirm Password</Label>
-                          <div className="relative">
-                            <Input
-                              type={showConfirmPassword ? "text" : "password"}
-                              value={confirmPassword}
-                              onChange={(e) => setConfirmPassword(e.target.value)}
-                              autoComplete="new-password"
-                              className={`pr-10 ${
-                                formErrors.confirmPassword ? "border-destructive" :
-                                passwordsMatch === true ? "border-green-500" :
-                                passwordsMatch === false ? "border-destructive" : ""
-                              }`}
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                              onClick={() => setShowConfirmPassword((s) => !s)}
-                            >
-                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </Button>
-                          </div>
-                          {formErrors.confirmPassword && (
-                            <p className="text-sm text-destructive">{formErrors.confirmPassword}</p>
-                          )}
+                          <SecurePasswordInput
+                            value={confirmPassword}
+                            onChange={setConfirmPassword}
+                            placeholder="Confirm your password"
+                            autoComplete="new-password"
+                            error={formErrors.confirmPassword}
+                            className={
+                              passwordsMatch === true ? "border-green-500" :
+                              passwordsMatch === false ? "border-destructive" : ""
+                            }
+                          />
                           {passwordsMatch === true && (
                             <p className="text-sm text-green-600 flex items-center gap-1">
                               <Check className="w-3 h-3" />
