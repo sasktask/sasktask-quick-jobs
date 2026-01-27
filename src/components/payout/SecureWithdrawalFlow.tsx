@@ -56,11 +56,12 @@ export function SecureWithdrawalFlow({
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [step, setStep] = useState<'amount' | 'review' | 'confirm'>('amount');
 
-  // Tax rates (Saskatchewan)
+  // Tax rates (Saskatchewan) & Uber-style fees
   const PLATFORM_FEE_RATE = 0; // Already deducted during payment
-  const INSTANT_FEE = 0.50;
+  const INSTANT_FEE = 1.25; // $1.25 per instant transfer (Uber standard)
   const GST_RATE = 0.05;
   const PST_RATE = 0.06;
+  const MAX_DAILY_CASHOUTS = 6; // Maximum 6 cashouts per day
 
   const calculateBreakdown = (): WithdrawalBreakdown => {
     const grossAmount = amount;
@@ -287,6 +288,7 @@ export function SecureWithdrawalFlow({
               </div>
               <p className="text-xs text-muted-foreground">Within 30 minutes</p>
               <p className="text-sm font-semibold text-amber-600 mt-1">{formatCurrency(INSTANT_FEE)} fee</p>
+              <p className="text-xs text-muted-foreground mt-1">Max {MAX_DAILY_CASHOUTS}x/day</p>
             </button>
           </div>
         </div>

@@ -50,7 +50,7 @@ export function TaxBreakdownPanel({ grossAmount, showDetailed = false }: TaxBrea
     gst_rate: 5.0,
     pst_rate: 6.0,
     platform_fee_rate: 15.0,
-    instant_fee: 0.50
+    instant_fee: 1.25 // $1.25 per instant transfer (Uber standard)
   });
   const [expanded, setExpanded] = useState(showDetailed);
   const [isLoading, setIsLoading] = useState(true);

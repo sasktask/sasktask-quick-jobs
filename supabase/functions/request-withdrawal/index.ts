@@ -14,7 +14,9 @@ const logStep = (step: string, details?: any) => {
 // Saskatchewan tax rates
 const GST_RATE = 0.05; // 5% Federal GST
 const PST_RATE = 0.06; // 6% Saskatchewan PST
-const INSTANT_FEE = 0.50; // $0.50 instant transfer fee
+const INSTANT_FEE = 1.25; // $1.25 instant transfer fee (Uber standard)
+const MAX_DAILY_CASHOUTS = 6; // Maximum 6 instant cashouts per day (Uber limit)
+const MIN_CASHOUT_AMOUNT = 1.00; // Minimum $1 for cashout
 
 interface WithdrawalBreakdown {
   grossAmount: number;
