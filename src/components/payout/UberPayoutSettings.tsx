@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InstantCashout } from './InstantCashout';
 import { PayoutSchedule } from './PayoutSchedule';
@@ -6,13 +6,22 @@ import { PayoutMethods } from './PayoutMethods';
 import { EarningsOverview } from './EarningsOverview';
 import { PayoutHistory } from './PayoutHistory';
 import { PayoutAccountSetup } from '@/components/PayoutAccountSetup';
+import { WeeklyEarningsGoal } from './WeeklyEarningsGoal';
+import { EarningsBreakdown } from './EarningsBreakdown';
+import { WithdrawalTiers } from './WithdrawalTiers';
+import { PendingPaymentsTimeline } from './PendingPaymentsTimeline';
+import { EarningsProjection } from './EarningsProjection';
 import { EarningsSummary } from '@/hooks/usePayoutData';
+import { useNavigate } from 'react-router-dom';
 import { 
   Zap, 
   Calendar, 
   CreditCard, 
   History,
-  Settings
+  Settings,
+  Target,
+  TrendingUp,
+  ShieldCheck
 } from 'lucide-react';
 import {
   Sheet,
@@ -37,24 +46,193 @@ export function UberPayoutSettings({
   payoutAccount,
   onRefresh
 }: UberPayoutSettingsProps) {
+  const navigate = useNavigate();
   const [addMethodOpen, setAddMethodOpen] = useState(false);
+  const [weeklyGoal, setWeeklyGoal] = useState(() => {
+    const saved = localStorage.getItem('weeklyEarningsGoal');
+    return saved ? parseFloat(saved) : 500;
+  });
+  
   const isPayoutAccountActive = payoutAccount?.account_status === 'active';
+
+  // Calculate weekly earnings
+  const currentWeekEarnings = useMemo(() => {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    return transactions
+      .filter(t => new Date(t.created_at) >= startOfWeek && t.escrow_status === 'released')
+      .reduce((sum, t) => sum + (t.payout_amount || 0), 0);
+  }, [transactions]);
+
+  // Calculate days left in week
+  const daysLeftInWeek = useMemo(() => {
+    const now = new Date();
+    return 7 - now.getDay();
+  }, []);
+
+  // Calculate streak (simplified)
+  const streakDays = useMemo(() => {
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    for (let i = 0; i < 30; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() - i);
+      const hasEarnings = transactions.some(t => {
+        const txDate = new Date(t.created_at);
+        txDate.setHours(0, 0, 0, 0);
+        return txDate.getTime() === checkDate.getTime();
+      });
+      if (hasEarnings) streak++;
+      else if (i > 0) break;
+    }
+    return streak;
+  }, [transactions]);
+
+  // Category breakdown
+  const categoryEarnings = useMemo(() => {
+    const categories: Record<string, { amount: number; taskCount: number }> = {};
+    transactions.forEach(t => {
+      if (t.escrow_status === 'released' && t.task?.category) {
+        const cat = t.task.category;
+        if (!categories[cat]) {
+          categories[cat] = { amount: 0, taskCount: 0 };
+        }
+        categories[cat].amount += t.payout_amount || 0;
+        categories[cat].taskCount += 1;
+      }
+    });
+    return Object.entries(categories).map(([category, data]) => ({
+      category,
+      amount: data.amount,
+      taskCount: data.taskCount,
+      color: ''
+    }));
+  }, [transactions]);
+
+  // Pending payments
+  const pendingPayments = useMemo(() => {
+    return transactions
+      .filter(t => t.escrow_status === 'held')
+      .map(t => ({
+        id: t.id,
+        amount: t.payout_amount || 0,
+        taskTitle: t.task?.title || 'Task',
+        status: 'held' as const,
+        createdAt: t.created_at,
+        autoReleaseAt: t.auto_release_at,
+        taskGiverConfirmed: t.task_giver_confirmed || false,
+        taskDoerConfirmed: t.task_doer_confirmed || false,
+      }));
+  }, [transactions]);
+
+  // Historical weekly data for projection
+  const historicalData = useMemo(() => {
+    const weeks: Record<string, number> = {};
+    const now = new Date();
+    
+    transactions.forEach(t => {
+      if (t.escrow_status === 'released') {
+        const txDate = new Date(t.created_at);
+        const weekStart = new Date(txDate);
+        weekStart.setDate(txDate.getDate() - txDate.getDay());
+        const weekKey = weekStart.toISOString().split('T')[0];
+        weeks[weekKey] = (weeks[weekKey] || 0) + (t.payout_amount || 0);
+      }
+    });
+
+    return Object.entries(weeks)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-8)
+      .map(([week, earnings], i) => ({
+        week: `W${i + 1}`,
+        earnings
+      }));
+  }, [transactions]);
+
+  const averageWeeklyEarnings = historicalData.length > 0
+    ? historicalData.reduce((sum, w) => sum + w.earnings, 0) / historicalData.length
+    : 0;
+
+  const bestWeek = historicalData.length > 0
+    ? Math.max(...historicalData.map(w => w.earnings))
+    : 0;
+
+  const projectedMonthlyEarnings = averageWeeklyEarnings * 4.33;
+
+  const trend = useMemo(() => {
+    if (historicalData.length < 2) return 'stable' as const;
+    const recent = historicalData.slice(-2);
+    const change = recent[1].earnings - recent[0].earnings;
+    if (change > recent[0].earnings * 0.1) return 'up' as const;
+    if (change < -recent[0].earnings * 0.1) return 'down' as const;
+    return 'stable' as const;
+  }, [historicalData]);
+
+  const trendPercentage = useMemo(() => {
+    if (historicalData.length < 2) return 0;
+    const recent = historicalData.slice(-2);
+    if (recent[0].earnings === 0) return 0;
+    return ((recent[1].earnings - recent[0].earnings) / recent[0].earnings) * 100;
+  }, [historicalData]);
+
+  // Verification progress (simplified)
+  const verificationProgress = useMemo(() => {
+    let progress = 30; // Base
+    if (payoutAccount?.bank_last4) progress += 30;
+    if (summary.completedTasks >= 10) progress += 20;
+    if (summary.completedTasks >= 50) progress += 20;
+    return Math.min(progress, 100);
+  }, [payoutAccount, summary.completedTasks]);
+
+  const currentTier = useMemo(() => {
+    if (summary.completedTasks >= 50 && verificationProgress >= 90) return 'premium';
+    if (payoutAccount?.bank_last4 && verificationProgress >= 60) return 'verified';
+    return 'basic';
+  }, [summary.completedTasks, payoutAccount, verificationProgress]);
+
+  const handleUpdateGoal = (newGoal: number) => {
+    setWeeklyGoal(newGoal);
+    localStorage.setItem('weeklyEarningsGoal', newGoal.toString());
+  };
 
   return (
     <div className="space-y-6">
       {/* Earnings Overview */}
       <EarningsOverview summary={summary} growthPercentage={growthPercentage} />
 
+      {/* Weekly Goal */}
+      <WeeklyEarningsGoal
+        currentWeekEarnings={currentWeekEarnings}
+        weeklyGoal={weeklyGoal}
+        onUpdateGoal={handleUpdateGoal}
+        streakDays={streakDays}
+        daysLeftInWeek={daysLeftInWeek}
+      />
+
       {/* Main Tabs */}
       <Tabs defaultValue="cashout" className="space-y-6">
-        <TabsList className="w-full grid grid-cols-4 h-auto p-1 bg-muted/50">
+        <TabsList className="w-full grid grid-cols-5 h-auto p-1 bg-muted/50">
           <TabsTrigger value="cashout" className="gap-2 py-3 data-[state=active]:bg-background">
             <Zap className="h-4 w-4" />
             <span className="hidden sm:inline">Cash Out</span>
           </TabsTrigger>
-          <TabsTrigger value="schedule" className="gap-2 py-3 data-[state=active]:bg-background">
+          <TabsTrigger value="pending" className="gap-2 py-3 data-[state=active]:bg-background relative">
             <Calendar className="h-4 w-4" />
-            <span className="hidden sm:inline">Schedule</span>
+            <span className="hidden sm:inline">Pending</span>
+            {pendingPayments.length > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 text-[10px] bg-amber-500 text-white rounded-full flex items-center justify-center">
+                {pendingPayments.length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="insights" className="gap-2 py-3 data-[state=active]:bg-background">
+            <TrendingUp className="h-4 w-4" />
+            <span className="hidden sm:inline">Insights</span>
           </TabsTrigger>
           <TabsTrigger value="methods" className="gap-2 py-3 data-[state=active]:bg-background">
             <CreditCard className="h-4 w-4" />
@@ -66,13 +244,21 @@ export function UberPayoutSettings({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="cashout" className="space-y-4">
+        <TabsContent value="cashout" className="space-y-6">
           {isPayoutAccountActive ? (
-            <InstantCashout
-              availableBalance={summary.inEscrow}
-              bankLast4={payoutAccount?.bank_last4}
-              onSuccess={onRefresh}
-            />
+            <>
+              <InstantCashout
+                availableBalance={summary.inEscrow}
+                bankLast4={payoutAccount?.bank_last4}
+                onSuccess={onRefresh}
+              />
+              <WithdrawalTiers
+                currentTier={currentTier}
+                verificationProgress={verificationProgress}
+                onUpgrade={() => navigate('/verification')}
+              />
+              <PayoutSchedule payoutAccountActive={isPayoutAccountActive} />
+            </>
           ) : (
             <div className="space-y-4">
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
@@ -85,8 +271,25 @@ export function UberPayoutSettings({
           )}
         </TabsContent>
 
-        <TabsContent value="schedule">
-          <PayoutSchedule payoutAccountActive={isPayoutAccountActive} />
+        <TabsContent value="pending" className="space-y-4">
+          <PendingPaymentsTimeline pendingPayments={pendingPayments} />
+        </TabsContent>
+
+        <TabsContent value="insights" className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <EarningsBreakdown
+              categoryEarnings={categoryEarnings}
+              totalEarnings={summary.totalEarnings}
+            />
+            <EarningsProjection
+              historicalData={historicalData}
+              averageWeeklyEarnings={averageWeeklyEarnings}
+              projectedMonthlyEarnings={projectedMonthlyEarnings}
+              bestWeek={bestWeek}
+              trend={trend}
+              trendPercentage={trendPercentage}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="methods">
