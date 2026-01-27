@@ -15,24 +15,51 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ mode }) 
   const handleGoogleAuth = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      // Get the current origin to build redirect URL
+      const redirectUrl = `${window.location.origin}/auth?provider=google`;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          // Redirect to onboarding first - it will check if registration is needed
-          redirectTo: `${window.location.origin}/onboarding`,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: "offline",
             prompt: "consent",
           },
+          skipBrowserRedirect: false,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Google OAuth error:", error);
+        throw error;
+      }
+
+      // If we get a URL, the OAuth flow has started
+      // The browser will redirect to Google, then back to our redirectUrl
+      if (data?.url) {
+        // The redirect happens automatically, but we can log it for debugging
+        console.log("OAuth redirect URL:", data.url);
+      }
     } catch (error: any) {
       console.error("Google auth error:", error);
+
+      // Provide more specific error messages
+      let errorMessage = "Unable to sign in with Google. Please try again.";
+
+      if (error?.message) {
+        if (error.message.includes("redirect_uri_mismatch")) {
+          errorMessage = "OAuth configuration error. Please contact support.";
+        } else if (error.message.includes("popup")) {
+          errorMessage = "Popup blocked. Please allow popups for this site.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       toast({
         title: "Authentication failed",
-        description: error.message || "Unable to sign in with Google. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
       setIsLoading(false);

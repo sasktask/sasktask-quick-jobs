@@ -267,7 +267,9 @@ const Auth: React.FC = () => {
   const [searchParams] = useSearchParams();
   const urlMode = searchParams.get("mode");
   const mode = urlMode === "signin" ? "signin" : urlMode === "reset-password" ? "reset-password" : "signup";
+  const oauthProvider = searchParams.get("provider");
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const oauthProvider = searchParams.get("provider");
 
   // Recovery dialogs state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -344,6 +346,40 @@ const Auth: React.FC = () => {
     if (!dateOfBirth) return null;
     return validateAge(dateOfBirth);
   }, [dateOfBirth]);
+
+  // Handle OAuth callback
+  useEffect(() => {
+    const handleOAuthCallback = async () => {
+      if (oauthProvider) {
+        // Check for OAuth callback (Supabase adds hash fragments)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get("access_token");
+        const error = hashParams.get("error");
+        const errorDescription = hashParams.get("error_description");
+
+        if (error) {
+          toast({
+            title: "OAuth Error",
+            description: error === "access_denied"
+              ? "Google sign-in was cancelled."
+              : errorDescription || `Authentication failed: ${error}`,
+            variant: "destructive",
+          });
+          // Clean up URL
+          window.history.replaceState({}, document.title, "/auth");
+          return;
+        }
+
+        if (accessToken) {
+          // Session will be handled by onAuthStateChange
+          // Just clean up the URL
+          window.history.replaceState({}, document.title, "/auth");
+        }
+      }
+    };
+
+    handleOAuthCallback();
+  }, [oauthProvider, toast]);
 
   // Autofocus on step change
   useEffect(() => {
