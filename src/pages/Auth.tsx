@@ -360,12 +360,50 @@ const Auth: React.FC = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session) {
+        // Check if user needs to complete registration (OAuth users without roles)
+        const { data: rolesData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id);
+
+        const roles = rolesData?.map(r => r.role) || [];
+
+        // If no roles, redirect to onboarding to complete registration
+        if (roles.length === 0) {
+          // Check if this is an OAuth user
+          const isOAuthUser = session.user.app_metadata?.provider &&
+            session.user.app_metadata.provider !== 'email';
+
+          if (isOAuthUser || !session.user.user_metadata?.role) {
+            navigate("/onboarding");
+            return;
+          }
+        }
+
         navigate("/dashboard");
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session && mode === "signin") {
+        // Check if user needs to complete registration
+        const { data: rolesData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id);
+
+        const roles = rolesData?.map(r => r.role) || [];
+
+        if (roles.length === 0) {
+          const isOAuthUser = session.user.app_metadata?.provider &&
+            session.user.app_metadata.provider !== 'email';
+
+          if (isOAuthUser || !session.user.user_metadata?.role) {
+            navigate("/onboarding");
+            return;
+          }
+        }
+
         navigate("/dashboard");
       }
     });

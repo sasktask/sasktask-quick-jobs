@@ -18,7 +18,8 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ mode }) 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          // Redirect to onboarding first - it will check if registration is needed
+          redirectTo: `${window.location.origin}/onboarding`,
           queryParams: {
             access_type: "offline",
             prompt: "consent",

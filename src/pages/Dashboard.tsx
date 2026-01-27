@@ -139,6 +139,24 @@ const Dashboard = () => {
       
       const roles = rolesData?.map(r => r.role) || [];
       setUserRoles(roles);
+      
+      // Check if user needs to complete registration (no roles assigned)
+      // This typically happens with OAuth sign-ins (Google, Apple, etc.)
+      if (roles.length === 0) {
+        // Check if user came from OAuth (has provider but no role metadata)
+        const isOAuthUser = session.user.app_metadata?.provider && 
+                           session.user.app_metadata.provider !== 'email';
+        
+        if (isOAuthUser || !session.user.user_metadata?.role) {
+          toast({
+            title: "Complete your registration",
+            description: "Please complete your profile to start using SaskTask.",
+          });
+          navigate("/onboarding");
+          return;
+        }
+      }
+      
       // Set primary role: admin > task_doer > task_giver
       const adminRole = roles.find(r => r === 'admin');
       const taskDoerRole = roles.find(r => r === 'task_doer');

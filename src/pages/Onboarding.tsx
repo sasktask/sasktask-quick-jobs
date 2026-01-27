@@ -62,22 +62,33 @@ const Onboarding = () => {
 
     setUser(session.user);
     
-    // Get user name from metadata
+    // Get user name from metadata (works for both email and OAuth signups)
     const fullName = session.user.user_metadata?.full_name || 
                      session.user.user_metadata?.first_name || 
+                     session.user.user_metadata?.name ||
                      "";
-    setUserName(fullName.split(" ")[0]);
+    setUserName(fullName.split(" ")[0] || "User");
 
-    // Check if profile is already complete
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("city, bio, profile_completion")
-      .eq("id", session.user.id)
-      .single();
+    // Check if user has roles assigned (OAuth users might not have roles)
+    const { data: rolesData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id);
+    
+    const roles = rolesData?.map(r => r.role) || [];
+    
+    // If user already has roles and profile is complete, redirect to dashboard
+    if (roles.length > 0) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("city, bio, profile_completion")
+        .eq("id", session.user.id)
+        .maybeSingle();
 
-    if (profile?.profile_completion >= 80) {
-      navigate("/dashboard");
-      return;
+      if (profile?.profile_completion >= 80) {
+        navigate("/dashboard");
+        return;
+      }
     }
 
     // Check if terms have been accepted
@@ -85,7 +96,7 @@ const Onboarding = () => {
       .from("verifications")
       .select("terms_accepted, privacy_accepted, age_verified")
       .eq("user_id", session.user.id)
-      .single();
+      .maybeSingle();
 
     if (verification?.terms_accepted && verification?.privacy_accepted && verification?.age_verified) {
       // Terms already accepted, go to role selection
@@ -123,17 +134,32 @@ const Onboarding = () => {
 
     setLoading(true);
     try {
-      // Insert roles into user_roles table
+      // Insert roles into user_roles table (use upsert to handle duplicates)
       for (const role of roleSelection) {
-        await supabase
+        const { error } = await supabase
           .from("user_roles")
-          .insert({ 
+          .upsert({ 
             user_id: user.id, 
             role: role as any 
-          })
-          .select()
-          .single();
+          }, {
+            onConflict: 'user_id,role'
+          });
+        
+        if (error && !error.message.includes('duplicate')) {
+          throw error;
+        }
       }
+
+      // Also update user metadata with role for consistency
+      const primaryRole = roleSelection[0];
+      const wantsBothRoles = roleSelection.length > 1;
+      
+      await supabase.auth.updateUser({
+        data: {
+          role: primaryRole,
+          wants_both_roles: wantsBothRoles,
+        }
+      });
 
       setStep(2);
     } catch (error: any) {
