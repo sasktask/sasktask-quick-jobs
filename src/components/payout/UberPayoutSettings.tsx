@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { InstantCashout } from './InstantCashout';
 import { PayoutSchedule } from './PayoutSchedule';
 import { PayoutMethods } from './PayoutMethods';
 import { EarningsOverview } from './EarningsOverview';
@@ -11,17 +10,21 @@ import { EarningsBreakdown } from './EarningsBreakdown';
 import { WithdrawalTiers } from './WithdrawalTiers';
 import { PendingPaymentsTimeline } from './PendingPaymentsTimeline';
 import { EarningsProjection } from './EarningsProjection';
+import { SecureWithdrawalFlow } from './SecureWithdrawalFlow';
+import { PayoutTaxSummary } from './PayoutTaxSummary';
+import { TaxBreakdownPanel } from './TaxBreakdownPanel';
 import { EarningsSummary } from '@/hooks/usePayoutData';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuthContext';
 import { 
-  Zap, 
+  Wallet, 
   Calendar, 
   CreditCard, 
   History,
   Settings,
-  Target,
   TrendingUp,
-  ShieldCheck
+  FileText,
+  Calculator
 } from 'lucide-react';
 import {
   Sheet,
@@ -47,6 +50,7 @@ export function UberPayoutSettings({
   onRefresh
 }: UberPayoutSettingsProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [addMethodOpen, setAddMethodOpen] = useState(false);
   const [weeklyGoal, setWeeklyGoal] = useState(() => {
     const saved = localStorage.getItem('weeklyEarningsGoal');
@@ -215,11 +219,11 @@ export function UberPayoutSettings({
       />
 
       {/* Main Tabs */}
-      <Tabs defaultValue="cashout" className="space-y-6">
-        <TabsList className="w-full grid grid-cols-5 h-auto p-1 bg-muted/50">
-          <TabsTrigger value="cashout" className="gap-2 py-3 data-[state=active]:bg-background">
-            <Zap className="h-4 w-4" />
-            <span className="hidden sm:inline">Cash Out</span>
+      <Tabs defaultValue="withdraw" className="space-y-6">
+        <TabsList className="w-full grid grid-cols-6 h-auto p-1 bg-muted/50">
+          <TabsTrigger value="withdraw" className="gap-2 py-3 data-[state=active]:bg-background">
+            <Wallet className="h-4 w-4" />
+            <span className="hidden sm:inline">Withdraw</span>
           </TabsTrigger>
           <TabsTrigger value="pending" className="gap-2 py-3 data-[state=active]:bg-background relative">
             <Calendar className="h-4 w-4" />
@@ -229,6 +233,10 @@ export function UberPayoutSettings({
                 {pendingPayments.length}
               </span>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="taxes" className="gap-2 py-3 data-[state=active]:bg-background">
+            <Calculator className="h-4 w-4" />
+            <span className="hidden sm:inline">Taxes</span>
           </TabsTrigger>
           <TabsTrigger value="insights" className="gap-2 py-3 data-[state=active]:bg-background">
             <TrendingUp className="h-4 w-4" />
@@ -244,11 +252,12 @@ export function UberPayoutSettings({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="cashout" className="space-y-6">
+        <TabsContent value="withdraw" className="space-y-6">
           {isPayoutAccountActive ? (
             <>
-              <InstantCashout
+              <SecureWithdrawalFlow
                 availableBalance={summary.inEscrow}
+                inEscrow={summary.pendingEarnings}
                 bankLast4={payoutAccount?.bank_last4}
                 onSuccess={onRefresh}
               />
@@ -263,7 +272,7 @@ export function UberPayoutSettings({
             <div className="space-y-4">
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
                 <p className="text-sm text-amber-700 dark:text-amber-400">
-                  ⚠️ Set up a bank account to enable instant cashout and scheduled payouts.
+                  ⚠️ Set up a bank account to enable withdrawals and scheduled payouts.
                 </p>
               </div>
               <PayoutAccountSetup />
@@ -273,6 +282,19 @@ export function UberPayoutSettings({
 
         <TabsContent value="pending" className="space-y-4">
           <PendingPaymentsTimeline pendingPayments={pendingPayments} />
+        </TabsContent>
+
+        <TabsContent value="taxes" className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <PayoutTaxSummary 
+              userId={user?.id || null} 
+              totalEarnings={summary.totalEarnings} 
+            />
+            <TaxBreakdownPanel 
+              grossAmount={summary.totalEarnings} 
+              showDetailed 
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="insights" className="space-y-6">
