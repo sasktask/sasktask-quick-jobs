@@ -269,7 +269,6 @@ const Auth: React.FC = () => {
   const mode = urlMode === "signin" ? "signin" : urlMode === "reset-password" ? "reset-password" : "signup";
   const oauthProvider = searchParams.get("provider");
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const oauthProvider = searchParams.get("provider");
 
   // Recovery dialogs state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
