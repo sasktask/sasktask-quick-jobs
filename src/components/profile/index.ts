@@ -7,3 +7,5 @@ export { EnhancedSecurityDashboard } from './EnhancedSecurityDashboard';
 export { ProfileActivityTimeline } from './ProfileActivityTimeline';
 export { PrivacySettings } from './PrivacySettings';
 export { TwoFactorSetup } from './TwoFactorSetup';
+export { UberStyleProfilePhoto } from './UberStyleProfilePhoto';
+export { VerifiedAvatar, PhotoVerifiedBadge } from './VerifiedAvatar';

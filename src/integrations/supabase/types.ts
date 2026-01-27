@@ -1711,6 +1711,8 @@ export type Database = {
           payment_verified: boolean | null
           payment_verified_at: string | null
           phone: string | null
+          photo_verified: boolean | null
+          photo_verified_at: string | null
           preferred_categories: string[] | null
           profile_completion: number | null
           rating: number | null
@@ -1771,6 +1773,8 @@ export type Database = {
           payment_verified?: boolean | null
           payment_verified_at?: string | null
           phone?: string | null
+          photo_verified?: boolean | null
+          photo_verified_at?: string | null
           preferred_categories?: string[] | null
           profile_completion?: number | null
           rating?: number | null
@@ -1831,6 +1835,8 @@ export type Database = {
           payment_verified?: boolean | null
           payment_verified_at?: string | null
           phone?: string | null
+          photo_verified?: boolean | null
+          photo_verified_at?: string | null
           preferred_categories?: string[] | null
           profile_completion?: number | null
           rating?: number | null
@@ -3775,6 +3781,11 @@ export type Database = {
           insurance_provider: string | null
           legal_name: string | null
           phone_verified: boolean | null
+          photo_rejection_reason: string | null
+          photo_url: string | null
+          photo_verification_status: string | null
+          photo_verified_at: string | null
+          photo_verified_by: string | null
           privacy_accepted: boolean
           privacy_accepted_at: string | null
           rejection_reason: string | null
@@ -3816,6 +3827,11 @@ export type Database = {
           insurance_provider?: string | null
           legal_name?: string | null
           phone_verified?: boolean | null
+          photo_rejection_reason?: string | null
+          photo_url?: string | null
+          photo_verification_status?: string | null
+          photo_verified_at?: string | null
+          photo_verified_by?: string | null
           privacy_accepted?: boolean
           privacy_accepted_at?: string | null
           rejection_reason?: string | null
@@ -3857,6 +3873,11 @@ export type Database = {
           insurance_provider?: string | null
           legal_name?: string | null
           phone_verified?: boolean | null
+          photo_rejection_reason?: string | null
+          photo_url?: string | null
+          photo_verification_status?: string | null
+          photo_verified_at?: string | null
+          photo_verified_by?: string | null
           privacy_accepted?: boolean
           privacy_accepted_at?: string | null
           rejection_reason?: string | null

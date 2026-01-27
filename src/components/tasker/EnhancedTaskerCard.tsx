@@ -2,13 +2,13 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Star, Shield, MapPin, Briefcase, Award, TrendingUp, 
   CheckCircle, Clock, MessageSquare, Calendar, Zap,
-  ThumbsUp, Users
+  ThumbsUp, Users, Camera
 } from "lucide-react";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { VerifiedAvatar } from "@/components/profile/VerifiedAvatar";
 import { motion } from "framer-motion";
 
 interface EnhancedTaskerCardProps {
@@ -31,7 +31,9 @@ interface EnhancedTaskerCardProps {
       id_verified?: boolean;
       background_check_status?: string;
       has_insurance?: boolean;
+      photo_verification_status?: string;
     };
+    photo_verified?: boolean;
     badgeCount?: number;
   };
   currentUserId?: string;
@@ -110,16 +112,15 @@ export const EnhancedTaskerCard = ({
           <div className="flex items-start gap-4 mb-4">
             <div className="relative">
               <div className={`absolute -inset-1 rounded-full bg-gradient-to-r from-primary to-secondary opacity-0 group-hover:opacity-100 blur transition-opacity ${isElite ? "opacity-50" : ""}`} />
-              <Avatar className="relative h-20 w-20 border-2 border-background">
-                <AvatarImage
-                  src={tasker.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${tasker.full_name}`}
-                  alt={tasker.full_name}
-                />
-                <AvatarFallback className="text-2xl bg-primary/10">
-                  {tasker.full_name?.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              {tasker.is_online && (
+              <VerifiedAvatar
+                src={tasker.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${tasker.full_name}`}
+                alt={tasker.full_name}
+                isVerified={tasker.photo_verified || tasker.verifications?.photo_verification_status === "verified"}
+                size="lg"
+                className="relative border-2 border-background"
+                fallbackClassName="text-2xl bg-primary/10"
+              />
+              {tasker.is_online && !tasker.photo_verified && (
                 <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-3 border-background rounded-full flex items-center justify-center">
                   <span className="w-2 h-2 bg-white rounded-full animate-ping" />
                 </div>

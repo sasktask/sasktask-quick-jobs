@@ -9,9 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Upload, User } from "lucide-react";
-import { ImageCropDialog } from "@/components/ImageCropDialog";
+import { Loader2 } from "lucide-react";
+import { UberStyleProfilePhoto } from "@/components/profile/UberStyleProfilePhoto";
 
 const profileSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters").max(100),
@@ -34,11 +33,8 @@ interface ProfileSettingsProps {
 
 export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState<Tables<"profiles"> | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string>("");
-  const [cropDialogOpen, setCropDialogOpen] = useState(false);
-  const [imageToCrop, setImageToCrop] = useState<string>("");
+  const [photoVerificationStatus, setPhotoVerificationStatus] = useState<"none" | "pending" | "verified" | "rejected">("none");
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -53,27 +49,44 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
 
   const loadProfile = async () => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+      // Fetch profile and verification status
+      const [profileResult, verificationResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single(),
+        supabase
+          .from("verifications")
+          .select("photo_verification_status")
+          .eq("user_id", user.id)
+          .single()
+      ]);
 
-      if (error) throw error;
+      if (profileResult.error) throw profileResult.error;
 
-      setProfile(data);
-      setAvatarUrl(data.avatar_url || "");
+      setProfile(profileResult.data);
+      
+      // Set photo verification status
+      if (verificationResult.data?.photo_verification_status) {
+        setPhotoVerificationStatus(
+          verificationResult.data.photo_verification_status as "none" | "pending" | "verified" | "rejected"
+        );
+      } else {
+        setPhotoVerificationStatus("none");
+      }
+
       reset({
-        full_name: data.full_name || "",
-        phone: data.phone || "",
-        city: data.city || "",
-        bio: data.bio || "",
-        skills: data.skills?.join(", ") || "",
-        hourly_rate: data.hourly_rate?.toString() || "",
-        website: data.website || "",
-        linkedin: data.linkedin || "",
-        twitter: data.twitter || "",
-        facebook: data.facebook || "",
+        full_name: profileResult.data.full_name || "",
+        phone: profileResult.data.phone || "",
+        city: profileResult.data.city || "",
+        bio: profileResult.data.bio || "",
+        skills: profileResult.data.skills?.join(", ") || "",
+        hourly_rate: profileResult.data.hourly_rate?.toString() || "",
+        website: profileResult.data.website || "",
+        linkedin: profileResult.data.linkedin || "",
+        twitter: profileResult.data.twitter || "",
+        facebook: profileResult.data.facebook || "",
       });
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -125,131 +138,26 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
     }
   };
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      if (!event.target.files || event.target.files.length === 0) {
-        return;
-      }
-
-      const file = event.target.files[0];
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("File size must be less than 5MB");
-        return;
-      }
-
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please upload an image file");
-        return;
-      }
-
-      // Read file as data URL for cropping
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImageToCrop(reader.result as string);
-        setCropDialogOpen(true);
-      };
-      reader.readAsDataURL(file);
-
-      // Reset input
-      event.target.value = "";
-    } catch (error: any) {
-      console.error("Error preparing image:", error);
-      toast.error(error.message || "Failed to load image");
-    }
-  };
-
-  const handleCropComplete = async (croppedBlob: Blob) => {
-    try {
-      setUploading(true);
-
-      const fileExt = "jpg";
-      // Use folder structure: userId/filename to match RLS policy
-      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
-
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from("profile-photos")
-        .upload(filePath, croppedBlob, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("profile-photos")
-        .getPublicUrl(filePath);
-
-      // Update profile
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ avatar_url: publicUrl })
-        .eq("id", user.id);
-
-      if (updateError) throw updateError;
-
-      setAvatarUrl(publicUrl);
-      toast.success("Profile photo updated successfully!");
-      loadProfile();
-    } catch (error: any) {
-      console.error("Error uploading avatar:", error);
-      toast.error(error.message || "Failed to upload avatar");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   return (
-    <>
-      <ImageCropDialog
-        open={cropDialogOpen}
-        onClose={() => setCropDialogOpen(false)}
-        imageSrc={imageToCrop}
-        onCropComplete={handleCropComplete}
+    <div className="space-y-6">
+      {/* Uber-Style Profile Photo Section */}
+      <UberStyleProfilePhoto
+        userId={user.id}
+        currentPhotoUrl={profile?.avatar_url || null}
+        isPhotoVerified={(profile as any)?.photo_verified || false}
+        verificationStatus={photoVerificationStatus}
+        onPhotoUpdated={loadProfile}
       />
 
+      {/* Profile Information Card */}
       <Card>
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
           <CardDescription>
-            Update your personal information and profile picture
+            Update your personal information
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Avatar Section */}
-          <div className="flex items-center gap-6">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={avatarUrl} alt="Profile" />
-              <AvatarFallback>
-                <User className="h-12 w-12" />
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <Label htmlFor="avatar-upload" className="cursor-pointer">
-                <div className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
-                  {uploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4" />
-                  )}
-                  Upload Photo
-                </div>
-              </Label>
-              <Input
-                id="avatar-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarUpload}
-                disabled={uploading}
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                JPG, PNG or GIF. Max 5MB.
-              </p>
-            </div>
-          </div>
-
+        <CardContent>
           {/* Profile Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
@@ -410,6 +318,6 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
           </form>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 };
