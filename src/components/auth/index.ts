@@ -12,3 +12,6 @@ export { AccountRecoveryDialog } from "./AccountRecoveryDialog";
 export { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
 export { SecurePasswordInput } from "./SecurePasswordInput";
 export { ResetPasswordForm } from "./ResetPasswordForm";
+export { RecoveryOptionsCard } from "./RecoveryOptionsCard";
+export { ForgotEmailDialog } from "./ForgotEmailDialog";
+export { ContactSupportDialog } from "./ContactSupportDialog";
