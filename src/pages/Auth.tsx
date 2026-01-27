@@ -268,7 +268,7 @@ const Auth: React.FC = () => {
   const urlMode = searchParams.get("mode");
   const mode = urlMode === "signin" ? "signin" : urlMode === "reset-password" ? "reset-password" : "signup";
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  
+
   // Recovery dialogs state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showForgotEmail, setShowForgotEmail] = useState(false);
@@ -632,27 +632,88 @@ const Auth: React.FC = () => {
         },
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        // Check for specific error types
+        if (signUpError.message?.toLowerCase().includes("database") ||
+          signUpError.message?.toLowerCase().includes("server_error") ||
+          signUpError.message?.toLowerCase().includes("unexpected_failure")) {
+          toast({
+            title: "Account creation error",
+            description: "There was a database error creating your account. Please try again or contact support if the issue persists.",
+            variant: "destructive",
+          });
+        } else {
+          throw signUpError;
+        }
+        return;
+      }
 
       if (signUpData?.user) {
-        // Show welcome animation
-        setShowWelcome(true);
+        // Check if we have a session (user is already signed in)
+        // This happens when email confirmation is disabled or user is auto-confirmed
+        if (signUpData.session) {
+          // User is already signed in, show welcome animation
+          setShowWelcome(true);
+        } else {
+          // No session means email confirmation might be required by Supabase
+          // Try to sign in - if it fails, we'll handle it
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
 
-        // Auto sign-in
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (signInError) {
-          console.error("Auto sign-in failed:", signInError);
+          if (signInError) {
+            // Check if error is due to email not being confirmed
+            if (signInError.message?.toLowerCase().includes("email not confirmed") ||
+              signInError.message?.toLowerCase().includes("confirm") ||
+              signInError.message?.toLowerCase().includes("verification")) {
+              toast({
+                title: "Email confirmation required",
+                description: "Please check your email and click the confirmation link to complete signup.",
+                variant: "default",
+              });
+              // Navigate to sign in page so user can sign in after confirming
+              navigate("/auth?mode=signin");
+              return;
+            } else {
+              // Other sign-in error
+              console.error("Auto sign-in failed:", signInError);
+              toast({
+                title: "Account created",
+                description: "Your account has been created. Please sign in to continue.",
+                variant: "default",
+              });
+              navigate("/auth?mode=signin");
+              return;
+            }
+          }
+
+          // Sign in successful
+          if (signInData?.session) {
+            setShowWelcome(true);
+          }
         }
       }
     } catch (err: any) {
-      toast({
-        title: "Signup failed",
-        description: err?.message || "Unable to create your account.",
-        variant: "destructive",
-      });
+      // Handle other errors
+      const errorMessage = err?.message || "Unable to create your account.";
+
+      // Check for database/server errors
+      if (errorMessage.toLowerCase().includes("database") ||
+        errorMessage.toLowerCase().includes("server_error") ||
+        errorMessage.toLowerCase().includes("unexpected_failure")) {
+        toast({
+          title: "Account creation error",
+          description: "There was a database error creating your account. Please try again or contact support if the issue persists.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Signup failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -701,33 +762,33 @@ const Auth: React.FC = () => {
           url="/auth?mode=signin"
         />
         <Navbar />
-        
+
         {/* Forgot Password Dialog */}
         <ForgotPasswordDialog
           open={showForgotPassword}
           onOpenChange={setShowForgotPassword}
           onSwitchToForgotEmail={() => setShowForgotEmail(true)}
         />
-        
+
         {/* Forgot Email Dialog */}
         <ForgotEmailDialog
           open={showForgotEmail}
           onOpenChange={setShowForgotEmail}
           onSwitchToPassword={() => setShowForgotPassword(true)}
         />
-        
+
         {/* Contact Support Dialog */}
         <ContactSupportDialog
           open={showContactSupport}
           onOpenChange={setShowContactSupport}
         />
-        
+
         {/* Account Recovery Dialog (legacy - kept for compatibility) */}
         <AccountRecoveryDialog
           open={showAccountRecovery}
           onOpenChange={setShowAccountRecovery}
         />
-        
+
         <div className="container mx-auto px-4 pt-24 pb-16 max-w-md">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -774,7 +835,7 @@ const Auth: React.FC = () => {
                   </div>
                   {formErrors.signInEmail && <p className="text-sm text-destructive">{formErrors.signInEmail}</p>}
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>Password</Label>
@@ -793,7 +854,7 @@ const Auth: React.FC = () => {
                     autoComplete="current-password"
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Checkbox
@@ -804,7 +865,7 @@ const Auth: React.FC = () => {
                     <Label htmlFor="signin-remember" className="text-sm text-foreground/80">Remember me</Label>
                   </div>
                 </div>
-                
+
                 <Button className="w-full h-12" onClick={handleSignIn} disabled={isSigningIn}>
                   {isSigningIn ? (
                     <>
@@ -818,7 +879,7 @@ const Auth: React.FC = () => {
                     </>
                   )}
                 </Button>
-                
+
                 {/* Account Recovery Options */}
                 <div className="pt-4 border-t border-border">
                   <RecoveryOptionsCard
@@ -827,7 +888,7 @@ const Auth: React.FC = () => {
                     onContactSupport={() => setShowContactSupport(true)}
                   />
                 </div>
-                
+
                 <div className="text-center text-sm text-foreground/70">
                   New to SaskTask?{" "}
                   <Button variant="link" className="px-1" onClick={() => navigate("/auth")}>
@@ -1240,7 +1301,7 @@ const Auth: React.FC = () => {
                             error={formErrors.confirmPassword}
                             className={
                               passwordsMatch === true ? "border-green-500" :
-                              passwordsMatch === false ? "border-destructive" : ""
+                                passwordsMatch === false ? "border-destructive" : ""
                             }
                           />
                           {passwordsMatch === true && (
@@ -1300,13 +1361,12 @@ const Auth: React.FC = () => {
 
                         <div className="space-y-3">
                           <div
-                            className={`flex items-start space-x-3 p-4 rounded-lg border transition-colors ${
-                              formErrors.termsAccepted
-                                ? "border-destructive bg-destructive/5"
-                                : termsAccepted
-                                  ? "border-green-500/50 bg-green-500/5"
-                                  : "border-border"
-                            }`}
+                            className={`flex items-start space-x-3 p-4 rounded-lg border transition-colors ${formErrors.termsAccepted
+                              ? "border-destructive bg-destructive/5"
+                              : termsAccepted
+                                ? "border-green-500/50 bg-green-500/5"
+                                : "border-border"
+                              }`}
                           >
                             <Checkbox
                               id="terms-accept"
