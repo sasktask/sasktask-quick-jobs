@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
 import { SEOHead } from "@/components/SEOHead";
 import { PhoneVerification } from "@/components/PhoneVerification";
-import { SignupProgressBar, WelcomeAnimation, GoogleSignInButton, SignupStepInfo, MagicLinkButton, AppleSignInButton, OnboardingTutorialDialog, ForgotPasswordDialog, AccountRecoveryDialog, SecurePasswordInput, PasswordStrengthIndicator, ResetPasswordForm } from "@/components/auth";
+import { SignupProgressBar, WelcomeAnimation, GoogleSignInButton, SignupStepInfo, MagicLinkButton, AppleSignInButton, OnboardingTutorialDialog, ForgotPasswordDialog, AccountRecoveryDialog, SecurePasswordInput, PasswordStrengthIndicator, ResetPasswordForm, RecoveryOptionsCard, ForgotEmailDialog, ContactSupportDialog } from "@/components/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { z } from "zod";
 import {
@@ -271,7 +271,10 @@ const Auth: React.FC = () => {
   
   // Recovery dialogs state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showForgotEmail, setShowForgotEmail] = useState(false);
+  const [showContactSupport, setShowContactSupport] = useState(false);
   const [showAccountRecovery, setShowAccountRecovery] = useState(false);
+  const [showRecoveryOptions, setShowRecoveryOptions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -703,9 +706,23 @@ const Auth: React.FC = () => {
         <ForgotPasswordDialog
           open={showForgotPassword}
           onOpenChange={setShowForgotPassword}
+          onSwitchToForgotEmail={() => setShowForgotEmail(true)}
         />
         
-        {/* Account Recovery Dialog */}
+        {/* Forgot Email Dialog */}
+        <ForgotEmailDialog
+          open={showForgotEmail}
+          onOpenChange={setShowForgotEmail}
+          onSwitchToPassword={() => setShowForgotPassword(true)}
+        />
+        
+        {/* Contact Support Dialog */}
+        <ContactSupportDialog
+          open={showContactSupport}
+          onOpenChange={setShowContactSupport}
+        />
+        
+        {/* Account Recovery Dialog (legacy - kept for compatibility) */}
         <AccountRecoveryDialog
           open={showAccountRecovery}
           onOpenChange={setShowAccountRecovery}
@@ -803,18 +820,12 @@ const Auth: React.FC = () => {
                 </Button>
                 
                 {/* Account Recovery Options */}
-                <div className="pt-2 border-t border-border">
-                  <p className="text-center text-sm text-muted-foreground mb-2">
-                    Having trouble signing in?
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setShowAccountRecovery(true)}
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Recover Account
-                  </Button>
+                <div className="pt-4 border-t border-border">
+                  <RecoveryOptionsCard
+                    onForgotPassword={() => setShowForgotPassword(true)}
+                    onForgotEmail={() => setShowForgotEmail(true)}
+                    onContactSupport={() => setShowContactSupport(true)}
+                  />
                 </div>
                 
                 <div className="text-center text-sm text-foreground/70">
