@@ -24,9 +24,15 @@ export function InstantCashout({ availableBalance, bankLast4, onSuccess }: Insta
   const { toast } = useToast();
   const [amount, setAmount] = useState(Math.min(50, availableBalance));
   const [isProcessing, setIsProcessing] = useState(false);
+  const [dailyCashoutCount] = useState(0); // Track daily cashouts
   
-  const instantFee = 0.50; // $0.50 instant transfer fee
-  const netAmount = amount - instantFee;
+  // Uber-style instant payout fees and limits
+  const INSTANT_FEE = 1.25; // $1.25 per instant transfer (Uber standard)
+  const MAX_DAILY_CASHOUTS = 6; // Maximum 6 cashouts per day
+  const MIN_CASHOUT_AMOUNT = 1.00;
+  
+  const netAmount = amount - INSTANT_FEE;
+  const canCashout = dailyCashoutCount < MAX_DAILY_CASHOUTS && amount >= MIN_CASHOUT_AMOUNT;
   
   const handleInstantCashout = async () => {
     if (amount < 1) {
@@ -162,7 +168,7 @@ export function InstantCashout({ availableBalance, bankLast4, onSuccess }: Insta
               Instant fee
               <Info className="h-3 w-3" />
             </span>
-            <span className="text-amber-600">-${instantFee.toFixed(2)}</span>
+            <span className="text-amber-600">-${INSTANT_FEE.toFixed(2)}</span>
           </div>
           <div className="border-t border-border pt-2 mt-2">
             <div className="flex justify-between">
@@ -170,6 +176,14 @@ export function InstantCashout({ availableBalance, bankLast4, onSuccess }: Insta
               <span className="font-bold text-lg text-primary">${netAmount.toFixed(2)}</span>
             </div>
           </div>
+        </div>
+
+        {/* Daily Cashout Limit Info */}
+        <div className="flex items-center gap-2 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+          <Info className="h-4 w-4 text-blue-600" />
+          <p className="text-xs text-blue-600">
+            {dailyCashoutCount}/{MAX_DAILY_CASHOUTS} instant cashouts used today
+          </p>
         </div>
 
         {/* Destination */}
@@ -187,7 +201,7 @@ export function InstantCashout({ availableBalance, bankLast4, onSuccess }: Insta
         {/* Cashout Button */}
         <Button 
           onClick={handleInstantCashout}
-          disabled={isProcessing || amount < 1}
+          disabled={isProcessing || !canCashout}
           className="w-full h-12 text-base gap-2"
           size="lg"
         >
@@ -196,6 +210,8 @@ export function InstantCashout({ availableBalance, bankLast4, onSuccess }: Insta
               <Loader2 className="h-5 w-5 animate-spin" />
               Processing...
             </>
+          ) : !canCashout ? (
+            <>Daily limit reached</>
           ) : (
             <>
               <Zap className="h-5 w-5" />
@@ -206,7 +222,7 @@ export function InstantCashout({ availableBalance, bankLast4, onSuccess }: Insta
         </Button>
 
         <p className="text-xs text-center text-muted-foreground">
-          Funds typically arrive in 30 minutes or less
+          Funds typically arrive in 30 minutes or less • $1.25 fee per instant transfer
         </p>
       </CardContent>
     </Card>
