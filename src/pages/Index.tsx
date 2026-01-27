@@ -36,7 +36,27 @@ const Index = () => {
           session
         }
       } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        setUser(session.user);
+        
+        // If user is authenticated, check if they have roles
+        // If they do, they can stay on index or go to dashboard
+        // If they don't, redirect to onboarding
+        const { data: rolesData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id);
+        
+        const roles = rolesData?.map(r => r.role) || [];
+        
+        // If user has no roles, they need to complete onboarding
+        // But don't redirect from index - let them browse
+        // They'll be redirected when trying to access protected routes
+      } else {
+        setUser(null);
+      }
+      
       setIsCheckingAuth(false);
     };
     checkAuth();

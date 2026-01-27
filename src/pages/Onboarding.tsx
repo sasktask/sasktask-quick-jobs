@@ -161,6 +161,16 @@ const Onboarding = () => {
         }
       });
 
+      // Verify roles were saved
+      const { data: verifyRoles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+      
+      if (!verifyRoles || verifyRoles.length === 0) {
+        throw new Error("Failed to save roles. Please try again.");
+      }
+
       setStep(2);
     } catch (error: any) {
       console.error("Error saving roles:", error);
@@ -230,12 +240,51 @@ const Onboarding = () => {
     }
   };
 
-  const handleWelcomeClose = () => {
+  const handleWelcomeClose = async () => {
     setShowWelcome(false);
+    
+    // Verify roles are saved before redirecting
+    let roles: string[] = [];
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries && roles.length === 0) {
+      const { data: rolesData, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+      
+      if (error) {
+        console.error("Error checking roles:", error);
+      } else {
+        roles = rolesData?.map(r => r.role) || [];
+      }
+      
+      if (roles.length === 0 && retryCount < maxRetries - 1) {
+        // Wait a bit and retry
+        await new Promise(resolve => setTimeout(resolve, 500));
+        retryCount++;
+      } else {
+        break;
+      }
+    }
+    
+    if (roles.length === 0) {
+      toast({
+        title: "Error",
+        description: "Roles not saved. Please try selecting your role again.",
+        variant: "destructive",
+      });
+      setStep(1); // Go back to role selection
+      return;
+    }
+    
     toast({
       title: "Profile Complete! 🎉",
-      description: "Welcome to SaskTask! Let's get started.",
+      description: "Welcome to SaskTask! Redirecting to your dashboard...",
     });
+    
+    // Navigate to dashboard - it will verify roles again
     navigate("/dashboard");
   };
 

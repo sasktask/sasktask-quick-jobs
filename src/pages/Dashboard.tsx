@@ -142,18 +142,38 @@ const Dashboard = () => {
       
       // Check if user needs to complete registration (no roles assigned)
       // This typically happens with OAuth sign-ins (Google, Apple, etc.)
+      // But allow a small delay for roles to be saved after onboarding
       if (roles.length === 0) {
-        // Check if user came from OAuth (has provider but no role metadata)
-        const isOAuthUser = session.user.app_metadata?.provider && 
-                           session.user.app_metadata.provider !== 'email';
+        // Wait a moment and check again (in case roles are still being saved)
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        if (isOAuthUser || !session.user.user_metadata?.role) {
-          toast({
-            title: "Complete your registration",
-            description: "Please complete your profile to start using SaskTask.",
-          });
-          navigate("/onboarding");
-          return;
+        const { data: rolesDataRetry } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id);
+        
+        const rolesRetry = rolesDataRetry?.map(r => r.role) || [];
+        
+        if (rolesRetry.length === 0) {
+          // Check if user came from OAuth (has provider but no role metadata)
+          const isOAuthUser = session.user.app_metadata?.provider && 
+                             session.user.app_metadata.provider !== 'email';
+          
+          if (isOAuthUser || !session.user.user_metadata?.role) {
+            toast({
+              title: "Complete your registration",
+              description: "Please complete your profile to start using SaskTask.",
+            });
+            navigate("/onboarding");
+            return;
+          }
+        } else {
+          // Roles found on retry, update state
+          setUserRoles(rolesRetry);
+          const adminRole = rolesRetry.find(r => r === 'admin');
+          const taskDoerRole = rolesRetry.find(r => r === 'task_doer');
+          const taskGiverRole = rolesRetry.find(r => r === 'task_giver');
+          setUserRole(adminRole || taskDoerRole || taskGiverRole || null);
         }
       }
       

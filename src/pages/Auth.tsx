@@ -371,15 +371,57 @@ const Auth: React.FC = () => {
         }
 
         if (accessToken) {
-          // Session will be handled by onAuthStateChange
-          // Just clean up the URL
-          window.history.replaceState({}, document.title, "/auth");
+          // Wait a bit for Supabase to process the session
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          // Get the session to verify authentication
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+          if (sessionError) {
+            console.error("Session error after OAuth:", sessionError);
+            toast({
+              title: "Authentication Error",
+              description: "Failed to establish session. Please try again.",
+              variant: "destructive",
+            });
+            window.history.replaceState({}, document.title, "/auth");
+            return;
+          }
+
+          if (session?.user) {
+            // Check if user has roles
+            const { data: rolesData } = await supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", session.user.id);
+
+            const roles = rolesData?.map(r => r.role) || [];
+
+            // Clean up URL first
+            window.history.replaceState({}, document.title, "/auth");
+
+            // Redirect based on registration status
+            if (roles.length === 0) {
+              // No roles - redirect to onboarding
+              toast({
+                title: "Welcome!",
+                description: "Please complete your profile to get started.",
+              });
+              navigate("/onboarding");
+            } else {
+              // Has roles - redirect to dashboard
+              navigate("/dashboard");
+            }
+          } else {
+            // No session yet, wait for onAuthStateChange
+            window.history.replaceState({}, document.title, "/auth");
+          }
         }
       }
     };
 
     handleOAuthCallback();
-  }, [oauthProvider, toast]);
+  }, [oauthProvider, toast, navigate]);
 
   // Autofocus on step change
   useEffect(() => {
