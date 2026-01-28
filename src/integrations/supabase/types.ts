@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string
+          icon: string
+          id: string
+          is_active: boolean | null
+          name: string
+          requirement_type: string
+          requirement_value: number
+          reward_type: string | null
+          reward_value: number | null
+          tier: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description: string
+          icon: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          requirement_type: string
+          requirement_value: number
+          reward_type?: string | null
+          reward_value?: number | null
+          tier: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          requirement_type?: string
+          requirement_value?: number
+          reward_type?: string | null
+          reward_value?: number | null
+          tier?: string
+        }
+        Relationships: []
+      }
       audit_trail_events: {
         Row: {
           booking_id: string | null
@@ -110,6 +155,159 @@ export type Database = {
         }
         Relationships: []
       }
+      background_check_consents: {
+        Row: {
+          consent_text: string
+          consent_type: string
+          consent_version: string
+          consented_at: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          ip_address: string | null
+          revoked_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          consent_text: string
+          consent_type: string
+          consent_version: string
+          consented_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          ip_address?: string | null
+          revoked_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          consent_text?: string
+          consent_type?: string
+          consent_version?: string
+          consented_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          ip_address?: string | null
+          revoked_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      background_check_packages: {
+        Row: {
+          check_types: Database["public"]["Enums"]["background_check_type"][]
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_required_for_tasker: boolean | null
+          name: string
+          price_cad: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          check_types: Database["public"]["Enums"]["background_check_type"][]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_required_for_tasker?: boolean | null
+          name: string
+          price_cad?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          check_types?: Database["public"]["Enums"]["background_check_type"][]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_required_for_tasker?: boolean | null
+          name?: string
+          price_cad?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      background_checks: {
+        Row: {
+          check_type: Database["public"]["Enums"]["background_check_type"]
+          completed_at: string | null
+          consent_given: boolean | null
+          consent_given_at: string | null
+          consent_ip_address: string | null
+          created_at: string | null
+          expires_at: string | null
+          flags: Json | null
+          id: string
+          provider: string | null
+          provider_reference_id: string | null
+          provider_response: Json | null
+          requested_at: string | null
+          result_summary: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_level: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["background_check_status"] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          check_type: Database["public"]["Enums"]["background_check_type"]
+          completed_at?: string | null
+          consent_given?: boolean | null
+          consent_given_at?: string | null
+          consent_ip_address?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          flags?: Json | null
+          id?: string
+          provider?: string | null
+          provider_reference_id?: string | null
+          provider_response?: Json | null
+          requested_at?: string | null
+          result_summary?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["background_check_status"] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          check_type?: Database["public"]["Enums"]["background_check_type"]
+          completed_at?: string | null
+          consent_given?: boolean | null
+          consent_given_at?: string | null
+          consent_ip_address?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          flags?: Json | null
+          id?: string
+          provider?: string | null
+          provider_reference_id?: string | null
+          provider_response?: Json | null
+          requested_at?: string | null
+          result_summary?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["background_check_status"] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           badge_level: string | null
@@ -181,48 +379,60 @@ export type Database = {
           agreed_at: string | null
           completion_evidence_uploaded: boolean | null
           created_at: string | null
+          decided_at: string | null
+          decline_reason: string | null
           deposit_paid: boolean | null
           evidence_count: number | null
           full_payment_at: string | null
           full_payment_paid: boolean | null
+          hire_amount: number | null
           id: string
           message: string | null
           payment_agreed: boolean | null
           status: Database["public"]["Enums"]["booking_status"] | null
           task_doer_id: string
           task_id: string
+          tasker_decision: string | null
           updated_at: string | null
         }
         Insert: {
           agreed_at?: string | null
           completion_evidence_uploaded?: boolean | null
           created_at?: string | null
+          decided_at?: string | null
+          decline_reason?: string | null
           deposit_paid?: boolean | null
           evidence_count?: number | null
           full_payment_at?: string | null
           full_payment_paid?: boolean | null
+          hire_amount?: number | null
           id?: string
           message?: string | null
           payment_agreed?: boolean | null
           status?: Database["public"]["Enums"]["booking_status"] | null
           task_doer_id: string
           task_id: string
+          tasker_decision?: string | null
           updated_at?: string | null
         }
         Update: {
           agreed_at?: string | null
           completion_evidence_uploaded?: boolean | null
           created_at?: string | null
+          decided_at?: string | null
+          decline_reason?: string | null
           deposit_paid?: boolean | null
           evidence_count?: number | null
           full_payment_at?: string | null
           full_payment_paid?: boolean | null
+          hire_amount?: number | null
           id?: string
           message?: string | null
           payment_agreed?: boolean | null
           status?: Database["public"]["Enums"]["booking_status"] | null
           task_doer_id?: string
           task_id?: string
+          tasker_decision?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -659,6 +869,93 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      doer_live_availability: {
+        Row: {
+          accepts_instant_requests: boolean | null
+          app_version: string | null
+          battery_level: number | null
+          created_at: string | null
+          current_latitude: number | null
+          current_longitude: number | null
+          current_task_id: string | null
+          device_info: Json | null
+          heading: number | null
+          id: string
+          is_available: boolean
+          is_charging: boolean | null
+          last_location_update: string | null
+          last_ping: string | null
+          location_accuracy: number | null
+          max_distance_km: number | null
+          network_type: string | null
+          preferred_categories: string[] | null
+          speed: number | null
+          status: string
+          today_online_seconds: number | null
+          today_tasks_completed: number | null
+          total_online_seconds: number | null
+          updated_at: string | null
+          user_id: string
+          went_online_at: string | null
+        }
+        Insert: {
+          accepts_instant_requests?: boolean | null
+          app_version?: string | null
+          battery_level?: number | null
+          created_at?: string | null
+          current_latitude?: number | null
+          current_longitude?: number | null
+          current_task_id?: string | null
+          device_info?: Json | null
+          heading?: number | null
+          id?: string
+          is_available?: boolean
+          is_charging?: boolean | null
+          last_location_update?: string | null
+          last_ping?: string | null
+          location_accuracy?: number | null
+          max_distance_km?: number | null
+          network_type?: string | null
+          preferred_categories?: string[] | null
+          speed?: number | null
+          status?: string
+          today_online_seconds?: number | null
+          today_tasks_completed?: number | null
+          total_online_seconds?: number | null
+          updated_at?: string | null
+          user_id: string
+          went_online_at?: string | null
+        }
+        Update: {
+          accepts_instant_requests?: boolean | null
+          app_version?: string | null
+          battery_level?: number | null
+          created_at?: string | null
+          current_latitude?: number | null
+          current_longitude?: number | null
+          current_task_id?: string | null
+          device_info?: Json | null
+          heading?: number | null
+          id?: string
+          is_available?: boolean
+          is_charging?: boolean | null
+          last_location_update?: string | null
+          last_ping?: string | null
+          location_accuracy?: number | null
+          max_distance_km?: number | null
+          network_type?: string | null
+          preferred_categories?: string[] | null
+          speed?: number | null
+          status?: string
+          today_online_seconds?: number | null
+          today_tasks_completed?: number | null
+          total_online_seconds?: number | null
+          updated_at?: string | null
+          user_id?: string
+          went_online_at?: string | null
+        }
+        Relationships: []
       }
       favorites: {
         Row: {
@@ -1102,6 +1399,8 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          auto_release_at: string | null
+          auto_release_triggered: boolean | null
           booking_id: string
           created_at: string
           deposit_refund_id: string | null
@@ -1117,8 +1416,11 @@ export type Database = {
           payout_amount: number
           payout_at: string | null
           platform_fee: number
+          release_type: string | null
           released_at: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
+          task_doer_confirmed: boolean | null
+          task_giver_confirmed: boolean | null
           task_id: string
           tax_deducted: number | null
           transaction_id: string | null
@@ -1126,6 +1428,8 @@ export type Database = {
         }
         Insert: {
           amount: number
+          auto_release_at?: string | null
+          auto_release_triggered?: boolean | null
           booking_id: string
           created_at?: string
           deposit_refund_id?: string | null
@@ -1141,8 +1445,11 @@ export type Database = {
           payout_amount: number
           payout_at?: string | null
           platform_fee: number
+          release_type?: string | null
           released_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
+          task_doer_confirmed?: boolean | null
+          task_giver_confirmed?: boolean | null
           task_id: string
           tax_deducted?: number | null
           transaction_id?: string | null
@@ -1150,6 +1457,8 @@ export type Database = {
         }
         Update: {
           amount?: number
+          auto_release_at?: string | null
+          auto_release_triggered?: boolean | null
           booking_id?: string
           created_at?: string
           deposit_refund_id?: string | null
@@ -1165,8 +1474,11 @@ export type Database = {
           payout_amount?: number
           payout_at?: string | null
           platform_fee?: number
+          release_type?: string | null
           released_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
+          task_doer_confirmed?: boolean | null
+          task_giver_confirmed?: boolean | null
           task_id?: string
           tax_deducted?: number | null
           transaction_id?: string | null
@@ -1369,6 +1681,9 @@ export type Database = {
           address: string | null
           availability_status: string | null
           avatar_url: string | null
+          background_check_expires_at: string | null
+          background_check_status: string | null
+          background_check_verified_at: string | null
           bio: string | null
           cancellation_count: number | null
           cancellation_rate: number | null
@@ -1396,6 +1711,8 @@ export type Database = {
           payment_verified: boolean | null
           payment_verified_at: string | null
           phone: string | null
+          photo_verified: boolean | null
+          photo_verified_at: string | null
           preferred_categories: string[] | null
           profile_completion: number | null
           rating: number | null
@@ -1426,6 +1743,9 @@ export type Database = {
           address?: string | null
           availability_status?: string | null
           avatar_url?: string | null
+          background_check_expires_at?: string | null
+          background_check_status?: string | null
+          background_check_verified_at?: string | null
           bio?: string | null
           cancellation_count?: number | null
           cancellation_rate?: number | null
@@ -1453,6 +1773,8 @@ export type Database = {
           payment_verified?: boolean | null
           payment_verified_at?: string | null
           phone?: string | null
+          photo_verified?: boolean | null
+          photo_verified_at?: string | null
           preferred_categories?: string[] | null
           profile_completion?: number | null
           rating?: number | null
@@ -1483,6 +1805,9 @@ export type Database = {
           address?: string | null
           availability_status?: string | null
           avatar_url?: string | null
+          background_check_expires_at?: string | null
+          background_check_status?: string | null
+          background_check_verified_at?: string | null
           bio?: string | null
           cancellation_count?: number | null
           cancellation_rate?: number | null
@@ -1510,6 +1835,8 @@ export type Database = {
           payment_verified?: boolean | null
           payment_verified_at?: string | null
           phone?: string | null
+          photo_verified?: boolean | null
+          photo_verified_at?: string | null
           preferred_categories?: string[] | null
           profile_completion?: number | null
           rating?: number | null
@@ -1601,6 +1928,102 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          reward_amount: number | null
+          updated_at: string | null
+          user_id: string
+          uses_count: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          reward_amount?: number | null
+          updated_at?: string | null
+          user_id: string
+          uses_count?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          reward_amount?: number | null
+          updated_at?: string | null
+          user_id?: string
+          uses_count?: number | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          qualifying_task_id: string | null
+          referral_code_id: string | null
+          referred_id: string
+          referred_reward: number | null
+          referred_rewarded_at: string | null
+          referrer_id: string
+          referrer_reward: number | null
+          referrer_rewarded_at: string | null
+          status: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          qualifying_task_id?: string | null
+          referral_code_id?: string | null
+          referred_id: string
+          referred_reward?: number | null
+          referred_rewarded_at?: string | null
+          referrer_id: string
+          referrer_reward?: number | null
+          referrer_rewarded_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          qualifying_task_id?: string | null
+          referral_code_id?: string | null
+          referred_id?: string
+          referred_reward?: number | null
+          referred_rewarded_at?: string | null
+          referrer_id?: string
+          referrer_reward?: number | null
+          referrer_rewarded_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_qualifying_task_id_fkey"
+            columns: ["qualifying_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referral_code_id_fkey"
+            columns: ["referral_code_id"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
             referencedColumns: ["id"]
           },
         ]
@@ -1909,6 +2332,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      smart_match_logs: {
+        Row: {
+          action_taken: string | null
+          created_at: string | null
+          id: string
+          match_reasons: Json | null
+          match_score: number | null
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string | null
+          id?: string
+          match_reasons?: Json | null
+          match_score?: number | null
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string | null
+          id?: string
+          match_reasons?: Json | null
+          match_score?: number | null
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_match_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sms_logs: {
         Row: {
@@ -2251,6 +2712,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "task_milestones_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "pending_auto_releases"
+            referencedColumns: ["payment_id"]
+          },
+          {
             foreignKeyName: "task_milestones_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
@@ -2446,6 +2914,124 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tax_calculations: {
+        Row: {
+          booking_id: string | null
+          contractor_withholding: number | null
+          created_at: string | null
+          gross_amount: number
+          gst_amount: number | null
+          id: string
+          net_amount: number
+          payment_id: string | null
+          province: string | null
+          pst_amount: number | null
+          tax_breakdown: Json | null
+          tax_year: number | null
+          total_tax: number
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          contractor_withholding?: number | null
+          created_at?: string | null
+          gross_amount: number
+          gst_amount?: number | null
+          id?: string
+          net_amount: number
+          payment_id?: string | null
+          province?: string | null
+          pst_amount?: number | null
+          tax_breakdown?: Json | null
+          tax_year?: number | null
+          total_tax: number
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          contractor_withholding?: number | null
+          created_at?: string | null
+          gross_amount?: number
+          gst_amount?: number | null
+          id?: string
+          net_amount?: number
+          payment_id?: string | null
+          province?: string | null
+          pst_amount?: number | null
+          tax_breakdown?: Json | null
+          tax_year?: number | null
+          total_tax?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_calculations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_calculations_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_calculations_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "pending_auto_releases"
+            referencedColumns: ["payment_id"]
+          },
+        ]
+      }
+      tax_configurations: {
+        Row: {
+          applies_to: string | null
+          created_at: string | null
+          description: string | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          is_active: boolean | null
+          province: string
+          rate: number
+          tax_type: string
+          threshold_amount: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          applies_to?: string | null
+          created_at?: string | null
+          description?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          is_active?: boolean | null
+          province?: string
+          rate: number
+          tax_type: string
+          threshold_amount?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          applies_to?: string | null
+          created_at?: string | null
+          description?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          is_active?: boolean | null
+          province?: string
+          rate?: number
+          tax_type?: string
+          threshold_amount?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       tiffin_menus: {
         Row: {
@@ -2859,6 +3445,47 @@ export type Database = {
           },
         ]
       }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          claimed_at: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          progress: number | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          progress?: number | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          progress?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_activity_logs: {
         Row: {
           activity_type: string
@@ -2919,6 +3546,57 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           wallet_balance?: number | null
+        }
+        Relationships: []
+      }
+      user_match_preferences: {
+        Row: {
+          ai_matching_enabled: boolean | null
+          availability_hours: Json | null
+          created_at: string | null
+          id: string
+          last_match_at: string | null
+          notification_preferences: Json | null
+          preferred_categories: string[] | null
+          preferred_distance_km: number | null
+          preferred_price_max: number | null
+          preferred_price_min: number | null
+          preferred_task_types: string[] | null
+          skill_keywords: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_matching_enabled?: boolean | null
+          availability_hours?: Json | null
+          created_at?: string | null
+          id?: string
+          last_match_at?: string | null
+          notification_preferences?: Json | null
+          preferred_categories?: string[] | null
+          preferred_distance_km?: number | null
+          preferred_price_max?: number | null
+          preferred_price_min?: number | null
+          preferred_task_types?: string[] | null
+          skill_keywords?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_matching_enabled?: boolean | null
+          availability_hours?: Json | null
+          created_at?: string | null
+          id?: string
+          last_match_at?: string | null
+          notification_preferences?: Json | null
+          preferred_categories?: string[] | null
+          preferred_distance_km?: number | null
+          preferred_price_max?: number | null
+          preferred_price_min?: number | null
+          preferred_task_types?: string[] | null
+          skill_keywords?: string[] | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -3103,6 +3781,11 @@ export type Database = {
           insurance_provider: string | null
           legal_name: string | null
           phone_verified: boolean | null
+          photo_rejection_reason: string | null
+          photo_url: string | null
+          photo_verification_status: string | null
+          photo_verified_at: string | null
+          photo_verified_by: string | null
           privacy_accepted: boolean
           privacy_accepted_at: string | null
           rejection_reason: string | null
@@ -3144,6 +3827,11 @@ export type Database = {
           insurance_provider?: string | null
           legal_name?: string | null
           phone_verified?: boolean | null
+          photo_rejection_reason?: string | null
+          photo_url?: string | null
+          photo_verification_status?: string | null
+          photo_verified_at?: string | null
+          photo_verified_by?: string | null
           privacy_accepted?: boolean
           privacy_accepted_at?: string | null
           rejection_reason?: string | null
@@ -3185,6 +3873,11 @@ export type Database = {
           insurance_provider?: string | null
           legal_name?: string | null
           phone_verified?: boolean | null
+          photo_rejection_reason?: string | null
+          photo_url?: string | null
+          photo_verification_status?: string | null
+          photo_verified_at?: string | null
+          photo_verified_by?: string | null
           privacy_accepted?: boolean
           privacy_accepted_at?: string | null
           rejection_reason?: string | null
@@ -3346,6 +4039,60 @@ export type Database = {
       }
     }
     Views: {
+      pending_auto_releases: {
+        Row: {
+          amount: number | null
+          auto_release_at: string | null
+          booking_id: string | null
+          booking_status: Database["public"]["Enums"]["booking_status"] | null
+          hours_until_release: number | null
+          payee_id: string | null
+          payer_id: string | null
+          payment_id: string | null
+          payout_amount: number | null
+          task_doer_confirmed: boolean | null
+          task_giver_confirmed: boolean | null
+          task_id: string | null
+          task_title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null
@@ -3393,10 +4140,33 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: number
       }
+      calculate_saskatchewan_tax: {
+        Args: { p_gross_amount: number; p_is_contractor_payout?: boolean }
+        Returns: Json
+      }
       calculate_trust_score: { Args: { p_user_id: string }; Returns: number }
       check_suspicious_login: {
         Args: { p_ip_address: string; p_user_id: string }
         Returns: boolean
+      }
+      check_user_achievements: {
+        Args: { p_user_id: string }
+        Returns: {
+          achievement_id: string
+          claimed_at: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          progress: number | null
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "user_achievements"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       cleanup_expired_otp_codes: { Args: never; Returns: undefined }
       cleanup_expired_sessions: { Args: never; Returns: undefined }
@@ -3411,8 +4181,33 @@ export type Database = {
         }
         Returns: string
       }
+      find_nearby_doers: {
+        Args: {
+          p_category?: string
+          p_exclude_user_id?: string
+          p_latitude: number
+          p_longitude: number
+          p_radius_km?: number
+        }
+        Returns: {
+          avatar_url: string
+          distance_km: number
+          eta_minutes: number
+          full_name: string
+          last_ping: string
+          rating: number
+          status: string
+          total_reviews: number
+          user_id: string
+        }[]
+      }
+      generate_referral_code: { Args: never; Returns: string }
       generate_user_id_number: {
         Args: { p_role: string; p_wants_both?: boolean }
+        Returns: string
+      }
+      get_or_create_referral_code: {
+        Args: { p_user_id: string }
         Returns: string
       }
       get_user_leaderboard_rank: {
@@ -3451,9 +4246,35 @@ export type Database = {
         }
         Returns: string
       }
+      process_pending_auto_releases: {
+        Args: never
+        Returns: {
+          booking_id: string
+          payment_id: string
+          released: boolean
+        }[]
+      }
+      process_referral: {
+        Args: { p_code: string; p_referred_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "task_giver" | "task_doer" | "admin"
+      background_check_status:
+        | "pending"
+        | "processing"
+        | "passed"
+        | "failed"
+        | "expired"
+        | "cancelled"
+      background_check_type:
+        | "criminal_record"
+        | "identity_verification"
+        | "employment_history"
+        | "education_verification"
+        | "credit_check"
+        | "reference_check"
       booking_status:
         | "pending"
         | "accepted"
@@ -3599,6 +4420,22 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["task_giver", "task_doer", "admin"],
+      background_check_status: [
+        "pending",
+        "processing",
+        "passed",
+        "failed",
+        "expired",
+        "cancelled",
+      ],
+      background_check_type: [
+        "criminal_record",
+        "identity_verification",
+        "employment_history",
+        "education_verification",
+        "credit_check",
+        "reference_check",
+      ],
       booking_status: [
         "pending",
         "accepted",

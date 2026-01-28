@@ -68,15 +68,25 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*, reputation_score, trust_score')
-      .eq('id', userId)
-      .maybeSingle();
+    // Fetch user profile and match preferences in parallel
+    const [profileResult, matchPrefsResult] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('*, reputation_score, trust_score')
+        .eq('id', userId)
+        .maybeSingle(),
+      supabase
+        .from('user_match_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle()
+    ]);
 
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
+    const profile = profileResult.data;
+    const matchPreferences = matchPrefsResult.data;
+
+    if (profileResult.error) {
+      console.error('Error fetching profile:', profileResult.error);
     }
 
     // Determine user location (from request or profile)
@@ -235,9 +245,19 @@ serve(async (req) => {
       categoryFrequency[cat] = (categoryFrequency[cat] || 0) + 1;
     });
 
-    // User preferences from profile
+    // User preferences from profile AND match preferences table
     const userSkills: string[] = profile?.skills || [];
-    const preferredCategories: string[] = profile?.preferred_categories || [];
+    const preferredCategories: string[] = [
+      ...(profile?.preferred_categories || []),
+      ...(matchPreferences?.preferred_categories || [])
+    ].filter((v, i, a) => a.indexOf(v) === i); // Dedupe
+    
+    // Additional matching preferences
+    const skillKeywords: string[] = matchPreferences?.skill_keywords || [];
+    const preferredTaskTypes: string[] = matchPreferences?.preferred_task_types || [];
+    const preferredPriceMin = matchPreferences?.preferred_price_min;
+    const preferredPriceMax = matchPreferences?.preferred_price_max;
+    const preferredDistanceKm = matchPreferences?.preferred_distance_km || maxDistance;
 
     // Calculate distance between two coordinates (Haversine formula)
     const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -281,43 +301,77 @@ serve(async (req) => {
         tags.push('seasonal');
       }
 
-      // Category match (30 points max)
+      // Category match based on EXPERTISE & HISTORY (40 points max) - HIGHEST PRIORITY
       const categoryCount = categoryFrequency[task.category] || 0;
-      if (categoryCount > 0) {
-        const categoryScore = Math.min(30, categoryCount * 10);
+      const isPreferredCategory = preferredCategories.includes(task.category);
+      
+      if (categoryCount > 0 && isPreferredCategory) {
+        // Both completed before AND in preferred = highest score
+        const categoryScore = Math.min(40, 25 + categoryCount * 5);
+        score += categoryScore;
+        reasons.push(`Expert in ${task.category} (${categoryCount} completed)`);
+        tags.push('expertise');
+      } else if (categoryCount > 0) {
+        // Has experience in this category
+        const categoryScore = Math.min(30, 15 + categoryCount * 5);
         score += categoryScore;
         reasons.push(`You've completed ${categoryCount} ${task.category} task(s)`);
         tags.push('experience');
-      } else if (preferredCategories.includes(task.category)) {
-        score += 20;
-        reasons.push(`Matches your preferred category: ${task.category}`);
+      } else if (isPreferredCategory) {
+        // In their preferred/chosen categories
+        score += 25;
+        reasons.push(`Matches your expertise: ${task.category}`);
         tags.push('preferred');
       }
 
-      // Pay alignment (20 points max)
-      if (avgPay > 0) {
-        const payDiff = Math.abs(task.pay_amount - avgPay) / avgPay;
-        if (payDiff < 0.2) {
-          score += 20;
-          reasons.push('Pay matches your usual range');
-        } else if (payDiff < 0.5) {
-          score += 10;
-        }
+      // Skill keywords match from preferences (15 points max)
+      const allSkillKeywords = [...userSkills, ...skillKeywords];
+      const taskText = `${task.title} ${task.description || ''}`.toLowerCase();
+      const matchingKeywords = allSkillKeywords.filter((keyword: string) => 
+        taskText.includes(keyword.toLowerCase())
+      );
+      if (matchingKeywords.length > 0) {
+        const skillScore = Math.min(15, matchingKeywords.length * 5);
+        score += skillScore;
+        reasons.push(`Matches your skills: ${matchingKeywords.slice(0, 3).join(', ')}`);
+        tags.push('skill-match');
       }
 
-      // Duration fit (15 points max)
-      const taskDuration = task.estimated_duration || 2;
-      if (avgDuration > 0) {
-        const durationDiff = Math.abs(taskDuration - avgDuration) / avgDuration;
-        if (durationDiff < 0.3) {
+      // Price range preference (15 points max)
+      const taskPay = task.pay_amount || 0;
+      if (preferredPriceMin !== null && preferredPriceMax !== null) {
+        if (taskPay >= preferredPriceMin && taskPay <= preferredPriceMax) {
           score += 15;
-          reasons.push('Duration fits your schedule');
-        } else if (durationDiff < 0.6) {
+          reasons.push('Within your price preference');
+          tags.push('price-fit');
+        } else if (taskPay >= preferredPriceMin * 0.8 && taskPay <= preferredPriceMax * 1.2) {
+          score += 8;
+        }
+      } else if (avgPay > 0) {
+        // Fallback to historical average
+        const payDiff = Math.abs(taskPay - avgPay) / avgPay;
+        if (payDiff < 0.2) {
+          score += 15;
+          reasons.push('Pay matches your usual range');
+        } else if (payDiff < 0.5) {
           score += 8;
         }
       }
 
-      // Location proximity (25 points max) - Enhanced
+      // Duration fit (10 points max)
+      const taskDuration = task.estimated_duration || 2;
+      if (avgDuration > 0) {
+        const durationDiff = Math.abs(taskDuration - avgDuration) / avgDuration;
+        if (durationDiff < 0.3) {
+          score += 10;
+          reasons.push('Duration fits your schedule');
+        } else if (durationDiff < 0.6) {
+          score += 5;
+        }
+      }
+
+      // Location proximity (25 points max) - Uses preferred distance
+      const effectiveMaxDistance = preferredDistanceKm || maxDistance;
       if (distance !== Infinity) {
         if (distance < 5) {
           score += 25;
@@ -327,25 +381,14 @@ serve(async (req) => {
           score += 20;
           reasons.push(`${distance.toFixed(1)}km from you`);
           tags.push('nearby');
-        } else if (distance < 25) {
+        } else if (distance < effectiveMaxDistance * 0.5) {
           score += 12;
           reasons.push(`${distance.toFixed(1)}km away`);
-        } else if (distance < maxDistance) {
+        } else if (distance < effectiveMaxDistance) {
           score += 5;
         } else {
-          score -= 10; // Penalize far tasks
+          score -= 15; // Stronger penalty for tasks outside preferred range
         }
-      }
-
-      // Skill match (10 points max)
-      const taskKeywords = `${task.title} ${task.description}`.toLowerCase();
-      const matchingSkills = userSkills.filter((skill: string) => 
-        taskKeywords.includes(skill.toLowerCase())
-      );
-      if (matchingSkills.length > 0) {
-        score += Math.min(10, matchingSkills.length * 5);
-        reasons.push(`Matches your skills: ${matchingSkills.join(', ')}`);
-        tags.push('skill-match');
       }
 
       // Priority bonus (5 points)

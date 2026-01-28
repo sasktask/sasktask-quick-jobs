@@ -16,6 +16,10 @@ import { Progress } from "@/components/ui/progress";
 import { SecurityOverview } from "./SecurityOverview";
 import { LoginHistory } from "./LoginHistory";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
+import { BiometricSettings } from "./BiometricSettings";
+import { SessionTimeoutSettings } from "./SessionTimeoutSettings";
+import { DataExportSettings } from "./DataExportSettings";
+
 // Strong password schema matching signup requirements
 const passwordSchema = z.object({
   newPassword: z.string()
@@ -141,6 +145,15 @@ export const SecuritySettings = ({ user }: SecuritySettingsProps) => {
     <div className="space-y-6">
       {/* Security Overview */}
       <SecurityOverview userId={user.id} />
+
+      {/* Biometric Authentication */}
+      <BiometricSettings userId={user.id} />
+
+      {/* Session Timeout Settings */}
+      <SessionTimeoutSettings userId={user.id} />
+
+      {/* Data Export (GDPR) */}
+      <DataExportSettings userId={user.id} />
 
       {/* Login History */}
       <LoginHistory userId={user.id} />

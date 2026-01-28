@@ -18,7 +18,7 @@ interface SearchResult {
 
 const popularSearches = [
   "Snow Removal",
-  "Cleaning", 
+  "Cleaning",
   "Moving Help",
   "Assembly",
   "Delivery",
@@ -133,15 +133,15 @@ export const HeroSearch = () => {
   return (
     <div ref={searchRef} className="relative w-full max-w-2xl mx-auto lg:mx-0">
       {/* Main Search Bar */}
-      <div 
+      <div
         className={cn(
-          "relative flex flex-col sm:flex-row items-stretch sm:items-center bg-background/80 backdrop-blur-xl rounded-xl sm:rounded-2xl border-2 transition-all duration-300 shadow-lg",
-          isFocused 
-            ? "border-primary shadow-xl shadow-primary/20" 
-            : "border-border hover:border-primary/50"
+          "relative flex items-center bg-background rounded-full border transition-all duration-200 shadow-[0_1px_4px_rgba(0,0,0,0.12)]",
+          isFocused
+            ? "border-transparent ring-2 ring-primary/20 shadow-[0_4px_16px_rgba(0,0,0,0.15)]"
+            : "border-border/70 hover:shadow-[0_3px_12px_rgba(0,0,0,0.14)]"
         )}
       >
-        <div className="flex items-center gap-2 pl-4 sm:pl-5 pt-3 sm:pt-0 text-muted-foreground">
+        <div className="flex items-center gap-2 pl-4 pr-3 text-muted-foreground">
           <Search className="h-5 w-5" />
         </div>
         <Input
@@ -151,13 +151,14 @@ export const HeroSearch = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          className="flex-1 border-0 bg-transparent text-base sm:text-lg h-12 sm:h-14 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+          style={{ backgroundColor: "#00000000" }}
+          className="flex-1 border-0 bg-transparent text-foreground text-base sm:text-lg h-12 sm:h-14 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60 px-0"
         />
-        <Button 
-          onClick={handleSearch} 
-          variant="hero" 
-          size="lg" 
-          className="m-2 sm:m-1.5 rounded-xl h-11 sm:h-auto"
+        <Button
+          onClick={handleSearch}
+          variant="secondary"
+          size="lg"
+          className="mr-2 sm:mr-3 ml-3 rounded-full h-10 sm:h-11 px-5 sm:px-6 text-sm font-medium bg-background text-foreground border border-border/60 hover:bg-background"
         >
           <Search className="h-5 w-5 sm:mr-2" />
           <span className="sm:inline">Search</span>
@@ -213,8 +214,8 @@ export const HeroSearch = () => {
           ) : searchQuery.length >= 2 ? (
             <div className="p-6 text-center">
               <p className="text-muted-foreground">No results found for "{searchQuery}"</p>
-              <Button 
-                variant="link" 
+              <Button
+                variant="link"
                 onClick={() => navigate(`/browse?search=${encodeURIComponent(searchQuery)}`)}
                 className="mt-2"
               >

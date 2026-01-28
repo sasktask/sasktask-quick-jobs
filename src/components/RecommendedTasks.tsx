@@ -43,18 +43,18 @@ const getWeatherIcon = (condition: string) => {
   }
 };
 
-const getTagBadge = (tag: string) => {
+const getTagBadge = (tag: string, index: number) => {
   switch (tag) {
     case 'nearby':
-      return <Badge variant="secondary" className="bg-green-500/10 text-green-600 text-xs"><Navigation className="h-3 w-3 mr-1" />Nearby</Badge>;
+      return <Badge key={`tag-${index}-${tag}`} variant="secondary" className="bg-green-500/10 text-green-600 text-xs"><Navigation className="h-3 w-3 mr-1" />Nearby</Badge>;
     case 'weather-ideal':
-      return <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 text-xs"><Cloud className="h-3 w-3 mr-1" />Weather Perfect</Badge>;
+      return <Badge key={`tag-${index}-${tag}`} variant="secondary" className="bg-blue-500/10 text-blue-600 text-xs"><Cloud className="h-3 w-3 mr-1" />Weather Perfect</Badge>;
     case 'urgent':
-      return <Badge variant="destructive" className="text-xs"><Zap className="h-3 w-3 mr-1" />Urgent</Badge>;
+      return <Badge key={`tag-${index}-${tag}`} variant="destructive" className="text-xs"><Zap className="h-3 w-3 mr-1" />Urgent</Badge>;
     case 'new':
-      return <Badge variant="secondary" className="bg-purple-500/10 text-purple-600 text-xs"><Sparkles className="h-3 w-3 mr-1" />New</Badge>;
+      return <Badge key={`tag-${index}-${tag}`} variant="secondary" className="bg-purple-500/10 text-purple-600 text-xs"><Sparkles className="h-3 w-3 mr-1" />New</Badge>;
     case 'seasonal':
-      return <Badge variant="secondary" className="bg-orange-500/10 text-orange-600 text-xs"><Leaf className="h-3 w-3 mr-1" />Seasonal</Badge>;
+      return <Badge key={`tag-${index}-${tag}`} variant="secondary" className="bg-orange-500/10 text-orange-600 text-xs"><Leaf className="h-3 w-3 mr-1" />Seasonal</Badge>;
     default:
       return null;
   }
@@ -111,7 +111,7 @@ export function RecommendedTasks({ userId }: RecommendedTasksProps) {
           {/* Tags */}
           {task.tags && task.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-2">
-              {task.tags.slice(0, 3).map((tag: string) => getTagBadge(tag)).filter(Boolean)}
+              {task.tags.slice(0, 3).map((tag: string, idx: number) => getTagBadge(tag, idx)).filter(Boolean)}
             </div>
           )}
           

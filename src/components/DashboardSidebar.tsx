@@ -4,6 +4,7 @@ import {
   Briefcase,
   Search,
   ClipboardList,
+  CalendarDays,
   MessageSquare,
   User,
   Settings,
@@ -21,6 +22,7 @@ import {
   Award,
   Shield,
   Zap,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -131,6 +133,11 @@ export function DashboardSidebar({
       icon: Users,
     },
     {
+      title: "Calendar",
+      href: "/calendar",
+      icon: CalendarDays,
+    },
+    {
       title: "Map View",
       href: "/map",
       icon: MapPin,
@@ -139,6 +146,16 @@ export function DashboardSidebar({
       title: "Leaderboard",
       href: "/leaderboard",
       icon: Trophy,
+    },
+    {
+      title: "Achievements",
+      href: "/achievements",
+      icon: Award,
+    },
+    {
+      title: "Referrals",
+      href: "/referrals",
+      icon: Gift,
     },
   ];
 

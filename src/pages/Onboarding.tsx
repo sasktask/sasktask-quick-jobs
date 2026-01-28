@@ -14,6 +14,7 @@ import { OnboardingProgress } from "@/components/OnboardingProgress";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { SEOHead } from "@/components/SEOHead";
 import { TermsAcceptanceDialog } from "@/components/TermsAcceptanceDialog";
+import { PhoneVerification } from "@/components/PhoneVerification";
 
 const onboardingSchema = z.object({
   city: z.string().trim().min(2, "City is required").max(100),
@@ -25,6 +26,7 @@ const onboardingSchema = z.object({
 const onboardingSteps = [
   { title: "Terms", description: "Accept terms and conditions" },
   { title: "Role", description: "Choose how you'll use SaskTask" },
+  { title: "Phone", description: "Verify your phone number" },
   { title: "Profile", description: "Tell us about yourself" },
   { title: "Complete", description: "You're ready to go!" },
 ];
@@ -38,6 +40,9 @@ const Onboarding = () => {
   const [roleSelection, setRoleSelection] = useState<string[]>([]);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showTermsDialog, setShowTermsDialog] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   
   // Form data
   const [city, setCity] = useState("");
@@ -62,20 +67,37 @@ const Onboarding = () => {
 
     setUser(session.user);
     
-    // Get user name from metadata
+    // Get user name from metadata (works for both email and OAuth signups)
     const fullName = session.user.user_metadata?.full_name || 
                      session.user.user_metadata?.first_name || 
+                     session.user.user_metadata?.name ||
                      "";
-    setUserName(fullName.split(" ")[0]);
+    setUserName(fullName.split(" ")[0] || "User");
 
-    // Check if profile is already complete
     const { data: profile } = await supabase
       .from("profiles")
-      .select("city, bio, profile_completion")
+      .select("city, bio, profile_completion, phone")
       .eq("id", session.user.id)
-      .single();
+      .maybeSingle();
 
-    if (profile?.profile_completion >= 80) {
+    if (profile?.phone) {
+      setPhone(profile.phone);
+      setPhoneVerified(true);
+    }
+
+    // Check if user has roles assigned (OAuth users might not have roles)
+    const { data: rolesData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id);
+    
+    const roles = rolesData?.map(r => r.role) || [];
+    if (roles.length > 0) {
+      setRoleSelection(roles);
+    }
+    
+    // If user already has roles, phone, and profile is complete, redirect to dashboard
+    if (roles.length > 0 && profile?.profile_completion >= 80 && profile?.phone) {
       navigate("/dashboard");
       return;
     }
@@ -85,11 +107,15 @@ const Onboarding = () => {
       .from("verifications")
       .select("terms_accepted, privacy_accepted, age_verified")
       .eq("user_id", session.user.id)
-      .single();
+      .maybeSingle();
 
     if (verification?.terms_accepted && verification?.privacy_accepted && verification?.age_verified) {
-      // Terms already accepted, go to role selection
-      setStep(1);
+      // Terms already accepted, go to role selection or phone/profile if roles exist
+      if (roles.length > 0) {
+        setStep(profile?.phone ? 3 : 2);
+      } else {
+        setStep(1);
+      }
     } else {
       // Show terms dialog
       setShowTermsDialog(true);
@@ -123,16 +149,41 @@ const Onboarding = () => {
 
     setLoading(true);
     try {
-      // Insert roles into user_roles table
+      // Insert roles into user_roles table (use upsert to handle duplicates)
       for (const role of roleSelection) {
-        await supabase
+        const { error } = await supabase
           .from("user_roles")
-          .insert({ 
+          .upsert({ 
             user_id: user.id, 
             role: role as any 
-          })
-          .select()
-          .single();
+          }, {
+            onConflict: 'user_id,role'
+          });
+        
+        if (error && !error.message.includes('duplicate')) {
+          throw error;
+        }
+      }
+
+      // Also update user metadata with role for consistency
+      const primaryRole = roleSelection[0];
+      const wantsBothRoles = roleSelection.length > 1;
+      
+      await supabase.auth.updateUser({
+        data: {
+          role: primaryRole,
+          wants_both_roles: wantsBothRoles,
+        }
+      });
+
+      // Verify roles were saved
+      const { data: verifyRoles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+      
+      if (!verifyRoles || verifyRoles.length === 0) {
+        throw new Error("Failed to save roles. Please try again.");
       }
 
       setStep(2);
@@ -204,12 +255,51 @@ const Onboarding = () => {
     }
   };
 
-  const handleWelcomeClose = () => {
+  const handleWelcomeClose = async () => {
     setShowWelcome(false);
+    
+    // Verify roles are saved before redirecting
+    let roles: string[] = [];
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries && roles.length === 0) {
+      const { data: rolesData, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+      
+      if (error) {
+        console.error("Error checking roles:", error);
+      } else {
+        roles = rolesData?.map(r => r.role) || [];
+      }
+      
+      if (roles.length === 0 && retryCount < maxRetries - 1) {
+        // Wait a bit and retry
+        await new Promise(resolve => setTimeout(resolve, 500));
+        retryCount++;
+      } else {
+        break;
+      }
+    }
+    
+    if (roles.length === 0) {
+      toast({
+        title: "Error",
+        description: "Roles not saved. Please try selecting your role again.",
+        variant: "destructive",
+      });
+      setStep(1); // Go back to role selection
+      return;
+    }
+    
     toast({
       title: "Profile Complete! 🎉",
-      description: "Welcome to SaskTask! Let's get started.",
+      description: "Welcome to SaskTask! Redirecting to your dashboard...",
     });
+    
+    // Navigate to dashboard - it will verify roles again
     navigate("/dashboard");
   };
 
@@ -255,7 +345,7 @@ const Onboarding = () => {
             {step === 1 ? `Welcome${userName ? `, ${userName}` : ""}!` : "Almost There!"}
           </h1>
           <p className="text-muted-foreground">
-            {step === 1 ? "Let's set up your profile in just 2 steps" : "Complete your profile to get started"}
+            {step === 1 ? "Let's set up your profile in a few steps" : "Complete your profile to get started"}
           </p>
         </div>
 
@@ -400,6 +490,66 @@ const Onboarding = () => {
         {step === 2 && (
           <Card className="shadow-2xl border-border/50 bg-card/80 backdrop-blur-sm animate-fade-in">
             <CardHeader className="text-center pb-2">
+              <CardTitle className="text-2xl">Verify your phone number</CardTitle>
+              <CardDescription>
+                This keeps your account secure and helps with trust & safety
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-4">
+              <PhoneVerification
+                userId={user?.id}
+                email={user?.email}
+                initialPhone={phone}
+                onVerified={(verifiedPhone) => {
+                  setPhone(verifiedPhone);
+                  setPhoneVerified(true);
+                  setPhoneError(null);
+                }}
+                onPhoneChange={(nextPhone) => {
+                  setPhone(nextPhone);
+                  setPhoneVerified(false);
+                  if (phoneError) {
+                    setPhoneError(null);
+                  }
+                }}
+                error={phoneError || undefined}
+              />
+
+              <div className="flex gap-3 pt-2">
+                <Button 
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  disabled={loading}
+                  className="gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </Button>
+                <Button 
+                  type="button"
+                  onClick={() => {
+                    if (!phoneVerified) {
+                      setPhoneError("Please verify your phone number to continue.");
+                      return;
+                    }
+                    setStep(3);
+                  }}
+                  className="flex-1 group"
+                  variant="hero"
+                  size="lg"
+                >
+                  Continue
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 3 && (
+          <Card className="shadow-2xl border-border/50 bg-card/80 backdrop-blur-sm animate-fade-in">
+            <CardHeader className="text-center pb-2">
               <CardTitle className="text-2xl">Tell us about yourself</CardTitle>
               <CardDescription>
                 This helps others find and connect with you
@@ -490,7 +640,7 @@ const Onboarding = () => {
                   <Button 
                     type="button"
                     variant="outline"
-                    onClick={() => setStep(1)}
+                    onClick={() => setStep(2)}
                     disabled={loading}
                     className="gap-2"
                   >

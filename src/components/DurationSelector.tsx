@@ -62,7 +62,7 @@ export function DurationSelector({ value, onChange }: DurationSelectorProps) {
         <Input
           type="number"
           step="0.5"
-          min="0.25"
+          min="0.5"
           max="24"
           placeholder="e.g., 2.5"
           value={value}

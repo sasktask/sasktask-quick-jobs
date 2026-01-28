@@ -22,6 +22,7 @@ import { PhoneVerification } from "@/components/PhoneVerification";
 import { InstantTaskerMatching } from "@/components/InstantTaskerMatching";
 import { PaymentVerification, usePaymentVerification } from "@/components/PaymentVerification";
 import { TaskScheduler } from "@/components/scheduling";
+import { VerificationGate, useVerificationGate } from "@/components/VerificationGate";
 // Full validation for publishing
 const taskSchema = z.object({
   title: z.string().trim().min(5, "Title must be at least 5 characters").max(200, "Title too long"),
@@ -58,6 +59,9 @@ const PostTask = () => {
   
   // Payment verification check
   const { isPaymentVerified, isLoading: isPaymentCheckLoading } = usePaymentVerification(userId);
+  
+  // Full verification check for posting tasks
+  const { isVerified: isFullyVerified, isLoading: isVerificationLoading, status: verificationStatus } = useVerificationGate(userId);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -446,15 +450,29 @@ const PostTask = () => {
           )}
         </div>
 
-        {/* Payment Verification Check */}
-        {userId && !isPaymentCheckLoading && !isPaymentVerified && (
+        {/* Full Profile Verification Check - Required for Task Givers to post */}
+        {userId && !isVerificationLoading && !isFullyVerified && (
+          <div className="mb-6">
+            <VerificationGate 
+              userId={userId} 
+              requiredFor="post_task"
+              showProgress={true}
+            >
+              {/* This won't render since user is not verified */}
+              <div />
+            </VerificationGate>
+          </div>
+        )}
+
+        {/* Payment Verification Check - Legacy fallback */}
+        {userId && isFullyVerified && !isPaymentCheckLoading && !isPaymentVerified && (
           <div className="mb-6">
             <PaymentVerification userId={userId} onVerified={() => window.location.reload()} />
           </div>
         )}
 
-        {/* Task Templates - only show if payment verified */}
-        {isPaymentVerified && (
+        {/* Task Templates - only show if fully verified */}
+        {isFullyVerified && isPaymentVerified && (
           <div className="mb-6">
             <TaskTemplateManager
               onSelectTemplate={handleSelectTemplate}
@@ -463,8 +481,8 @@ const PostTask = () => {
           </div>
         )}
 
-        {/* Only show form if payment is verified */}
-        {isPaymentVerified && (
+        {/* Only show form if fully verified */}
+        {isFullyVerified && isPaymentVerified && (
         <Card className="border-border">
           <CardHeader>
             <CardTitle>Task Details</CardTitle>

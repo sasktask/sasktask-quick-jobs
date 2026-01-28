@@ -53,8 +53,8 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
-        // Allow larger bundles in PWA cache (5MB limit)
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // Allow larger bundles in PWA cache (6MB limit)
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/, /^\/rss\.xml/, /^\/sitemap\.xml/],

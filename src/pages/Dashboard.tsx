@@ -23,8 +23,12 @@ import { LiveEarningsTicker } from "@/components/LiveEarningsTicker";
 import { ProgressRing } from "@/components/ProgressRing";
 import { EnhancedActivityFeed } from "@/components/EnhancedActivityFeed";
 import { QuickActionsFAB } from "@/components/QuickActionsFAB";
-import { UpcomingTasksCalendar } from "@/components/UpcomingTasksCalendar";
+import { TaskCalendar } from "@/components/calendar";
 import { QuickRebook } from "@/components/QuickRebook";
+import { ProfileCompletionNudge } from "@/components/auth";
+import { LiveAvailabilityWidget, OnlineStatusBar } from "@/components/instant";
+import { SmartMatchingCard } from "@/components/SmartMatchingCard";
+import { HireRequestsPanel, HireRequestStatusTracker } from "@/components/tasker/hire";
 
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 
@@ -135,6 +139,44 @@ const Dashboard = () => {
       
       const roles = rolesData?.map(r => r.role) || [];
       setUserRoles(roles);
+      
+      // Check if user needs to complete registration (no roles assigned)
+      // This typically happens with OAuth sign-ins (Google, Apple, etc.)
+      // But allow a small delay for roles to be saved after onboarding
+      if (roles.length === 0) {
+        // Wait a moment and check again (in case roles are still being saved)
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { data: rolesDataRetry } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id);
+        
+        const rolesRetry = rolesDataRetry?.map(r => r.role) || [];
+        
+        if (rolesRetry.length === 0) {
+          // Check if user came from OAuth (has provider but no role metadata)
+          const isOAuthUser = session.user.app_metadata?.provider && 
+                             session.user.app_metadata.provider !== 'email';
+          
+          if (isOAuthUser || !session.user.user_metadata?.role) {
+            toast({
+              title: "Complete your registration",
+              description: "Please complete your profile to start using SaskTask.",
+            });
+            navigate("/onboarding");
+            return;
+          }
+        } else {
+          // Roles found on retry, update state
+          setUserRoles(rolesRetry);
+          const adminRole = rolesRetry.find(r => r === 'admin');
+          const taskDoerRole = rolesRetry.find(r => r === 'task_doer');
+          const taskGiverRole = rolesRetry.find(r => r === 'task_giver');
+          setUserRole(adminRole || taskDoerRole || taskGiverRole || null);
+        }
+      }
+      
       // Set primary role: admin > task_doer > task_giver
       const adminRole = roles.find(r => r === 'admin');
       const taskDoerRole = roles.find(r => r === 'task_doer');
@@ -412,6 +454,17 @@ const Dashboard = () => {
               <QuickStatsBar profile={profile} stats={stats} badgeCount={badgeCount} />
             </div>
 
+            {/* Profile Completion Nudge */}
+            {profile && (
+              <div className="mb-6">
+                <ProfileCompletionNudge
+                  profile={profile}
+                  userRole={userRole as "task_giver" | "task_doer" | "both"}
+                  variant="card"
+                />
+              </div>
+            )}
+
             {/* Verification Prompt for Task Doers */}
             {isTaskDoer && !isVerified && (
               <Card className="mb-6 border-primary/50 bg-primary/5">
@@ -514,9 +567,24 @@ const Dashboard = () => {
                   <QuickRebook userId={user.id} />
                 )}
 
-                {/* Upcoming Tasks Calendar */}
+                {/* Hire Request Status for Task Givers */}
+                {isTaskGiver && user?.id && (
+                  <HireRequestStatusTracker />
+                )}
+
+                {/* Incoming Hire Requests for Task Doers */}
+                {isTaskDoer && user?.id && (
+                  <HireRequestsPanel />
+                )}
+
+                {/* Task Calendar */}
                 {user?.id && (
-                  <UpcomingTasksCalendar userId={user.id} userRole={userRole} />
+                  <TaskCalendar userId={user.id} userRole={userRole} />
+                )}
+
+                {/* AI-Powered Smart Matching for Task Doers */}
+                {isTaskDoer && user?.id && (
+                  <SmartMatchingCard userId={user.id} />
                 )}
 
                 {/* AI-Powered Recommendations for Task Doers */}
@@ -694,6 +762,16 @@ const Dashboard = () => {
           <Footer />
         </main>
       </div>
+      
+      {/* Online Status Bar for Task Doers */}
+      {isTaskDoer && user?.id && (
+        <OnlineStatusBar userId={user.id} />
+      )}
+      
+      {/* Live Availability Widget for Task Doers */}
+      {isTaskDoer && user?.id && (
+        <LiveAvailabilityWidget userId={user.id} />
+      )}
       
       {/* Quick Actions FAB */}
       <QuickActionsFAB userRole={userRole} />

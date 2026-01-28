@@ -9,9 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Upload, User } from "lucide-react";
-import { ImageCropDialog } from "@/components/ImageCropDialog";
+import { Loader2 } from "lucide-react";
+import { UberStyleProfilePhoto } from "@/components/profile/UberStyleProfilePhoto";
 
 const profileSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters").max(100),
@@ -34,15 +33,15 @@ interface ProfileSettingsProps {
 
 export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState<Tables<"profiles"> | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string>("");
-  const [cropDialogOpen, setCropDialogOpen] = useState(false);
-  const [imageToCrop, setImageToCrop] = useState<string>("");
+  const [photoVerificationStatus, setPhotoVerificationStatus] = useState<"none" | "pending" | "verified" | "rejected">("none");
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
   });
+
+  // Prefer profile flag if present; fall back to auth metadata
+  const isPhoneVerified = Boolean((profile as any)?.phone_verified ?? user?.user_metadata?.phone_verified);
 
   useEffect(() => {
     loadProfile();
@@ -50,27 +49,44 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
 
   const loadProfile = async () => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+      // Fetch profile and verification status
+      const [profileResult, verificationResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single(),
+        supabase
+          .from("verifications")
+          .select("photo_verification_status")
+          .eq("user_id", user.id)
+          .single()
+      ]);
 
-      if (error) throw error;
+      if (profileResult.error) throw profileResult.error;
 
-      setProfile(data);
-      setAvatarUrl(data.avatar_url || "");
+      setProfile(profileResult.data);
+      
+      // Set photo verification status
+      if (verificationResult.data?.photo_verification_status) {
+        setPhotoVerificationStatus(
+          verificationResult.data.photo_verification_status as "none" | "pending" | "verified" | "rejected"
+        );
+      } else {
+        setPhotoVerificationStatus("none");
+      }
+
       reset({
-        full_name: data.full_name || "",
-        phone: data.phone || "",
-        city: data.city || "",
-        bio: data.bio || "",
-        skills: data.skills?.join(", ") || "",
-        hourly_rate: data.hourly_rate?.toString() || "",
-        website: data.website || "",
-        linkedin: data.linkedin || "",
-        twitter: data.twitter || "",
-        facebook: data.facebook || "",
+        full_name: profileResult.data.full_name || "",
+        phone: profileResult.data.phone || "",
+        city: profileResult.data.city || "",
+        bio: profileResult.data.bio || "",
+        skills: profileResult.data.skills?.join(", ") || "",
+        hourly_rate: profileResult.data.hourly_rate?.toString() || "",
+        website: profileResult.data.website || "",
+        linkedin: profileResult.data.linkedin || "",
+        twitter: profileResult.data.twitter || "",
+        facebook: profileResult.data.facebook || "",
       });
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -82,7 +98,6 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
     try {
       const updateData: any = {
         full_name: data.full_name,
-        phone: data.phone,
         city: data.city,
         bio: data.bio,
         website: data.website || null,
@@ -90,6 +105,11 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
         twitter: data.twitter || null,
         facebook: data.facebook || null,
       };
+
+      // Do not allow changing phone once verified
+      if (!isPhoneVerified) {
+        updateData.phone = data.phone;
+      }
 
       // Parse skills if provided
       if (data.skills) {
@@ -118,284 +138,186 @@ export const ProfileSettings = ({ user }: ProfileSettingsProps) => {
     }
   };
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      if (!event.target.files || event.target.files.length === 0) {
-        return;
-      }
-
-      const file = event.target.files[0];
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("File size must be less than 5MB");
-        return;
-      }
-
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please upload an image file");
-        return;
-      }
-
-      // Read file as data URL for cropping
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImageToCrop(reader.result as string);
-        setCropDialogOpen(true);
-      };
-      reader.readAsDataURL(file);
-
-      // Reset input
-      event.target.value = "";
-    } catch (error: any) {
-      console.error("Error preparing image:", error);
-      toast.error(error.message || "Failed to load image");
-    }
-  };
-
-  const handleCropComplete = async (croppedBlob: Blob) => {
-    try {
-      setUploading(true);
-
-      const fileExt = "jpg";
-      // Use folder structure: userId/filename to match RLS policy
-      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
-
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from("profile-photos")
-        .upload(filePath, croppedBlob, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("profile-photos")
-        .getPublicUrl(filePath);
-
-      // Update profile
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ avatar_url: publicUrl })
-        .eq("id", user.id);
-
-      if (updateError) throw updateError;
-
-      setAvatarUrl(publicUrl);
-      toast.success("Profile photo updated successfully!");
-      loadProfile();
-    } catch (error: any) {
-      console.error("Error uploading avatar:", error);
-      toast.error(error.message || "Failed to upload avatar");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   return (
-    <>
-      <ImageCropDialog
-        open={cropDialogOpen}
-        onClose={() => setCropDialogOpen(false)}
-        imageSrc={imageToCrop}
-        onCropComplete={handleCropComplete}
+    <div className="space-y-6">
+      {/* Uber-Style Profile Photo Section */}
+      <UberStyleProfilePhoto
+        userId={user.id}
+        currentPhotoUrl={profile?.avatar_url || null}
+        isPhotoVerified={(profile as any)?.photo_verified || false}
+        verificationStatus={photoVerificationStatus}
+        onPhotoUpdated={loadProfile}
       />
-      
+
+      {/* Profile Information Card */}
       <Card>
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
           <CardDescription>
-            Update your personal information and profile picture
+            Update your personal information
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-        {/* Avatar Section */}
-        <div className="flex items-center gap-6">
-          <Avatar className="h-24 w-24">
-            <AvatarImage src={avatarUrl} alt="Profile" />
-            <AvatarFallback>
-              <User className="h-12 w-12" />
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <Label htmlFor="avatar-upload" className="cursor-pointer">
-              <div className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
-                {uploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4" />
-                )}
-                Upload Photo
-              </div>
-            </Label>
-            <Input
-              id="avatar-upload"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarUpload}
-              disabled={uploading}
-            />
-            <p className="text-xs text-muted-foreground mt-2">
-              JPG, PNG or GIF. Max 5MB.
-            </p>
-          </div>
-        </div>
-
-        {/* Profile Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={user.email}
-              disabled
-              className="bg-muted"
-            />
-            <p className="text-xs text-muted-foreground">
-              Email cannot be changed
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Full Name</Label>
-            <Input
-              id="full_name"
-              {...register("full_name")}
-              placeholder="Your full name"
-            />
-            {errors.full_name && (
-              <p className="text-sm text-destructive">{errors.full_name.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
-              id="phone"
-              {...register("phone")}
-              placeholder="+1 (555) 123-4567"
-            />
-            {errors.phone && (
-              <p className="text-sm text-destructive">{errors.phone.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="city">City / Location</Label>
-            <Input
-              id="city"
-              {...register("city")}
-              placeholder="e.g., Saskatoon, SK"
-            />
-            {errors.city && (
-              <p className="text-sm text-destructive">{errors.city.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="bio">Short Bio</Label>
-            <textarea
-              id="bio"
-              {...register("bio")}
-              placeholder="Tell us about yourself..."
-              className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              maxLength={500}
-            />
-            {errors.bio && (
-              <p className="text-sm text-destructive">{errors.bio.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="skills">Skills (comma-separated)</Label>
-            <Input
-              id="skills"
-              {...register("skills")}
-              placeholder="e.g., Plumbing, Electrical, Moving"
-            />
-            {errors.skills && (
-              <p className="text-sm text-destructive">{errors.skills.message}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              List your skills to help clients find you
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="hourly_rate">Hourly Rate (CAD)</Label>
-            <Input
-              id="hourly_rate"
-              type="number"
-              {...register("hourly_rate")}
-              placeholder="e.g., 25"
-              min="0"
-              step="0.01"
-            />
-            {errors.hourly_rate && (
-              <p className="text-sm text-destructive">{errors.hourly_rate.message}</p>
-            )}
-          </div>
-
-          <div className="border-t pt-6 space-y-4">
-            <h3 className="text-lg font-semibold">Social Media & Links</h3>
-            
+        <CardContent>
+          {/* Profile Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="website"
-                type="url"
-                {...register("website")}
-                placeholder="https://yourwebsite.com"
+                id="email"
+                type="email"
+                value={user.email}
+                disabled
+                className="bg-muted"
               />
-              {errors.website && (
-                <p className="text-sm text-destructive">{errors.website.message}</p>
+              <p className="text-xs text-muted-foreground">
+                Email cannot be changed
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Full Name</Label>
+              <Input
+                id="full_name"
+                {...register("full_name")}
+                placeholder="Your full name"
+              />
+              {errors.full_name && (
+                <p className="text-sm text-destructive">{errors.full_name.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="linkedin">LinkedIn Profile</Label>
+              <Label htmlFor="phone">Phone Number</Label>
               <Input
-                id="linkedin"
-                {...register("linkedin")}
-                placeholder="https://linkedin.com/in/yourprofile"
+                id="phone"
+                {...register("phone")}
+                placeholder="+1 (555) 123-4567"
+                disabled={isPhoneVerified}
+                className={isPhoneVerified ? "bg-muted/70 cursor-not-allowed" : ""}
               />
+              {errors.phone && (
+                <p className="text-sm text-destructive">{errors.phone.message}</p>
+              )}
+              {isPhoneVerified && (
+                <p className="text-xs text-muted-foreground">
+                  Phone number is locked after verification.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="twitter">Twitter / X Profile</Label>
+              <Label htmlFor="city">City / Location</Label>
               <Input
-                id="twitter"
-                {...register("twitter")}
-                placeholder="https://twitter.com/yourhandle"
+                id="city"
+                {...register("city")}
+                placeholder="e.g., Saskatoon, SK"
               />
+              {errors.city && (
+                <p className="text-sm text-destructive">{errors.city.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="facebook">Facebook Profile</Label>
-              <Input
-                id="facebook"
-                {...register("facebook")}
-                placeholder="https://facebook.com/yourprofile"
+              <Label htmlFor="bio">Short Bio</Label>
+              <textarea
+                id="bio"
+                {...register("bio")}
+                placeholder="Tell us about yourself..."
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                maxLength={500}
               />
+              {errors.bio && (
+                <p className="text-sm text-destructive">{errors.bio.message}</p>
+              )}
             </div>
-          </div>
 
-          <Button type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
-    </>
+            <div className="space-y-2">
+              <Label htmlFor="skills">Skills (comma-separated)</Label>
+              <Input
+                id="skills"
+                {...register("skills")}
+                placeholder="e.g., Plumbing, Electrical, Moving"
+              />
+              {errors.skills && (
+                <p className="text-sm text-destructive">{errors.skills.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                List your skills to help clients find you
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="hourly_rate">Hourly Rate (CAD)</Label>
+              <Input
+                id="hourly_rate"
+                type="number"
+                {...register("hourly_rate")}
+                placeholder="e.g., 25"
+                min="0"
+                step="0.01"
+              />
+              {errors.hourly_rate && (
+                <p className="text-sm text-destructive">{errors.hourly_rate.message}</p>
+              )}
+            </div>
+
+            <div className="border-t pt-6 space-y-4">
+              <h3 className="text-lg font-semibold">Social Media & Links</h3>
+
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  type="url"
+                  {...register("website")}
+                  placeholder="https://yourwebsite.com"
+                />
+                {errors.website && (
+                  <p className="text-sm text-destructive">{errors.website.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="linkedin">LinkedIn Profile</Label>
+                <Input
+                  id="linkedin"
+                  {...register("linkedin")}
+                  placeholder="https://linkedin.com/in/yourprofile"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="twitter">Twitter / X Profile</Label>
+                <Input
+                  id="twitter"
+                  {...register("twitter")}
+                  placeholder="https://twitter.com/yourhandle"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="facebook">Facebook Profile</Label>
+                <Input
+                  id="facebook"
+                  {...register("facebook")}
+                  placeholder="https://facebook.com/yourprofile"
+                />
+              </div>
+            </div>
+
+            <Button type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
