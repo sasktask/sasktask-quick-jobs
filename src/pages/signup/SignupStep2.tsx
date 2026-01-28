@@ -53,17 +53,17 @@ const SignupStep2 = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center p-4">
-      <div className="absolute top-4 right-4">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => navigate("/")}
-        >
-          Back home
-        </Button>
-      </div>
       <Card className="w-full max-w-xl shadow-2xl border-border/50 bg-card/80 backdrop-blur-sm">
+        <div className="absolute top-4 right-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/")}
+          >
+            Back home
+          </Button>
+        </div>
         <CardHeader>
           <CardTitle className="text-2xl">Choose your role</CardTitle>
           <CardDescription>Step 2 of 4: How will you use SaskTask?</CardDescription>

@@ -101,6 +101,16 @@ const SignupStep4 = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center p-4">
       <Card className="w-full max-w-xl shadow-2xl border-border/50 bg-card/80 backdrop-blur-sm">
+        <div className="absolute top-4 right-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/")}
+          >
+            Back home
+          </Button>
+        </div>
         <CardHeader>
           <CardTitle className="text-2xl">Verify your phone</CardTitle>
           <CardDescription>Step 4 of 4: Phone verification & terms</CardDescription>
