@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getSignupDraft, saveSignupDraft } from "@/lib/signupDraft";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { AppleSignInButton } from "@/components/auth/AppleSignInButton";
 
 const SignupStep1 = () => {
   const [firstName, setFirstName] = useState("");
@@ -53,6 +55,15 @@ const SignupStep1 = () => {
           <CardDescription>Step 1 of 4: Basic information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <GoogleSignInButton mode="signup" />
+            <AppleSignInButton mode="signup" />
+          </div>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            or sign up with email
+            <span className="h-px flex-1 bg-border" />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="firstName">First name *</Label>
             <Input
