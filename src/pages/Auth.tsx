@@ -356,80 +356,97 @@ const Auth: React.FC = () => {
   // Handle OAuth callback
   useEffect(() => {
     const handleOAuthCallback = async () => {
-      if (oauthProvider) {
-        // Check for OAuth callback (Supabase adds hash fragments)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get("access_token");
-        const error = hashParams.get("error");
-        const errorDescription = hashParams.get("error_description");
+      if (!oauthProvider) return;
 
-        if (error) {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+
+      // Supabase v2 default (PKCE) returns ?code=
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          console.error("OAuth code exchange error:", exchangeError);
           toast({
-            title: "OAuth Error",
-            description: error === "access_denied"
-              ? "Google sign-in was cancelled."
-              : errorDescription || `Authentication failed: ${error}`,
+            title: "Authentication Error",
+            description: exchangeError.message || "Failed to complete OAuth sign-in.",
             variant: "destructive",
           });
-          // Clean up URL
+          window.history.replaceState({}, document.title, "/auth");
+          return;
+        }
+      }
+
+      // Fallback for implicit flow (#access_token)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get("access_token");
+      const error = hashParams.get("error");
+      const errorDescription = hashParams.get("error_description");
+
+      if (error) {
+        toast({
+          title: "OAuth Error",
+          description: error === "access_denied"
+            ? "Google sign-in was cancelled."
+            : errorDescription || `Authentication failed: ${error}`,
+          variant: "destructive",
+        });
+        window.history.replaceState({}, document.title, "/auth");
+        return;
+      }
+
+      if (code || accessToken) {
+        // Wait a bit for Supabase to process the session
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Get the session to verify authentication
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error("Session error after OAuth:", sessionError);
+          toast({
+            title: "Authentication Error",
+            description: "Failed to establish session. Please try again.",
+            variant: "destructive",
+          });
           window.history.replaceState({}, document.title, "/auth");
           return;
         }
 
-        if (accessToken) {
-          // Wait a bit for Supabase to process the session
-          await new Promise(resolve => setTimeout(resolve, 500));
+        if (session?.user) {
+          // Check if user has roles
+          const { data: rolesData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id);
 
-          // Get the session to verify authentication
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          const roles = rolesData?.map(r => r.role) || [];
 
-          if (sessionError) {
-            console.error("Session error after OAuth:", sessionError);
-            toast({
-              title: "Authentication Error",
-              description: "Failed to establish session. Please try again.",
-              variant: "destructive",
-            });
-            window.history.replaceState({}, document.title, "/auth");
-            return;
-          }
+          // Clean up URL first
+          window.history.replaceState({}, document.title, "/auth");
 
-          if (session?.user) {
-            // Check if user has roles
-            const { data: rolesData } = await supabase
-              .from("user_roles")
-              .select("role")
-              .eq("user_id", session.user.id);
-
-            const roles = rolesData?.map(r => r.role) || [];
-
-            // Clean up URL first
-            window.history.replaceState({}, document.title, "/auth");
-
-            // Redirect based on registration status
-            if (roles.length === 0) {
-              // For OAuth signups, go straight to dashboard
-              const isOAuthUser = session.user.app_metadata?.provider &&
-                session.user.app_metadata.provider !== "email";
-              if (isOAuthUser) {
-                navigate("/dashboard");
-                return;
-              }
-
-              // Non-OAuth users without roles go to onboarding
-              toast({
-                title: "Welcome!",
-                description: "Please complete your profile to get started.",
-              });
-              navigate("/onboarding");
-            } else {
-              // Has roles - redirect to dashboard
+          // Redirect based on registration status
+          if (roles.length === 0) {
+            // For OAuth signups, go straight to dashboard
+            const isOAuthUser = session.user.app_metadata?.provider &&
+              session.user.app_metadata.provider !== "email";
+            if (isOAuthUser) {
               navigate("/dashboard");
+              return;
             }
+
+            // Non-OAuth users without roles go to onboarding
+            toast({
+              title: "Welcome!",
+              description: "Please complete your profile to get started.",
+            });
+            navigate("/onboarding");
           } else {
-            // No session yet, wait for onAuthStateChange
-            window.history.replaceState({}, document.title, "/auth");
+            // Has roles - redirect to dashboard
+            navigate("/dashboard");
           }
+        } else {
+          // No session yet, wait for onAuthStateChange
+          window.history.replaceState({}, document.title, "/auth");
         }
       }
     };
