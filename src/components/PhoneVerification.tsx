@@ -195,7 +195,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
       console.error("Verification failed:", error);
       toast({
         title: "Verification failed",
-        description: error.message || "Invalid or expired code. Please try again.",
+        description: "Invalid or expired code. Please try again.",
         variant: "destructive",
       });
       setOtp("");

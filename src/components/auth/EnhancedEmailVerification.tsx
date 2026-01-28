@@ -215,7 +215,7 @@ export const EnhancedEmailVerification: React.FC<EnhancedEmailVerificationProps>
       
       toast({
         title: "Verification failed",
-        description: error.message || "Invalid or expired code. Please try again.",
+        description: "Invalid or expired code. Please try again.",
         variant: "destructive",
       });
     } finally {
