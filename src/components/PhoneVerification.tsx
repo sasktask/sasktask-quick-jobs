@@ -24,7 +24,27 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   error,
   onPhoneChange,
 }) => {
-  const [phone, setPhone] = useState(initialPhone);
+  const normalizeDigits = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    return digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  };
+
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digit characters
+    const digits = value.replace(/\D/g, "");
+
+    // Format as Canadian phone number
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+  };
+
+  const formatForDisplay = (value: string) => {
+    const normalized = normalizeDigits(value);
+    return formatPhoneNumber(normalized);
+  };
+
+  const [phone, setPhone] = useState(formatForDisplay(initialPhone));
   const [showOTP, setShowOTP] = useState(false);
   const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -42,22 +62,18 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
     }
   }, [countdown]);
 
-  const formatPhoneNumber = (value: string) => {
-    // Remove all non-digit characters
-    const digits = value.replace(/\D/g, "");
-
-    // Format as Canadian phone number
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
-  };
-
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPhoneNumber(e.target.value);
+    const formatted = formatPhoneNumber(normalizeDigits(e.target.value));
     setPhone(formatted);
     // Reset verification if phone changes
     if (isVerified) {
       setIsVerified(false);
+    }
+    if (showOTP) {
+      setShowOTP(false);
+      setOtp("");
+      setCountdown(0);
+      setVerificationId(null);
     }
     const digits = getDigitsOnly(formatted);
     if (onPhoneChange) {
@@ -66,11 +82,12 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   };
 
   const getDigitsOnly = (phoneNumber: string) => {
-    return phoneNumber.replace(/\D/g, "");
+    return normalizeDigits(phoneNumber);
   };
 
   const sendOTP = async () => {
     const digits = getDigitsOnly(phone);
+    const normalizedEmail = email?.trim().toLowerCase() || null;
 
     if (digits.length !== 10) {
       toast({
@@ -83,7 +100,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
 
     setIsSending(true);
     try {
-      if (!userId && !email) {
+      if (!userId && !normalizedEmail) {
         throw new Error("Missing user identifier for phone verification.");
       }
 
@@ -91,12 +108,24 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
         body: {
           phone: `+1${digits}`,
           userId,
-          email,
+          email: normalizedEmail,
         },
       });
 
       if (error) {
-        throw new Error(data?.error || error.message || "Failed to send verification code");
+        let message = error.message || "Failed to send verification code";
+        const context = (error as any)?.context;
+        if (context && typeof context.json === "function") {
+          try {
+            const body = await context.json();
+            if (body?.error) {
+              message = body.error;
+            }
+          } catch (_parseError) {
+            // Keep default message if response body isn't readable
+          }
+        }
+        throw new Error(data?.error || message);
       }
 
       if (data?.error) {
