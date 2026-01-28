@@ -328,6 +328,13 @@ const Auth: React.FC = () => {
   const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   const clearErrors = () => setFormErrors({});
 
+  // Redirect signup to the new 4-step flow
+  useEffect(() => {
+    if (mode === "signup" && !oauthProvider) {
+      navigate("/signup/step-1", { replace: true });
+    }
+  }, [mode, oauthProvider, navigate]);
+
   // Mark field as touched for real-time validation
   const handleBlur = (field: string) => {
     setTouchedFields((prev) => ({ ...prev, [field]: true }));
@@ -401,7 +408,15 @@ const Auth: React.FC = () => {
 
             // Redirect based on registration status
             if (roles.length === 0) {
-              // No roles - redirect to onboarding
+              // For OAuth signups, go straight to dashboard
+              const isOAuthUser = session.user.app_metadata?.provider &&
+                session.user.app_metadata.provider !== "email";
+              if (isOAuthUser) {
+                navigate("/dashboard");
+                return;
+              }
+
+              // Non-OAuth users without roles go to onboarding
               toast({
                 title: "Welcome!",
                 description: "Please complete your profile to get started.",
@@ -445,13 +460,17 @@ const Auth: React.FC = () => {
 
         const roles = rolesData?.map(r => r.role) || [];
 
-        // If no roles, redirect to onboarding to complete registration
+        // If no roles, decide redirect based on provider
         if (roles.length === 0) {
-          // Check if this is an OAuth user
           const isOAuthUser = session.user.app_metadata?.provider &&
-            session.user.app_metadata.provider !== 'email';
+            session.user.app_metadata.provider !== "email";
 
-          if (isOAuthUser || !session.user.user_metadata?.role) {
+          if (isOAuthUser) {
+            navigate("/dashboard");
+            return;
+          }
+
+          if (!session.user.user_metadata?.role) {
             navigate("/onboarding");
             return;
           }
@@ -473,9 +492,14 @@ const Auth: React.FC = () => {
 
         if (roles.length === 0) {
           const isOAuthUser = session.user.app_metadata?.provider &&
-            session.user.app_metadata.provider !== 'email';
+            session.user.app_metadata.provider !== "email";
 
-          if (isOAuthUser || !session.user.user_metadata?.role) {
+          if (isOAuthUser) {
+            navigate("/dashboard");
+            return;
+          }
+
+          if (!session.user.user_metadata?.role) {
             navigate("/onboarding");
             return;
           }

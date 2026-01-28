@@ -14,6 +14,7 @@ import { OnboardingProgress } from "@/components/OnboardingProgress";
 import { WelcomeDialog } from "@/components/WelcomeDialog";
 import { SEOHead } from "@/components/SEOHead";
 import { TermsAcceptanceDialog } from "@/components/TermsAcceptanceDialog";
+import { PhoneVerification } from "@/components/PhoneVerification";
 
 const onboardingSchema = z.object({
   city: z.string().trim().min(2, "City is required").max(100),
@@ -25,6 +26,7 @@ const onboardingSchema = z.object({
 const onboardingSteps = [
   { title: "Terms", description: "Accept terms and conditions" },
   { title: "Role", description: "Choose how you'll use SaskTask" },
+  { title: "Phone", description: "Verify your phone number" },
   { title: "Profile", description: "Tell us about yourself" },
   { title: "Complete", description: "You're ready to go!" },
 ];
@@ -38,6 +40,9 @@ const Onboarding = () => {
   const [roleSelection, setRoleSelection] = useState<string[]>([]);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showTermsDialog, setShowTermsDialog] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   
   // Form data
   const [city, setCity] = useState("");
@@ -69,6 +74,17 @@ const Onboarding = () => {
                      "";
     setUserName(fullName.split(" ")[0] || "User");
 
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("city, bio, profile_completion, phone")
+      .eq("id", session.user.id)
+      .maybeSingle();
+
+    if (profile?.phone) {
+      setPhone(profile.phone);
+      setPhoneVerified(true);
+    }
+
     // Check if user has roles assigned (OAuth users might not have roles)
     const { data: rolesData } = await supabase
       .from("user_roles")
@@ -76,19 +92,14 @@ const Onboarding = () => {
       .eq("user_id", session.user.id);
     
     const roles = rolesData?.map(r => r.role) || [];
-    
-    // If user already has roles and profile is complete, redirect to dashboard
     if (roles.length > 0) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("city, bio, profile_completion")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (profile?.profile_completion >= 80) {
-        navigate("/dashboard");
-        return;
-      }
+      setRoleSelection(roles);
+    }
+    
+    // If user already has roles, phone, and profile is complete, redirect to dashboard
+    if (roles.length > 0 && profile?.profile_completion >= 80 && profile?.phone) {
+      navigate("/dashboard");
+      return;
     }
 
     // Check if terms have been accepted
@@ -99,8 +110,12 @@ const Onboarding = () => {
       .maybeSingle();
 
     if (verification?.terms_accepted && verification?.privacy_accepted && verification?.age_verified) {
-      // Terms already accepted, go to role selection
-      setStep(1);
+      // Terms already accepted, go to role selection or phone/profile if roles exist
+      if (roles.length > 0) {
+        setStep(profile?.phone ? 3 : 2);
+      } else {
+        setStep(1);
+      }
     } else {
       // Show terms dialog
       setShowTermsDialog(true);
@@ -330,7 +345,7 @@ const Onboarding = () => {
             {step === 1 ? `Welcome${userName ? `, ${userName}` : ""}!` : "Almost There!"}
           </h1>
           <p className="text-muted-foreground">
-            {step === 1 ? "Let's set up your profile in just 2 steps" : "Complete your profile to get started"}
+            {step === 1 ? "Let's set up your profile in a few steps" : "Complete your profile to get started"}
           </p>
         </div>
 
@@ -475,6 +490,66 @@ const Onboarding = () => {
         {step === 2 && (
           <Card className="shadow-2xl border-border/50 bg-card/80 backdrop-blur-sm animate-fade-in">
             <CardHeader className="text-center pb-2">
+              <CardTitle className="text-2xl">Verify your phone number</CardTitle>
+              <CardDescription>
+                This keeps your account secure and helps with trust & safety
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-4">
+              <PhoneVerification
+                userId={user?.id}
+                email={user?.email}
+                initialPhone={phone}
+                onVerified={(verifiedPhone) => {
+                  setPhone(verifiedPhone);
+                  setPhoneVerified(true);
+                  setPhoneError(null);
+                }}
+                onPhoneChange={(nextPhone) => {
+                  setPhone(nextPhone);
+                  setPhoneVerified(false);
+                  if (phoneError) {
+                    setPhoneError(null);
+                  }
+                }}
+                error={phoneError || undefined}
+              />
+
+              <div className="flex gap-3 pt-2">
+                <Button 
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  disabled={loading}
+                  className="gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </Button>
+                <Button 
+                  type="button"
+                  onClick={() => {
+                    if (!phoneVerified) {
+                      setPhoneError("Please verify your phone number to continue.");
+                      return;
+                    }
+                    setStep(3);
+                  }}
+                  className="flex-1 group"
+                  variant="hero"
+                  size="lg"
+                >
+                  Continue
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 3 && (
+          <Card className="shadow-2xl border-border/50 bg-card/80 backdrop-blur-sm animate-fade-in">
+            <CardHeader className="text-center pb-2">
               <CardTitle className="text-2xl">Tell us about yourself</CardTitle>
               <CardDescription>
                 This helps others find and connect with you
@@ -565,7 +640,7 @@ const Onboarding = () => {
                   <Button 
                     type="button"
                     variant="outline"
-                    onClick={() => setStep(1)}
+                    onClick={() => setStep(2)}
                     disabled={loading}
                     className="gap-2"
                   >
