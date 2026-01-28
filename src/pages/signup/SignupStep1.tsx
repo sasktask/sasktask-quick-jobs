@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,20 @@ import { getSignupDraft, saveSignupDraft } from "@/lib/signupDraft";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AppleSignInButton } from "@/components/auth/AppleSignInButton";
 import { EnhancedEmailVerification } from "@/components/auth/EnhancedEmailVerification";
+import { AlertCircle, Calendar, Check } from "lucide-react";
+
+const MIN_AGE = 18;
+
+const validateAge = (dateOfBirth: string): { valid: boolean; age: number } => {
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return { valid: age >= MIN_AGE, age };
+};
 
 const SignupStep1 = () => {
   const [firstName, setFirstName] = useState("");
@@ -19,8 +33,14 @@ const SignupStep1 = () => {
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [emailVerified, setEmailVerified] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ dateOfBirth?: string }>({});
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const ageValidation = useMemo(() => {
+    if (!dateOfBirth) return null;
+    return validateAge(dateOfBirth);
+  }, [dateOfBirth]);
 
   useEffect(() => {
     const draft = getSignupDraft();
@@ -47,10 +67,27 @@ const SignupStep1 = () => {
   };
 
   const handleContinue = () => {
+    if (!dateOfBirth) {
+      setFormErrors((prev) => ({ ...prev, dateOfBirth: "Date of birth is required" }));
+    }
+    if (dateOfBirth && ageValidation && !ageValidation.valid) {
+      setFormErrors((prev) => ({
+        ...prev,
+        dateOfBirth: `You must be at least ${MIN_AGE} years old to use SaskTask. You are ${ageValidation.age} years old.`,
+      }));
+    }
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !dateOfBirth) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (ageValidation && !ageValidation.valid) {
+      toast({
+        title: "Age requirement",
+        description: `You must be ${MIN_AGE}+ to use SaskTask.`,
         variant: "destructive",
       });
       return;
@@ -169,14 +206,35 @@ const SignupStep1 = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dob">Date of birth *</Label>
+              <Label className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Date of Birth *
+              </Label>
               <Input
-                id="dob"
                 type="date"
                 value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                className="h-11"
+                onChange={(e) => {
+                  setDateOfBirth(e.target.value);
+                  if (formErrors.dateOfBirth) {
+                    setFormErrors((prev) => ({ ...prev, dateOfBirth: undefined }));
+                  }
+                }}
+                max={new Date().toISOString().split("T")[0]}
+                className={formErrors.dateOfBirth ? "border-destructive h-11" : "h-11"}
               />
+              {formErrors.dateOfBirth && <p className="text-sm text-destructive">{formErrors.dateOfBirth}</p>}
+              {ageValidation && !ageValidation.valid && !formErrors.dateOfBirth && (
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  You must be {MIN_AGE}+ to use SaskTask
+                </p>
+              )}
+              {ageValidation && ageValidation.valid && (
+                <p className="text-sm text-green-600 flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  Age verified ({ageValidation.age} years old)
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Button
