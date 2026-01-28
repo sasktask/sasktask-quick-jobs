@@ -11,7 +11,6 @@ import { NotificationPermissionPrompt } from "./components/NotificationPermissio
 import { AIAssistantWidget } from "./components/AIAssistantWidget";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Browse from "./pages/Browse";
@@ -100,7 +99,6 @@ const App = () => (
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
                 <Route path="/signup" element={<Navigate to="/signup/step-1" replace />} />
                 <Route path="/signup/step-1" element={<SignupStep1 />} />
                 <Route path="/signup/step-2" element={<SignupStep2 />} />
