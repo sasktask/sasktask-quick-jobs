@@ -165,7 +165,7 @@ const SignupStep1 = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="middleName">Middle name</Label>
+              <Label htmlFor="middleName">Middle name(optional)</Label>
               <Input
                 id="middleName"
                 value={middleName}
@@ -173,6 +173,11 @@ const SignupStep1 = () => {
                 placeholder="Middle name"
                 className="h-11"
               />
+              {middleName && (
+                <p className="text-sm text-muted-foreground">
+                  Middle name: {middleName}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName">Last name *</Label>
