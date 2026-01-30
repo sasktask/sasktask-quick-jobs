@@ -72,6 +72,7 @@ import Payouts from "./pages/Payouts";
 import Checkout from "./pages/Checkout";
 import Notifications from "./pages/Notifications";
 import Services from "./pages/Services";
+import ServicesHub from "./pages/ServicesHub";
 import InstantWork from "./pages/InstantWork";
 import CalendarPage from "./pages/Calendar";
 import SignupStep1 from "./pages/signup/SignupStep1";
@@ -179,6 +180,7 @@ const App = () => (
                 <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
                 <Route path="/instant-work" element={<ProtectedRoute><InstantWork /></ProtectedRoute>} />
                 <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
+                <Route path="/services-hub" element={<ProtectedRoute><ServicesHub /></ProtectedRoute>} />
                 <Route path="/tiffin" element={<Navigate to="/browse?category=Tiffin+Services" replace />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

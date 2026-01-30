@@ -29,6 +29,7 @@ import { ProfileCompletionNudge } from "@/components/auth";
 import { LiveAvailabilityWidget, OnlineStatusBar } from "@/components/instant";
 import { SmartMatchingCard } from "@/components/SmartMatchingCard";
 import { HireRequestsPanel, HireRequestStatusTracker } from "@/components/tasker/hire";
+import { DashboardAnalytics } from "@/components/analytics";
 
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { 

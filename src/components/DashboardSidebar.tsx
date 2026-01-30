@@ -127,6 +127,12 @@ export function DashboardSidebar({
 
   const exploreItems = [
     {
+      title: "Services Hub",
+      href: "/services-hub",
+      icon: Star,
+      highlight: true,
+    },
+    {
       title: "Browse Tasks",
       href: "/browse",
       icon: Search,
