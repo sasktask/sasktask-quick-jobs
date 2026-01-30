@@ -1,17 +1,24 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { PhoneVerification } from "@/components/PhoneVerification";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Shield, 
-  Phone, 
-  CreditCard, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Shield,
+  Phone,
+  CreditCard,
+  CheckCircle,
+  XCircle,
   Loader2,
   ChevronRight,
   Award,
@@ -32,20 +39,51 @@ interface VerificationStatus {
   phoneVerified: boolean;
 }
 
-export const VerificationStatusIndicator = ({ 
-  userId, 
-  showCard = true, 
+export const VerificationStatusIndicator = ({
+  userId,
+  showCard = true,
   compact = false,
-  onlyBadges = false 
+  onlyBadges = false
 }: VerificationStatusIndicatorProps) => {
   const [status, setStatus] = useState<VerificationStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [verificationDialog, setVerificationDialog] = useState<'phone' | null>(null);
+  const [profilePhone, setProfilePhone] = useState<string>("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (userId) {
       fetchVerificationStatus();
     }
   }, [userId]);
+
+  // When opening phone verification dialog, fetch current profile phone
+  useEffect(() => {
+    if (verificationDialog !== 'phone' || !userId) return;
+    const fetchProfilePhone = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("phone")
+        .eq("id", userId)
+        .maybeSingle();
+      setProfilePhone(data?.phone ?? "");
+    };
+    fetchProfilePhone();
+  }, [verificationDialog, userId]);
+
+  const handleVerifyClick = (key: string, link: string) => {
+    if (key === 'phone') {
+      setVerificationDialog('phone');
+    } else {
+      navigate(link);
+    }
+  };
+
+  const handlePhoneVerified = async (phone: string) => {
+    await supabase.from("profiles").update({ phone }).eq("id", userId);
+    setVerificationDialog(null);
+    fetchVerificationStatus();
+  };
 
   const fetchVerificationStatus = async () => {
     try {
@@ -107,34 +145,34 @@ export const VerificationStatusIndicator = ({
   if (!status) return null;
 
   const verifications = [
-    { 
-      key: 'email', 
-      label: 'Email', 
-      verified: status.emailVerified, 
+    {
+      key: 'email',
+      label: 'Email',
+      verified: status.emailVerified,
       icon: Mail,
       description: 'Email address verified',
       link: '/account?tab=security'
     },
-    { 
-      key: 'payment', 
-      label: 'Payment', 
-      verified: status.paymentVerified, 
+    {
+      key: 'payment',
+      label: 'Payment',
+      verified: status.paymentVerified,
       icon: CreditCard,
       description: 'Payment method verified',
       link: '/account?tab=billing'
     },
-    { 
-      key: 'id', 
-      label: 'ID', 
-      verified: status.idVerified, 
+    {
+      key: 'id',
+      label: 'ID',
+      verified: status.idVerified,
       icon: Shield,
       description: 'Identity verified',
       link: '/verification'
     },
-    { 
-      key: 'phone', 
-      label: 'Phone', 
-      verified: status.phoneVerified, 
+    {
+      key: 'phone',
+      label: 'Phone',
+      verified: status.phoneVerified,
       icon: Phone,
       description: 'Phone number verified',
       link: '/profile?tab=profile'
@@ -153,10 +191,10 @@ export const VerificationStatusIndicator = ({
           {verifications.map((v) => (
             <Tooltip key={v.key}>
               <TooltipTrigger asChild>
-                <Badge 
+                <Badge
                   variant={v.verified ? "default" : "outline"}
-                  className={v.verified 
-                    ? "bg-green-500/10 text-green-600 border-green-500/30 hover:bg-green-500/20" 
+                  className={v.verified
+                    ? "bg-green-500/10 text-green-600 border-green-500/30 hover:bg-green-500/20"
                     : "text-muted-foreground"
                   }
                 >
@@ -184,12 +222,11 @@ export const VerificationStatusIndicator = ({
             <TooltipProvider key={v.key}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div 
-                    className={`p-1.5 rounded-full ${
-                      v.verified 
-                        ? 'bg-green-500/10 text-green-600' 
-                        : 'bg-muted text-muted-foreground'
-                    }`}
+                  <div
+                    className={`p-1.5 rounded-full ${v.verified
+                      ? 'bg-green-500/10 text-green-600'
+                      : 'bg-muted text-muted-foreground'
+                      }`}
                   >
                     <v.icon className="h-4 w-4" />
                   </div>
@@ -224,7 +261,7 @@ export const VerificationStatusIndicator = ({
             </Badge>
           )}
         </div>
-        
+
         <Progress value={progress} className="h-2" />
         <p className="text-sm text-muted-foreground">
           {completedCount} of {verifications.length} verifications complete
@@ -232,20 +269,18 @@ export const VerificationStatusIndicator = ({
 
         <div className="space-y-2">
           {verifications.map((v) => (
-            <div 
+            <div
               key={v.key}
-              className={`flex items-center justify-between p-3 rounded-lg border ${
-                v.verified 
-                  ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900' 
-                  : 'bg-muted/50 border-border'
-              }`}
+              className={`flex items-center justify-between p-3 rounded-lg border ${v.verified
+                ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900'
+                : 'bg-muted/50 border-border'
+                }`}
             >
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-full ${
-                  v.verified 
-                    ? 'bg-green-500/20 text-green-600' 
-                    : 'bg-muted text-muted-foreground'
-                }`}>
+                <div className={`p-2 rounded-full ${v.verified
+                  ? 'bg-green-500/20 text-green-600'
+                  : 'bg-muted text-muted-foreground'
+                  }`}>
                   <v.icon className="h-4 w-4" />
                 </div>
                 <div>
@@ -258,15 +293,30 @@ export const VerificationStatusIndicator = ({
               {v.verified ? (
                 <CheckCircle className="h-5 w-5 text-green-600" />
               ) : (
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to={v.link}>
-                    Verify <ChevronRight className="h-4 w-4 ml-1" />
-                  </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleVerifyClick(v.key, v.link)}
+                >
+                  Verify <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               )}
             </div>
           ))}
         </div>
+
+        <Dialog open={verificationDialog === 'phone'} onOpenChange={(open) => !open && setVerificationDialog(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Verify your phone</DialogTitle>
+            </DialogHeader>
+            <PhoneVerification
+              userId={userId}
+              initialPhone={profilePhone}
+              onVerified={handlePhoneVerified}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -300,20 +350,18 @@ export const VerificationStatusIndicator = ({
 
         <div className="space-y-2">
           {verifications.map((v) => (
-            <div 
+            <div
               key={v.key}
-              className={`flex items-center justify-between p-3 rounded-lg border ${
-                v.verified 
-                  ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900' 
-                  : 'bg-muted/50 border-border'
-              }`}
+              className={`flex items-center justify-between p-3 rounded-lg border ${v.verified
+                ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900'
+                : 'bg-muted/50 border-border'
+                }`}
             >
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-full ${
-                  v.verified 
-                    ? 'bg-green-500/20 text-green-600' 
-                    : 'bg-muted text-muted-foreground'
-                }`}>
+                <div className={`p-2 rounded-full ${v.verified
+                  ? 'bg-green-500/20 text-green-600'
+                  : 'bg-muted text-muted-foreground'
+                  }`}>
                   <v.icon className="h-4 w-4" />
                 </div>
                 <div>
@@ -326,14 +374,31 @@ export const VerificationStatusIndicator = ({
               {v.verified ? (
                 <CheckCircle className="h-5 w-5 text-green-600" />
               ) : (
-                <Button variant="outline" size="sm" asChild>
-                  <Link to={v.link}>Verify</Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleVerifyClick(v.key, v.link)}
+                >
+                  Verify
                 </Button>
               )}
             </div>
           ))}
         </div>
       </CardContent>
+
+      <Dialog open={verificationDialog === 'phone'} onOpenChange={(open) => !open && setVerificationDialog(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Verify your phone</DialogTitle>
+          </DialogHeader>
+          <PhoneVerification
+            userId={userId}
+            initialPhone={profilePhone}
+            onVerified={handlePhoneVerified}
+          />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
@@ -398,8 +463,8 @@ export const useVerificationStatus = (userId: string | null) => {
     fetchStatus();
   }, [userId]);
 
-  return { 
-    ...status, 
+  return {
+    ...status,
     isLoading,
     isFullyVerified: status ? status.emailVerified && status.paymentVerified && status.idVerified && status.phoneVerified : false
   };
