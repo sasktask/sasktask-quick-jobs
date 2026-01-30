@@ -125,9 +125,9 @@ const RoleCard: React.FC<RoleCardProps> = ({
 const roleOptions = [
   {
     role: "task_doer" as SignupRole,
-    title: "Service Provider",
-    subtitle: "Earn money on your schedule",
-    description: "Offer your skills and get paid for completing tasks in your community",
+    title: "Tasker",
+    subtitle: "Earn money doing what you love",
+    description: "Join our community of skilled professionals and get paid for completing tasks",
     icon: Hammer,
     features: [
       "Set your own rates & availability",
@@ -140,7 +140,7 @@ const roleOptions = [
   },
   {
     role: "task_giver" as SignupRole,
-    title: "Client",
+    title: "Task Poster",
     subtitle: "Get things done faster",
     description: "Post tasks and hire verified professionals for any job, big or small",
     icon: Briefcase,
@@ -153,7 +153,7 @@ const roleOptions = [
   },
   {
     role: "both" as SignupRole,
-    title: "Flexible Member",
+    title: "Both",
     subtitle: "Best of both worlds",
     description: "Hire help when you need it and earn extra income when you have time",
     icon: Sparkles,
