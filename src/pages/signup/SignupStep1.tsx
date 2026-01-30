@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -9,9 +8,27 @@ import { getSignupDraft, saveSignupDraft } from "@/lib/signupDraft";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AppleSignInButton } from "@/components/auth/AppleSignInButton";
 import { EnhancedEmailVerification } from "@/components/auth/EnhancedEmailVerification";
-import { AlertCircle, Calendar, Check } from "lucide-react";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { motion, AnimatePresence } from "framer-motion";
+import { AlertCircle, Calendar, Check, Mail, User, ArrowRight, Sparkles } from "lucide-react";
+import { z } from "zod";
 
 const MIN_AGE = 18;
+
+// Validation schemas
+const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email("Please enter a valid email address")
+  .max(255, "Email is too long");
+
+const nameSchema = z
+  .string()
+  .trim()
+  .min(2, "Must be at least 2 characters")
+  .max(50, "Must be less than 50 characters")
+  .regex(/^[a-zA-Z\s'-]+$/, "Only letters, spaces, hyphens and apostrophes allowed");
 
 const validateAge = (dateOfBirth: string): { valid: boolean; age: number } => {
   const today = new Date();
@@ -33,7 +50,8 @@ const SignupStep1 = () => {
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [emailVerified, setEmailVerified] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
-  const [formErrors, setFormErrors] = useState<{ dateOfBirth?: string }>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -41,6 +59,26 @@ const SignupStep1 = () => {
     if (!dateOfBirth) return null;
     return validateAge(dateOfBirth);
   }, [dateOfBirth]);
+
+  // Real-time email validation
+  const emailError = useMemo(() => {
+    if (!touchedFields.email || !email) return null;
+    const result = emailSchema.safeParse(email);
+    return result.success ? null : result.error.errors[0].message;
+  }, [email, touchedFields.email]);
+
+  // Real-time name validation
+  const firstNameError = useMemo(() => {
+    if (!touchedFields.firstName || !firstName) return null;
+    const result = nameSchema.safeParse(firstName);
+    return result.success ? null : result.error.errors[0].message;
+  }, [firstName, touchedFields.firstName]);
+
+  const lastNameError = useMemo(() => {
+    if (!touchedFields.lastName || !lastName) return null;
+    const result = nameSchema.safeParse(lastName);
+    return result.success ? null : result.error.errors[0].message;
+  }, [lastName, touchedFields.lastName]);
 
   useEffect(() => {
     const draft = getSignupDraft();
@@ -53,49 +91,64 @@ const SignupStep1 = () => {
     setEmailVerified(Boolean(draft.emailVerified));
   }, []);
 
+  const handleBlur = (field: string) => {
+    setTouchedFields((prev) => ({ ...prev, [field]: true }));
+  };
+
   const handleStartVerification = () => {
-    if (!email.trim()) {
+    const result = emailSchema.safeParse(email);
+    if (!result.success) {
+      setFormErrors({ email: result.error.errors[0].message });
       toast({
-        title: "Email required",
-        description: "Please enter your email before requesting a code.",
+        title: "Invalid email",
+        description: result.error.errors[0].message,
         variant: "destructive",
       });
       return;
     }
-
     setShowEmailVerification(true);
   };
 
   const handleContinue = () => {
+    const errors: Record<string, string> = {};
+
+    // Validate all fields
+    if (!firstName.trim()) {
+      errors.firstName = "First name is required";
+    } else {
+      const result = nameSchema.safeParse(firstName);
+      if (!result.success) errors.firstName = result.error.errors[0].message;
+    }
+
+    if (!lastName.trim()) {
+      errors.lastName = "Last name is required";
+    } else {
+      const result = nameSchema.safeParse(lastName);
+      if (!result.success) errors.lastName = result.error.errors[0].message;
+    }
+
+    if (!email.trim()) {
+      errors.email = "Email is required";
+    } else {
+      const result = emailSchema.safeParse(email);
+      if (!result.success) errors.email = result.error.errors[0].message;
+    }
+
     if (!dateOfBirth) {
-      setFormErrors((prev) => ({ ...prev, dateOfBirth: "Date of birth is required" }));
+      errors.dateOfBirth = "Date of birth is required";
+    } else if (ageValidation && !ageValidation.valid) {
+      errors.dateOfBirth = `You must be at least ${MIN_AGE} years old to use SaskTask`;
     }
-    if (dateOfBirth && ageValidation && !ageValidation.valid) {
-      setFormErrors((prev) => ({
-        ...prev,
-        dateOfBirth: `You must be at least ${MIN_AGE} years old to use SaskTask. You are ${ageValidation.age} years old.`,
-      }));
-    }
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !dateOfBirth) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields to continue.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (ageValidation && !ageValidation.valid) {
-      toast({
-        title: "Age requirement",
-        description: `You must be ${MIN_AGE}+ to use SaskTask.`,
-        variant: "destructive",
-      });
-      return;
-    }
+
     if (!emailVerified) {
+      errors.emailVerified = "Please verify your email to continue";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       toast({
-        title: "Verify your email",
-        description: "Please verify your email before continuing.",
+        title: "Please fix the errors",
+        description: "Some information needs to be corrected before continuing.",
         variant: "destructive",
       });
       return;
@@ -111,86 +164,138 @@ const SignupStep1 = () => {
     navigate("/signup/step-2");
   };
 
+  if (showEmailVerification) {
+    return (
+      <EnhancedEmailVerification
+        email={email.trim().toLowerCase()}
+        verificationId={verificationId}
+        onVerificationIdReceived={(id) => {
+          setVerificationId(id);
+          saveSignupDraft({ emailVerificationId: id });
+        }}
+        onVerified={() => {
+          setEmailVerified(true);
+          saveSignupDraft({ emailVerified: true });
+          setShowEmailVerification(false);
+        }}
+        onBack={() => setShowEmailVerification(false)}
+      />
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center p-4 relative">
-      {showEmailVerification ? (
-        <EnhancedEmailVerification
-          email={email.trim().toLowerCase()}
-          verificationId={verificationId}
-          onVerificationIdReceived={(id) => {
-            setVerificationId(id);
-            saveSignupDraft({ emailVerificationId: id });
-          }}
-          onVerified={() => {
-            setEmailVerified(true);
-            saveSignupDraft({ emailVerified: true });
-            setShowEmailVerification(false);
-          }}
-          onBack={() => setShowEmailVerification(false)}
-        />
-      ) : (
-        <Card className="w-full max-w-xl shadow-2xl border-border/50 bg-card/80 backdrop-blur-sm">
-          <div className="absolute top-4 right-4">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/")}
-            >
-              Back home
-            </Button>
+    <AuthLayout
+      step={1}
+      totalSteps={4}
+      title="Create your account"
+      subtitle="Join thousands of Canadians getting things done"
+    >
+      <div className="space-y-6">
+        {/* Social sign-in options */}
+        <div className="space-y-3">
+          <GoogleSignInButton mode="signup" />
+          <AppleSignInButton mode="signup" />
+        </div>
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
           </div>
-          <CardHeader>
-            <CardTitle className="text-2xl">Create your account</CardTitle>
-            <CardDescription>Step 1 of 4: Basic information</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <GoogleSignInButton mode="signup" />
-              <AppleSignInButton mode="signup" />
-            </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="h-px flex-1 bg-border" />
-              or sign up with email
-              <span className="h-px flex-1 bg-border" />
-            </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-4 text-muted-foreground font-medium">
+              Or continue with email
+            </span>
+          </div>
+        </div>
+
+        {/* Form fields */}
+        <div className="space-y-4">
+          {/* Name row */}
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First name *</Label>
-              <Input
-                id="firstName"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="First name"
-                className="h-11"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="middleName">Middle name(optional)</Label>
-              <Input
-                id="middleName"
-                value={middleName}
-                onChange={(e) => setMiddleName(e.target.value)}
-                placeholder="Middle name"
-                className="h-11"
-              />
-              {middleName && (
-                <p className="text-sm text-muted-foreground">
-                  Middle name: {middleName}
-                </p>
+              <Label htmlFor="firstName" className="text-sm font-medium">
+                First name <span className="text-destructive">*</span>
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => {
+                    setFirstName(e.target.value);
+                    if (formErrors.firstName) {
+                      setFormErrors((prev) => ({ ...prev, firstName: "" }));
+                    }
+                  }}
+                  onBlur={() => handleBlur("firstName")}
+                  placeholder="John"
+                  className={`pl-10 h-12 ${formErrors.firstName || firstNameError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                />
+              </div>
+              {(formErrors.firstName || firstNameError) && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-xs text-destructive flex items-center gap-1"
+                >
+                  <AlertCircle className="w-3 h-3" />
+                  {formErrors.firstName || firstNameError}
+                </motion.p>
               )}
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last name *</Label>
+              <Label htmlFor="lastName" className="text-sm font-medium">
+                Last name <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="lastName"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Last name"
-                className="h-11"
+                onChange={(e) => {
+                  setLastName(e.target.value);
+                  if (formErrors.lastName) {
+                    setFormErrors((prev) => ({ ...prev, lastName: "" }));
+                  }
+                }}
+                onBlur={() => handleBlur("lastName")}
+                placeholder="Doe"
+                className={`h-12 ${formErrors.lastName || lastNameError ? "border-destructive focus-visible:ring-destructive" : ""}`}
               />
+              {(formErrors.lastName || lastNameError) && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-xs text-destructive flex items-center gap-1"
+                >
+                  <AlertCircle className="w-3 h-3" />
+                  {formErrors.lastName || lastNameError}
+                </motion.p>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
+          </div>
+
+          {/* Middle name (optional) */}
+          <div className="space-y-2">
+            <Label htmlFor="middleName" className="text-sm font-medium text-muted-foreground">
+              Middle name <span className="text-xs">(optional)</span>
+            </Label>
+            <Input
+              id="middleName"
+              value={middleName}
+              onChange={(e) => setMiddleName(e.target.value)}
+              placeholder="Middle name"
+              className="h-12"
+            />
+          </div>
+
+          {/* Email */}
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-medium">
+              Email address <span className="text-destructive">*</span>
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
@@ -199,66 +304,130 @@ const SignupStep1 = () => {
                   setEmail(e.target.value);
                   setEmailVerified(false);
                   setVerificationId(null);
-                  setShowEmailVerification(false);
                   saveSignupDraft({
                     email: e.target.value.trim().toLowerCase(),
                     emailVerified: false,
                     emailVerificationId: null,
                   });
-                }}
-                placeholder="you@example.com"
-                className="h-11"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Date of Birth *
-              </Label>
-              <Input
-                type="date"
-                value={dateOfBirth}
-                onChange={(e) => {
-                  setDateOfBirth(e.target.value);
-                  if (formErrors.dateOfBirth) {
-                    setFormErrors((prev) => ({ ...prev, dateOfBirth: undefined }));
+                  if (formErrors.email) {
+                    setFormErrors((prev) => ({ ...prev, email: "" }));
                   }
                 }}
-                max={new Date().toISOString().split("T")[0]}
-                className={formErrors.dateOfBirth ? "border-destructive h-11" : "h-11"}
+                onBlur={() => handleBlur("email")}
+                placeholder="you@example.com"
+                className={`pl-10 h-12 ${formErrors.email || emailError ? "border-destructive focus-visible:ring-destructive" : ""}`}
               />
-              {formErrors.dateOfBirth && <p className="text-sm text-destructive">{formErrors.dateOfBirth}</p>}
-              {ageValidation && !ageValidation.valid && !formErrors.dateOfBirth && (
-                <p className="text-sm text-destructive flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  You must be {MIN_AGE}+ to use SaskTask
-                </p>
-              )}
-              {ageValidation && ageValidation.valid && (
-                <p className="text-sm text-green-600 flex items-center gap-1">
-                  <Check className="w-3 h-3" />
-                  Age verified ({ageValidation.age} years old)
-                </p>
+              {emailVerified && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded-full">
+                    <Check className="w-3 h-3" />
+                    Verified
+                  </div>
+                </div>
               )}
             </div>
-            <div className="space-y-2">
-              <Button
-                onClick={handleStartVerification}
-                className="w-full"
-                variant="outline"
-                disabled={emailVerified}
+            {(formErrors.email || emailError) && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-destructive flex items-center gap-1"
               >
-                {emailVerified ? "Email verified" : "Verify email"}
-              </Button>
-            </div>
+                <AlertCircle className="w-3 h-3" />
+                {formErrors.email || emailError}
+              </motion.p>
+            )}
+          </div>
 
-            <Button onClick={handleContinue} className="w-full" variant="hero" size="lg">
-              Continue
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          {/* Email verification button */}
+          {!emailVerified && email && !emailError && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-12 border-dashed border-2 hover:border-primary hover:bg-primary/5"
+                onClick={handleStartVerification}
+              >
+                <Sparkles className="w-4 h-4 mr-2 text-primary" />
+                Verify your email address
+              </Button>
+              {formErrors.emailVerified && (
+                <p className="text-xs text-destructive mt-2 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {formErrors.emailVerified}
+                </p>
+              )}
+            </motion.div>
+          )}
+
+          {/* Date of birth */}
+          <div className="space-y-2">
+            <Label htmlFor="dateOfBirth" className="text-sm font-medium flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Date of birth <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="dateOfBirth"
+              type="date"
+              value={dateOfBirth}
+              onChange={(e) => {
+                setDateOfBirth(e.target.value);
+                if (formErrors.dateOfBirth) {
+                  setFormErrors((prev) => ({ ...prev, dateOfBirth: "" }));
+                }
+              }}
+              max={new Date().toISOString().split("T")[0]}
+              className={`h-12 ${formErrors.dateOfBirth ? "border-destructive focus-visible:ring-destructive" : ""}`}
+            />
+            {formErrors.dateOfBirth && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-destructive flex items-center gap-1"
+              >
+                <AlertCircle className="w-3 h-3" />
+                {formErrors.dateOfBirth}
+              </motion.p>
+            )}
+            {ageValidation && ageValidation.valid && !formErrors.dateOfBirth && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-green-600 flex items-center gap-1"
+              >
+                <Check className="w-3 h-3" />
+                Age verified ({ageValidation.age} years old)
+              </motion.p>
+            )}
+          </div>
+        </div>
+
+        {/* Continue button */}
+        <Button
+          onClick={handleContinue}
+          className="w-full h-12 text-base font-semibold"
+          variant="hero"
+          size="lg"
+        >
+          Continue
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+
+        {/* Sign in link */}
+        <p className="text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link
+            to="/auth?mode=signin"
+            className="font-semibold text-primary hover:underline underline-offset-4"
+          >
+            Sign in
+          </Link>
+        </p>
+      </div>
+    </AuthLayout>
   );
 };
 

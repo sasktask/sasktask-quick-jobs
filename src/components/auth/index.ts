@@ -15,3 +15,4 @@ export { ResetPasswordForm } from "./ResetPasswordForm";
 export { RecoveryOptionsCard } from "./RecoveryOptionsCard";
 export { ForgotEmailDialog } from "./ForgotEmailDialog";
 export { ContactSupportDialog } from "./ContactSupportDialog";
+export { AuthLayout } from "./AuthLayout";
