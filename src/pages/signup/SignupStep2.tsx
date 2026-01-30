@@ -7,37 +7,46 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { motion } from "framer-motion";
 import { 
   Briefcase, 
-  Wrench, 
-  Users, 
+  Hammer, 
+  Sparkles, 
   ArrowRight, 
   ArrowLeft,
   Check,
   DollarSign,
   Clock,
   Shield,
-  Star
+  Star,
+  TrendingUp,
+  Zap,
+  BadgeCheck
 } from "lucide-react";
 
 interface RoleCardProps {
   role: SignupRole;
   title: string;
+  subtitle: string;
   description: string;
   icon: React.ElementType;
   features: string[];
   isSelected: boolean;
   onClick: () => void;
   delay?: number;
+  badge?: string;
+  badgeIcon?: React.ElementType;
 }
 
 const RoleCard: React.FC<RoleCardProps> = ({
   role,
   title,
+  subtitle,
   description,
   icon: Icon,
   features,
   isSelected,
   onClick,
   delay = 0,
+  badge,
+  badgeIcon: BadgeIcon,
 }) => (
   <motion.button
     type="button"
@@ -47,10 +56,18 @@ const RoleCard: React.FC<RoleCardProps> = ({
     onClick={onClick}
     className={`relative w-full text-left p-6 rounded-2xl border-2 transition-all duration-300 group ${
       isSelected
-        ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
-        : "border-border bg-card hover:border-primary/50 hover:bg-muted/50"
+        ? "border-primary bg-primary/5 shadow-lg shadow-primary/10 scale-[1.02]"
+        : "border-border bg-card hover:border-primary/50 hover:bg-muted/50 hover:scale-[1.01]"
     }`}
   >
+    {/* Badge */}
+    {badge && (
+      <div className="absolute -top-3 left-6 px-3 py-1 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-xs font-semibold rounded-full flex items-center gap-1.5 shadow-md">
+        {BadgeIcon && <BadgeIcon className="w-3 h-3" />}
+        {badge}
+      </div>
+    )}
+
     {/* Selection indicator */}
     <div
       className={`absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
@@ -62,77 +79,92 @@ const RoleCard: React.FC<RoleCardProps> = ({
       {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
     </div>
 
-    {/* Icon */}
-    <div
-      className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300 ${
-        isSelected
-          ? "bg-primary text-primary-foreground"
-          : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
-      }`}
-    >
-      <Icon className="w-7 h-7" />
+    <div className="flex items-start gap-4">
+      {/* Icon */}
+      <div
+        className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+          isSelected
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+        }`}
+      >
+        <Icon className="w-7 h-7" />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <h3 className="text-lg font-bold">{title}</h3>
+        </div>
+        <p className="text-sm font-medium text-primary mb-1">{subtitle}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
     </div>
 
-    {/* Content */}
-    <h3 className="text-lg font-semibold mb-1">{title}</h3>
-    <p className="text-sm text-muted-foreground mb-4">{description}</p>
-
     {/* Features */}
-    <ul className="space-y-2">
+    <ul className="mt-4 grid grid-cols-1 gap-2">
       {features.map((feature, index) => (
         <li
           key={index}
-          className="flex items-center gap-2 text-sm text-muted-foreground"
+          className="flex items-center gap-2 text-sm"
         >
-          <Check className={`w-4 h-4 ${isSelected ? "text-primary" : "text-muted-foreground/50"}`} />
-          {feature}
+          <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+            isSelected ? "bg-primary/20" : "bg-muted"
+          }`}>
+            <Check className={`w-3 h-3 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+          </div>
+          <span className={isSelected ? "text-foreground" : "text-muted-foreground"}>
+            {feature}
+          </span>
         </li>
       ))}
     </ul>
-
-    {/* Popular badge for "both" option */}
-    {role === "both" && (
-      <div className="absolute -top-3 left-6 px-3 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded-full flex items-center gap-1">
-        <Star className="w-3 h-3" />
-        Most Popular
-      </div>
-    )}
   </motion.button>
 );
 
 const roleOptions = [
   {
-    role: "task_giver" as SignupRole,
-    title: "I need help",
-    description: "Post tasks and hire trusted local helpers",
-    icon: Briefcase,
+    role: "task_doer" as SignupRole,
+    title: "Service Provider",
+    subtitle: "Earn money on your schedule",
+    description: "Offer your skills and get paid for completing tasks in your community",
+    icon: Hammer,
     features: [
-      "Post unlimited tasks",
-      "Browse verified taskers",
-      "Secure payment protection",
+      "Set your own rates & availability",
+      "Get paid securely within 24 hours",
+      "Build your professional reputation",
+      "Access to instant job notifications",
     ],
+    badge: "Start Earning",
+    badgeIcon: TrendingUp,
   },
   {
-    role: "task_doer" as SignupRole,
-    title: "I want to earn",
-    description: "Get paid for completing tasks in your area",
-    icon: Wrench,
+    role: "task_giver" as SignupRole,
+    title: "Client",
+    subtitle: "Get things done faster",
+    description: "Post tasks and hire verified professionals for any job, big or small",
+    icon: Briefcase,
     features: [
-      "Set your own schedule",
-      "Earn competitive rates",
-      "Build your reputation",
+      "Post tasks in under 2 minutes",
+      "Browse verified local professionals",
+      "Secure payment protection",
+      "Real-time progress tracking",
     ],
   },
   {
     role: "both" as SignupRole,
-    title: "I want both",
-    description: "Post tasks and earn money helping others",
-    icon: Users,
+    title: "Flexible Member",
+    subtitle: "Best of both worlds",
+    description: "Hire help when you need it and earn extra income when you have time",
+    icon: Sparkles,
     features: [
-      "Maximum flexibility",
-      "All features included",
-      "Switch roles anytime",
+      "Full access to all features",
+      "Switch between roles instantly",
+      "Maximize your earning potential",
+      "Priority customer support",
     ],
+    badge: "Most Popular",
+    badgeIcon: Star,
   },
 ];
 
@@ -174,8 +206,8 @@ const SignupStep2 = () => {
     <AuthLayout
       step={2}
       totalSteps={4}
-      title="How will you use SaskTask?"
-      subtitle="You can always change this later in your settings"
+      title="Choose your path"
+      subtitle="Select how you'd like to use SaskTask — you can change this anytime"
     >
       <div className="space-y-6">
         {/* Role selection cards */}
@@ -183,7 +215,14 @@ const SignupStep2 = () => {
           {roleOptions.map((option, index) => (
             <RoleCard
               key={option.role}
-              {...option}
+              role={option.role}
+              title={option.title}
+              subtitle={option.subtitle}
+              description={option.description}
+              icon={option.icon}
+              features={option.features}
+              badge={option.badge}
+              badgeIcon={option.badgeIcon}
               isSelected={selectedRole === option.role}
               onClick={() => setSelectedRole(option.role)}
               delay={index * 0.1}
@@ -191,24 +230,28 @@ const SignupStep2 = () => {
           ))}
         </div>
 
-        {/* Benefits reminder */}
+        {/* Trust indicators */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="grid grid-cols-3 gap-3 p-4 bg-muted/50 rounded-xl"
+          className="grid grid-cols-4 gap-2 p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/10"
         >
           <div className="text-center">
             <Shield className="w-5 h-5 mx-auto mb-1 text-primary" />
-            <p className="text-xs text-muted-foreground">Verified users</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">Verified</p>
           </div>
           <div className="text-center">
             <DollarSign className="w-5 h-5 mx-auto mb-1 text-primary" />
-            <p className="text-xs text-muted-foreground">Secure payments</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">Secure Pay</p>
           </div>
           <div className="text-center">
-            <Clock className="w-5 h-5 mx-auto mb-1 text-primary" />
-            <p className="text-xs text-muted-foreground">24/7 support</p>
+            <Zap className="w-5 h-5 mx-auto mb-1 text-primary" />
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">Instant</p>
+          </div>
+          <div className="text-center">
+            <BadgeCheck className="w-5 h-5 mx-auto mb-1 text-primary" />
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">Insured</p>
           </div>
         </motion.div>
 
