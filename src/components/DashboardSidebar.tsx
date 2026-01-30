@@ -60,6 +60,9 @@ export function DashboardSidebar({
   const isTaskDoer = userRoles.includes('task_doer');
   const hasBothRoles = isTaskGiver && isTaskDoer;
 
+  // Task Doers and Both-role users get full access to all features
+  const showAllFeatures = isTaskDoer || hasBothRoles;
+
   const mainNavItems = [
     {
       title: "Dashboard",
@@ -67,15 +70,15 @@ export function DashboardSidebar({
       icon: LayoutDashboard,
       badge: null,
     },
-    // Show Post Task for task givers
-    ...(isTaskGiver ? [{
+    // Show Post Task for task givers or users with both roles
+    ...(isTaskGiver || hasBothRoles ? [{
       title: "Post Task",
       href: "/post-task",
       icon: ClipboardList,
       badge: null,
     }] : []),
-    // Show Find Tasks for task doers
-    ...(isTaskDoer ? [{
+    // Show Find Tasks for task doers or users with both roles
+    ...(showAllFeatures ? [{
       title: "Find Tasks",
       href: "/browse",
       icon: Search,
@@ -99,13 +102,14 @@ export function DashboardSidebar({
       icon: MessageSquare,
       badge: unreadMessages > 0 ? unreadMessages : null,
     },
-    {
+    // Instant Work - highlighted for task doers
+    ...(showAllFeatures ? [{
       title: "Instant Work",
       href: "/instant-work",
       icon: Zap,
       badge: null,
       highlight: true,
-    },
+    }] : []),
   ];
 
   const moneyItems = [
@@ -172,8 +176,8 @@ export function DashboardSidebar({
     },
   ];
 
-  // Task doer specific items - only show if user has task_doer role
-  const taskDoerItems = isTaskDoer ? [
+  // Task doer specific items - show full professional toolkit for task doers
+  const taskDoerItems = showAllFeatures ? [
     {
       title: "Get Verified",
       href: "/verification",
@@ -184,6 +188,21 @@ export function DashboardSidebar({
       title: "My Reputation",
       href: "/leaderboard",
       icon: Award,
+    },
+    {
+      title: "Find Taskers",
+      href: "/find-taskers",
+      icon: Users,
+    },
+    {
+      title: "Tax Compliance",
+      href: "/tax-compliance",
+      icon: FileText,
+    },
+    {
+      title: "Insurance",
+      href: "/insurance-requirements",
+      icon: Shield,
     },
   ] : [];
 
@@ -231,7 +250,7 @@ export function DashboardSidebar({
           <>
             <div className="space-y-1">
               <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Professional
+                Professional Tools
               </p>
               {taskDoerItems.map((item) => (
                 <NavItem key={item.href} item={item} />
