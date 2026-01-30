@@ -39,6 +39,9 @@ import RefundPolicy from "./pages/RefundPolicy";
 import CopyrightDMCA from "./pages/CopyrightDMCA";
 import DisputeResolution from "./pages/DisputeResolution";
 import SaskatchewanCompliance from "./pages/SaskatchewanCompliance";
+import DisputePolicy from "./pages/DisputePolicy";
+import TaxCompliance from "./pages/TaxCompliance";
+import InsuranceRequirements from "./pages/InsuranceRequirements";
 import Install from "./pages/Install";
 import AdminVerification from "./pages/AdminVerification";
 import AdminCertificates from "./pages/AdminCertificates";
@@ -119,6 +122,9 @@ const App = () => (
                 <Route path="/copyright" element={<CopyrightDMCA />} />
                 <Route path="/dispute-resolution" element={<DisputeResolution />} />
                 <Route path="/saskatchewan-compliance" element={<SaskatchewanCompliance />} />
+                <Route path="/dispute-policy" element={<DisputePolicy />} />
+                <Route path="/tax-compliance" element={<TaxCompliance />} />
+                <Route path="/insurance-requirements" element={<InsuranceRequirements />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />

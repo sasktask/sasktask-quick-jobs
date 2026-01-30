@@ -804,6 +804,68 @@ export type Database = {
           },
         ]
       }
+      dispute_resolution_records: {
+        Row: {
+          amount_refunded: number | null
+          amount_released: number | null
+          appeal_deadline: string | null
+          appeal_filed: boolean | null
+          created_at: string
+          dispute_id: string | null
+          id: string
+          legal_reference: string | null
+          platform_fee_waived: boolean | null
+          resolution_date: string | null
+          resolution_method: string | null
+          resolution_stage: string
+          resolution_summary: string | null
+          resolved_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_refunded?: number | null
+          amount_released?: number | null
+          appeal_deadline?: string | null
+          appeal_filed?: boolean | null
+          created_at?: string
+          dispute_id?: string | null
+          id?: string
+          legal_reference?: string | null
+          platform_fee_waived?: boolean | null
+          resolution_date?: string | null
+          resolution_method?: string | null
+          resolution_stage: string
+          resolution_summary?: string | null
+          resolved_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_refunded?: number | null
+          amount_released?: number | null
+          appeal_deadline?: string | null
+          appeal_filed?: boolean | null
+          created_at?: string
+          dispute_id?: string | null
+          id?: string
+          legal_reference?: string | null
+          platform_fee_waived?: boolean | null
+          resolution_date?: string | null
+          resolution_method?: string | null
+          resolution_stage?: string
+          resolution_summary?: string | null
+          resolved_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispute_resolution_records_dispute_id_fkey"
+            columns: ["dispute_id"]
+            isOneToOne: false
+            referencedRelation: "disputes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       disputes: {
         Row: {
           against_user: string
@@ -1066,6 +1128,137 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      insurance_requirements: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          effective_date: string
+          id: string
+          is_mandatory: boolean | null
+          legal_reference: string | null
+          minimum_coverage: number | null
+          province: string
+          requirement_type: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          effective_date?: string
+          id?: string
+          is_mandatory?: boolean | null
+          legal_reference?: string | null
+          minimum_coverage?: number | null
+          province?: string
+          requirement_type: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          effective_date?: string
+          id?: string
+          is_mandatory?: boolean | null
+          legal_reference?: string | null
+          minimum_coverage?: number | null
+          province?: string
+          requirement_type?: string
+        }
+        Relationships: []
+      }
+      legal_acceptances: {
+        Row: {
+          acceptance_method: string | null
+          accepted_at: string
+          created_at: string
+          document_id: string
+          document_type: string
+          document_version: string
+          id: string
+          ip_address: string | null
+          revoked_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          acceptance_method?: string | null
+          accepted_at?: string
+          created_at?: string
+          document_id: string
+          document_type: string
+          document_version: string
+          id?: string
+          ip_address?: string | null
+          revoked_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          acceptance_method?: string | null
+          accepted_at?: string
+          created_at?: string
+          document_id?: string
+          document_type?: string
+          document_version?: string
+          id?: string
+          ip_address?: string | null
+          revoked_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_acceptances_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "legal_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_documents: {
+        Row: {
+          content: string
+          created_at: string
+          document_type: string
+          effective_date: string
+          id: string
+          is_active: boolean | null
+          requires_acceptance: boolean | null
+          summary: string | null
+          title: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          document_type: string
+          effective_date?: string
+          id?: string
+          is_active?: boolean | null
+          requires_acceptance?: boolean | null
+          summary?: string | null
+          title: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          document_type?: string
+          effective_date?: string
+          id?: string
+          is_active?: boolean | null
+          requires_acceptance?: boolean | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
       }
       login_history: {
         Row: {
@@ -2028,6 +2221,54 @@ export type Database = {
           },
         ]
       }
+      regulatory_compliance: {
+        Row: {
+          compliance_type: string
+          created_at: string
+          document_url: string | null
+          expiry_date: string | null
+          id: string
+          notes: string | null
+          province: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          verification_date: string | null
+          verification_details: Json | null
+          verified_by: string | null
+        }
+        Insert: {
+          compliance_type: string
+          created_at?: string
+          document_url?: string | null
+          expiry_date?: string | null
+          id?: string
+          notes?: string | null
+          province?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          verification_date?: string | null
+          verification_details?: Json | null
+          verified_by?: string | null
+        }
+        Update: {
+          compliance_type?: string
+          created_at?: string
+          document_url?: string | null
+          expiry_date?: string | null
+          id?: string
+          notes?: string | null
+          province?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          verification_date?: string | null
+          verification_details?: Json | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           booking_id: string | null
@@ -2987,6 +3228,60 @@ export type Database = {
             referencedColumns: ["payment_id"]
           },
         ]
+      }
+      tax_compliance_records: {
+        Row: {
+          created_at: string
+          gross_earnings: number | null
+          gst_collected: number | null
+          gst_registration_date: string | null
+          gst_registration_number: string | null
+          id: string
+          is_gst_registered: boolean | null
+          pst_collected: number | null
+          reached_gst_threshold: boolean | null
+          tax_responsibility_accepted: boolean | null
+          tax_responsibility_accepted_at: string | null
+          tax_year: number
+          threshold_reached_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gross_earnings?: number | null
+          gst_collected?: number | null
+          gst_registration_date?: string | null
+          gst_registration_number?: string | null
+          id?: string
+          is_gst_registered?: boolean | null
+          pst_collected?: number | null
+          reached_gst_threshold?: boolean | null
+          tax_responsibility_accepted?: boolean | null
+          tax_responsibility_accepted_at?: string | null
+          tax_year: number
+          threshold_reached_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gross_earnings?: number | null
+          gst_collected?: number | null
+          gst_registration_date?: string | null
+          gst_registration_number?: string | null
+          id?: string
+          is_gst_registered?: boolean | null
+          pst_collected?: number | null
+          reached_gst_threshold?: boolean | null
+          tax_responsibility_accepted?: boolean | null
+          tax_responsibility_accepted_at?: string | null
+          tax_year?: number
+          threshold_reached_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       tax_configurations: {
         Row: {
