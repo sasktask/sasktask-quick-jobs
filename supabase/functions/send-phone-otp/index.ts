@@ -101,32 +101,50 @@ serve(async (req: Request) => {
     const normalizedUserId = userId || "00000000-0000-0000-0000-000000000000";
     const pendingEmail = email || null;
 
-    // Reject if phone is already verified/claimed by another user
+    // Reject if phone is already claimed by an existing registered user
     const { data: existingProfile } = await supabase
       .from("profiles")
-      .select("id")
+      .select("id, email")
       .eq("phone", phone)
-      .neq("id", normalizedUserId)
       .maybeSingle();
 
+    // Only block if phone belongs to a DIFFERENT user (not the current user and not matching pending email)
     if (existingProfile) {
-      return new Response(
-        JSON.stringify({ error: "This phone number is already in use by another account. Please use a different number." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // If there's a real userId provided, check if it matches
+      if (userId && existingProfile.id !== userId) {
+        return new Response(
+          JSON.stringify({ error: "This phone number is already in use by another account. Please use a different number." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // For pre-signup (no userId), check if the email matches
+      if (!userId && pendingEmail && existingProfile.email !== pendingEmail) {
+        return new Response(
+          JSON.stringify({ error: "This phone number is already in use by another account. Please use a different number." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
-    // Also block if another user has a verified record for this phone
+    // Check verified phone_verifications for conflicts with OTHER users/emails
     const { data: existingVerification } = await supabase
       .from("phone_verifications")
       .select("user_id, verified_at, pending_email")
       .eq("phone", phone)
-      .neq("user_id", normalizedUserId)
-      .neq("pending_email", pendingEmail || "___none___")
-      .not("verified_at", "is", null)
-      .maybeSingle();
+      .not("verified_at", "is", null);
 
-    if (existingVerification) {
+    // Filter to find actual conflicts (different user or different pending email)
+    const conflictingVerification = existingVerification?.find((v: any) => {
+      // If current request has userId, conflict if verification belongs to different user
+      if (userId && v.user_id && v.user_id !== userId) return true;
+      // If current request has pending_email, conflict if verification has different pending_email
+      if (pendingEmail && v.pending_email && v.pending_email !== pendingEmail) return true;
+      // If verification has a real user_id but current request is pre-signup with different email
+      if (!userId && v.user_id && v.user_id !== "00000000-0000-0000-0000-000000000000") return true;
+      return false;
+    });
+
+    if (conflictingVerification) {
       return new Response(
         JSON.stringify({ error: "This phone number has already been verified by another account. Please use a different number." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
