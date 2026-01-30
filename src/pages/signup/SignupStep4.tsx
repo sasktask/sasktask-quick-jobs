@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,6 +28,8 @@ const SignupStep4 = () => {
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  const agreementsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -38,11 +40,26 @@ const SignupStep4 = () => {
       return;
     }
     setEmail(draft.email);
-    setPhone(draft.phone);
-    setPhoneVerified(draft.phoneVerified || false);
-    setTermsAccepted(draft.termsAccepted);
-    setPrivacyAccepted(draft.privacyAccepted || false);
+    setPhone(draft.phone || "");
+    setPhoneVerified(Boolean(draft.phoneVerified));
+    setTermsAccepted(Boolean(draft.termsAccepted));
+    setPrivacyAccepted(Boolean(draft.privacyAccepted));
+    setInitialized(true);
   }, [navigate]);
+
+  // Debug: Log state changes
+  useEffect(() => {
+    if (initialized) {
+      console.log("[SignupStep4] State:", { phoneVerified, termsAccepted, privacyAccepted });
+    }
+  }, [phoneVerified, termsAccepted, privacyAccepted, initialized]);
+
+  // Scroll to agreements after phone verification
+  const scrollToAgreements = () => {
+    setTimeout(() => {
+      agreementsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
+  };
 
   const handleCreateAccount = async () => {
     const draft = getSignupDraft();
@@ -188,10 +205,15 @@ const SignupStep4 = () => {
             email={email}
             initialPhone={phone}
             onVerified={(verifiedPhone) => {
+              console.log("[SignupStep4] Phone verified:", verifiedPhone);
               setPhone(verifiedPhone);
               setPhoneVerified(true);
               setPhoneError(null);
               saveSignupDraft({ phone: verifiedPhone, phoneVerified: true });
+              // Scroll to agreements section if not already completed
+              if (!termsAccepted || !privacyAccepted) {
+                scrollToAgreements();
+              }
             }}
             onPhoneChange={(nextPhone) => {
               setPhone(nextPhone);
@@ -207,14 +229,24 @@ const SignupStep4 = () => {
 
         {/* Legal agreements */}
         <motion.div
+          ref={agreementsRef}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="space-y-4 p-4 bg-muted/50 rounded-xl"
+          className={`space-y-4 p-4 rounded-xl transition-all duration-300 ${
+            phoneVerified && (!termsAccepted || !privacyAccepted)
+              ? "bg-primary/10 border-2 border-primary ring-2 ring-primary/20"
+              : "bg-muted/50"
+          }`}
         >
           <div className="flex items-center gap-2 mb-2">
             <FileText className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium">Legal agreements</span>
+            {phoneVerified && (!termsAccepted || !privacyAccepted) && (
+              <span className="ml-auto text-xs font-medium text-primary animate-pulse">
+                ← Please complete
+              </span>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -224,6 +256,7 @@ const SignupStep4 = () => {
                 checked={termsAccepted}
                 onCheckedChange={(value) => {
                   const next = Boolean(value);
+                  console.log("[SignupStep4] Terms accepted:", next);
                   setTermsAccepted(next);
                   saveSignupDraft({ termsAccepted: next });
                 }}
@@ -255,6 +288,7 @@ const SignupStep4 = () => {
                 checked={privacyAccepted}
                 onCheckedChange={(value) => {
                   const next = Boolean(value);
+                  console.log("[SignupStep4] Privacy accepted:", next);
                   setPrivacyAccepted(next);
                   saveSignupDraft({ privacyAccepted: next });
                 }}
