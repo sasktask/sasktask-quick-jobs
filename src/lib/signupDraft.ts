@@ -12,7 +12,9 @@ export interface SignupDraft {
   password: string;
   confirmPassword: string;
   phone: string;
+  phoneVerified?: boolean;
   termsAccepted: boolean;
+  privacyAccepted: boolean;
 }
 
 const SIGNUP_DRAFT_KEY = "signup_draft_v1";
@@ -29,7 +31,9 @@ const emptyDraft: SignupDraft = {
   password: "",
   confirmPassword: "",
   phone: "",
+  phoneVerified: false,
   termsAccepted: false,
+  privacyAccepted: false,
 };
 
 export const getSignupDraft = (): SignupDraft => {

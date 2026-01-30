@@ -39,7 +39,9 @@ const SignupStep4 = () => {
     }
     setEmail(draft.email);
     setPhone(draft.phone);
+    setPhoneVerified(draft.phoneVerified || false);
     setTermsAccepted(draft.termsAccepted);
+    setPrivacyAccepted(draft.privacyAccepted || false);
   }, [navigate]);
 
   const handleCreateAccount = async () => {
@@ -189,12 +191,12 @@ const SignupStep4 = () => {
               setPhone(verifiedPhone);
               setPhoneVerified(true);
               setPhoneError(null);
-              saveSignupDraft({ phone: verifiedPhone });
+              saveSignupDraft({ phone: verifiedPhone, phoneVerified: true });
             }}
             onPhoneChange={(nextPhone) => {
               setPhone(nextPhone);
               setPhoneVerified(false);
-              saveSignupDraft({ phone: nextPhone });
+              saveSignupDraft({ phone: nextPhone, phoneVerified: false });
               if (phoneError) {
                 setPhoneError(null);
               }
@@ -251,7 +253,11 @@ const SignupStep4 = () => {
               <Checkbox
                 id="privacy"
                 checked={privacyAccepted}
-                onCheckedChange={(value) => setPrivacyAccepted(Boolean(value))}
+                onCheckedChange={(value) => {
+                  const next = Boolean(value);
+                  setPrivacyAccepted(next);
+                  saveSignupDraft({ privacyAccepted: next });
+                }}
                 className="mt-0.5"
               />
               <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
@@ -284,6 +290,39 @@ const SignupStep4 = () => {
             </p>
           </div>
         </motion.div>
+
+        {/* Requirements checklist */}
+        {(!phoneVerified || !termsAccepted || !privacyAccepted) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg"
+          >
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
+              Please complete the following:
+            </p>
+            <ul className="text-sm text-amber-700 dark:text-amber-300 space-y-1">
+              {!phoneVerified && (
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
+                  Verify your phone number
+                </li>
+              )}
+              {!termsAccepted && (
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
+                  Accept Terms of Service
+                </li>
+              )}
+              {!privacyAccepted && (
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
+                  Accept Privacy Policy
+                </li>
+              )}
+            </ul>
+          </motion.div>
+        )}
 
         {/* Navigation buttons */}
         <div className="flex gap-3">
