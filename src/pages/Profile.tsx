@@ -308,9 +308,9 @@ const Profile = () => {
             /> */}
 
             {/* Verification Status Card */}
-            {/* {userId && (
+            {userId && (
               <VerificationStatusIndicator userId={userId} />
-            )} */}
+            )}
 
             {/* Profile Strength - Desktop */}
             <div className="hidden lg:block">
