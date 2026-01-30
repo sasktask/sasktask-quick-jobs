@@ -9,11 +9,9 @@ import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AppleSignInButton } from "@/components/auth/AppleSignInButton";
 import { EnhancedEmailVerification } from "@/components/auth/EnhancedEmailVerification";
 import { AuthLayout } from "@/components/auth/AuthLayout";
-import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, Calendar, Check, Mail, User, ArrowRight, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { AlertCircle, Check, Mail, User, ArrowRight, Sparkles } from "lucide-react";
 import { z } from "zod";
-
-const MIN_AGE = 18;
 
 // Validation schemas
 const emailSchema = z
@@ -30,23 +28,10 @@ const nameSchema = z
   .max(50, "Must be less than 50 characters")
   .regex(/^[a-zA-Z\s'-]+$/, "Only letters, spaces, hyphens and apostrophes allowed");
 
-const validateAge = (dateOfBirth: string): { valid: boolean; age: number } => {
-  const today = new Date();
-  const birthDate = new Date(dateOfBirth);
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return { valid: age >= MIN_AGE, age };
-};
-
 const SignupStep1 = () => {
   const [firstName, setFirstName] = useState("");
-  const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [emailVerified, setEmailVerified] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
@@ -54,11 +39,6 @@ const SignupStep1 = () => {
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const ageValidation = useMemo(() => {
-    if (!dateOfBirth) return null;
-    return validateAge(dateOfBirth);
-  }, [dateOfBirth]);
 
   // Real-time email validation
   const emailError = useMemo(() => {
@@ -83,10 +63,8 @@ const SignupStep1 = () => {
   useEffect(() => {
     const draft = getSignupDraft();
     setFirstName(draft.firstName);
-    setMiddleName(draft.middleName);
     setLastName(draft.lastName);
     setEmail(draft.email);
-    setDateOfBirth(draft.dateOfBirth);
     setVerificationId(draft.emailVerificationId || null);
     setEmailVerified(Boolean(draft.emailVerified));
   }, []);
@@ -134,12 +112,6 @@ const SignupStep1 = () => {
       if (!result.success) errors.email = result.error.errors[0].message;
     }
 
-    if (!dateOfBirth) {
-      errors.dateOfBirth = "Date of birth is required";
-    } else if (ageValidation && !ageValidation.valid) {
-      errors.dateOfBirth = `You must be at least ${MIN_AGE} years old to use SaskTask`;
-    }
-
     if (!emailVerified) {
       errors.emailVerified = "Please verify your email to continue";
     }
@@ -156,10 +128,8 @@ const SignupStep1 = () => {
 
     saveSignupDraft({
       firstName: firstName.trim(),
-      middleName: middleName.trim(),
       lastName: lastName.trim(),
       email: email.trim().toLowerCase(),
-      dateOfBirth,
     });
     navigate("/signup/step-2");
   };
@@ -275,20 +245,6 @@ const SignupStep1 = () => {
             </div>
           </div>
 
-          {/* Middle name (optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="middleName" className="text-sm font-medium text-muted-foreground">
-              Middle name <span className="text-xs">(optional)</span>
-            </Label>
-            <Input
-              id="middleName"
-              value={middleName}
-              onChange={(e) => setMiddleName(e.target.value)}
-              placeholder="Middle name"
-              className="h-12"
-            />
-          </div>
-
           {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium">
@@ -362,47 +318,6 @@ const SignupStep1 = () => {
               )}
             </motion.div>
           )}
-
-          {/* Date of birth */}
-          <div className="space-y-2">
-            <Label htmlFor="dateOfBirth" className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Date of birth <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="dateOfBirth"
-              type="date"
-              value={dateOfBirth}
-              onChange={(e) => {
-                setDateOfBirth(e.target.value);
-                if (formErrors.dateOfBirth) {
-                  setFormErrors((prev) => ({ ...prev, dateOfBirth: "" }));
-                }
-              }}
-              max={new Date().toISOString().split("T")[0]}
-              className={`h-12 ${formErrors.dateOfBirth ? "border-destructive focus-visible:ring-destructive" : ""}`}
-            />
-            {formErrors.dateOfBirth && (
-              <motion.p
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-xs text-destructive flex items-center gap-1"
-              >
-                <AlertCircle className="w-3 h-3" />
-                {formErrors.dateOfBirth}
-              </motion.p>
-            )}
-            {ageValidation && ageValidation.valid && !formErrors.dateOfBirth && (
-              <motion.p
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-xs text-green-600 flex items-center gap-1"
-              >
-                <Check className="w-3 h-3" />
-                Age verified ({ageValidation.age} years old)
-              </motion.p>
-            )}
-          </div>
         </div>
 
         {/* Continue button */}

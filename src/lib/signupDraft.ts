@@ -5,7 +5,6 @@ export interface SignupDraft {
   middleName: string;
   lastName: string;
   email: string;
-  dateOfBirth: string;
   emailVerificationId?: string | null;
   emailVerified?: boolean;
   role: SignupRole | "";
@@ -23,7 +22,6 @@ const emptyDraft: SignupDraft = {
   middleName: "",
   lastName: "",
   email: "",
-  dateOfBirth: "",
   emailVerificationId: null,
   emailVerified: false,
   role: "",
