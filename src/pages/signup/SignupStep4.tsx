@@ -74,7 +74,6 @@ const SignupStep4 = () => {
             first_name: draft.firstName,
             middle_name: draft.middleName || null,
             last_name: draft.lastName,
-            date_of_birth: draft.dateOfBirth || null,
             phone,
             role: primaryRole,
             wants_both_roles: wantsBothRoles,

@@ -143,7 +143,7 @@ const SignupStep2 = () => {
 
   useEffect(() => {
     const draft = getSignupDraft();
-    if (!draft.email || !draft.firstName || !draft.lastName || !draft.dateOfBirth) {
+    if (!draft.email || !draft.firstName || !draft.lastName) {
       navigate("/signup/step-1");
       return;
     }
