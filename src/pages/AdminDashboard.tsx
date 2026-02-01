@@ -87,11 +87,17 @@ export default function AdminDashboard() {
   }, []);
 
   // Check if user was active within the last 5 minutes
+  // IMPORTANT: Only rely on last_seen timestamp, not is_online flag which can become stale
   const isRecentlyActive = (lastSeen: string | null): boolean => {
     if (!lastSeen) return false;
     const lastSeenDate = new Date(lastSeen);
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
     return lastSeenDate > fiveMinutesAgo;
+  };
+
+  // Determine if user is truly online (based on recent activity, not stale is_online flag)
+  const isUserTrulyOnline = (user: User): boolean => {
+    return isRecentlyActive(user.last_seen);
   };
 
   const loadData = async () => {
@@ -108,10 +114,9 @@ export default function AdminDashboard() {
       setUsers(usersData);
       setUserRoles(rolesRes.data || []);
 
-      // Count online users based on last_seen within 5 minutes OR is_online flag
-      const onlineCount = usersData.filter(u => 
-        u.is_online === true || isRecentlyActive(u.last_seen)
-      ).length;
+      // Count truly online users - ONLY based on last_seen within 5 minutes
+      // The is_online flag can become stale if browser is closed without cleanup
+      const onlineCount = usersData.filter(u => isRecentlyActive(u.last_seen)).length;
 
       setStats({
         total: usersData.length,
@@ -295,7 +300,7 @@ export default function AdminDashboard() {
       statusFilter === "all" ||
       (statusFilter === "verified" && u.verified_by_admin) ||
       (statusFilter === "unverified" && !u.verified_by_admin) ||
-      (statusFilter === "online" && (u.is_online || isRecentlyActive(u.last_seen))) ||
+      (statusFilter === "online" && isRecentlyActive(u.last_seen)) ||
       (statusFilter === "banned" && u.availability_status === "banned");
 
     return matchesSearch && matchesStatus;
@@ -421,7 +426,7 @@ export default function AdminDashboard() {
                               {user.full_name?.charAt(0) || user.email?.charAt(0) || "?"}
                             </AvatarFallback>
                           </Avatar>
-                          {(user.is_online || isRecentlyActive(user.last_seen)) && (
+                          {isRecentlyActive(user.last_seen) && (
                             <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-emerald-500 rounded-full border-2 border-background" />
                           )}
                         </div>
