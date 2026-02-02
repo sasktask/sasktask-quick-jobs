@@ -84,6 +84,43 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadData();
+
+    // Subscribe to realtime changes on profiles table for online status updates
+    const channel = supabase
+      .channel('admin-profiles-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+        },
+        (payload) => {
+          console.log('[AdminDashboard] Profile updated:', payload.new);
+          // Update the user in our local state
+          setUsers(prevUsers => {
+            const updatedUsers = prevUsers.map(user => 
+              user.id === payload.new.id 
+                ? { ...user, ...payload.new as User }
+                : user
+            );
+            
+            // Recalculate online count
+            const onlineCount = updatedUsers.filter(u => isRecentlyActive(u.last_seen)).length;
+            setStats(prevStats => ({
+              ...prevStats,
+              online: onlineCount,
+            }));
+            
+            return updatedUsers;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Check if user was active within the last 5 minutes
