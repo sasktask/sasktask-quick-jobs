@@ -17,6 +17,7 @@ import {
   Layers
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { markUserOffline } from "@/hooks/useOnlinePresence";
 import { OWNER_USER_ID } from "@/lib/constants";
 import {
   Sheet,
@@ -90,6 +91,7 @@ export const MobileMenu = ({ isOpen, onClose, user, userRole, userRoles = [] }: 
   };
 
   const handleSignOut = async () => {
+    await markUserOffline(user?.id);
     await supabase.auth.signOut();
     onClose();
     navigate("/");

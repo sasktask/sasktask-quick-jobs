@@ -86,6 +86,7 @@ import AdminBackgroundChecks from "./pages/AdminBackgroundChecks";
 import AdminTaxSettings from "./pages/AdminTaxSettings";
 import { MobileBottomNav } from "./components/MobileBottomNav";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { OnlinePresenceHandler } from "./components/OnlinePresenceHandler";
 
 const queryClient = new QueryClient();
 
@@ -94,6 +95,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="sasktask-theme">
       <LanguageProvider>
         <AuthProvider>
+          <OnlinePresenceHandler />
           <TooltipProvider>
             <Toaster />
             <Sonner />

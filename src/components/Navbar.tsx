@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useTheme } from "next-themes";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount";
+import { markUserOffline } from "@/hooks/useOnlinePresence";
 import { NotificationCenter } from "./NotificationCenter";
 import { MobileMenu } from "./MobileMenu";
 import { UserIdSearch } from "./UserIdSearch";
@@ -70,6 +71,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
   };
 
   const handleSignOut = async () => {
+    await markUserOffline(user?.id);
     await supabase.auth.signOut();
     navigate("/");
   };

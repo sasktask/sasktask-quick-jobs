@@ -2,6 +2,42 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
+// Cached session for synchronous beforeunload/pagehide - browser doesn't wait for async
+let offlineCache: { userId: string; accessToken: string } | null = null;
+
+const setOfflineCache = (userId: string, accessToken: string) => {
+  offlineCache = { userId, accessToken };
+};
+
+/** Fire offline update synchronously using cached session. No async - for beforeunload/pagehide. */
+const fireOfflineUpdateSync = () => {
+  const cached = offlineCache;
+  if (!cached) return;
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${cached.userId}`;
+  const body = JSON.stringify({ is_online: false, last_seen: new Date().toISOString() });
+  const headers = {
+    "Content-Type": "application/json",
+    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    Authorization: `Bearer ${cached.accessToken}`,
+    Prefer: "return=minimal",
+  };
+  fetch(url, { method: "PATCH", headers, body, keepalive: true }).catch(() => {});
+};
+
+/** Mark user as offline in profiles. Call before sign out or when browser closes. */
+export const markUserOffline = async (userId: string | undefined) => {
+  if (!userId) return;
+  try {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ is_online: false, last_seen: new Date().toISOString() })
+      .eq("id", userId);
+    if (error) throw error;
+  } catch (error) {
+    console.error("Failed to mark user offline:", error);
+  }
+};
+
 interface PresenceState {
   [key: string]: {
     user_id: string;
@@ -18,19 +54,24 @@ export const useOnlinePresence = (userId: string | undefined) => {
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isActiveRef = useRef(true);
 
-  // Update last_seen timestamp in the database
+  // Update last_seen timestamp in the database; also refresh offline cache for beforeunload
   const updateLastSeen = useCallback(async (isOnline: boolean) => {
     if (!userId) return;
-    
+
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        setOfflineCache(userId, session.access_token);
+      }
+
       const { error } = await supabase
         .from("profiles")
-        .update({ 
-          is_online: isOnline, 
-          last_seen: new Date().toISOString() 
+        .update({
+          is_online: isOnline,
+          last_seen: new Date().toISOString(),
         })
         .eq("id", userId);
-      
+
       if (error) {
         console.error("Failed to update last_seen:", error);
       } else {
@@ -46,12 +87,12 @@ export const useOnlinePresence = (userId: string | undefined) => {
     if (heartbeatRef.current) {
       clearInterval(heartbeatRef.current);
     }
-    
+
     console.log("[Presence] Starting heartbeat");
-    
-    // Initial update
+
+    // Initial update (also populates offline cache)
     updateLastSeen(true);
-    
+
     // Set up periodic heartbeat
     heartbeatRef.current = setInterval(() => {
       if (isActiveRef.current) {
@@ -69,43 +110,6 @@ export const useOnlinePresence = (userId: string | undefined) => {
     }
     updateLastSeen(false);
   }, [updateLastSeen]);
-
-  // Mark user offline using synchronous approach for beforeunload
-  const markOfflineSync = useCallback(async () => {
-    if (!userId) return;
-    
-    try {
-      // Get current session for auth token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
-
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
-      const data = JSON.stringify({ 
-        is_online: false, 
-        last_seen: new Date().toISOString() 
-      });
-      
-      // Use sendBeacon with proper headers via Blob
-      const headers = {
-        'Content-Type': 'application/json',
-        'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        'Authorization': `Bearer ${session.access_token}`,
-        'Prefer': 'return=minimal'
-      };
-      
-      // sendBeacon doesn't support custom headers, so use fetch with keepalive instead
-      fetch(url, {
-        method: 'PATCH',
-        headers,
-        body: data,
-        keepalive: true // This ensures the request completes even if the page is closing
-      }).catch(() => {
-        // Silently fail - page is closing anyway
-      });
-    } catch (error) {
-      // Silently fail - page is closing anyway
-    }
-  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -149,8 +153,12 @@ export const useOnlinePresence = (userId: string | undefined) => {
             user_id: userId,
             online_at: new Date().toISOString(),
           });
-          
-          // Start heartbeat when subscribed
+
+          // Populate offline cache immediately for beforeunload (user might close tab quickly)
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.access_token) setOfflineCache(userId, session.access_token);
+          });
+
           startHeartbeat();
         }
       });
@@ -172,24 +180,26 @@ export const useOnlinePresence = (userId: string | undefined) => {
       }
     };
 
-    // Handle before unload - mark offline when closing browser/tab
-    const handleBeforeUnload = () => {
-      markOfflineSync();
+    // Mark offline when closing browser/tab - must be synchronous (no await)
+    const handleUnload = () => {
+      fireOfflineUpdateSync();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("beforeunload", handleUnload);
+    window.addEventListener("pagehide", handleUnload); // More reliable on mobile
 
-    // Cleanup on unmount
+    // Cleanup on unmount (e.g. sign out)
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      
-      // Stop heartbeat and mark offline
+      window.removeEventListener("beforeunload", handleUnload);
+      window.removeEventListener("pagehide", handleUnload);
+
       stopHeartbeat();
       supabase.removeChannel(presenceChannel);
+      offlineCache = null;
     };
-  }, [userId, startHeartbeat, stopHeartbeat, updateLastSeen, markOfflineSync]);
+  }, [userId, startHeartbeat, stopHeartbeat, updateLastSeen]);
 
   const isUserOnline = useCallback(
     (checkUserId: string) => onlineUsers.has(checkUserId),

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { markUserOffline } from "@/hooks/useOnlinePresence";
 
 interface SessionTimeoutSettingsProps {
   userId: string;
@@ -171,6 +172,7 @@ export const SessionTimeoutSettings = ({ userId }: SessionTimeoutSettingsProps) 
 
   const handleAutoLogout = async () => {
     toast.info('Session expired due to inactivity');
+    await markUserOffline(userId);
     await supabase.auth.signOut();
     navigate('/auth');
   };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { markUserOffline } from "@/hooks/useOnlinePresence";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -149,7 +150,8 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({
       toast.success(data?.message || "Your account has been deleted");
       onOpenChange(false);
 
-      // Sign out and redirect
+      // Mark offline and sign out before redirect
+      await markUserOffline(user.id);
       await supabase.auth.signOut();
       navigate("/");
     } catch (error: any) {
