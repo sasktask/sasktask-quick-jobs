@@ -7,20 +7,26 @@ let offlineCache: { userId: string; accessToken: string } | null = null;
 
 const setOfflineCache = (userId: string, accessToken: string) => {
   offlineCache = { userId, accessToken };
+  console.log("[Presence] Offline cache updated for user:", userId);
 };
 
 /** Fire offline update synchronously using cached session. No async - for beforeunload/pagehide. */
 const fireOfflineUpdateSync = () => {
   const cached = offlineCache;
-  if (!cached) return;
+  if (!cached) {
+    console.log("[Presence] No cached session for offline update");
+    return;
+  }
+  console.log("[Presence] Firing synchronous offline update for user:", cached.userId);
   const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${cached.userId}`;
   const body = JSON.stringify({ is_online: false, last_seen: new Date().toISOString() });
-  const headers = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     Authorization: `Bearer ${cached.accessToken}`,
     Prefer: "return=minimal",
   };
+  // Use fetch with keepalive - this is the most reliable way to send data on page close
   fetch(url, { method: "PATCH", headers, body, keepalive: true }).catch(() => {});
 };
 
@@ -148,6 +154,7 @@ export const useOnlinePresence = (userId: string | undefined) => {
         });
       })
       .subscribe(async (status) => {
+        console.log("[Presence] Channel status:", status);
         if (status === "SUBSCRIBED") {
           await presenceChannel.track({
             user_id: userId,
@@ -155,9 +162,10 @@ export const useOnlinePresence = (userId: string | undefined) => {
           });
 
           // Populate offline cache immediately for beforeunload (user might close tab quickly)
-          supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.access_token) setOfflineCache(userId, session.access_token);
-          });
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            setOfflineCache(userId, session.access_token);
+          }
 
           startHeartbeat();
         }
@@ -182,6 +190,7 @@ export const useOnlinePresence = (userId: string | undefined) => {
 
     // Mark offline when closing browser/tab - must be synchronous (no await)
     const handleUnload = () => {
+      console.log("[Presence] beforeunload/pagehide triggered");
       fireOfflineUpdateSync();
     };
 
@@ -191,13 +200,14 @@ export const useOnlinePresence = (userId: string | undefined) => {
 
     // Cleanup on unmount (e.g. sign out)
     return () => {
+      console.log("[Presence] Cleanup - removing listeners and marking offline");
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("beforeunload", handleUnload);
       window.removeEventListener("pagehide", handleUnload);
 
       stopHeartbeat();
       supabase.removeChannel(presenceChannel);
-      offlineCache = null;
+      // Don't clear offlineCache here - it might still be needed for the sync update
     };
   }, [userId, startHeartbeat, stopHeartbeat, updateLastSeen]);
 
