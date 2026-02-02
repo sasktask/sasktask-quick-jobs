@@ -1,11 +1,12 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Users, Search, Sparkles, Shield, Star, Clock,
-  ArrowRight, Zap
+import {
+  Users, Search, Sparkles, Shield, Star, Clock, Zap
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface TaskerHeroSectionProps {
   stats: {
@@ -17,6 +18,7 @@ interface TaskerHeroSectionProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
   onQuickFilter: (filter: string) => void;
+  onSearch?: () => void;
 }
 
 export const TaskerHeroSection = ({
@@ -24,14 +26,21 @@ export const TaskerHeroSection = ({
   searchQuery,
   onSearchChange,
   onQuickFilter,
+  onSearch,
 }: TaskerHeroSectionProps) => {
+  const [isFocused, setIsFocused] = useState(false);
+
+  const handleSearch = () => {
+    onSearch?.();
+  };
+
   return (
     <div className="relative overflow-hidden">
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5" />
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl" />
-      
+
       <div className="relative z-10 py-12 lg:py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -81,21 +90,37 @@ export const TaskerHeroSection = ({
             transition={{ delay: 0.4 }}
             className="max-w-2xl mx-auto"
           >
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all opacity-0 group-hover:opacity-100" />
-              <div className="relative flex items-center bg-background/80 backdrop-blur-sm border-2 border-border hover:border-primary/50 rounded-2xl p-2 transition-all shadow-lg">
-                <Search className="h-5 w-5 text-muted-foreground ml-4" />
-                <Input
-                  placeholder="Search by skill, name, or service..."
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  className="border-0 bg-transparent focus-visible:ring-0 text-lg placeholder:text-muted-foreground/60"
-                />
-                <Button size="lg" className="rounded-xl gap-2 px-6">
-                  Search
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+            <div
+              className={cn(
+                "relative flex items-center bg-background rounded-full border transition-all duration-200 shadow-[0_1px_4px_rgba(0,0,0,0.12)]",
+                isFocused
+                  ? "border-transparent ring-2 ring-primary/20 shadow-[0_4px_16px_rgba(0,0,0,0.15)]"
+                  : "border-border/70 hover:shadow-[0_3px_12px_rgba(0,0,0,0.14)]"
+              )}
+            >
+              <div className="flex items-center gap-2 pl-4 pr-3 text-muted-foreground">
+                <Search className="h-5 w-5" />
               </div>
+              <Input
+                type="text"
+                placeholder="Search by skill, name, or service..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                style={{ backgroundColor: "#00000000" }}
+                className="flex-1 border-0 bg-transparent text-foreground text-base sm:text-lg h-12 sm:h-14 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60 px-0"
+              />
+              <Button
+                onClick={handleSearch}
+                variant="secondary"
+                size="lg"
+                className="mr-2 sm:mr-3 ml-3 rounded-full h-10 sm:h-11 px-5 sm:px-6 text-sm font-medium bg-background text-foreground border border-border/60 hover:bg-background"
+              >
+                <Search className="h-5 w-5 sm:mr-2" />
+                <span className="sm:inline">Search</span>
+              </Button>
             </div>
           </motion.div>
 
