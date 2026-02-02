@@ -15,7 +15,7 @@ const HEARTBEAT_INTERVAL = 30 * 1000;
 export const useOnlinePresence = (userId: string | undefined) => {
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
-  const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isActiveRef = useRef(true);
 
   // Update last_seen timestamp in the database
@@ -23,13 +23,19 @@ export const useOnlinePresence = (userId: string | undefined) => {
     if (!userId) return;
     
     try {
-      await supabase
+      const { error } = await supabase
         .from("profiles")
         .update({ 
           is_online: isOnline, 
           last_seen: new Date().toISOString() 
         })
         .eq("id", userId);
+      
+      if (error) {
+        console.error("Failed to update last_seen:", error);
+      } else {
+        console.log(`[Presence] Updated: is_online=${isOnline}, time=${new Date().toISOString()}`);
+      }
     } catch (error) {
       console.error("Failed to update last_seen:", error);
     }
@@ -40,6 +46,8 @@ export const useOnlinePresence = (userId: string | undefined) => {
     if (heartbeatRef.current) {
       clearInterval(heartbeatRef.current);
     }
+    
+    console.log("[Presence] Starting heartbeat");
     
     // Initial update
     updateLastSeen(true);
@@ -54,6 +62,7 @@ export const useOnlinePresence = (userId: string | undefined) => {
 
   // Stop heartbeat and mark offline
   const stopHeartbeat = useCallback(() => {
+    console.log("[Presence] Stopping heartbeat");
     if (heartbeatRef.current) {
       clearInterval(heartbeatRef.current);
       heartbeatRef.current = null;
@@ -61,8 +70,47 @@ export const useOnlinePresence = (userId: string | undefined) => {
     updateLastSeen(false);
   }, [updateLastSeen]);
 
+  // Mark user offline using synchronous approach for beforeunload
+  const markOfflineSync = useCallback(async () => {
+    if (!userId) return;
+    
+    try {
+      // Get current session for auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
+      const data = JSON.stringify({ 
+        is_online: false, 
+        last_seen: new Date().toISOString() 
+      });
+      
+      // Use sendBeacon with proper headers via Blob
+      const headers = {
+        'Content-Type': 'application/json',
+        'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        'Authorization': `Bearer ${session.access_token}`,
+        'Prefer': 'return=minimal'
+      };
+      
+      // sendBeacon doesn't support custom headers, so use fetch with keepalive instead
+      fetch(url, {
+        method: 'PATCH',
+        headers,
+        body: data,
+        keepalive: true // This ensures the request completes even if the page is closing
+      }).catch(() => {
+        // Silently fail - page is closing anyway
+      });
+    } catch (error) {
+      // Silently fail - page is closing anyway
+    }
+  }, [userId]);
+
   useEffect(() => {
     if (!userId) return;
+
+    console.log("[Presence] Setting up presence for user:", userId);
 
     const presenceChannel = supabase.channel("online-users", {
       config: {
@@ -113,8 +161,7 @@ export const useOnlinePresence = (userId: string | undefined) => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "hidden") {
         isActiveRef.current = false;
-        // Don't stop heartbeat immediately, just mark as inactive
-        // This allows for quick tab switches without losing online status
+        // Update last_seen but keep online true - will go offline after 5 min of inactivity
       } else {
         isActiveRef.current = true;
         await presenceChannel.track({
@@ -127,14 +174,7 @@ export const useOnlinePresence = (userId: string | undefined) => {
 
     // Handle before unload - mark offline when closing browser/tab
     const handleBeforeUnload = () => {
-      // Use sendBeacon for reliable offline marking on page close
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
-      const data = JSON.stringify({ 
-        is_online: false, 
-        last_seen: new Date().toISOString() 
-      });
-      
-      navigator.sendBeacon(url, new Blob([data], { type: 'application/json' }));
+      markOfflineSync();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -149,7 +189,7 @@ export const useOnlinePresence = (userId: string | undefined) => {
       stopHeartbeat();
       supabase.removeChannel(presenceChannel);
     };
-  }, [userId, startHeartbeat, stopHeartbeat, updateLastSeen]);
+  }, [userId, startHeartbeat, stopHeartbeat, updateLastSeen, markOfflineSync]);
 
   const isUserOnline = useCallback(
     (checkUserId: string) => onlineUsers.has(checkUserId),
