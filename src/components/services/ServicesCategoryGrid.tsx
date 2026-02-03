@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import {
   Hammer, Snowflake, ShoppingBag, Monitor, Car, Camera, GraduationCap,
   Zap, ArrowRight, TrendingUp
 } from "lucide-react";
+import { ServiceActionDialog } from "./ServiceActionDialog";
 
 interface ServiceCategory {
   id: string;
@@ -43,20 +44,29 @@ interface ServicesCategoryGridProps {
 }
 
 export function ServicesCategoryGrid({ onCategorySelect, showCounts = true }: ServicesCategoryGridProps) {
+  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleCategoryClick = (category: ServiceCategory) => {
+    setSelectedCategory(category);
+    setDialogOpen(true);
+    onCategorySelect?.(category.id);
+  };
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-      {categories.map((category, index) => (
-        <motion.div
-          key={category.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: index * 0.05 }}
-        >
-          <Link 
-            to={`/browse?category=${category.id}`}
-            onClick={() => onCategorySelect?.(category.id)}
+    <>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        {categories.map((category, index) => (
+          <motion.div
+            key={category.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
           >
-            <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 overflow-hidden h-full">
+            <Card 
+              className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 overflow-hidden h-full"
+              onClick={() => handleCategoryClick(category)}
+            >
               <CardContent className="p-4 relative">
                 {/* Trending badge */}
                 {category.trending && (
@@ -94,9 +104,20 @@ export function ServicesCategoryGrid({ onCategorySelect, showCounts = true }: Se
                 <ArrowRight className="absolute bottom-4 right-4 w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </CardContent>
             </Card>
-          </Link>
-        </motion.div>
-      ))}
-    </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Action Dialog */}
+      {selectedCategory && (
+        <ServiceActionDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          categoryId={selectedCategory.id}
+          categoryTitle={selectedCategory.title}
+          categoryIcon={selectedCategory.icon}
+        />
+      )}
+    </>
   );
 }
