@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X, Clock, Navigation, Sparkles, Bookmark, Utensils, Star, Shield, ChefHat, Leaf, Award, CheckCircle2, Package, Users, Flame, ArrowRight } from "lucide-react";
+import { Search, MapPin, DollarSign, Calendar, Briefcase, Wrench, SlidersHorizontal, X, Clock, Navigation, Sparkles, Bookmark, Utensils, Star, Shield, ChefHat, Leaf, Award, CheckCircle2, Package, Users, Flame, ArrowRight, Plus, Zap } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ import { SaveSearchDialog } from "@/components/SaveSearchDialog";
 import { TiffinProviderCard, TiffinMenuDialog, TiffinOrderForm } from "@/components/tiffin";
 import { motion } from "framer-motion";
 import { toast as sonnerToast } from "sonner";
+import { useAuth } from "@/hooks/useAuthContext";
 
 // Tiffin cuisine types
 const tiffinCuisineTypes = [
@@ -526,6 +527,9 @@ const Browse = () => {
     );
   }
 
+  // Get auth context for role-based actions
+  const { isTaskGiver, isTaskDoer, hasBothRoles } = useAuth();
+
   return (
     <DashboardLayout>
       <div className="container mx-auto px-4 py-6">
@@ -546,7 +550,27 @@ const Browse = () => {
                   : "Find and accept tasks near you instantly"}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {/* Role-based action buttons */}
+            {isTaskGiver && (
+              <Button 
+                onClick={() => navigate(`/post-task${categoryFilter !== "all" ? `?category=${categoryFilter}` : ""}`)} 
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Post a Task
+              </Button>
+            )}
+            {isTaskDoer && (
+              <Button 
+                variant={isTaskGiver ? "outline" : "default"}
+                onClick={() => navigate("/instant-work")} 
+                className="gap-2"
+              >
+                <Zap className="h-4 w-4" />
+                Go Online
+              </Button>
+            )}
             {isTiffinCategory && (
               <Button variant="outline" onClick={() => setCategoryFilter("all")} className="gap-2">
                 <X className="h-4 w-4" />
