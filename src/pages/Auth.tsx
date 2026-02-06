@@ -1511,6 +1511,7 @@ const Auth: React.FC = () => {
                             onVerified={(verifiedPhone) => {
                               setPhone(verifiedPhone);
                               setPhoneVerified(true);
+                              setFormErrors(prev => ({ ...prev, phone: undefined }));
                             }}
                           />
                         </div>

@@ -4,14 +4,14 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Loader2, 
-  MapPin, 
-  DollarSign, 
-  Clock, 
-  X, 
-  Navigation, 
-  Crosshair, 
+import {
+  Loader2,
+  MapPin,
+  DollarSign,
+  Clock,
+  X,
+  Navigation,
+  Crosshair,
   Layers,
   Route,
   Sparkles,
@@ -89,11 +89,11 @@ const clusterPaint = {
   'circle-opacity': 0.9,
 };
 
-export function TaskClusterMap({ 
-  tasks, 
-  mapboxToken, 
-  isLoading, 
-  userLocation, 
+export function TaskClusterMap({
+  tasks,
+  mapboxToken,
+  isLoading,
+  userLocation,
   radiusKm = 50,
   showHeatmap = false,
   recentlyAddedIds = [],
@@ -198,7 +198,7 @@ export function TaskClusterMap({
   const handleTaskClick = useCallback((task: Task) => {
     setSelectedTask(task);
     onTaskSelect?.(task);
-    
+
     // Fly to task location
     if (map.current && task.latitude && task.longitude) {
       map.current.flyTo({
@@ -244,8 +244,8 @@ export function TaskClusterMap({
   }, [mapLoaded]);
 
   const toggleSaveTask = useCallback((taskId: string) => {
-    setSavedTasks(prev => 
-      prev.includes(taskId) 
+    setSavedTasks(prev =>
+      prev.includes(taskId)
         ? prev.filter(id => id !== taskId)
         : [...prev, taskId]
     );
@@ -254,13 +254,13 @@ export function TaskClusterMap({
   // Calculate distance for selected task
   const getTaskDistance = useCallback((task: Task) => {
     if (!userLocation || !task.latitude || !task.longitude) return undefined;
-    
+
     const R = 6371;
     const dLat = (task.latitude - userLocation.latitude) * Math.PI / 180;
     const dLon = (task.longitude - userLocation.longitude) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(userLocation.latitude * Math.PI / 180) * Math.cos(task.latitude * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos(userLocation.latitude * Math.PI / 180) * Math.cos(task.latitude * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }, [userLocation]);
@@ -322,7 +322,7 @@ export function TaskClusterMap({
       features: tasksWithCoords.map(task => ({
         type: 'Feature' as const,
         geometry: { type: 'Point' as const, coordinates: [task.longitude!, task.latitude!] },
-        properties: { 
+        properties: {
           ...task,
           isNew: recentlyAddedIds.includes(task.id),
           isUrgent: task.priority === 'urgent',
@@ -487,7 +487,7 @@ export function TaskClusterMap({
     const mapInstance = map.current;
 
     userMarkerRef.current?.remove();
-    
+
     // Animated user location marker
     const el = document.createElement('div');
     el.className = 'user-location-marker';
@@ -500,7 +500,7 @@ export function TaskClusterMap({
         </div>
       </div>
     `;
-    
+
     userMarkerRef.current = new mapboxgl.Marker(el)
       .setLngLat([userLocation.longitude, userLocation.latitude])
       .addTo(mapInstance);
@@ -512,25 +512,25 @@ export function TaskClusterMap({
       (mapInstance.getSource('radius-circle') as mapboxgl.GeoJSONSource).setData(circleData);
     } else {
       mapInstance.addSource('radius-circle', { type: 'geojson', data: circleData });
-      
+
       // Gradient fill for radius
       mapInstance.addLayer({
         id: 'radius-circle-fill',
         type: 'fill',
         source: 'radius-circle',
-        paint: { 
-          'fill-color': '#3b82f6', 
-          'fill-opacity': 0.08 
+        paint: {
+          'fill-color': '#3b82f6',
+          'fill-opacity': 0.08
         }
       }, 'clusters');
-      
+
       mapInstance.addLayer({
         id: 'radius-circle-line',
         type: 'line',
         source: 'radius-circle',
-        paint: { 
-          'line-color': '#3b82f6', 
-          'line-width': 2, 
+        paint: {
+          'line-color': '#3b82f6',
+          'line-width': 2,
           'line-dasharray': [4, 2],
           'line-opacity': 0.6
         }
@@ -541,14 +541,14 @@ export function TaskClusterMap({
   // Filter tasks by selection bounds
   const filteredBySelection = selectionBounds
     ? tasks.filter(t => {
-        if (!t.latitude || !t.longitude) return false;
-        return (
-          t.longitude >= selectionBounds[0] &&
-          t.latitude >= selectionBounds[1] &&
-          t.longitude <= selectionBounds[2] &&
-          t.latitude <= selectionBounds[3]
-        );
-      })
+      if (!t.latitude || !t.longitude) return false;
+      return (
+        t.longitude >= selectionBounds[0] &&
+        t.latitude >= selectionBounds[1] &&
+        t.longitude <= selectionBounds[2] &&
+        t.latitude <= selectionBounds[3]
+      );
+    })
     : null;
 
   if (isLoading) {
@@ -580,7 +580,7 @@ export function TaskClusterMap({
   return (
     <div className="relative w-full h-[600px] rounded-xl overflow-hidden border border-border shadow-lg">
       <div ref={mapContainer} className="absolute inset-0" />
-      
+
       {/* Draw Selection Controls */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
         <MapDrawSelection
@@ -594,7 +594,7 @@ export function TaskClusterMap({
       {/* Cluster hover tooltip */}
       <AnimatePresence>
         {hoveredCluster && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}

@@ -4,10 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { TaskClusterMap } from "@/components/TaskClusterMap";
-import { 
-  MapCategoryFilter, 
-  MapTrafficLayer, 
-  Map3DControls, 
+import {
+  MapCategoryFilter,
+  MapTrafficLayer,
+  Map3DControls,
   MapHeatmapLayer,
   MapLocationSearch,
   NavigationPanel,
@@ -62,7 +62,7 @@ export default function MapView() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { location: userLocation, isLoading: locationLoading, error: locationError, requestLocation } = useUserLocation();
-  
+
   // Real-time updates
   const { tasks: realtimeTasks, isConnected, getRecentlyAddedIds } = useMapRealtime(initialTasks);
   const recentlyAddedIds = getRecentlyAddedIds();
@@ -75,12 +75,12 @@ export default function MapView() {
   const fetchMapboxToken = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-      
+
       if (error) {
         console.error("Error invoking get-mapbox-token:", error);
         return;
       }
-      
+
       if (data?.token) {
         setMapboxToken(data.token);
       } else if (data?.error) {
@@ -99,7 +99,7 @@ export default function MapView() {
   const fetchTasks = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         navigate("/auth");
         return;
@@ -136,7 +136,7 @@ export default function MapView() {
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(t => 
+      result = result.filter(t =>
         t.title.toLowerCase().includes(query) ||
         t.description?.toLowerCase().includes(query) ||
         t.location.toLowerCase().includes(query)
@@ -172,7 +172,7 @@ export default function MapView() {
 
   const tasksWithLocation = filteredTasks.filter(t => t.latitude && t.longitude);
   const tasksWithoutLocation = filteredTasks.filter(t => !t.latitude || !t.longitude);
-  
+
   // Calculate stats
   const totalValue = tasksWithLocation.reduce((sum, t) => sum + t.pay_amount, 0);
   const avgPay = tasksWithLocation.length > 0 ? Math.round(totalValue / tasksWithLocation.length) : 0;
@@ -187,7 +187,7 @@ export default function MapView() {
         duration: 1500,
         essential: true,
       });
-      
+
       if (placeName) {
         toast({
           title: "Location Found",
@@ -234,7 +234,7 @@ export default function MapView() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <div className="container mx-auto px-4 pt-24 pb-20">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
@@ -253,7 +253,7 @@ export default function MapView() {
               Find tasks near you with real-time updates
             </p>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3">
             {/* Advanced Location Search */}
             <MapLocationSearch
@@ -263,7 +263,7 @@ export default function MapView() {
             />
 
             {/* Location button */}
-            <Button 
+            <Button
               variant={userLocation ? "default" : "outline"}
               onClick={requestLocation}
               disabled={locationLoading}
@@ -313,7 +313,7 @@ export default function MapView() {
 
             {/* 3D Controls */}
             <Map3DControls map={mapInstance} />
-            
+
             <Button variant="outline" onClick={() => navigate("/browse")}>
               <List className="h-4 w-4 mr-2" />
               List View
@@ -359,7 +359,7 @@ export default function MapView() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-border">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
@@ -416,8 +416,8 @@ export default function MapView() {
 
         {/* Map Container with Navigation Panel */}
         <div className="relative">
-          <TaskClusterMap 
-            tasks={filteredTasks} 
+          <TaskClusterMap
+            tasks={filteredTasks}
             mapboxToken={mapboxToken}
             isLoading={isLoading}
             userLocation={userLocation}
@@ -433,8 +433,8 @@ export default function MapView() {
                   description: (
                     <div className="flex flex-col gap-2 mt-2">
                       <p className="text-sm">{task.location}</p>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         className="gap-2 w-full"
                         onClick={() => handleGetDirections({
                           name: task.title,
@@ -499,7 +499,7 @@ export default function MapView() {
                   animate={{ opacity: 1, y: 0 }}
                   whileHover={{ y: -2 }}
                 >
-                  <Card 
+                  <Card
                     className="border-border hover:shadow-lg transition-all cursor-pointer"
                     onClick={() => navigate(`/task/${task.id}`)}
                   >

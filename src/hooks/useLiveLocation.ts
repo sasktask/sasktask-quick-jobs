@@ -38,7 +38,7 @@ export function useLiveLocation(options: UseLiveLocationOptions = {}): UseLiveLo
   const [location, setLocation] = useState<LiveLocation | null>(null);
   const [isTracking, setIsTracking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const watchIdRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastBroadcastRef = useRef<number>(0);
@@ -46,7 +46,7 @@ export function useLiveLocation(options: UseLiveLocationOptions = {}): UseLiveLo
   // Broadcast location to server
   const broadcastLocation = useCallback(async (loc: LiveLocation) => {
     if (!broadcastToServer) return;
-    
+
     // Throttle broadcasts
     const now = Date.now();
     if (now - lastBroadcastRef.current < updateInterval) return;
@@ -93,7 +93,7 @@ export function useLiveLocation(options: UseLiveLocationOptions = {}): UseLiveLo
 
     setLocation(newLocation);
     setError(null);
-    
+
     if (onLocationUpdate) {
       onLocationUpdate(newLocation);
     }
@@ -104,7 +104,7 @@ export function useLiveLocation(options: UseLiveLocationOptions = {}): UseLiveLo
   // Handle position error
   const handlePositionError = useCallback((err: GeolocationPositionError) => {
     let errorMessage = 'Unable to get location';
-    
+
     switch (err.code) {
       case err.PERMISSION_DENIED:
         errorMessage = 'Location permission denied';
@@ -237,7 +237,7 @@ export function useLiveLocation(options: UseLiveLocationOptions = {}): UseLiveLo
           intervalRef.current = setInterval(() => {
             navigator.geolocation.getCurrentPosition(
               handlePositionUpdate,
-              () => {},
+              () => { },
               { enableHighAccuracy: false, timeout: 10000 }
             );
           }, 60000); // Once per minute when hidden
