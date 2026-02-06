@@ -56,6 +56,13 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   const [isVerified, setIsVerified] = useState(initialVerified);
   const { toast } = useToast();
 
+  // Sync isVerified state when initialVerified prop changes (e.g., on page refresh with stored draft)
+  useEffect(() => {
+    if (initialVerified && !isVerified) {
+      setIsVerified(true);
+    }
+  }, [initialVerified]);
+
   // Countdown timer for resend
   useEffect(() => {
     if (countdown > 0) {
