@@ -11,6 +11,7 @@ interface PhoneVerificationProps {
   userId?: string;
   email?: string;
   initialPhone?: string;
+  initialVerified?: boolean;
   onVerified: (phone: string) => void;
   error?: string;
   onPhoneChange?: (phone: string) => void;
@@ -20,6 +21,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   userId,
   email,
   initialPhone = "",
+  initialVerified = false,
   onVerified,
   error,
   onPhoneChange,
@@ -51,7 +53,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   const [isSending, setIsSending] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [verificationId, setVerificationId] = useState<string | null>(null);
-  const [isVerified, setIsVerified] = useState(false);
+  const [isVerified, setIsVerified] = useState(initialVerified);
   const { toast } = useToast();
 
   // Countdown timer for resend
