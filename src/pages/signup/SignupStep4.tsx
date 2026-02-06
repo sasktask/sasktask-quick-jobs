@@ -204,6 +204,7 @@ const SignupStep4 = () => {
           <PhoneVerification
             email={email}
             initialPhone={phone}
+            initialVerified={phoneVerified}
             onVerified={(verifiedPhone) => {
               console.log("[SignupStep4] Phone verified:", verifiedPhone);
               setPhone(verifiedPhone);
