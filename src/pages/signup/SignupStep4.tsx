@@ -201,21 +201,22 @@ const SignupStep4 = () => {
             )}
           </div>
           
-          <PhoneVerification
-            email={email}
-            initialPhone={phone}
-            initialVerified={phoneVerified}
-            onVerified={(verifiedPhone) => {
-              console.log("[SignupStep4] Phone verified:", verifiedPhone);
-              setPhone(verifiedPhone);
-              setPhoneVerified(true);
-              setPhoneError(null);
-              saveSignupDraft({ phone: verifiedPhone, phoneVerified: true });
-              // Scroll to agreements section if not already completed
-              if (!termsAccepted || !privacyAccepted) {
-                scrollToAgreements();
-              }
-            }}
+        <PhoneVerification
+          email={email}
+          initialPhone={phone}
+          initialVerified={phoneVerified}
+          onVerified={(verifiedPhone) => {
+            console.log("[SignupStep4] Phone verified callback fired:", verifiedPhone);
+            // Use functional updates to ensure state is properly set
+            setPhone(verifiedPhone);
+            setPhoneVerified(true);
+            setPhoneError(null);
+            saveSignupDraft({ phone: verifiedPhone, phoneVerified: true });
+            // Scroll to agreements after a brief delay
+            setTimeout(() => {
+              scrollToAgreements();
+            }, 100);
+          }}
             onPhoneChange={(nextPhone) => {
               setPhone(nextPhone);
               setPhoneVerified(false);
