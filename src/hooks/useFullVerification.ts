@@ -85,15 +85,33 @@ export function useFullVerification(userId: string | null): UseFullVerificationR
       const idVerified = isAdminOverride || !!verification?.id_verified;
 
       // Phone verification - check phone_verifications table
+      // Check by user_id OR by pending_email (for pre-signup verifications)
       let phoneVerified = false;
       if (profile?.phone) {
-        const { count } = await supabase
+        // First check by user_id
+        const { count: countByUserId } = await supabase
           .from('phone_verifications')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId)
           .eq('phone', profile.phone)
           .not('verified_at', 'is', null);
-        phoneVerified = isAdminOverride || (!!count && count > 0);
+        
+        if (countByUserId && countByUserId > 0) {
+          phoneVerified = true;
+        } else {
+          // Also check by pending_email (for verifications done during signup before account creation)
+          const userEmail = session?.user?.email;
+          if (userEmail) {
+            const { count: countByEmail } = await supabase
+              .from('phone_verifications')
+              .select('*', { count: 'exact', head: true })
+              .eq('pending_email', userEmail)
+              .eq('phone', profile.phone)
+              .not('verified_at', 'is', null);
+            phoneVerified = !!countByEmail && countByEmail > 0;
+          }
+        }
+        phoneVerified = isAdminOverride || phoneVerified;
       } else {
         phoneVerified = isAdminOverride;
       }
