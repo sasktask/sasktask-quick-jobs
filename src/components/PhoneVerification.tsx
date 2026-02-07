@@ -60,8 +60,13 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   useEffect(() => {
     if (initialVerified && !isVerified) {
       setIsVerified(true);
+      // Also notify parent that phone is verified (in case parent state is out of sync)
+      const digits = getDigitsOnly(phone);
+      if (digits.length === 10) {
+        onVerified(`+1${digits}`);
+      }
     }
-  }, [initialVerified]);
+  }, [initialVerified, isVerified, phone, onVerified]);
 
   // Countdown timer for resend
   useEffect(() => {
