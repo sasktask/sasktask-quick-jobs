@@ -488,15 +488,37 @@ export function TaskClusterMap({
 
     userMarkerRef.current?.remove();
 
-    // Animated user location marker
+    // User location marker with map pin icon
     const el = document.createElement('div');
     el.className = 'user-location-marker';
     el.innerHTML = `
-      <div class="relative">
-        <div class="absolute -inset-4 rounded-full bg-blue-500/20 animate-ping"></div>
-        <div class="absolute -inset-2 rounded-full bg-blue-500/30 animate-pulse"></div>
-        <div class="relative w-5 h-5 rounded-full bg-blue-500 border-3 border-white shadow-lg flex items-center justify-center">
-          <div class="w-2 h-2 rounded-full bg-white"></div>
+      <div class="relative" style="transform: translateY(-50%);">
+        <div class="absolute -inset-3 rounded-full bg-blue-500/20 animate-pulse"></div>
+        <div style="
+          position: relative;
+          width: 32px;
+          height: 32px;
+          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          border: 3px solid white;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <svg 
+            style="transform: rotate(45deg); width: 14px; height: 14px; color: white;" 
+            fill="none" 
+            stroke="currentColor" 
+            stroke-width="2" 
+            stroke-linecap="round" 
+            stroke-linejoin="round"
+            viewBox="0 0 24 24"
+          >
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 2a10 10 0 0 0-7.743 16.33l7.326 5.67a.5.5 0 0 0 .834 0l7.326-5.67A10 10 0 0 0 12 2z"></path>
+          </svg>
         </div>
       </div>
     `;
