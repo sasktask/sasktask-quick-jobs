@@ -127,10 +127,12 @@ export function TaskMap({ tasks, mapboxToken, isLoading, userLocation, radiusKm 
       // Add user location marker
       const el = document.createElement('div');
       el.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#3b82f6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
-          <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
-          <circle cx="12" cy="10" r="3" fill="white" stroke="#3b82f6" stroke-width="1.5"/>
-        </svg>
+        <div class="relative">
+          <div class="w-6 h-6 rounded-full bg-blue-500 border-3 border-white shadow-lg flex items-center justify-center animate-pulse">
+            <div class="w-2 h-2 rounded-full bg-white"></div>
+          </div>
+          <div class="absolute -inset-2 rounded-full bg-blue-500/20 animate-ping"></div>
+        </div>
       `;
 
       userMarkerRef.current = new mapboxgl.Marker(el)
