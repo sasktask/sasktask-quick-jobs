@@ -111,10 +111,10 @@ export function MapTaskPreview({
         if (response.ok) {
           const geoData = await response.json();
           const feature = geoData.features?.[0];
-          
+
           if (feature) {
             const context = feature.context || [];
-            const getContextValue = (type: string) => 
+            const getContextValue = (type: string) =>
               context.find((c: any) => c.id?.startsWith(type))?.text;
 
             setGeocodedAddress({
@@ -190,10 +190,9 @@ export function MapTaskPreview({
         <div className="px-4 pt-3 pb-1">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs text-muted-foreground">Match Score</span>
-            <span className={`text-xs font-medium ${
-              matchScore >= 80 ? 'text-green-500' : 
-              matchScore >= 60 ? 'text-yellow-500' : 'text-orange-500'
-            }`}>
+            <span className={`text-xs font-medium ${matchScore >= 80 ? 'text-green-500' :
+                matchScore >= 60 ? 'text-yellow-500' : 'text-orange-500'
+              }`}>
               {matchScore}%
             </span>
           </div>
@@ -282,7 +281,7 @@ export function MapTaskPreview({
                 </Button>
               </div>
             </div>
-            
+
             {task.latitude && task.longitude && (
               <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50">
                 <Compass className="h-3.5 w-3.5 text-muted-foreground" />

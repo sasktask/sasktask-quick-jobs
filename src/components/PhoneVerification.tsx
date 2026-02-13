@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,6 +54,7 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
   const [countdown, setCountdown] = useState(0);
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(initialVerified);
+  const hasNotifiedVerifiedRef = useRef(false);
   const { toast } = useToast();
 
   // Sync isVerified state when initialVerified prop changes (e.g., on page refresh with stored draft)
@@ -67,6 +68,19 @@ export const PhoneVerification: React.FC<PhoneVerificationProps> = ({
       }
     }
   }, [initialVerified, isVerified, phone, onVerified]);
+
+  useEffect(() => {
+    if (!isVerified) {
+      hasNotifiedVerifiedRef.current = false;
+      return;
+    }
+    if (hasNotifiedVerifiedRef.current) return;
+    const digits = getDigitsOnly(phone);
+    if (digits.length === 10) {
+      hasNotifiedVerifiedRef.current = true;
+      onVerified(`+1${digits}`);
+    }
+  }, [isVerified, phone, onVerified]);
 
   // Countdown timer for resend
   useEffect(() => {
